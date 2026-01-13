@@ -1,0 +1,196 @@
+<div class="supplier-transaction-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Supplier Transactions</h1>
+    <button (click)="openAddForm()" class="btn btn-primary">+ New Transaction</button>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
+      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
+        <app-autocomplete-input
+          label="Supplier"
+          [items]="suppliers"
+          [displayKey]="'name'"
+          placeholder="All Suppliers"
+          (selectedChange)="selectedSupplier = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+        <app-autocomplete-input
+          label="Variant"
+          [items]="variants"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-actions" style="display: flex; gap: 0.5rem;">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+        <button (click)="exportSupplierTransactionsPDF()" class="btn btn-secondary" style="display: flex; align-items: center;">
+          <fa-icon [icon]="faDownload" style="margin-right: 4px;"></fa-icon> Export PDF
+        </button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+
+
+
+  <!-- Transactions Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Transaction History</h3>
+      <span class="record-count">{{ totalTransactions }} transactions</span>
+    </div>
+    <div class="card-body">
+      <div *ngIf="paginatedTransactions.length > 0; else noData" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Supplier</th>
+              <th>Variant</th>
+              <th class="text-center">Filled Received</th>
+              <th class="text-center">Empty Returned</th>
+              <th>Reference</th>
+              <th class="text-center">Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of paginatedTransactions">
+              <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td><strong>{{ transaction.supplierName }}</strong></td>
+              <td>{{ transaction.variantName }}</td>
+              <td class="text-center received">{{ transaction.filledReceived }} units</td>
+              <td class="text-center returned">{{ transaction.emptySent }} units</td>
+              <td class="muted">{{ transaction.reference }}</td>
+              <td class="text-center">{{ transaction.amount | number:'1.2-2' }}</td>
+              <td>
+                <button class="action-btn" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="paginatedTransactions.length > 0" class="pagination">
+        <button 
+          (click)="onPageChange(transactionPage - 1)" 
+          [disabled]="transactionPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ transactionPage }} of {{ getTotalPages() }}</span>
+        <button 
+          (click)="onPageChange(transactionPage + 1)" 
+          [disabled]="transactionPage === getTotalPages()"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="transactionPageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faBox"></fa-icon> No transactions found</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId ? 'Edit Transaction' : 'New Supplier Transaction' }}</h2>
+        <button class="modal-close" (click)="closeForm()">✕</button>
+      </div>
+      <form [formGroup]="transactionForm" (ngSubmit)="saveTransaction()" class="modal-body">
+        <app-autocomplete-input
+          label="Supplier"
+          [required]="true"
+          [items]="suppliers"
+          [displayKey]="'name'"
+          placeholder="Select a supplier"
+          (selectedChange)="transactionForm.get('supplierId')?.setValue($event?.id || '')"
+        ></app-autocomplete-input>
+        <div *ngIf="transactionForm.get('supplierId')?.invalid && transactionForm.get('supplierId')?.touched" class="error-message">
+          Supplier is required
+        </div>
+
+        <app-autocomplete-input
+          label="Variant"
+          [required]="true"
+          [items]="variants"
+          [displayKey]="'name'"
+          placeholder="Select variant"
+          (selectedChange)="transactionForm.get('variantId')?.setValue($event?.id || '')"
+        ></app-autocomplete-input>
+        <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
+          Variant is required
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date <span class="required">*</span></label>
+          <input formControlName="transactionDate" type="date" class="form-control">
+          <div *ngIf="transactionForm.get('transactionDate')?.invalid && transactionForm.get('transactionDate')?.touched" class="error-message">
+            Date is required
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Filled Cylinders Received <span class="required">*</span></label>
+            <input formControlName="filledReceived" type="number" class="form-control" placeholder="0">
+            <div *ngIf="transactionForm.get('filledReceived')?.invalid && transactionForm.get('filledReceived')?.touched" class="error-message">
+              Valid quantity required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Empty Cylinders Sent <span class="required">*</span></label>
+            <input formControlName="emptySent" type="number" class="form-control" placeholder="0">
+            <div *ngIf="transactionForm.get('emptySent')?.invalid && transactionForm.get('emptySent')?.touched" class="error-message">
+              Valid quantity required
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reference Number</label>
+          <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Amount <span class="required">*</span></label>
+          <input formControlName="amount" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
+          <div *ngIf="transactionForm.get('amount')?.invalid && transactionForm.get('amount')?.touched" class="error-message">
+            Valid amount required
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" [disabled]="!transactionForm.valid">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+

@@ -1,0 +1,125 @@
+<div class="inventory-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Inventory Management</h1>
+    <p class="page-subtitle">Track cylinder stock and movements</p>
+  </div>
+
+  <!-- Stock Summary Cards -->
+  <div class="stock-summary">
+    <div class="stock-card" *ngFor="let stock of stockSummary">
+      <div class="stock-header">
+        <h3>{{ stock.variantName }}</h3>
+        <span class="stock-icon"><fa-icon [icon]="faBox"></fa-icon></span>
+      </div>
+      <div class="stock-details">
+        <div class="stock-item text-center">
+          <span class="label">Filled</span>
+          <span class="value filled">{{ stock.filledQty || 0 }}</span>
+        </div>
+        <div class="stock-item text-center">
+          <span class="label">Empty</span>
+          <span class="value empty">{{ stock.emptyQty || 0 }}</span>
+        </div>
+      </div>
+      <div class="stock-total text-center">
+        <span class="label">Total</span>
+        <span class="value">{{ (stock.filledQty || 0) + (stock.emptyQty || 0)  }} units</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Movement History -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Stock Movement</h3>
+      <div class="variant-filter">
+        <app-autocomplete-input
+          [items]="variants"
+          [displayKey]="'name'"
+          placeholder="All Variants"
+          (selectedChange)="filterVariant = $event?.name || ''; onFilterChange()"
+        ></app-autocomplete-input>
+          <label for="typeSelect" style="margin-left: 1rem;">Type:</label>
+          <select id="typeSelect" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="form-control">
+            <option value="">All Types</option>
+            <option value="Sale">Sale</option>
+            <option value="Return">Return</option>
+          </select>
+      </div>
+    </div>
+    <div class="card-body">
+      <div *ngIf="filteredMovements.length > 0; else noData" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Variant</th>
+                <th>Type</th>
+                <th class="text-center">Filled Qty</th>
+                <th class="text-center">Empty Qty</th>
+                <th class="text-center">Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let movement of paginatedMovements" [class.outgoing]="movement.type === 'Sale'">
+                <td>{{ movement.date | date: 'dd MMM yyyy' }}</td>
+                <td>
+                  <span class="variant-badge" [ngStyle]="{'background-color': getVariantColor(movement.variant)}"></span>
+                  <strong>{{ movement.variant }}</strong>
+                </td>
+                <td>
+                  <span class="badge"
+                    [class.badge-sale]="movement.type === 'Sale'"
+                    [class.badge-purchase]="movement.type === 'Purchase'"
+                    [class.badge-empty]="movement.type === 'Empty Return'"
+                    [class.badge-return]="movement.type === 'Return'">
+                    {{ movement.type }}
+                  </span>
+                </td>
+                <td class="text-center">{{ movement.filledQty }}</td>
+                <td class="text-center">{{ movement.emptyQty }}</td>
+                <td class="muted text-center">{{ movement.reference }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ng-template #noData>
+        <div class="no-data">
+          <p>No movements found</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div *ngIf="totalMovements > 0" class="pagination">
+      <button 
+        (click)="onPageChange(movementPage - 1)" 
+        [disabled]="movementPage === 1"
+        class="btn btn-secondary">
+        ← Previous
+      </button>
+      <span class="page-info">Page {{ movementPage }} of {{ totalPages }}</span>
+      <button 
+        (click)="onPageChange(movementPage + 1)" 
+        [disabled]="movementPage >= totalPages"
+        class="btn btn-secondary">
+        Next →
+      </button>
+      <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+        <span class="page-size-label">Show</span>
+        <select [(ngModel)]="movementPageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+        <span class="page-size-label">per page</span>
+      </div>
+    </div>
+  </div>
+
+

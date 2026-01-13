@@ -1,0 +1,44 @@
+<div class="login-bg">
+  <div class="login-card">
+    <!-- Logo with same design as navbar -->
+    <div class="brand">
+      <div class="brand-icon">⛽</div>
+      <div class="brand-content">
+        <div class="brand-name">Gas Pro</div>
+        <div class="brand-tagline">Inventory System</div>
+      </div>
+    </div>
+    <form (ngSubmit)="onLogin()" autocomplete="off">
+      <div class="input-group">
+        <span class="input-icon"><fa-icon [icon]="faUser"></fa-icon></span>
+        <input type="text" [(ngModel)]="username" name="username" placeholder="Username" required />
+      </div>
+      <div class="input-group">
+        <span class="input-icon"><fa-icon [icon]="faLock"></fa-icon></span>
+        <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required />
+      </div>
+      <button type="submit" [disabled]="loading">
+        <span *ngIf="!loading">Login</span>
+        <span *ngIf="loading" class="spinner"></span>
+      </button>
+      <div class="login-links">
+        <a href="#" (click)="openForgotPassword($event)">Forgot password?</a>
+      </div>
+      <!-- Error div removed as Toastr will handle error messages -->
+    </form>
+    <div class="modal-backdrop" *ngIf="showForgot">
+      <div class="modal">
+        <div class="modal-title">Reset Password</div>
+        <form (ngSubmit)="onForgotPassword()">
+          <input type="email" [(ngModel)]="forgotEmail" name="forgotEmail" placeholder="Enter your email" required />
+          <button type="submit" [disabled]="forgotLoading">
+            <span *ngIf="!forgotLoading">Send Reset Link</span>
+            <span *ngIf="forgotLoading" class="spinner"></span>
+          </button>
+        </form>
+        <div *ngIf="forgotMsg" class="forgot-msg">{{ forgotMsg }}</div>
+        <button class="modal-close" (click)="closeForgotPassword()">&times;</button>
+      </div>
+    </div>
+  </div>
+</div>

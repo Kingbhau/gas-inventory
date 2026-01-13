@@ -1,0 +1,149 @@
+<div class="profile-page">
+
+  <!-- Header -->
+  <div class="profile-header">
+    <fa-icon [icon]="faUserCircle" class="avatar"></fa-icon>
+
+    <div class="header-info">
+      <h1>{{ user?.name }}</h1>
+      <span class="role">{{ user?.role }}</span>
+      <span class="username">{{ user?.username }}</span>
+    </div>
+
+    <button class="btn-primary" (click)="openEditModal()">
+      Edit Profile
+    </button>
+  </div>
+
+  <!-- Info Grid -->
+  <div class="profile-grid">
+
+    <!-- Personal Info -->
+    <section class="card">
+      <h3>Personal Information</h3>
+
+      <div class="info-row">
+        <label>Full Name</label>
+        <span>{{ user?.name }}</span>
+      </div>
+
+      <div class="info-row">
+        <label>Mobile</label>
+        <span>{{ user?.mobileNo }}</span>
+      </div>
+
+      <div class="info-row">
+        <label>Username</label>
+        <span>{{ user?.username }}</span>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="card">
+      <h3>Security</h3>
+
+      <div class="info-row">
+        <label>Role</label>
+        <span>{{ user?.role }}</span>
+      </div>
+
+      <button class="btn-link" (click)="openPasswordModal()">
+        Change password
+      </button>
+    </section>
+
+  </div>
+</div>
+
+<!-- =========================
+     EDIT PROFILE MODAL
+     ========================= -->
+<div class="modal-overlay" *ngIf="showEdit">
+
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">Edit profile</h2>
+        <p class="modal-subtitle">Update your personal information</p>
+      </div>
+
+      <button class="modal-close" (click)="closeEditModal()">✕</button>
+    </div>
+
+    <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+      <div class="modal-body">
+
+        <div class="form-group">
+          <label>Full name</label>
+          <input class="form-control" formControlName="name">
+        </div>
+
+        <div class="form-group">
+          <label>Mobile number</label>
+          <input class="form-control" formControlName="mobileNo">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeEditModal()">
+          Cancel
+        </button>
+        <button class="btn-primary" type="submit" [disabled]="!profileForm.valid">
+          Save changes
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- =========================
+     PASSWORD MODAL
+     ========================= -->
+<div class="modal-overlay" *ngIf="showPassword">
+
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <div>
+        <h2 class="modal-title">Change password</h2>
+        <p class="modal-subtitle">Use a strong, unique password</p>
+      </div>
+
+      <button class="modal-close" (click)="closePasswordModal()">✕</button>
+    </div>
+
+    <form [formGroup]="passwordForm" (ngSubmit)="resetPassword()">
+      <div class="modal-body">
+
+        <div class="form-group">
+          <label>Current password</label>
+          <input type="password" class="form-control" formControlName="currentPassword">
+        </div>
+
+        <div class="form-group">
+          <label>New password</label>
+          <input type="password" class="form-control" formControlName="newPassword">
+        </div>
+
+        <div class="form-group">
+          <label>Confirm password</label>
+          <input type="password" class="form-control" formControlName="confirmPassword">
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closePasswordModal()">
+          Cancel
+        </button>
+        <button class="btn-primary" type="submit" [disabled]="!passwordForm.valid">
+          Update password
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

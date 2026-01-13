@@ -1,0 +1,70 @@
+<div class="sale-entry-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Empty Cylinder Return</h1>
+    <p class="page-subtitle">Record a return of empty cylinders from a customer</p>
+  </div>
+
+  <!-- Empty Return Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Return Details</h3>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="emptyReturnForm" (ngSubmit)="submit()" class="sale-form">
+        <!-- Customer Selection (Autocomplete) -->
+        <app-autocomplete-input
+          label="Customer"
+          [required]="true"
+          [items]="customers"
+          [displayKey]="'name'"
+          placeholder="Select a customer"
+          (selectedChange)="emptyReturnForm.get('customerId')?.setValue($event?.id || '')"
+        ></app-autocomplete-input>
+        <div *ngIf="emptyReturnForm.get('customerId')?.invalid && emptyReturnForm.get('customerId')?.touched" class="error-message">
+          Customer is required
+        </div>
+
+        <!-- Variant Selection (Autocomplete) -->
+        <app-autocomplete-input
+          label="Cylinder Variant"
+          [required]="true"
+          [items]="variants"
+          [displayKey]="'name'"
+          placeholder="Select variant"
+          (selectedChange)="emptyReturnForm.get('variantId')?.setValue($event?.id || '')"
+        ></app-autocomplete-input>
+        <div *ngIf="emptyReturnForm.get('variantId')?.invalid && emptyReturnForm.get('variantId')?.touched" class="error-message">
+          Variant is required
+        </div>
+
+        <div class="form-row">
+          <!-- Empty Cylinders Returned -->
+          <div class="form-group">
+            <label class="form-label">Empty Cylinders Returned <span class="required">*</span></label>
+            <input formControlName="emptyIn" type="number" min="1" class="form-control" required placeholder="0" />
+            <div *ngIf="emptyReturnForm.get('emptyIn')?.invalid && emptyReturnForm.get('emptyIn')?.touched" class="error-message">
+              Valid quantity required
+            </div>
+          </div>
+          <!-- Date -->
+          <div class="form-group">
+            <label class="form-label">Date <span class="required">*</span></label>
+            <input formControlName="transactionDate" type="date" class="form-control" required />
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting || emptyReturnForm.invalid">
+            <span>✓</span> Record Return
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="submitting">
+            <span>↻</span> Reset
+          </button>
+        </div>
+        <!-- Success Message removed: Toastr handles popup notification -->
+      </form>
+    </div>
+  </div>
+</div>

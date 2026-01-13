@@ -1,0 +1,134 @@
+<div class="suppliers-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Suppliers</h1>
+      <p class="page-subtitle">Manage all supplier accounts and transactions</p>
+    </div>
+    <button (click)="openAddForm()" class="btn btn-primary" [disabled]="suppliers.length >= 1">
+      <fa-icon [icon]="faPlus"></fa-icon>
+      Add Supplier
+    </button>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="search-section">
+    <div class="search-container">
+      <fa-icon [icon]="faSearch" class="search-icon"></fa-icon>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="Search by name or contact..."
+        class="search-input">
+    </div>
+  </div>
+
+  <!-- Suppliers Table Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">All Suppliers</h3>
+      <p class="card-subtitle">Total: {{ paginatedSuppliers.length }} suppliers</p>
+    </div>
+    <div class="card-body">
+      <div *ngIf="paginatedSuppliers.length > 0; else noData" class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Supplier Name</th>
+              <th>Contact Information</th>
+              <th class="text-center" style="width: 120px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let supplier of paginatedSuppliers">
+              <td class="font-semibold">{{ supplier.name }}</td>
+              <td>{{ supplier.contact }}</td>
+              <td class="text-center actions-cell">
+                <button class="action-btn" (click)="editSupplier(supplier)" title="Edit">
+                  <fa-icon [icon]="faPencil"></fa-icon>
+                </button>
+                <button class="action-btn danger" (click)="deleteSupplier(supplier.id)" title="Delete">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="paginatedSuppliers.length > 0" class="pagination">
+        <button 
+          (click)="onPageChange(supplierPage - 1)" 
+          [disabled]="supplierPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ supplierPage }} of {{ getTotalPages() }}</span>
+        <button 
+          (click)="onPageChange(supplierPage + 1)" 
+          [disabled]="supplierPage === getTotalPages()"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="supplierPageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+      </div>
+
+      <ng-template #noData>
+        <div class="empty-state">
+          <div class="empty-icon"><fa-icon [icon]="faBuilding"></fa-icon></div>
+          <h4 class="empty-title">No Suppliers Found</h4>
+          <p class="empty-subtitle">Start by adding your first supplier</p>
+          <button (click)="openAddForm()" class="btn btn-primary">
+            <fa-icon [icon]="faPlus"></fa-icon>
+            Add Supplier
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">{{ editingId ? 'Edit Supplier' : 'Add New Supplier' }}</h2>
+          <p class="modal-subtitle">{{ editingId ? 'Update supplier information' : 'Create a new supplier account' }}</p>
+        </div>
+        <button class="modal-close" (click)="closeForm()">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <form [formGroup]="supplierForm" (ngSubmit)="saveSupplier()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Supplier Name <span class="required">*</span></label>
+          <input formControlName="name" type="text" class="form-control" placeholder="Enter supplier name">
+          <div *ngIf="supplierForm.get('name')?.invalid && supplierForm.get('name')?.touched" class="form-error">
+            <fa-icon [icon]="faExclamation"></fa-icon> Name must be at least 2 characters
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contact Information <span class="required">*</span></label>
+          <input formControlName="contact" type="text" class="form-control" placeholder="Phone, email, or address">
+          <div *ngIf="supplierForm.get('contact')?.invalid && supplierForm.get('contact')?.touched" class="form-error">
+            <fa-icon [icon]="faExclamation"></fa-icon> Contact information must be at least 10 characters
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!supplierForm.valid">
+            {{ editingId ? 'Update Supplier' : 'Create Supplier' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>

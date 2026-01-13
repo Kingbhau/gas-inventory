@@ -1,0 +1,163 @@
+<div class="sales-history-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Sales History</h1>
+    <p class="page-subtitle">View and manage all sales transactions</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All Customers"
+          (selectedChange)="selectedCustomer = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <br>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Variant"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterMinAmount" class="filter-input" placeholder="Min">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
+      </div>
+      <br>
+      <div class="filter-actions">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Sales Records</h3>
+      <span class="record-count">{{ filteredSales.length }} records</span>
+    </div>
+    <div class="card-body">
+      <div *ngIf="filteredSales.length > 0; else noData" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Variant & Qty</th>
+                <th>Amount</th>
+                <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sale of paginatedSales" [class.highlight]="sale.totalAmount > 50000">
+                <td>{{ sale.saleDate | date: 'dd MMM yyyy' }}</td>
+                <td><strong>{{ sale.customerName }}</strong></td>
+                <td>{{ sale.variantName }} - {{ sale.filledIssuedQty || 0 }} units</td>
+                <td class="amount">{{ sale.totalAmount | indianCurrency }}</td>
+                <td>
+                  <button class="btn-action" (click)="viewInvoice(sale.id)" title="View Invoice"><fa-icon [icon]="faEye"></fa-icon></button>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Data Message -->
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No sales records found</p>
+        </div>
+      </ng-template>
+
+      <!-- Pagination -->
+      <div *ngIf="filteredSales.length > 0" class="pagination">
+        <button 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Modal -->
+  <div *ngIf="selectedSale" class="modal-overlay" (click)="closeInvoice()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Invoice #{{ selectedSale.id }}</h2>
+        <button class="modal-close" (click)="closeInvoice()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ selectedSale.saleDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Customer:</span>
+            <span class="value">{{ selectedSale.customerName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Variant:</span>
+            <span class="value">{{ selectedSale.variantName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Quantity:</span>
+            <span class="value">{{ selectedSale.filledIssuedQty }} units</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Base Price:</span>
+            <span class="value">{{ selectedSale.basePrice | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Discount:</span>
+            <span class="value">{{ selectedSale.discount | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row total">
+            <span class="label">Total Amount:</span>
+            <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeInvoice()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

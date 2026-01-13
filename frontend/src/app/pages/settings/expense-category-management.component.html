@@ -1,0 +1,116 @@
+<div class="expense-category-wrapper">
+  <!-- Category Form Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId ? 'Edit Category' : 'Add New Category' }}</h2>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <!-- Category Name -->
+        <div class="form-group">
+          <label class="form-label">Category Name <span class="required">*</span></label>
+          <input 
+            formControlName="name"
+            type="text"
+            class="form-control"
+            placeholder="e.g., Salaries, Utilities, Maintenance"
+            [class.is-invalid]="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched">
+          <div *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched" class="form-error">
+            <span *ngIf="categoryForm.get('name')?.errors?.['required']">Category name is required</span>
+            <span *ngIf="categoryForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea 
+            formControlName="description"
+            class="form-control"
+            placeholder="Optional description for this category"
+            rows="2"></textarea>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button 
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="categoryForm.invalid || isSubmitting">
+            <span *ngIf="!isSubmitting">{{ editingId ? 'Update' : 'Create' }}</span>
+            <span *ngIf="isSubmitting">{{ editingId ? 'Updating...' : 'Creating...' }}</span>
+          </button>
+          <button 
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Expense Categories</h3>
+      <button (click)="onAddNew()" class="btn btn-primary">+ Add Category</button>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <p>Loading categories...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && categories.length === 0" class="no-data-container">
+        <p>No categories found. Create one to get started.</p>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!isLoading && categories.length > 0" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let category of categories">
+              <td><strong>{{ category.name }}</strong></td>
+              <td class="muted">{{ category.description || '-' }}</td>
+              <td class="text-center">
+                <button 
+                  (click)="toggleStatus(category)"
+                  [class.badge-active]="category.isActive"
+                  [class.badge-inactive]="!category.isActive"
+                  class="badge">
+                  {{ category.isActive ? 'Active' : 'Inactive' }}
+                </button>
+              </td>
+              <td class="text-center">
+                <button 
+                  (click)="onEdit(category)"
+                  class="btn-action"
+                  title="Edit">
+                  <fa-icon [icon]="faEdit"></fa-icon>
+                </button>
+                <!-- <button 
+                  (click)="onDelete(category.id)"
+                  class="btn-action delete"
+                  title="Delete">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button> -->
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,127 @@
+<ng-container *ngIf="isAuthenticated && !isLoginPage(); else loginOnly">
+  <!-- Global Loader -->
+  <app-loader
+    [isLoading]="(loading$ | async)?.isLoading || false"
+    [message]="(loading$ | async)?.message || ''"
+    [fullscreen]="true">
+  </app-loader>
+
+  <!-- Header/Top Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <!-- Left Section -->
+      <div class="header-left">
+        <button class="header-icon-btn" (click)="toggleSidebar()" title="Toggle Menu" aria-label="Toggle Sidebar">
+          <fa-icon [icon]="faBars"></fa-icon>
+        </button>
+        <div class="brand">
+          <div class="brand-icon">⛽</div>
+          <div class="brand-content">
+            <div class="brand-name">Gas Pro</div>
+            <div class="brand-tagline">Inventory System</div>
+          </div>
+        </div>
+      </div>
+      <!-- Center Section (removed search) -->
+      <!-- Right Section -->
+      <div class="header-right">
+        <!-- Notification bell removed -->
+        <div class="user-section" style="position: relative;">
+          <div class="user-avatar">  {{ (userInfo?.name || userName)?.charAt(0) }}</div>
+          <div class="user-info">
+            <div class="user-name">{{ userInfo?.name || userName }}</div>
+            <div class="user-role">{{ userInfo?.role || userRole }}</div>
+          </div>
+          <button class="header-icon-btn" title="Profile Actions" (click)="toggleProfileDropdown(); $event.stopPropagation();">
+            <fa-icon [icon]="faChevronDown"></fa-icon>
+          </button>
+          <div class="profile-dropdown" *ngIf="profileDropdownOpen" (click)="$event.stopPropagation()" style="position: absolute; right: 0; top: 100%;">
+            <button class="dropdown-item" (click)="logout()">
+              <fa-icon [icon]="faSignOut"></fa-icon> Logout
+            </button>
+          </div>
+        </div>
+        </div>
+      </div>
+    
+  </header>
+
+  <!-- Main Container -->
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" [class.sidebar-open]="sidebarOpen">
+      <div class="sidebar-wrapper">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+          <h3 class="sidebar-title">Menu</h3>
+          <button class="close-btn" (click)="toggleSidebar()" title="Close">
+            <fa-icon [icon]="faTimes"></fa-icon>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <ng-container *ngIf="isManager; else staffNav">
+            <div class="nav-section">
+              <div class="nav-label">Main</div>
+              <ul class="nav-items">
+                <li><a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faChartBar"></fa-icon></span><span class="nav-text">Dashboard</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Sales</div>
+              <ul class="nav-items">
+                <li><a routerLink="/sales/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Sales Entry</span></a></li>
+                <li><a routerLink="/empty-return" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span><span class="nav-text">Empty Return</span></a></li>
+                <li><a routerLink="/sales/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Sales History</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Expenses</div>
+              <ul class="nav-items">
+                <li><a routerLink="/expenses/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faReceipt"></fa-icon></span><span class="nav-text">Expense Entry</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Management</div>
+              <ul class="nav-items">
+                <li><a routerLink="/inventory" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span><span class="nav-text">Inventory</span></a></li>
+                <li><a routerLink="/customers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faUsers"></fa-icon></span><span class="nav-text">Customers</span></a></li>
+                <li><a routerLink="/suppliers" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faTruck"></fa-icon></span><span class="nav-text">Suppliers</span></a></li>
+                <li><a routerLink="/suppliers/transactions" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Supplier Transactions</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Other</div>
+              <ul class="nav-items">
+                <li><a routerLink="/reports" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faFileAlt"></fa-icon></span><span class="nav-text">Reports</span></a></li>
+                <li><a routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faUsers"></fa-icon></span><span class="nav-text">Users</span></a></li>
+                <li><a routerLink="/profile" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faUser"></fa-icon></span><span class="nav-text">My Profile</span></a></li>
+                <li><a routerLink="/settings" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faCog"></fa-icon></span><span class="nav-text">Settings</span></a></li>
+                
+              </ul>
+            </div>
+          </ng-container>
+          <ng-template #staffNav>
+            <div class="nav-section">
+              <div class="nav-label">Sales</div>
+              <ul class="nav-items">
+                <li><a routerLink="/sales/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Sales Entry</span></a></li>
+                <li><a routerLink="/empty-return" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span><span class="nav-text">Empty Return</span></a></li>
+                <li><a routerLink="/profile" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faUser"></fa-icon></span><span class="nav-text">My Profile</span></a></li>
+              </ul>
+            </div>
+          </ng-template>
+        </nav>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+ </ng-container>
+<ng-template #loginOnly>
+  <router-outlet></router-outlet>
+</ng-template>
+
+

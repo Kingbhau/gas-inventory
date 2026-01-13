@@ -1,0 +1,535 @@
+/* Center text utility for summary cards */
+.text-center {
+  text-align: center !important;
+}
+/* Badge for Return type */
+.badge-return {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.inventory-container {
+  padding: 0;
+}
+
+/* Variant Badge and Filter */
+.variant-badge {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  border: 1px solid #ccc;
+}
+
+.variant-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 53%;
+  
+}
+.variant-filter #variantSelect{
+ width: 45%;
+}
+.variant-filter #typeSelect{
+  width: 45%;
+}
+.variant-filter select {
+ padding: 10px;
+}
+.variantSelect{
+ padding: 10px;
+}
+.variant-filter label {
+  font-weight: 500;
+}
+
+.form-control {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* Page Header */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Stock Summary Cards */
+.stock-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stock-card {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.stock-card:hover {
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.stock-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.stock-icon {
+  font-size: 2rem;
+}
+
+.stock-details {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.stock-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stock-item .label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.stock-item .value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stock-item .value.filled {
+  color: #16a34a;
+}
+
+.stock-item .value.empty {
+  color: #ea580c;
+}
+
+.stock-total {
+  padding: 1rem;
+  background: #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stock-total .label {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.stock-total .value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  /* overflow: hidden; */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.card-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #cbd5e1;
+  background: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.tab-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+.card-body {
+  padding: var(--spacing-lg);
+  overflow: visible !important;
+}
+
+/* Table */
+.table-wrapper {
+  overflow-x: auto;
+  position: relative;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.data-table thead {
+  background: #f1f5f9;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+
+.data-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.data-table tbody tr {
+  transition: background 0.2s;
+}
+
+.data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.data-table tbody tr.outgoing {
+  background: white;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-sale {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-purchase {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badge-empty {
+  background: #fef9c3;
+  color: #b45309;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* No Data */
+.no-data {
+  padding: 3rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Alert Section */
+.alert-section {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.alert-header {
+  padding: 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.alert-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.alerts-list {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alert-item {
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.alert-warning {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.alert-danger {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-icon {
+  font-size: 1.25rem;
+}
+
+.alert-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.no-alerts {
+  padding: 2rem;
+  text-align: center;
+  color: #16a34a;
+  font-weight: 600;
+  background: #dcfce7;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Pagination - Match Sales History & Customers */
+.pagination {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  min-height: 56px;
+}
+
+.page-info {
+  font-size: 0.9rem;
+  color: #64748b;
+  min-width: 120px;
+  text-align: center;
+}
+
+.page-size-label {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0 0.25rem;
+}
+
+.page-size-select {
+  padding: 0.35rem 1.2rem 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-size: 1rem;
+  background: #fff;
+  color: #0f172a;
+  margin: 0 0.25rem;
+  min-width: 60px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  transition: border 0.2s;
+}
+
+.page-size-select:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+
+/* Button - Match Sales History */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #cbd5e1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stock-summary {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stock-card {
+    padding: 1rem;
+  }
+
+  .stock-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .stock-details {
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .stock-item .value {
+    font-size: 1.5rem;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .variant-filter {
+    width: 100%;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .tab-buttons {
+    width: 100%;
+  }
+
+  .tab-btn {
+    flex: 1;
+  }
+
+  .mobile-table-scroll {
+    overflow-x: auto !important;
+    width: 100%;
+    min-width: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 0;
+    margin-right: -var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+
+  .data-table {
+    min-width: 800px;
+    font-size: 0.85rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.75rem;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .pagination > div {
+    margin-left: 0 !important;
+    justify-content: flex-start;
+  }
+}

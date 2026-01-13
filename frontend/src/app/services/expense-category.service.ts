@@ -1,0 +1,57 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { ExpenseCategory } from '../models/expense-category.model';
+import { getApiUrl } from '../config/api.config';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ExpenseCategoryService {
+  private apiUrl =getApiUrl('/expense-categories');
+
+  constructor(private http: HttpClient) {}
+
+  // Get all categories
+  getAllCategories(page: number = 0, pageSize: number = 100): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', pageSize.toString());
+    return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true });
+  }
+
+  // Get active categories only
+  getActiveCategories(): Observable<ExpenseCategory[]> {
+    return this.http.get<ExpenseCategory[]>(`${this.apiUrl}/active`, { withCredentials: true });
+  }
+
+  // Get category by ID
+  getCategoryById(id: number): Observable<ExpenseCategory> {
+    return this.http.get<ExpenseCategory>(`${this.apiUrl}/${id}`, { withCredentials: true });
+  }
+
+  // Create new category
+  createCategory(category: ExpenseCategory): Observable<ExpenseCategory> {
+    return this.http.post<ExpenseCategory>(`${this.apiUrl}`, category, { withCredentials: true });
+  }
+
+  // Update category
+  updateCategory(id: number, category: ExpenseCategory): Observable<ExpenseCategory> {
+    return this.http.put<ExpenseCategory>(`${this.apiUrl}/${id}`, category, { withCredentials: true });
+  }
+
+  // Delete category
+  deleteCategory(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true });
+  }
+
+  // Activate/Deactivate category
+  toggleCategoryStatus(id: number, isActive: boolean): Observable<ExpenseCategory> {
+    return this.http.patch<ExpenseCategory>(`${this.apiUrl}/${id}/status`, { isActive }, { withCredentials: true });
+  }
+
+  // Get category names only
+  getCategoryNames(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/names`, { withCredentials: true });
+  }
+}

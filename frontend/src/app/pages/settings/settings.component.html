@@ -1,0 +1,213 @@
+<div class="settings-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Manage business configuration and master data</p>
+  </div>
+
+  <!-- Settings Tabs -->
+  <div class="settings-tabs">
+    <button 
+      *ngFor="let tab of tabs"
+      [class.active]="activeTab === tab.id"
+      (click)="activeTab = tab.id"
+      class="tab-btn">
+      <fa-icon [icon]="tab.icon"></fa-icon> {{ tab.name }}
+    </button>
+  </div>
+
+  <!-- Cylinder Variants -->
+  <div *ngIf="activeTab === 'variants'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Cylinder Variants</h3>
+      <button (click)="openVariantForm()" class="btn btn-primary">+ Add Variant</button>
+    </div>
+    <div class="card-body">
+      <div class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Variant Name</th>
+              <th>Code</th>
+              <th>Weight (kg)</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let variant of variantsList">
+              <td><strong>{{ variant.name }}</strong></td>
+              <td class="muted">{{ variant.code }}</td>
+              <td>{{ variant.weight }} kg</td>
+              <td>
+                <span class="badge" [class.badge-active]="variant.active">
+                  {{ variant.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+                <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly Pricing -->
+  <div *ngIf="activeTab === 'pricing'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Monthly Base Price</h3>
+      <button (click)="openPriceForm()" class="btn btn-primary">+ Add Price</button>
+    </div>
+    <div class="card-body">
+      <div class="pricing-grid">
+        <div class="pricing-card" *ngFor="let price of monthlyPrices">
+          <div class="price-month">{{ price.month || 'N/A' }}</div>
+          <div class="price-list">
+            <ng-container *ngIf="price.variants && price.variants.length > 0">
+              <div class="price-item" *ngFor="let variant of price.variants">
+                <span class="variant-name">{{ variant.name || 'Unknown' }}</span>
+                <span class="price-value">₹ {{ variant.price || 0 }}</span>
+              </div>
+            </ng-container>
+          </div>
+          <button (click)="editPrice(price)" class="btn btn-secondary">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Categories -->
+  <div *ngIf="activeTab === 'categories'" class="card">
+    <app-expense-category-management></app-expense-category-management>
+  </div>
+
+  <!-- Business Info -->
+  <div *ngIf="activeTab === 'business'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Business Information</h3>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="form">
+        <div class="form-group">
+          <label class="form-label">Agency Name <span class="required">*</span></label>
+          <input formControlName="agencyName" type="text" class="form-control" placeholder="Your agency name">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Registration Number</label>
+            <input formControlName="registrationNumber" type="text" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">GST Number</label>
+            <input formControlName="gstNumber" type="text" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <textarea formControlName="address" class="form-control" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Contact Number</label>
+            <input formControlName="contactNumber" type="tel" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input formControlName="email" type="email" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">✓ Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Variant Form Modal -->
+  <div *ngIf="showVariantForm" class="modal-overlay" (click)="closeVariantForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingVariantId ? 'Edit Variant' : 'Add New Variant' }}</h2>
+        <button class="modal-close" (click)="closeVariantForm()">✕</button>
+      </div>
+      <form [formGroup]="variantForm" (ngSubmit)="saveVariant()" class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Variant Name <span class="required">*</span></label>
+          <input formControlName="name" type="text" class="form-control" placeholder="e.g., 19kg Cylinder">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Code <span class="required">*</span></label>
+            <input formControlName="code" type="text" class="form-control" placeholder="e.g., V001">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Weight (kg) <span class="required">*</span></label>
+            <input formControlName="weightKg" type="number" class="form-control" placeholder="19" step="0.1" min="0.1">
+            <div *ngIf="variantForm.get('weightKg')?.invalid && variantForm.get('weightKg')?.touched" class="form-error">
+              <span *ngIf="variantForm.get('weightKg')?.errors?.['required']">Weight is required</span>
+              <span *ngIf="variantForm.get('weightKg')?.errors?.['min']">Weight must be greater than 0</span>
+              <span *ngIf="variantForm.get('weightKg')?.errors?.['pattern']">Enter a valid weight (e.g., 19 or 2.5)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label checkbox">
+            <input formControlName="active" type="checkbox">
+            <span>Active</span>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" [disabled]="!variantForm.valid">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="closeVariantForm()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Price Edit Modal -->
+  <div *ngIf="showPriceForm" class="modal-overlay" (click)="closePriceForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditingPrice ? 'Edit Prices - ' + editingPrice?.month : 'Add New Price' }}</h2>
+        <button class="modal-close" (click)="closePriceForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="!isEditingPrice" class="form-group">
+          <label class="form-label">Select Month <span class="required">*</span></label>
+          <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange(selectedMonth)" class="form-control" placeholder="Select month">
+        </div>
+        <div class="price-edit-list">
+          <ng-container *ngIf="editingPrice?.variants && editingPrice.variants.length > 0">
+            <div class="price-edit-item" *ngFor="let variant of editingPrice.variants">
+              <label class="form-label">{{ variant.name || 'Unknown' }}</label>
+              <div class="input-with-currency">
+                <span class="currency">₹</span>
+                <input type="number" [(ngModel)]="variant.price" class="form-control" placeholder="Enter price">
+              </div>
+            </div>
+          </ng-container>
+          <div *ngIf="!editingPrice?.variants || editingPrice.variants.length === 0" class="no-data">
+            <p>All variants already have prices for this month</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="savePrices()" class="btn btn-primary">Save Prices</button>
+        <button (click)="closePriceForm()" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

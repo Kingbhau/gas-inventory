@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_FILE_PATH" value="logs"/>
+    <property name="LOG_FILE_MAX_SIZE" value="20MB"/>
+    <property name="LOG_FILE_MAX_HISTORY" value="60"/>
+    <!-- Industry-standard pattern with clear field separation -->
+    <property name="LOG_PATTERN_READABLE" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%X{requestId}] [%X{userId}] | %logger{36} | %msg%n"/>
+    <property name="LOG_PATTERN_DETAILED" value="%d{yyyy-MM-dd HH:mm:ss.SSS} | %-5level | [%X{requestId}] [%X{userId}] [%X{transactionId}] | %thread | %logger{36} | %msg%n"/>
+
+    <!-- Spring profiles -->
+    <springProfile name="dev">
+        <property name="LOG_LEVEL" value="DEBUG"/>
+    </springProfile>
+    <springProfile name="prod">
+        <property name="LOG_LEVEL" value="INFO"/>
+    </springProfile>
+
+    <!-- Console Appender - Readable format for development -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder>
+            <pattern>${LOG_PATTERN_READABLE}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- JSON Appender - Structured logging for ELK integration -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/application.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/application-%d{yyyy-MM-dd}.%i.json</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service": "gas-agency-system", "version": "1.0.0"}</customFields>
+            <includeContext>true</includeContext>
+            <includeMdcData>true</includeMdcData>
+            <fieldNames>
+                <timestamp>timestamp</timestamp>
+                <version>@version</version>
+                <level>level</level>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <message>message</message>
+                <stackTrace>stack_trace</stackTrace>
+            </fieldNames>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for JSON file appender (non-blocking) -->
+    <appender name="ASYNC_JSON" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="JSON_FILE"/>
+    </appender>
+
+    <!-- Main application log file -->
+    <appender name="FILE_APPLICATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/application-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN_DETAILED}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for application file appender -->
+    <appender name="ASYNC_FILE_APPLICATION" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_APPLICATION"/>
+    </appender>
+
+    <!-- File Appender for error logs only -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN_DETAILED}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for error appender -->
+    <appender name="ASYNC_FILE_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_ERROR"/>
+    </appender>
+
+    <!-- File Appender for audit logs (compliance tracking) -->
+    <appender name="FILE_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/audit.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/audit-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN_READABLE}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for audit appender -->
+    <appender name="ASYNC_FILE_AUDIT" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_AUDIT"/>
+    </appender>
+
+    <!-- File Appender for business logs -->
+    <appender name="FILE_BUSINESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/business.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/business-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN_DETAILED}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for business appender -->
+    <appender name="ASYNC_FILE_BUSINESS" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_BUSINESS"/>
+    </appender>
+
+    <!-- Performance logger -->
+    <appender name="FILE_PERFORMANCE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}/performance.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}/performance-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${LOG_FILE_MAX_SIZE}</maxFileSize>
+            <maxHistory>${LOG_FILE_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} | [%X{requestId}] | %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Async wrapper for performance appender -->
+    <appender name="ASYNC_FILE_PERFORMANCE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_PERFORMANCE"/>
+    </appender>
+
+    <!-- Business loggers -->
+    <logger name="com.gasagency.service" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_APPLICATION"/>
+        <appender-ref ref="ASYNC_FILE_BUSINESS"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </logger>
+
+    <!-- Audit logger -->
+    <logger name="com.gasagency.audit" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_AUDIT"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </logger>
+
+    <!-- Performance logger -->
+    <logger name="com.gasagency.performance" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_PERFORMANCE"/>
+    </logger>
+
+    <!-- Controller logger -->
+    <logger name="com.gasagency.controller" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_APPLICATION"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </logger>
+
+    <!-- Exception handler logger -->
+    <logger name="com.gasagency.exception" level="WARN" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_APPLICATION"/>
+        <appender-ref ref="ASYNC_FILE_ERROR"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </logger>
+
+    <!-- Config logger -->
+    <logger name="com.gasagency.config" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_APPLICATION"/>
+    </logger>
+
+    <!-- Hibernate/Database loggers -->
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+
+    <!-- Spring Framework loggers -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+
+    <!-- Root Logger -->
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_APPLICATION"/>
+        <appender-ref ref="ASYNC_FILE_ERROR"/>
+        <appender-ref ref="ASYNC_JSON"/>
+    </root>
+
+</configuration>

@@ -1,0 +1,12 @@
+2026-01-10 17:32:58.405 | INFO  | [921388fd-713d-4387-a7df-baa5c6b9e9a7] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=10 | customerId=3
+2026-01-10 17:32:58.410 | INFO  | [921388fd-713d-4387-a7df-baa5c6b9e9a7] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=1
+2026-01-10 18:02:11.772 | INFO  | [2462a764-6e7d-4ecd-ab15-00b76a21e4b3] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=11 | customerId=1
+2026-01-10 18:02:11.773 | INFO  | [2462a764-6e7d-4ecd-ab15-00b76a21e4b3] [] | com.gasagency.audit | SALE_CREATED | saleId=8 | customerId=1 | customer=Tushar Rokade | amount=1000.0 | timestamp=2026-01-10 18:02:11
+2026-01-10 18:02:22.409 | INFO  | [932e5267-1177-4d6b-a879-e06f5b600558] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=12 | customerId=1
+2026-01-10 18:02:22.410 | INFO  | [932e5267-1177-4d6b-a879-e06f5b600558] [] | com.gasagency.audit | SALE_CREATED | saleId=9 | customerId=1 | customer=Tushar Rokade | amount=1500.0 | timestamp=2026-01-10 18:02:22
+2026-01-10 18:02:34.338 | INFO  | [3a9a6964-3313-4d42-b521-f952b22d26e1] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=13 | customerId=1
+2026-01-10 18:02:34.349 | INFO  | [3a9a6964-3313-4d42-b521-f952b22d26e1] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=4
+2026-01-10 18:02:41.874 | INFO  | [59674847-f2d2-4336-adfc-5e08828574c9] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=14 | customerId=1
+2026-01-10 18:02:41.892 | INFO  | [59674847-f2d2-4336-adfc-5e08828574c9] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=6
+2026-01-10 18:02:56.842 | INFO  | [90710e08-6d98-4fe7-932a-70ede2acffe4] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=15 | customerId=1
+2026-01-10 18:02:56.842 | INFO  | [90710e08-6d98-4fe7-932a-70ede2acffe4] [] | com.gasagency.audit | SALE_CREATED | saleId=10 | customerId=1 | customer=Tushar Rokade | amount=500.0 | timestamp=2026-01-10 18:02:56

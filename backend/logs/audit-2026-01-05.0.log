@@ -1,0 +1,123 @@
+2026-01-05 11:51:51.767 | INFO  | [e5356782-d99e-4d60-b833-c8a472d53e1d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar Rokade
+2026-01-05 11:52:14.937 | INFO  | [9d4ed23f-8a02-4ee7-884b-57818d38d269] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP GAS
+2026-01-05 11:52:33.223 | INFO  | [6974abec-8c94-43e2-ae28-6fac1cc16a2e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 11:52:59.468 | INFO  | [9e0a4789-188f-4f2e-ad20-653ce50cd8b3] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 11:53:43.449 | INFO  | [35f49e38-8452-482e-a533-a3f9d5adefe9] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 11:53:57.911 | INFO  | [14e2fc08-11f7-4b3b-b719-ab993cf8aa7f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 11:53:57.911 | INFO  | [14e2fc08-11f7-4b3b-b719-ab993cf8aa7f] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar Rokade | amount=40000.0 | timestamp=2026-01-05 11:53:57
+2026-01-05 11:56:06.615 | INFO  | [8a8c0f81-3ce3-4900-8e88-1fafc91ebc9f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 11:56:14.147 | INFO  | [6d31ef7d-9e6d-4c68-928b-ded58f1e993a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 11:56:37.886 | INFO  | [d0f80756-63e6-4372-af8a-aac34ff9954b] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP GAS
+2026-01-05 11:56:54.831 | INFO  | [9e8856f5-ae43-4d10-9f6c-e4b53bead7bb] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar Rokade
+2026-01-05 11:58:19.488 | INFO  | [59bb8ebb-6acf-4f22-9d50-3c4c885df6d9] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 11:59:44.847 | INFO  | [5e53f852-fdc3-43a6-9625-0b7b2701d912] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 11:59:44.855 | INFO  | [5e53f852-fdc3-43a6-9625-0b7b2701d912] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar Rokade | amount=3800.0 | timestamp=2026-01-05 11:59:44
+2026-01-05 12:07:01.663 | INFO  | [dea402e2-9a8c-488e-8c02-bffb92a5563d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar Rokade
+2026-01-05 12:07:19.342 | INFO  | [8e1f585c-4976-4685-b8e6-91a0be9f4f80] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP Gas
+2026-01-05 12:07:29.102 | INFO  | [3aaeb9c4-5c96-43ae-b5fb-7df47d459153] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 12:07:35.346 | INFO  | [e1ebd88c-d18e-485b-b289-8dd313018384] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 12:07:53.782 | INFO  | [31304998-b614-437c-9eb4-5403a42c28ae] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 12:08:15.406 | INFO  | [6e0a3c0a-d504-4dad-a480-1395224e44ec] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 12:08:15.406 | INFO  | [6e0a3c0a-d504-4dad-a480-1395224e44ec] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar Rokade | amount=2900.0 | timestamp=2026-01-05 12:08:15
+2026-01-05 12:21:18.243 | INFO  | [1a11064f-12ae-4139-a11d-97aede60e24d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 12:21:18.243 | INFO  | [1a11064f-12ae-4139-a11d-97aede60e24d] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar Rokade | amount=7500.0 | timestamp=2026-01-05 12:21:18
+2026-01-05 13:42:13.303 | INFO  | [4f30a511-68da-4074-8cf2-de7ef8245b69] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 13:42:20.693 | INFO  | [dc43ce0f-d4b2-4892-9691-fe8ec0d37c6f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 13:42:35.942 | INFO  | [fadf30e7-7bdc-4ca0-b73c-859a93efbba8] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 13:51:33.392 | INFO  | [bf86f1bb-2c66-469f-aa7f-3e04b71ee4b9] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 13:51:51.567 | INFO  | [8ef68eab-8456-42a2-9f18-67c9f0f94143] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP Gas
+2026-01-05 13:52:02.181 | INFO  | [92e7153e-9115-4893-83a2-b6489aed1e0d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 13:52:08.993 | INFO  | [3dd02b2b-8035-42d1-a2fb-68a190fcb399] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 13:52:31.704 | INFO  | [4d1ae8d7-e701-416c-8c53-ec43de5393a2] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 13:52:50.874 | INFO  | [f5017234-71c0-4e81-a714-4caf2352bd42] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=2 | supplierId=1
+2026-01-05 13:53:15.013 | INFO  | [8776f847-8f18-4efd-b259-4c1cfae05533] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 13:53:15.014 | INFO  | [8776f847-8f18-4efd-b259-4c1cfae05533] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=3000.0 | timestamp=2026-01-05 13:53:15
+2026-01-05 13:54:36.504 | INFO  | [95d680e6-e8d9-4f9f-9310-7ea9d9a90bd9] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 13:54:36.504 | INFO  | [95d680e6-e8d9-4f9f-9310-7ea9d9a90bd9] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar | amount=3000.0 | timestamp=2026-01-05 13:54:36
+2026-01-05 14:08:03.649 | INFO  | [faea392e-edaf-4a17-a469-6d14289cc407] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 14:08:10.330 | INFO  | [a7e515d0-f40f-4b79-8f6a-5fbd3c1ee3f8] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 14:09:29.402 | INFO  | [3125ad9c-c8cc-4d5b-9f90-fb78af600391] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 14:09:40.257 | INFO  | [ff66e080-0a3a-45ea-ab36-95358b217f3e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 14:09:56.139 | INFO  | [98b48deb-1168-4c6e-95e1-b5067df31e99] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 14:10:32.638 | INFO  | [bb5b768f-8381-4b2c-be9c-17d42dd2bfc3] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 14:10:32.640 | INFO  | [bb5b768f-8381-4b2c-be9c-17d42dd2bfc3] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=4500.0 | timestamp=2026-01-05 14:10:32
+2026-01-05 14:11:29.158 | INFO  | [8dfcaa79-a430-4bb6-910d-09159f8e9148] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 14:11:29.161 | INFO  | [8dfcaa79-a430-4bb6-910d-09159f8e9148] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar | amount=3000.0 | timestamp=2026-01-05 14:11:29
+2026-01-05 14:13:28.064 | INFO  | [36ed4ffb-b07a-476a-9130-d67fd3b43602] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=2 | supplierId=1
+2026-01-05 14:13:59.566 | INFO  | [f7834071-a4e5-40d0-9cf4-91fe5aba234c] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=2 | name=Mahesh
+2026-01-05 14:14:29.055 | INFO  | [6801e471-9adf-4ebb-ac12-3b117a1b9989] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=3 | customerId=2
+2026-01-05 14:14:29.056 | INFO  | [6801e471-9adf-4ebb-ac12-3b117a1b9989] [] | com.gasagency.audit | SALE_CREATED | saleId=3 | customerId=2 | customer=Mahesh | amount=7500.0 | timestamp=2026-01-05 14:14:29
+2026-01-05 14:21:59.487 | INFO  | [608c5186-553e-4305-8a42-7bc1e65aec04] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 14:22:07.475 | INFO  | [7e85a134-bc23-4722-bc7e-682e223220c4] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 14:22:22.266 | INFO  | [29da173d-eb2b-47b7-accd-075457529b0e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 14:22:41.996 | INFO  | [5b4291e4-2f5f-45e6-94df-e1daceff6269] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 14:22:58.223 | INFO  | [8a865ef2-14ee-4717-af8c-c94e15db221d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 14:23:15.739 | INFO  | [778827e8-2607-424d-a18a-ece1fd111478] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 14:23:15.740 | INFO  | [778827e8-2607-424d-a18a-ece1fd111478] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=4000.0 | timestamp=2026-01-05 14:23:15
+2026-01-05 14:27:08.673 | INFO  | [7dcc8a46-fef6-4dc1-99d0-bbed667ab007] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 14:27:08.674 | INFO  | [7dcc8a46-fef6-4dc1-99d0-bbed667ab007] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar | amount=3900.0 | timestamp=2026-01-05 14:27:08
+2026-01-05 14:27:56.178 | INFO  | [3a57e7e2-42aa-4889-9544-d79be8cee2a2] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=3 | customerId=1
+2026-01-05 14:27:56.178 | INFO  | [3a57e7e2-42aa-4889-9544-d79be8cee2a2] [] | com.gasagency.audit | SALE_CREATED | saleId=3 | customerId=1 | customer=Tushar | amount=4000.0 | timestamp=2026-01-05 14:27:56
+2026-01-05 14:46:13.425 | INFO  | [803434a6-df7c-4fa3-81e8-7ef6aacf58df] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 14:46:22.841 | INFO  | [4a728dad-0a49-4bea-82aa-23485dfb8e24] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=2 | name=5KG
+2026-01-05 14:46:33.666 | INFO  | [3199b8c1-47dd-4c27-a96f-850cd370d7f7] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=2 | variantId=1
+2026-01-05 14:46:33.666 | INFO  | [94a1b7a3-e8b8-4d59-aa4b-79964721fe9c] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=2
+2026-01-05 14:46:48.739 | INFO  | [6bf35120-4e36-47bb-b5e4-40ab086bd33a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 14:47:07.000 | INFO  | [fb08bc3e-d431-4a18-bace-b6485414a8cc] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 14:47:23.983 | INFO  | [8468dd76-b19f-4b2c-b078-545c3e6a4023] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=2 | supplierId=1
+2026-01-05 14:47:50.335 | INFO  | [617d1ef9-6ce9-4b57-b3f8-de408f024aa3] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 14:48:04.585 | INFO  | [a7c085a8-a751-4f6b-92c8-16f742d4edef] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=2 | name=Mahesh
+2026-01-05 14:48:53.334 | INFO  | [4da8d1fb-8df8-49d8-904e-517de75dc04e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 14:48:53.335 | INFO  | [4da8d1fb-8df8-49d8-904e-517de75dc04e] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=2000.0 | timestamp=2026-01-05 14:48:53
+2026-01-05 14:57:57.376 | INFO  | [5e96a826-2b52-4c1a-8065-ec9da06b93ce] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 14:58:03.315 | INFO  | [a1cbe8e1-ee05-40ec-bd7a-15ef8638a700] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 14:58:17.859 | INFO  | [71185d04-5e6c-4e00-961c-4fac00c26538] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 14:58:29.799 | INFO  | [10eb4de9-d79e-404a-885f-33f6daad6e2d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP Gas
+2026-01-05 14:58:52.690 | INFO  | [90114f81-5928-4d2a-845c-aa98800954e1] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 14:59:06.696 | INFO  | [f9ecc607-5164-4e6d-aa0a-72d787750e0c] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 14:59:39.449 | INFO  | [34fb6690-b8e5-43ed-96ce-be853c5b6b1c] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 15:03:41.959 | INFO  | [a3682c66-3adc-477b-81bf-4937d8b366d6] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=3 | customerId=1
+2026-01-05 15:03:41.960 | INFO  | [a3682c66-3adc-477b-81bf-4937d8b366d6] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=2900.0 | timestamp=2026-01-05 15:03:41
+2026-01-05 15:04:41.688 | INFO  | [324a5a04-dc63-4f8f-99c8-ef0669a3de2a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=4 | customerId=1
+2026-01-05 15:04:41.688 | INFO  | [324a5a04-dc63-4f8f-99c8-ef0669a3de2a] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar | amount=7500.0 | timestamp=2026-01-05 15:04:41
+2026-01-05 16:27:39.519 | INFO  | [00353812-6db8-456f-ae26-a2de4bdf5a4b] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 16:27:52.997 | INFO  | [172aabcc-69cb-4ad9-a8f2-7ae77da6c3ab] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 16:28:06.857 | INFO  | [f62a1f77-73ec-4aa3-840f-d7f2146b9fb4] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 16:28:23.002 | INFO  | [6f310fe8-0754-4eff-aae1-72062c7e3dee] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 16:28:32.431 | INFO  | [930bcc6a-3359-4bb6-a5d6-3ffaf5ca0300] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 16:53:04.072 | INFO  | [cf713145-6beb-464f-bad7-bb9354ee4a1f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 16:53:11.799 | INFO  | [139dff06-36a8-4dcb-95b0-6a4097a2871c] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 16:53:26.514 | INFO  | [6a598a96-1353-4d28-8bcc-28b7fae8ec5e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 16:53:42.020 | INFO  | [d7028e9c-fb90-402c-a898-4663b497135f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 16:54:00.857 | INFO  | [b0bbc96d-f722-4e86-8607-2e8cbbfcfa04] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 16:59:47.104 | INFO  | [fb9a2e50-1e5f-4632-b703-fd6dfcf1e33e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG 
+2026-01-05 16:59:53.879 | INFO  | [2a306002-e0c9-4db9-bdb3-0a04bb013b55] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 17:00:10.715 | INFO  | [a7539e36-621e-4fbb-9bbd-b2e4d3c34987] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 17:00:24.175 | INFO  | [5891b447-9d15-4b9c-96ee-56813d8ede00] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 17:00:41.810 | INFO  | [503a81f2-f95e-44cf-81c5-f3a6a8475e37] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 17:00:54.398 | INFO  | [376670d2-26ce-4192-b98b-d93169f62fa7] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 17:00:54.398 | INFO  | [376670d2-26ce-4192-b98b-d93169f62fa7] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=4000.0 | timestamp=2026-01-05 17:00:54
+2026-01-05 17:02:54.630 | INFO  | [eb2ede1e-afc1-493d-b961-008d05352c6d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=2 | name=Mahesh
+2026-01-05 17:03:10.394 | INFO  | [21fdc8b5-33b5-452a-9937-1553c2f94a46] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=2
+2026-01-05 17:03:10.394 | INFO  | [21fdc8b5-33b5-452a-9937-1553c2f94a46] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=2 | customer=Mahesh | amount=3000.0 | timestamp=2026-01-05 17:03:10
+2026-01-05 17:10:03.681 | INFO  | [b7f3ae5b-56a1-407a-9c1d-07a2040203cb] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 17:10:12.591 | INFO  | [c23736e7-f57e-4191-bc86-0fbada1f9761] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 17:11:03.361 | INFO  | [4020a251-30a4-44fe-bbcc-b1f5900c12be] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Tushar
+2026-01-05 17:11:15.305 | INFO  | [72c9fdf9-179c-495e-9f97-2ee77f050a67] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP
+2026-01-05 17:11:38.851 | INFO  | [e546b13f-607e-4947-8c50-2f69b5f7e360] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=1 | supplierId=1
+2026-01-05 17:11:51.747 | INFO  | [c368661a-c0c9-4a94-869a-5eb94a0bdb21] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-05 17:11:51.748 | INFO  | [c368661a-c0c9-4a94-869a-5eb94a0bdb21] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Tushar | amount=4500.0 | timestamp=2026-01-05 17:11:51
+2026-01-05 17:12:30.831 | INFO  | [7fe36095-cb59-457b-969c-952a0e0faf7d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=2 | name=5KG
+2026-01-05 17:12:37.008 | INFO  | [f3f756e2-1a24-4a92-b7f5-a204cd19fdfd] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=2 | variantId=2
+2026-01-05 17:13:32.856 | INFO  | [67288dd1-376c-46bb-94cc-3c757cab4757] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=2 | supplierId=1
+2026-01-05 17:55:14.525 | INFO  | [8ff7318d-badb-44a0-81df-117041d9789e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-05 17:55:14.525 | INFO  | [8ff7318d-badb-44a0-81df-117041d9789e] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Tushar | amount=2700.0 | timestamp=2026-01-05 17:55:14
+2026-01-05 18:14:26.214 | INFO  | [99dc97cc-8d6d-494e-afee-d4180c67623e] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=3 | customerId=1
+2026-01-05 18:14:26.214 | INFO  | [99dc97cc-8d6d-494e-afee-d4180c67623e] [] | com.gasagency.audit | SALE_CREATED | saleId=3 | customerId=1 | customer=Tushar | amount=1800.0 | timestamp=2026-01-05 18:14:26
+2026-01-05 18:15:59.907 | INFO  | [567e2aed-e86d-452e-986e-1c93a0f7edd8] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=4 | customerId=1
+2026-01-05 18:17:34.138 | INFO  | [0f37c88b-3547-4708-a513-ab62dff25c6f] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=5 | customerId=1
+2026-01-05 21:43:39.475 | INFO  | [216aced0-6295-4a18-8fca-a8285612be50] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=1 | name=19KG
+2026-01-05 21:43:59.423 | INFO  | [eb452a13-3d7b-42c7-abe7-9945dfc22ee4] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=1 | variantId=1
+2026-01-05 21:44:09.949 | INFO  | [ef1eeee4-cf2f-451b-a00b-b9538b6e96d6] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CYLINDER_VARIANT | variantId=2 | name=5KG
+2026-01-05 21:44:16.063 | INFO  | [9e7c4a6c-434d-4c66-b028-91c01290e08a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=2 | variantId=2
+2026-01-05 21:44:30.980 | INFO  | [f713c885-4544-4168-809b-2ebdbef15ac3] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER | supplierId=1 | name=HP

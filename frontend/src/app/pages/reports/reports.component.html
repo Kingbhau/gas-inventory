@@ -1,0 +1,400 @@
+<div class="reports-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Reports</h1>
+    <p class="page-subtitle">Business analytics and performance metrics</p>
+  </div>
+
+  <!-- Report Selector -->
+  <div class="report-selector">
+    <div class="selector-buttons">
+      <button 
+        *ngFor="let report of availableReports"
+        [class.active]="selectedReport === report.id"
+        (click)="selectedReport = report.id; loadReportData();"
+        class="selector-btn">
+        <fa-icon [icon]="report.icon"></fa-icon> {{ report.name }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Date Filter (only for sales report) -->
+  <div *ngIf="selectedReport === 'sales'" class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Variant"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterMinAmount" class="filter-input" placeholder="Min">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
+      </div>
+      <div class="filter-actions">
+        <button (click)="onGenerateClick()" class="btn btn-primary">Search</button>
+        <button (click)="exportReport()" class="btn btn-secondary"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Report -->
+  <div *ngIf="selectedReport === 'sales'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Sales Report</h3>
+    </div>
+    <div class="card-body">
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Sales</span>
+          <span class="value">{{ totalSalesAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Transactions</span>
+          <span class="value">{{ transactionCount }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Avg. Sale Value</span>
+          <span class="value">{{ avgSaleValue | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Top Customer</span>
+          <span class="value">{{ topCustomer }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="salesData.length > 0" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Variant</th>
+                <th class="text-center">Quantity</th>
+                <th class="text-center">Base Price</th>
+                <th class="text-center">Discount</th>
+                <th class="text-center">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of paginatedSalesData">
+                <td>{{ row.sale.saleDate | date: 'dd MMM yyyy' }}</td>
+                <td><strong>{{ row.sale.customerName }}</strong></td>
+                <td>{{ row.item.variantName }}</td>
+                <td class="text-center">{{ row.item.qtyIssued }}</td>
+                <td class="text-center">{{ row.item.basePrice | indianCurrency }}</td>
+                <td class="text-center">{{ row.item.discount | indianCurrency }}</td>
+                <td class="text-center amount">{{ row.item.finalPrice | indianCurrency }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="salesTotalElements > 0" class="pagination">
+        <button 
+          (click)="onSalesPageChange(salesPage - 1)" 
+          [disabled]="salesPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ salesPage }} of {{ salesTotalPages }}</span>
+        <button 
+          (click)="onSalesPageChange(salesPage + 1)" 
+          [disabled]="salesPage === salesTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="salesPageSize" (ngModelChange)="onSalesPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Report -->
+  <app-expense-report 
+    *ngIf="selectedReport === 'expenses'"
+    [agencyName]="agencyName">
+  </app-expense-report>
+
+  <!-- Return Pending Cylinders Report -->
+  <div *ngIf="selectedReport === 'returnPending'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Return Pending Cylinders Report</h3>
+    </div>
+    <div class="card-body">
+      <div class="filter-row" style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+        <div class="filter-group" style="min-width: 200px; margin: 0;">
+          <app-autocomplete-input
+            [items]="variantsList"
+            [displayKey]="'name'"
+            placeholder="All"
+            (selectedChange)="filterReturnPendingVariantId = $event?.name || ''"
+          ></app-autocomplete-input>
+        </div>
+      </div>
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Return Pending</span>
+          <span class="value">{{ totalReturnPending }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Customers with Return Pending</span>
+          <span class="value">{{ customersWithReturnPending }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">High Risk (>10 units)</span>
+          <span class="value">{{ getHighRiskReturnPendingCount() }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="returnPendingData.length > 0" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Variant</th>
+                <th class="text-center">Return Pending Units</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedReturnPendingData | variantReturnPendingFilter:filterReturnPendingVariantId">
+                <td>{{ item.customer }}</td>
+                <td>{{ item.variant }}</td>
+                <td class="text-center">{{ item.returnPending }}</td>
+                <td>
+                  <span *ngIf="item.returnPending > 10" class="badge badge-danger">High Risk</span>
+                  <span *ngIf="item.returnPending > 0 && item.returnPending <= 10" class="badge badge-warning">Pending</span>
+                  <span *ngIf="item.returnPending <= 0" class="badge badge-success">Clear</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="returnPendingTotalElements > 0" class="pagination">
+        <button 
+          (click)="onReturnPendingPageChange(returnPendingPage - 1)" 
+          [disabled]="returnPendingPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ returnPendingPage }} of {{ returnPendingTotalPages }}</span>
+        <button 
+          (click)="onReturnPendingPageChange(returnPendingPage + 1)" 
+          [disabled]="returnPendingPage === returnPendingTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="returnPendingPageSize" (ngModelChange)="onReturnPendingPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+      </div>
+    </div>
+  
+
+  <!-- Inventory Report -->
+  <div *ngIf="selectedReport === 'inventory'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Inventory Summary Report</h3>
+    </div>
+    <div class="card-body">
+      <div class="inventory-grid">
+        <div *ngFor="let item of inventoryData" class="inventory-item">
+          <div class="item-header">{{ item.variant }}</div>
+          <div class="item-content">
+            <div class="stock-row">
+              <span class="label">Filled:</span>
+              <span class="value filled">{{ item.filled }} units</span>
+            </div>
+            <div class="stock-row">
+              <span class="label">Empty:</span>
+              <span class="value empty">{{ item.empty }} units</span>
+            </div>
+            <div class="stock-row total">
+              <span class="label">Total:</span>
+              <span class="value">{{ item.filled + item.empty }} units</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Variant</th>
+                <th class="text-center">Filled</th>
+                <th class="text-center">Empty</th>
+                <th class="text-center">Total</th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of paginatedInventoryData">
+                <td><strong>{{ item.variant }}</strong></td>
+                <td class="text-center">{{ item.filled }}</td>
+                <td class="text-center">{{ item.empty }}</td>
+                <td class="text-center">{{ item.filled + item.empty }}</td>
+                <!-- <td>
+                  <span class="badge" [class.badge-success]="item.filled > 50" [class.badge-warning]="item.filled <= 50">
+                    {{ item.filled > 50 ? 'Healthy' : 'Low Stock' }}
+                  </span>
+                </td> -->
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="inventoryTotalElements > 0" class="pagination">
+        <button 
+          (click)="onInventoryPageChange(inventoryPage - 1)" 
+          [disabled]="inventoryPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ inventoryPage }} of {{ inventoryTotalPages }}</span>
+        <button 
+          (click)="onInventoryPageChange(inventoryPage + 1)" 
+          [disabled]="inventoryPage === inventoryTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="inventoryPageSize" (ngModelChange)="onInventoryPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+      </div>
+    </div>
+ 
+
+  <!-- Supplier Report -->
+  <div *ngIf="selectedReport === 'supplier'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Supplier Reconciliation Report</h3>
+    </div>
+    <div class="card-body">
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Received</span>
+          <span class="value">{{ totalSupplierFilled }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Returned</span>
+          <span class="value">{{ totalSupplierEmpty }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Net Stock</span>
+          <span class="value">{{ totalSupplierFilled - totalSupplierEmpty }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Active Suppliers</span>
+          <span class="value">{{ supplierData.length }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="supplierData.length > 0" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Supplier</th>
+                <th class="text-center">Filled Received</th>
+                <th class="text-center">Empty Returned</th>
+                <th class="text-center">Net</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let supplier of paginatedSupplierData">
+                <td><strong>{{ supplier.name }}</strong></td>
+                <td class="text-center received">{{ supplier.filled }}</td>
+                <td class="text-center returned">{{ supplier.empty }}</td>
+                <td class="text-center net">{{ supplier.filled - supplier.empty }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Pagination Controls -->
+      <div *ngIf="supplierTotalElements > 0" class="pagination">
+        <button 
+          (click)="onSupplierPageChange(supplierPage - 1)" 
+          [disabled]="supplierPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ supplierPage }} of {{ supplierTotalPages }}</span>
+        <button 
+          (click)="onSupplierPageChange(supplierPage + 1)" 
+          [disabled]="supplierPage === supplierTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="supplierPageSize" (ngModelChange)="onSupplierPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+        <script>
+        function onSalesPageSizeChange() {
+          this.salesPage = 1;
+        }
+        function onReturnPendingPageSizeChange() {
+          this.returnPendingPage = 1;
+        }
+        function onInventoryPageSizeChange() {
+          this.inventoryPage = 1;
+        }
+        function onSupplierPageSizeChange() {
+          this.supplierPage = 1;
+        }
+        </script>
+

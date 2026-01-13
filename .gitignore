@@ -1,0 +1,16 @@
+# Backend (Spring Boot)
+/backend/target/
+/backend/.idea/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+
+# Frontend (Angular)
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.angular/cache/
+/frontend/.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

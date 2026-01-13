@@ -1,0 +1,124 @@
+<div class="expense-report-content">
+  <!-- Filters Card -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Category"
+          [items]="categories"
+          placeholder="All Categories"
+          (selectedChange)="onCategorySelect($event)"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterMinAmount" class="filter-input" placeholder="Min">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
+      </div>
+      <div class="filter-actions">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+        <button (click)="exportPDF()" class="btn btn-secondary"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Expense Report</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Section -->
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Expenses</span>
+          <span class="value">{{ totalAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Transactions</span>
+          <span class="value">{{ transactionCount }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Avg. Expense</span>
+          <span class="value">{{ avgExpenseValue | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Top Category</span>
+          <span class="value">{{ topCategory }}</span>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <p>Loading expenses...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && filteredExpenses.length === 0" class="no-data-container">
+        <p>No expenses found for the selected filters.</p>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="!isLoading && filteredExpenses.length > 0" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th class="text-center">Amount</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let expense of filteredExpenses">
+                <td>{{ expense.expenseDate | date: 'dd MMM yyyy' }}</td>
+                <td><strong>{{ expense.description }}</strong></td>
+                <td><span class="category-badge">{{ expense.category }}</span></td>
+                <td class="text-center amount">{{ expense.amount | indianCurrency }}</td>
+                <td class="notes-cell">{{ expense.notes || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="totalExpenses > 0 && !isLoading" class="pagination">
+        <button 
+          (click)="onPageChange(currentPage - 1)" 
+          [disabled]="currentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button 
+          (click)="onPageChange(currentPage + 1)" 
+          [disabled]="currentPage === totalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

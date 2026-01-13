@@ -1,0 +1,58 @@
+package com.gasagency.entity;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+@Entity
+@Table(name = "supplier", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
+        @Index(name = "idx_supplier_name", columnList = "name"),
+        @Index(name = "idx_supplier_contact", columnList = "contact")
+})
+public class Supplier extends Auditable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "Supplier name is required.")
+    @Size(max = 100, message = "Supplier name must be at most 100 characters.")
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    @NotBlank(message = "Contact is required.")
+    @Size(max = 20, message = "Contact must be at most 20 characters.")
+    @Column(nullable = false)
+    private String contact;
+
+    public Supplier() {
+    }
+
+    public Supplier(String name, String contact) {
+        this.name = name;
+        this.contact = contact;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+}

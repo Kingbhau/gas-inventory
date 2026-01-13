@@ -1,0 +1,163 @@
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">{{ todayDate | date: 'EEEE, MMMM d, yyyy' }}</p>
+    </div>
+    <div class="header-actions">
+      <!-- Removed Export and Generate Report buttons -->
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid">
+    <div *ngFor="let kpi of kpiCards" [ngClass]="'kpi-card kpi-' + kpi.color">
+      <div class="kpi-header">
+        <div>
+          <div class="kpi-label">{{ kpi.label }}</div>
+          <div class="kpi-subtext">
+            <ng-container *ngIf="kpi.label.toLowerCase().includes('sale') || kpi.label.toLowerCase().includes('value') || kpi.subtext.startsWith('₹'); else normalSubtext">
+              {{ kpi.subtext.replace('₹', '') | indianCurrency }}
+            </ng-container>
+            <ng-template #normalSubtext>{{ kpi.subtext }}</ng-template>
+          </div>
+        </div>
+        <div class="kpi-icon">
+          <fa-icon [icon]="kpi.icon"></fa-icon>
+        </div>
+      </div>
+      <div class="kpi-value">
+        <ng-container *ngIf="kpi.label.toLowerCase().includes('sale') || kpi.label.toLowerCase().includes('value') || (kpi.subtext && kpi.subtext.startsWith('₹')); else normalValue">
+          {{ kpi.value  }}
+        </ng-container>
+        <ng-template #normalValue>{{ kpi.value }}</ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid Section -->
+  <div class="grid-section">
+    <!-- Inventory Summary Card -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Inventory Summary</h3>
+          <p class="card-subtitle">Current stock levels by cylinder variant</p>
+        </div>
+        <button class="card-action-btn" title="More options">
+          <fa-icon [icon]="faEllipsis"></fa-icon>
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Variant</th>
+                <th class="text-center">Filled</th>
+                <th class="text-center">Empty</th>
+                <th class="text-center">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of inventorySummary">
+                <td class="font-medium">{{ row.variant }}</td>
+                <td class="text-center text-success">{{ row.filled }}</td>
+                <td class="text-center text-warning">{{ row.empty }}</td>
+                <td class="text-center font-semibold">{{ (row.filled + row.empty) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div *ngIf="inventorySummary.length > 0" class="pagination" style="flex-wrap:nowrap; align-items:center; gap:1.5rem;">
+          <button 
+            (click)="onInventoryPageChange(inventoryPage - 1)" 
+            [disabled]="inventoryPage === 1"
+            class="btn btn-secondary">
+            ←Previous
+          </button>
+          <span class="page-info">Page {{ inventoryPage }} of {{ inventoryTotalPages }}</span>
+          <button 
+            (click)="onInventoryPageChange(inventoryPage + 1)" 
+            [disabled]="inventoryPage === inventoryTotalPages"
+            class="btn btn-secondary">
+            Next→
+          </button>
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="inventoryPageSize" (ngModelChange)="onInventoryPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of inventoryPageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Empty Cylinders Card -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Pending Collections</h3>
+          <p class="card-subtitle">Empty cylinders awaiting pickup</p>
+        </div>
+        <button class="card-action-btn" title="More options">
+          <fa-icon [icon]="faEllipsis"></fa-icon>
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Variant</th>
+                <th class="text-center">Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of pendingCylinders" [class.highlight-row]="row.pending > 0">
+                <td class="font-medium">{{ row.customer }}</td>
+                <td>{{ row.variant }}</td>
+                <td class="text-center" [ngClass]="row.pending > 0 ? 'text-danger font-semibold' : 'text-muted'">
+                  {{ row.pending }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions Section -->
+  <div class="card mt-5">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Recent Transactions</h3>
+        <p class="card-subtitle">Latest sales activities</p>
+      </div>
+     <a [routerLink]="['/sales/history']" class="link">View All →</a>
+    </div>
+    <div class="card-body">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Date & Time</th>
+              <th class="text-center">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let sale of recentSales">
+              <td class="font-medium">{{ sale.customer }}</td>
+              <td class="text-muted text-sm">{{ sale.date }}</td>
+              <td class="text-center font-semibold">{{ sale.amount | indianCurrency }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
