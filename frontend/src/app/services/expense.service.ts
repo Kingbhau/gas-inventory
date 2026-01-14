@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Expense } from '../models/expense.model';
 import { ExpenseCategoryService } from './expense-category.service';
 import { getApiUrl } from '../config/api.config';
+import { applyTimeout } from '../config/http.config';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,8 @@ export class ExpenseService {
 
   // Create a new expense
   createExpense(expense: Expense): Observable<Expense> {
-    return this.http.post<Expense>(`${this.apiUrl}`, expense, { withCredentials: true });
+    return this.http.post<Expense>(`${this.apiUrl}`, expense, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   // Get all expenses with pagination
@@ -26,7 +28,8 @@ export class ExpenseService {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('size', pageSize.toString());
-    return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true });
+    return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   // Get expense by ID

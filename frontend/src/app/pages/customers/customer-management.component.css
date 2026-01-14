@@ -20,6 +20,12 @@
     min-width: 800px;
   }
 }
+
+.mobile-table-scroll {
+  position: relative;
+  overflow: visible !important;
+}
+
 @media (max-width: 768px) {
   .table-wrapper {
     overflow-x: auto !important;
@@ -33,6 +39,17 @@
     min-width: 800px;
   }
 }
+/* Dropdown container */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  overflow: visible !important;
+}
+
+.dropdown > div {
+  overflow: visible !important;
+}
+
 /* Dropdown menu for actions */
 .dropdown-menu {
   display: none;
@@ -46,7 +63,8 @@
   left: auto;
   right: 0;
   top: 110%;
-  z-index: 2000;
+  z-index: 3000 !important;
+  overflow: visible !important;
 }
 
 .dropdown-menu.show.bottom-fix {
@@ -82,11 +100,14 @@
   background: none;
   border: none;
   text-align: left;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
   color: #222;
   cursor: pointer;
   transition: background 0.15s;
+  white-space: nowrap;
+  display: block;
+  overflow: visible;
 }
 .dropdown-item:hover {
   background: #f1f5f9;
@@ -175,6 +196,9 @@
   align-items: center;
   gap: 0.5rem;
   justify-content: flex-end;
+  position: relative;
+  overflow: visible !important;
+  z-index: 100;
 }
 .modal-content.details-modal {
   position: relative;
@@ -432,9 +456,10 @@
    ==================================== */
 
 .table-wrapper {
-  overflow-x: auto;
   position: relative;
+  width: 100%;
 }
+
 
 .dropdown-open {
   overflow: visible !important;
@@ -443,6 +468,7 @@
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  overflow: visible !important;
 }
 
 .data-table thead {
@@ -462,10 +488,12 @@
   padding: var(--spacing-lg);
   border-bottom: 1px solid var(--border-light);
   color: var(--text-primary);
+  overflow: visible !important;
 }
 
 .data-table tbody tr {
   transition: all var(--transition-base);
+  overflow: visible !important;
 }
 
 .data-table tbody tr:hover {
@@ -793,24 +821,29 @@
   background: white;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .card-body {
   padding: var(--spacing-lg);
+  overflow: visible !important;
 }
 
 /* Table */
 .table-wrapper {
-  overflow-x: auto;
+  position: relative;
+  width: 100%;
+  overflow: visible !important;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  overflow: visible !important;
 }
+
 
 .table thead {
   background: #f1f5f9;
@@ -829,10 +862,12 @@
   padding: 1rem;
   border-bottom: 1px solid #e2e8f0;
   color: #0f172a;
+  overflow: visible !important;
 }
 
 .table tbody tr {
   transition: background 0.2s;
+  overflow: visible !important;
 }
 
 .table tbody tr:hover {

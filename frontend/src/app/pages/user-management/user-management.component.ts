@@ -179,7 +179,6 @@ export class UserManagementComponent implements OnInit {
     const userInfo = this.authService.getUserInfo();
     const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
     this.userForm.patchValue({ active: true, businessId });
-    console.log('openAddForm: businessId set to', businessId);
   }
 
   editUser(user: any) {
@@ -246,7 +245,6 @@ export class UserManagementComponent implements OnInit {
       const userInfo = this.authService.getUserInfo();
       const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
       const userPayload = { ...this.userForm.value, businessId };
-      console.log('saveUser: sending payload', userPayload);
       this.userService.addUser(userPayload).subscribe({
         next: () => {
           this.toastr.success('User added successfully.', 'Success');

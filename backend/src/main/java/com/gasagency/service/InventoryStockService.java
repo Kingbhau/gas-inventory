@@ -151,6 +151,7 @@ public class InventoryStockService {
                                 });
         }
 
+        @Transactional
         public InventoryStock getStockEntityWithLock(Long variantId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_WITH_LOCK", "INVENTORY_STOCK", "variantId", variantId);
 

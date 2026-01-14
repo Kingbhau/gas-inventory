@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CylinderVariant } from '../models/cylinder-variant.model';
 import { getApiUrl } from '../config/api.config';
+import { applyTimeout } from '../config/http.config';
 
 @Injectable({
   providedIn: 'root'
@@ -13,11 +14,13 @@ export class CylinderVariantService {
   constructor(private http: HttpClient) { }
 
   createVariant(variant: CylinderVariant): Observable<CylinderVariant> {
-    return this.http.post<CylinderVariant>(this.apiUrl, variant);
+    return this.http.post<CylinderVariant>(this.apiUrl, variant)
+      .pipe(applyTimeout());
   }
 
   getVariant(id: number): Observable<CylinderVariant> {
-    return this.http.get<CylinderVariant>(`${this.apiUrl}/${id}`);
+    return this.http.get<CylinderVariant>(`${this.apiUrl}/${id}`)
+      .pipe(applyTimeout());
   }
 
   getAllVariants(page: number = 0, size: number = 20, sortBy: string = 'id', direction: string = 'ASC'): Observable<any> {
@@ -26,7 +29,8 @@ export class CylinderVariantService {
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<any>(this.apiUrl, { params })
+      .pipe(applyTimeout());
   }
 
   getActiveVariants(): Observable<CylinderVariant[]> {

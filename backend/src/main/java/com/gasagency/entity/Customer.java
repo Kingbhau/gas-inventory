@@ -16,6 +16,10 @@ public class Customer extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
     @NotBlank(message = "Customer name is required.")
     @Size(max = 100, message = "Customer name must be at most 100 characters.")
     @Column(nullable = false)
@@ -50,6 +54,14 @@ public class Customer extends Auditable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     public String getName() {

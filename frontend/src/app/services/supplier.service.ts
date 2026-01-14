@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Supplier } from '../models/supplier.model';
 import { getApiUrl } from '../config/api.config';
+import { applyTimeout } from '../config/http.config';
 
 @Injectable({
   providedIn: 'root'
@@ -13,11 +14,13 @@ export class SupplierService {
   constructor(private http: HttpClient) { }
 
   createSupplier(supplier: Supplier): Observable<Supplier> {
-    return this.http.post<Supplier>(this.apiUrl, supplier, { withCredentials: true });
+    return this.http.post<Supplier>(this.apiUrl, supplier, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   getSupplier(id: number): Observable<Supplier> {
-    return this.http.get<Supplier>(`${this.apiUrl}/${id}`, { withCredentials: true });
+    return this.http.get<Supplier>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   getAllSuppliers(page: number = 0, size: number = 20, sortBy: string = 'id', direction: string = 'ASC'): Observable<any> {
@@ -26,7 +29,8 @@ export class SupplierService {
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
-    return this.http.get<any>(this.apiUrl, { params, withCredentials: true });
+    return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   updateSupplier(id: number, supplier: Supplier): Observable<Supplier> {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Renderer2 } from '@angular/core';
+import { Component, OnInit, OnDestroy, Renderer2, ChangeDetectorRef, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -14,7 +14,8 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, RouterModule, FontAwesomeModule, LoaderComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppComponent implements OnInit, OnDestroy {
   private globalClickUnlistener: (() => void) | null = null;
@@ -25,7 +26,9 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private loadingService: LoadingService,
     private renderer: Renderer2,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   get isAuthenticated(): boolean {
@@ -142,25 +145,30 @@ export class AppComponent implements OnInit, OnDestroy {
   onSearch(event: KeyboardEvent) {
     // Handle search functionality
     const target = event.target as HTMLInputElement;
-    console.log('Search:', target.value);
   }
 
   logout() {
     this.authService.logout().subscribe({
       next: () => {
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('user_role');
-        localStorage.removeItem('user_name');
-        this.profileDropdownOpen = false;
-        this.router.navigate(['/login']);
+        this.ngZone.run(() => {
+          localStorage.removeItem('user_info');
+          localStorage.removeItem('user_role');
+          localStorage.removeItem('user_name');
+          this.profileDropdownOpen = false;
+          this.cdr.markForCheck();
+          this.router.navigate(['/login']);
+        });
       },
       error: () => {
         // Even if error, clear local info
-        localStorage.removeItem('user_info');
-        localStorage.removeItem('user_role');
-        localStorage.removeItem('user_name');
-        this.profileDropdownOpen = false;
-        this.router.navigate(['/login']);
+        this.ngZone.run(() => {
+          localStorage.removeItem('user_info');
+          localStorage.removeItem('user_role');
+          localStorage.removeItem('user_name');
+          this.profileDropdownOpen = false;
+          this.cdr.markForCheck();
+          this.router.navigate(['/login']);
+        });
       }
     });
   }

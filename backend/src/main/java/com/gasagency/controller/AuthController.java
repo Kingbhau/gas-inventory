@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import com.gasagency.entity.RefreshToken;
 import com.gasagency.repository.RefreshTokenRepository;
 import java.time.Instant;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -137,6 +138,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         // Remove both cookies
         Cookie jwtCookie = new Cookie("jwt_token", null);

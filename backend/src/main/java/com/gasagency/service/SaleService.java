@@ -9,6 +9,7 @@ import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
+import com.gasagency.exception.ConcurrencyConflictException;
 import com.gasagency.util.AuditLogger;
 import com.gasagency.util.PerformanceTracker;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -136,8 +138,37 @@ public class SaleService {
                 return new SaleSummaryDTO(totalSalesAmount, transactionCount, avgSaleValue, topCustomer);
         }
 
-        @Transactional(isolation = Isolation.SERIALIZABLE)
         public SaleDTO createSale(CreateSaleRequestDTO request) {
+                int maxRetries = 3;
+                int attempt = 0;
+
+                while (attempt < maxRetries) {
+                        try {
+                                return createSaleInternal(request);
+                        } catch (ObjectOptimisticLockingFailureException e) {
+                                attempt++;
+                                if (attempt >= maxRetries) {
+                                        logger.error("Sale creation failed after {} retries due to concurrent modifications",
+                                                        maxRetries);
+                                        throw new ConcurrencyConflictException(
+                                                        "Sale creation failed due to concurrent updates. Please try again.");
+                                }
+                                logger.warn("Retry {} of {} for sale creation due to concurrent modification", attempt,
+                                                maxRetries);
+                                try {
+                                        Thread.sleep(100 * attempt); // Exponential backoff
+                                } catch (InterruptedException ie) {
+                                        Thread.currentThread().interrupt();
+                                        throw new ConcurrencyConflictException(
+                                                        "Sale creation interrupted. Please try again.");
+                                }
+                        }
+                }
+                throw new ConcurrencyConflictException("Failed to create sale after maximum retries.");
+        }
+
+        @Transactional(isolation = Isolation.READ_COMMITTED)
+        private SaleDTO createSaleInternal(CreateSaleRequestDTO request) {
                 String transactionId = UUID.randomUUID().toString();
                 MDC.put("transactionId", transactionId);
                 long txnStartTime = System.currentTimeMillis();

@@ -25,6 +25,7 @@ export class SaleEntryComponent implements OnInit {
   saleForm!: FormGroup;
   successMessage = '';
   baseAmount = 0;
+  isSubmitting = false;
 
   displayCustomerName(customer: any): string {
     return customer && typeof customer === 'object' ? customer.name : '';
@@ -201,6 +202,11 @@ export class SaleEntryComponent implements OnInit {
   }
 
   submitSale() {
+    // Prevent double submission
+    if (this.isSubmitting) {
+      return;
+    }
+
     const customerObj = this.saleForm.get('customerId')?.value;
     const variantObj = this.saleForm.get('variantId')?.value;
     const saleRequest = {
@@ -214,6 +220,9 @@ export class SaleEntryComponent implements OnInit {
         }
       ]
     };
+
+    this.isSubmitting = true;
+
     const sub = this.saleService.createSale(saleRequest)
       .pipe(
         catchError((error: any) => {
@@ -228,6 +237,7 @@ export class SaleEntryComponent implements OnInit {
           this.toastr.success('Sale recorded successfully', 'Success');
           this.resetForm();
         }
+        this.isSubmitting = false;
         sub.unsubscribe();
       });
   }

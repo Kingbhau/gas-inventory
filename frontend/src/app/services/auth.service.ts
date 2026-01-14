@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
+import { applyTimeout } from '../config/http.config';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -13,16 +14,19 @@ export class AuthService {
     // ...existing code...
 
   refreshToken(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/refresh`, {}, { withCredentials: true });
+    return this.http.post(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   login(username: string, password: string): Observable<any> {
     // withCredentials ensures cookie is set
-    return this.http.post(`${this.apiUrl}/login`, { username, password }, { withCredentials: true });
+    return this.http.post(`${this.apiUrl}/login`, { username, password }, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   register(username: string, password: string, role: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, { username, password, role });
+    return this.http.post(`${this.apiUrl}/register`, { username, password, role })
+      .pipe(applyTimeout());
   }
 
 
@@ -34,11 +38,13 @@ export class AuthService {
 
   logout(): Observable<any> {
     // Call backend to clear cookie
-    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true });
+    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   forgotPassword(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/forgot-password`, { email });
+    return this.http.post(`${this.apiUrl}/forgot-password`, { email })
+      .pipe(applyTimeout());
   }
 
 

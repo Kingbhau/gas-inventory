@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.jpa.JpaSystemException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.slf4j.Logger;
@@ -31,6 +32,42 @@ public class GlobalExceptionHandler {
                                 ex.getMessage(),
                                 LocalDateTime.now());
                 return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        }
+
+        @ExceptionHandler(ConcurrencyConflictException.class)
+        public ResponseEntity<ErrorResponse> handleConcurrencyConflict(
+                        ConcurrencyConflictException ex, WebRequest request) {
+                logger.warn("Concurrency conflict detected: {}", ex.getMessage());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                "CONCURRENCY_CONFLICT",
+                                ex.getMessage(),
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        }
+
+        @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+        public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(
+                        ObjectOptimisticLockingFailureException ex, WebRequest request) {
+                logger.warn("Optimistic lock failure - concurrent modification detected: {}", ex.getMessage());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.CONFLICT.value(),
+                                "CONCURRENCY_CONFLICT",
+                                "The data was modified by another request. Please refresh and try again.",
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        }
+
+        @ExceptionHandler(jakarta.persistence.LockTimeoutException.class)
+        public ResponseEntity<ErrorResponse> handleLockTimeout(
+                        jakarta.persistence.LockTimeoutException ex, WebRequest request) {
+                logger.warn("Lock timeout - could not acquire database lock: {}", ex.getMessage());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                                "LOCK_TIMEOUT",
+                                "System is busy. Please try again in a moment.",
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
         }
 
         @ExceptionHandler(InvalidOperationException.class)
