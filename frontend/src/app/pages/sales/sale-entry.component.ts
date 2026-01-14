@@ -1,5 +1,5 @@
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -19,9 +19,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './sale-entry.component.html',
-  styleUrl: './sale-entry.component.css'
+  styleUrl: './sale-entry.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SaleEntryComponent implements OnInit {
+export class SaleEntryComponent implements OnInit, OnDestroy {
   saleForm!: FormGroup;
   successMessage = '';
   baseAmount = 0;
@@ -72,6 +73,9 @@ export class SaleEntryComponent implements OnInit {
       this.prefillBasePrice(variantObj && variantObj.id ? variantObj.id : null);
     });
   }
+
+  ngOnDestroy() {}
+
   prefillBasePrice(variantId: number) {
     if (!variantId) {
       this.saleForm.get('basePrice')?.setValue(0);

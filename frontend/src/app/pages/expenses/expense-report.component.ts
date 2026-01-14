@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -17,9 +17,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, FormsModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './expense-report.component.html',
-  styleUrl: './expense-report.component.css'
+  styleUrl: './expense-report.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ExpenseReportComponent implements OnInit {
+export class ExpenseReportComponent implements OnInit, OnDestroy {
   @Input() agencyName: string = '';
 
   expenses: Expense[] = [];
@@ -55,7 +56,8 @@ export class ExpenseReportComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private loadingService: LoadingService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -68,9 +70,11 @@ export class ExpenseReportComponent implements OnInit {
       next: (response: any) => {
         const categoryList = Array.isArray(response) ? response : (response.content || []);
         this.categories = categoryList.map((cat: any) => cat.name || cat);
+        this.cdr.markForCheck();
       },
       error: () => {
         this.categories = ['Salary', 'Utilities', 'Maintenance', 'Transportation', 'Office Supplies', 'Other'];
+        this.cdr.markForCheck();
       }
     });
   }
@@ -97,6 +101,7 @@ export class ExpenseReportComponent implements OnInit {
           this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
           this.applyClientFilters();
           this.calculateSummary();
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error('Failed to load expenses');
@@ -116,6 +121,7 @@ export class ExpenseReportComponent implements OnInit {
           this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
           this.applyClientFilters();
           this.calculateSummary();
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error('Failed to load expenses');
@@ -142,6 +148,7 @@ export class ExpenseReportComponent implements OnInit {
     }
 
     this.filteredExpenses = filtered;
+    this.cdr.markForCheck();
   }
 
   calculateSummary() {
@@ -161,12 +168,16 @@ export class ExpenseReportComponent implements OnInit {
         categorySums[a] > categorySums[b] ? a : b
       );
     }
+    this.cdr.markForCheck();
   }
+
+  ngOnDestroy() {}
 
   applyFilters() {
     this.filtersApplied = true;
     this.currentPage = 1;
     this.loadExpenses(this.currentPage, this.pageSize);
+    this.cdr.markForCheck();
   }
 
   resetFilters() {
@@ -184,12 +195,14 @@ export class ExpenseReportComponent implements OnInit {
     
     this.filtersApplied = false;
     this.loadExpenses(this.currentPage, this.pageSize);
+    this.cdr.markForCheck();
   }
 
   onPageChange(newPage: number) {
     if (newPage >= 1 && newPage <= this.totalPages) {
       this.currentPage = newPage;
       this.loadExpenses(this.currentPage, this.pageSize);
+      this.cdr.markForCheck();
     }
   }
 
@@ -197,10 +210,12 @@ export class ExpenseReportComponent implements OnInit {
     this.pageSize = newSize;
     this.currentPage = 1;
     this.loadExpenses(this.currentPage, this.pageSize);
+    this.cdr.markForCheck();
   }
 
   onCategorySelect(event: any): void {
     this.filterCategory = typeof event === 'string' ? event : '';
+    this.cdr.markForCheck();
   }
 
   exportPDF() {

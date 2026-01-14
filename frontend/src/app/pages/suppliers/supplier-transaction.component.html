@@ -16,22 +16,18 @@
         <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
       </div>
       <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
-        <app-autocomplete-input
-          label="Supplier"
-          [items]="suppliers"
-          [displayKey]="'name'"
-          placeholder="All Suppliers"
-          (selectedChange)="selectedSupplier = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
+        <label class="filter-label">Supplier</label>
+        <select [(ngModel)]="selectedSupplier" class="filter-input">
+          <option value="">All Suppliers</option>
+          <option *ngFor="let supplier of suppliers" [value]="supplier.id?.toString()">{{ supplier.name }}</option>
+        </select>
       </div>
       <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
-        <app-autocomplete-input
-          label="Variant"
-          [items]="variants"
-          [displayKey]="'name'"
-          placeholder="All"
-          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
+        <label class="filter-label">Variant</label>
+        <select [(ngModel)]="filterVariantId" class="filter-input">
+          <option value="">All Variants</option>
+          <option *ngFor="let variant of variants" [value]="variant.id?.toString()">{{ variant.name }}</option>
+        </select>
       </div>
       <div class="filter-actions" style="display: flex; gap: 0.5rem;">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
@@ -124,28 +120,26 @@
         <button class="modal-close" (click)="closeForm()">✕</button>
       </div>
       <form [formGroup]="transactionForm" (ngSubmit)="saveTransaction()" class="modal-body">
-        <app-autocomplete-input
-          label="Supplier"
-          [required]="true"
-          [items]="suppliers"
-          [displayKey]="'name'"
-          placeholder="Select a supplier"
-          (selectedChange)="transactionForm.get('supplierId')?.setValue($event?.id || '')"
-        ></app-autocomplete-input>
-        <div *ngIf="transactionForm.get('supplierId')?.invalid && transactionForm.get('supplierId')?.touched" class="error-message">
-          Supplier is required
+        <div class="form-group">
+          <label class="form-label">Supplier <span class="required">*</span></label>
+          <select formControlName="supplierId" class="form-control">
+            <option value="">Select a supplier</option>
+            <option *ngFor="let supplier of suppliers" [value]="supplier.id">{{ supplier.name }}</option>
+          </select>
+          <div *ngIf="transactionForm.get('supplierId')?.invalid && transactionForm.get('supplierId')?.touched" class="error-message">
+            Supplier is required
+          </div>
         </div>
 
-        <app-autocomplete-input
-          label="Variant"
-          [required]="true"
-          [items]="variants"
-          [displayKey]="'name'"
-          placeholder="Select variant"
-          (selectedChange)="transactionForm.get('variantId')?.setValue($event?.id || '')"
-        ></app-autocomplete-input>
-        <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
-          Variant is required
+        <div class="form-group">
+          <label class="form-label">Variant <span class="required">*</span></label>
+          <select formControlName="variantId" class="form-control">
+            <option value="">Select variant</option>
+            <option *ngFor="let variant of variants" [value]="variant.id">{{ variant.name }}</option>
+          </select>
+          <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
+            Variant is required
+          </div>
         </div>
 
         <div class="form-group">

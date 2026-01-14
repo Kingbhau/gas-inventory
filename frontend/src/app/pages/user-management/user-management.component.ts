@@ -1,7 +1,7 @@
 
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -20,9 +20,10 @@ import { finalize } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule],
   templateUrl: './user-management.component.html',
-  styleUrl: './user-management.component.css'
+  styleUrl: './user-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class UserManagementComponent implements OnInit {
+export class UserManagementComponent implements OnInit, OnDestroy {
   userForm!: FormGroup;
   showForm = false;
   editingId: number | null = null;
@@ -78,15 +79,18 @@ export class UserManagementComponent implements OnInit {
     this.updatePagination();
   }
 
-  
+  ngOnDestroy() {}
+
   openDeleteModal(user: any) {
     this.deleteUserTarget = user;
     this.showDeleteModal = true;
+    this.cdr.markForCheck();
   }
 
   closeDeleteModal() {
     this.showDeleteModal = false;
     this.deleteUserTarget = null;
+    this.cdr.markForCheck();
   }
 
   confirmDeleteUser() {
@@ -113,9 +117,11 @@ export class UserManagementComponent implements OnInit {
         next: (users) => {
           this.users = users;
           this.updatePagination();
+          this.cdr.markForCheck();
         },
         error: () => {
           this.toastr.error('Failed to load users.', 'Error');
+          this.cdr.markForCheck();
         }
       });
   }
@@ -147,12 +153,14 @@ export class UserManagementComponent implements OnInit {
   onPageChange(page: number) {
     if (page < 1 || page > this.getTotalPages()) return;
     this.userPage = page;
+    this.cdr.markForCheck();
   }
 
   onPageSizeChange(size: number) {
     this.userPageSize = size;
     this.userPage = 1;
     this.updatePagination();
+    this.cdr.markForCheck();
   }
 
   updatePagination() {
@@ -179,6 +187,7 @@ export class UserManagementComponent implements OnInit {
     const userInfo = this.authService.getUserInfo();
     const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
     this.userForm.patchValue({ active: true, businessId });
+    this.cdr.markForCheck();
   }
 
   editUser(user: any) {
@@ -188,16 +197,19 @@ export class UserManagementComponent implements OnInit {
       ...user,
       active: user.active !== undefined ? user.active : true
     });
+    this.cdr.markForCheck();
   }
 
   openDetailsModal(user: any) {
     this.detailsUser = user;
     this.showDetailsModal = true;
+    this.cdr.markForCheck();
   }
 
   closeDetailsModal() {
     this.showDetailsModal = false;
     this.detailsUser = null;
+    this.cdr.markForCheck();
   }
 
   saveUser() {
@@ -236,6 +248,7 @@ export class UserManagementComponent implements OnInit {
           this.userForm.reset();
           this.userForm.patchValue({ active: true });
           this.updatePagination();
+          this.cdr.markForCheck();
         },
         error: () => {
           this.toastr.error('Failed to update user.', 'Error');
@@ -253,6 +266,7 @@ export class UserManagementComponent implements OnInit {
           this.userForm.reset();
           this.userForm.patchValue({ active: true });
           this.updatePagination();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           const msg = err?.error?.message || 'Failed to add user.';
@@ -283,5 +297,6 @@ export class UserManagementComponent implements OnInit {
     this.showForm = false;
     this.userForm.reset();
     this.userForm.patchValue({ active: true });
+    this.cdr.markForCheck();
   }
 }

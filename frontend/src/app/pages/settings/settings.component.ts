@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -24,9 +24,10 @@ interface SettingsTab {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsComponent implements OnInit {
+export class SettingsComponent implements OnInit, OnDestroy {
       // Pagination state for price section
       pricePage = 1;
       pricePageSize = 10;
@@ -91,7 +92,8 @@ export class SettingsComponent implements OnInit {
     private variantService: CylinderVariantService,
     private priceService: MonthlyPriceService,
     private toastr: ToastrService,
-    private businessInfoService: BusinessInfoService
+    private businessInfoService: BusinessInfoService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForms();
   }
@@ -103,6 +105,8 @@ export class SettingsComponent implements OnInit {
     this.loadBusinessInfo();
   }
 
+  ngOnDestroy() {}
+
   loadBusinessInfo() {
     this.businessLoading = true;
     this.businessError = null;
@@ -111,6 +115,7 @@ export class SettingsComponent implements OnInit {
       next: (data: BusinessInfo) => {
         this.businessForm.patchValue(data || {});
         this.businessLoading = false;
+        this.cdr.markForCheck();
       },
       error: (error: any) => {
         // Only show a clean error message in a popup
@@ -119,6 +124,7 @@ export class SettingsComponent implements OnInit {
           : 'Failed to load business info';
         this.toastr.error(errorMsg, 'Error');
         this.businessLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -132,6 +138,7 @@ export class SettingsComponent implements OnInit {
         }
         this.totalVariants = data.totalElements || this.variantsList.length;
         this.variantTotalPages = data.totalPages || 1;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Failed to load variants';
@@ -140,6 +147,7 @@ export class SettingsComponent implements OnInit {
         this.variantsList = [];
         this.totalVariants = 0;
         this.variantTotalPages = 1;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -147,12 +155,14 @@ export class SettingsComponent implements OnInit {
   onVariantPageChange(page: number) {
     this.variantPage = page;
     this.loadVariants();
+    this.cdr.markForCheck();
   }
 
   onVariantPageSizeChange(size: number) {
     this.variantPageSize = size;
     this.variantPage = 1;
     this.loadVariants();
+    this.cdr.markForCheck();
   }
 
   loadPrices() {
@@ -163,6 +173,7 @@ export class SettingsComponent implements OnInit {
           this.monthlyPrices = [];
           this.totalPrices = 0;
           this.priceTotalPages = 1;
+          this.cdr.markForCheck();
           return;
         }
         // Group prices by monthYear
@@ -184,6 +195,7 @@ export class SettingsComponent implements OnInit {
         this.monthlyPrices = Object.values(grouped);
         this.totalPrices = this.monthlyPrices.length;
         this.priceTotalPages = Math.ceil(this.totalPrices / this.pricePageSize) || 1;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Failed to load prices';
@@ -192,6 +204,7 @@ export class SettingsComponent implements OnInit {
         this.monthlyPrices = [];
         this.totalPrices = 0;
         this.priceTotalPages = 1;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -199,12 +212,14 @@ export class SettingsComponent implements OnInit {
   onPricePageChange(page: number) {
     this.pricePage = page;
     this.loadPrices();
+    this.cdr.markForCheck();
   }
 
   onPricePageSizeChange(size: number) {
     this.pricePageSize = size;
     this.pricePage = 1;
     this.loadPrices();
+    this.cdr.markForCheck();
   }
 
   initForms() {
@@ -234,6 +249,7 @@ export class SettingsComponent implements OnInit {
     this.variantForm.reset({ weightKg: '', active: true });
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   editVariant(variant: any) {
@@ -241,6 +257,7 @@ export class SettingsComponent implements OnInit {
     this.variantForm.patchValue(variant);
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   saveVariant() {
@@ -305,6 +322,7 @@ export class SettingsComponent implements OnInit {
     this.showVariantForm = false;
     this.editingVariantId = null;
     document.querySelector('.content-wrapper')?.classList.remove('modal-open');
+    this.cdr.markForCheck();
   }
 
   openPriceForm() {
@@ -340,6 +358,7 @@ export class SettingsComponent implements OnInit {
     });
     this.showPriceForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   editPrice(price: any) {
@@ -367,6 +386,7 @@ export class SettingsComponent implements OnInit {
     });
     this.showPriceForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   onMonthChange(monthValue: string) {
@@ -398,6 +418,7 @@ export class SettingsComponent implements OnInit {
       month: dateString,
       variants: availableVariants
     };
+    this.cdr.markForCheck();
   }
 
   savePrices() {

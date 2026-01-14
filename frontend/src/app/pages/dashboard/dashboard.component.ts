@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -44,9 +44,10 @@ interface RecentSaleRow {
   standalone: true,
   imports: [CommonModule, RouterModule, FontAwesomeModule, SharedModule, FormsModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrl: './dashboard.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   todayDate = new Date();
 
   // Font Awesome Icons
@@ -79,11 +80,16 @@ export class DashboardComponent implements OnInit {
     private saleService: SaleService,
     private ledgerService: CustomerCylinderLedgerService,
     private loadingService: LoadingService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadDashboardData();
+  }
+
+  ngOnDestroy() {
+    // Component destroyed - data will be reloaded on next visit
   }
 
   loadDashboardData() {
@@ -95,6 +101,7 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.kpiCards[0] = { ...this.kpiCards[0], value: data.transactionCount, subtext: `₹${data.totalSalesAmount.toFixed(0)}` };
         this.kpiCards[3] = { ...this.kpiCards[3], value: Math.round(data.avgSaleValue), subtext: `₹${data.avgSaleValue.toFixed(0)}` };
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Error loading sales';
@@ -122,6 +129,7 @@ export class DashboardComponent implements OnInit {
 
         // Update KPI cards with return pending data
         this.kpiCards[2] = { ...this.kpiCards[2], value: totalReturnPending, subtext: 'cylinders pending return' };
+        this.cdr.markForCheck();
       },
       error: (error: any) => {
         const errorMessage = error?.error?.message || error?.message || 'Error loading return pending summary';
@@ -146,6 +154,7 @@ export class DashboardComponent implements OnInit {
         const totalFilled = pageRows.reduce((sum: number, stock: any) => sum + (stock.filledQty || 0), 0);
         const totalEmpty = pageRows.reduce((sum: number, stock: any) => sum + (stock.emptyQty || 0), 0);
         this.kpiCards[1] = { ...this.kpiCards[1], value: totalFilled + totalEmpty, subtext: `${totalFilled} filled, ${totalEmpty} empty` };
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Error loading inventory';
@@ -163,6 +172,7 @@ export class DashboardComponent implements OnInit {
           date: new Date(sale.saleDate).toLocaleDateString(),
           amount: sale.totalAmount?.toString() || '0'
         }));
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Error loading recent sales';

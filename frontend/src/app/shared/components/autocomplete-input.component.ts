@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -7,9 +7,10 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './autocomplete-input.component.html',
-  styleUrls: ['./autocomplete-input.component.css']
+  styleUrls: ['./autocomplete-input.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AutocompleteInputComponent<T = any> {
+export class AutocompleteInputComponent<T = any> implements OnChanges {
   @Input() placeholder: string = '';
   @Input() label: string = '';
   @Input() required: boolean = false;
@@ -21,6 +22,14 @@ export class AutocompleteInputComponent<T = any> {
 
   searchText: string = '';
   isOpen: boolean = false;
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['items'] && !changes['items'].firstChange) {
+      this.cdr.markForCheck();
+    }
+  }
 
   get filteredItems(): T[] {
     const text = (this.searchText || '').toLowerCase();
@@ -35,11 +44,13 @@ export class AutocompleteInputComponent<T = any> {
 
   onFocus() {
     this.isOpen = true;
+    this.cdr.markForCheck();
   }
 
   onBlur() {
     setTimeout(() => {
       this.isOpen = false;
+      this.cdr.markForCheck();
     }, 150);
   }
 
@@ -48,6 +59,7 @@ export class AutocompleteInputComponent<T = any> {
     this.selectedChange.emit(item);
     this.searchText = this.getDisplayValue(item);
     this.isOpen = false;
+    this.cdr.markForCheck();
   }
 
   getDisplayValue(item: T | null): string {

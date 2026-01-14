@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,9 +18,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './sales-history.component.html',
-  styleUrl: './sales-history.component.css'
+  styleUrl: './sales-history.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SalesHistoryComponent implements OnInit {
+export class SalesHistoryComponent implements OnInit, OnDestroy {
   filterFromDate = '';
   filterToDate = '';
   selectedCustomer = '';
@@ -54,7 +55,8 @@ export class SalesHistoryComponent implements OnInit {
     private customerService: CustomerService,
     private toastr: ToastrService,
     private variantService: CylinderVariantService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -65,6 +67,7 @@ export class SalesHistoryComponent implements OnInit {
       this.variantService.getAllVariants(0, 100).subscribe({
         next: (data: any) => {
           this.variantsList = data.content || data;
+          this.cdr.markForCheck();
         },
         error: (error: any) => {
           this.variantsList = [];
@@ -72,6 +75,8 @@ export class SalesHistoryComponent implements OnInit {
       });
     }
   }
+
+  ngOnDestroy() {}
 
   loadSales() {
     // Use filters if set
@@ -134,6 +139,7 @@ export class SalesHistoryComponent implements OnInit {
           this.filteredSales = [...this.allSales];
           this.totalElements = data.totalElements || this.filteredSales.length;
           this.totalPages = data.totalPages || 1;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales';
@@ -150,6 +156,7 @@ export class SalesHistoryComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.customersList = data.content || data;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading customers';

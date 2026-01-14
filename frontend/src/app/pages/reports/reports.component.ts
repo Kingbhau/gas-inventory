@@ -11,7 +11,7 @@ export class VariantReturnPendingFilterPipe implements PipeTransform {
 
 import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { catchError, of, finalize } from 'rxjs';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -44,9 +44,10 @@ interface ReportOption {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, VariantReturnPendingFilterPipe, ExpenseReportComponent, AutocompleteInputComponent],
   templateUrl: './reports.component.html',
-  styleUrl: './reports.component.css'
+  styleUrl: './reports.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ReportsComponent implements OnInit {
+export class ReportsComponent implements OnInit, OnDestroy {
   agencyName: string = '';
         private filtersEverApplied = false;
       // Helper methods for pagination (Angular templates can't use Math)
@@ -109,11 +110,16 @@ export class ReportsComponent implements OnInit {
       });
     }
     get paginatedSalesData() {
-      // Already paged from backend
-      return this.flattenedSaleItems;
+      // Flatten and paginate items
+      const allItems = this.flattenedSaleItems;
+      const startIndex = (this.salesPage - 1) * this.salesPageSize;
+      const endIndex = startIndex + this.salesPageSize;
+      return allItems.slice(startIndex, endIndex);
     }
     get paginatedReturnPendingData() {
-      return this.returnPendingData;
+      const startIndex = (this.returnPendingPage - 1) * this.returnPendingPageSize;
+      const endIndex = startIndex + this.returnPendingPageSize;
+      return this.returnPendingData.slice(startIndex, endIndex);
     }
     get paginatedInventoryData() {
       return this.inventoryData;
@@ -176,7 +182,8 @@ export class ReportsComponent implements OnInit {
     private variantService: CylinderVariantService,
     private toastr: ToastrService,
     private businessInfoService: BusinessInfoService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -189,11 +196,13 @@ export class ReportsComponent implements OnInit {
         this.agencyName = '';
       }
     });
-    if (this.selectedReport === 'sales') {
-      this.applyFilters(false);
-    } else {
-      this.loadReportData();
-    }
+    
+    // Load initial data for sales and return pending reports
+    this.applyFilters(false);
+    this.loadReturnPendingData();
+    this.loadInventoryData();
+    this.loadSupplierData();
+    
     this.customerService.getAllCustomers(0, 100).subscribe({
       next: (data) => {
         this.customersList = data.content || data;
@@ -208,7 +217,10 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  loadReportData() {
+  ngOnDestroy() {}
+
+  onTabChange(tabName: string) {
+    this.selectedReport = tabName;
     if (this.selectedReport === 'sales') {
       this.applyFilters(false);
     }
@@ -230,21 +242,22 @@ export class ReportsComponent implements OnInit {
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading return pending data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
           return of([]);
         })
       )
       .subscribe((data: any) => {
+        // Store the full transformed data
         this.returnPendingData = data
           .sort((a: any, b: any) => (b.id || 0) - (a.id || 0))
           .map((ledger: any) => ({
             customer: ledger.customerName || 'Unknown',
             variant: ledger.variantName || 'Unknown',
             returnPending: ledger.balance || 0
-          }))
-          .slice((this.returnPendingPage - 1) * this.returnPendingPageSize, this.returnPendingPage * this.returnPendingPageSize);
-        this.returnPendingTotalElements = data.length;
-        this.returnPendingTotalPages = Math.ceil(data.length / this.returnPendingPageSize) || 1;
+          }));
+        // Calculate pagination based on full data
+        this.returnPendingTotalElements = this.returnPendingData.length;
+        this.returnPendingTotalPages = Math.ceil(this.returnPendingData.length / this.returnPendingPageSize) || 1;
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
   }
@@ -269,6 +282,7 @@ export class ReportsComponent implements OnInit {
           empty: stock.emptyQty || 0
         }));
         this.inventoryTotalElements = data.totalElements || this.inventoryData.length;
+        this.cdr.markForCheck();
         this.inventoryTotalPages = data.totalPages || 1;
         sub.unsubscribe();
       });
@@ -299,6 +313,7 @@ export class ReportsComponent implements OnInit {
         });
         this.supplierData = Array.from(supplierMap.values());
         this.supplierTotalElements = data.totalElements || this.supplierData.length;
+        this.cdr.markForCheck();
         this.supplierTotalPages = data.totalPages || 1;
         sub.unsubscribe();
       });
@@ -397,15 +412,15 @@ export class ReportsComponent implements OnInit {
 
   async applyFilters(showToastr: boolean = true) {
     // Use current page and size
-    const targetPage = this.salesPage;
-    const targetSize = this.salesPageSize;
     const fromDate = this.filterFromDate ? this.filterFromDate : undefined;
     const toDate = this.filterToDate ? this.filterToDate : undefined;
     const customerId = this.filterCustomerId ? this.filterCustomerId : undefined;
     const variantId = this.filterVariantId ? Number(this.filterVariantId) : undefined;
     const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
-    const sub = this.saleService.getAllSales(targetPage - 1, targetSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    
+    // Fetch data without pagination first to handle client-side item pagination
+    const sub = this.saleService.getAllSales(0, 1000, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -416,11 +431,16 @@ export class ReportsComponent implements OnInit {
       )
       .subscribe((data: any) => {
         this.salesData = data.content || data;
-        this.salesTotalElements = data.totalElements || this.salesData.length;
-        this.salesTotalPages = data.totalPages || 1;
+        
+        // Calculate total pages based on flattened items
+        const totalFlattenedItems = this.flattenedSaleItems.length;
+        this.salesTotalElements = totalFlattenedItems;
+        this.salesTotalPages = Math.ceil(totalFlattenedItems / this.salesPageSize) || 1;
+        
         if (showToastr) {
           this.toastr.info('Filters applied', 'Info');
         }
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
     // Fetch summary card values from backend summary endpoint
@@ -439,6 +459,7 @@ export class ReportsComponent implements OnInit {
         this.summaryTransactionCount = summary.transactionCount || 0;
         this.summaryAvgSaleValue = summary.avgSaleValue || 0;
         this.summaryTopCustomer = summary.topCustomer || 'N/A';
+        this.cdr.markForCheck();
       });
   }
 

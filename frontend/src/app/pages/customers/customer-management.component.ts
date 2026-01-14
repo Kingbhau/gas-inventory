@@ -1,7 +1,7 @@
 
 import { catchError, of, finalize } from 'rxjs';
-import { ChangeDetectorRef } from '@angular/core';
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -20,9 +20,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, AutocompleteInputComponent],
   templateUrl: './customer-management.component.html',
-  styleUrl: './customer-management.component.css'
+  styleUrl: './customer-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CustomerManagementComponent implements OnInit {
+export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   // Pagination state for customers table
   customerPage = 1;
@@ -113,6 +114,8 @@ export class CustomerManagementComponent implements OnInit {
   ngOnInit() {
     this.loadVariantsAndCustomers();
   }
+
+  ngOnDestroy() {}
 
   get filteredVariants() {
     if (!this.ledgerFilterVariant) return this.variants;
@@ -319,6 +322,7 @@ export class CustomerManagementComponent implements OnInit {
             this.toastr.success('Customer updated successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
+            this.cdr.markForCheck();
           }
         });
     } else {
@@ -333,10 +337,12 @@ export class CustomerManagementComponent implements OnInit {
         )
         .subscribe((newCustomer: any) => {
           if (newCustomer) {
-            this.customers.push(newCustomer);
             this.toastr.success('Customer added successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
+            // Reload all customers with balances after adding new customer
+            this.loadCustomersWithBalances();
+            this.cdr.markForCheck();
           }
         });
     }
@@ -413,6 +419,7 @@ export class CustomerManagementComponent implements OnInit {
         
         this.totalLedgerItems = data.totalElements || 0;
         this.totalLedgerPages = data.totalPages || 1;
+        this.cdr.markForCheck();
         ledgerSub.unsubscribe();
       });
   }

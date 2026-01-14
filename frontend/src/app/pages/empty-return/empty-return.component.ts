@@ -1,7 +1,7 @@
 import { catchError, of, finalize } from 'rxjs';
 
 
-import { OnInit } from '@angular/core';
+import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomerService } from '../../services/customer.service';
@@ -18,9 +18,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
     standalone: true,
     imports: [ReactiveFormsModule, CommonModule, AutocompleteInputComponent],
     templateUrl: './empty-return.component.html',
-    styleUrls: ['./empty-return.component.css']
+    styleUrls: ['./empty-return.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EmptyReturnComponent implements OnInit {
+export class EmptyReturnComponent implements OnInit, OnDestroy {
     emptyReturnForm: FormGroup;
     submitting = false;
     customers: any[] = [];
@@ -65,6 +66,8 @@ export class EmptyReturnComponent implements OnInit {
             )
             .subscribe((data: any) => this.variants = data as any[]);
     }
+
+    ngOnDestroy() {}
 
     resetForm() {
         this.emptyReturnForm.reset({ emptyIn: null, transactionDate: new Date().toISOString().substring(0, 10) });

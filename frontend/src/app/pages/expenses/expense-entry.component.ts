@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -17,9 +17,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './expense-entry.component.html',
-  styleUrl: './expense-entry.component.css'
+  styleUrl: './expense-entry.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ExpenseEntryComponent implements OnInit {
+export class ExpenseEntryComponent implements OnInit, OnDestroy {
   expenseForm!: FormGroup;
   successMessage = '';
   categories: any[] = [];
@@ -88,6 +89,8 @@ export class ExpenseEntryComponent implements OnInit {
       }
     });
   }
+
+  ngOnDestroy() {}
 
   onSubmit() {
     if (this.expenseForm.invalid) {

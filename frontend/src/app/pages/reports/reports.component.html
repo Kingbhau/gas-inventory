@@ -11,7 +11,7 @@
       <button 
         *ngFor="let report of availableReports"
         [class.active]="selectedReport === report.id"
-        (click)="selectedReport = report.id; loadReportData();"
+        (click)="onTabChange(report.id)"
         class="selector-btn">
         <fa-icon [icon]="report.icon"></fa-icon> {{ report.name }}
       </button>
@@ -87,7 +87,7 @@
         </div>
       </div>
 
-      <div *ngIf="salesData.length > 0" class="table-wrapper">
+      <div *ngIf="flattenedSaleItems.length > 0" class="table-wrapper">
         <div class="mobile-table-scroll">
           <table class="data-table">
             <thead>
@@ -115,8 +115,14 @@
           </table>
         </div>
       </div>
+      <div *ngIf="salesData.length > 0 && flattenedSaleItems.length === 0" class="empty-state">
+        <p>No data available for the selected filters.</p>
+      </div>
+      <div *ngIf="salesData.length === 0" class="empty-state">
+        <p>No sales data available.</p>
+      </div>
       <!-- Pagination Controls -->
-      <div *ngIf="salesTotalElements > 0" class="pagination">
+      <div *ngIf="flattenedSaleItems.length > 0" class="pagination">
         <button 
           (click)="onSalesPageChange(salesPage - 1)" 
           [disabled]="salesPage === 1"

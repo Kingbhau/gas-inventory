@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -20,9 +20,10 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './inventory-management.component.html',
-  styleUrl: './inventory-management.component.css'
+  styleUrl: './inventory-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InventoryManagementComponent implements OnInit {
+export class InventoryManagementComponent implements OnInit, OnDestroy {
       // Pagination state for stock movement table
       movementPage = 1;
       filterType = '';
@@ -54,7 +55,8 @@ export class InventoryManagementComponent implements OnInit {
     private ledgerService: CustomerCylinderLedgerService,
     private loadingService: LoadingService,
     private toastr: ToastrService,
-    private variantService: CylinderVariantService
+    private variantService: CylinderVariantService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -63,12 +65,20 @@ export class InventoryManagementComponent implements OnInit {
     this.loadVariants();
   }
 
+  ngOnDestroy() {
+    // Component destroyed - data will be reloaded on next visit
+  }
+
   loadVariants() {
     this.variantService.getActiveVariants().subscribe({
-      next: (data) => this.variants = data,
+      next: (data) => {
+        this.variants = data;
+        this.cdr.markForCheck();
+      },
       error: (err) => {
         this.toastr.error('Failed to load variants', 'Error');
         this.variants = [];
+        this.cdr.markForCheck();
       }
     });
   }
@@ -101,6 +111,7 @@ export class InventoryManagementComponent implements OnInit {
           .sort((a: any, b: any) => (b.id && a.id ? b.id - a.id : new Date(b.date).getTime() - new Date(a.date).getTime()));
         // Reset to page 1 when data is reloaded
         this.movementPage = 1;
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
   }
@@ -136,6 +147,7 @@ export class InventoryManagementComponent implements OnInit {
       )
       .subscribe((data: any) => {
         this.stockSummary = data?.content || data || [];
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
   }

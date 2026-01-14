@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '../../shared/shared.module';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -20,11 +20,12 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
 @Component({
   selector: 'app-supplier-transaction',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule],
   templateUrl: './supplier-transaction.component.html',
-  styleUrl: './supplier-transaction.component.css'
+  styleUrl: './supplier-transaction.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SupplierTransactionComponent implements OnInit {
+export class SupplierTransactionComponent implements OnInit, OnDestroy {
   agencyName: string = '';
     // Pagination state for supplier transactions table
     transactionPage = 1;
@@ -66,7 +67,8 @@ export class SupplierTransactionComponent implements OnInit {
     private toastr: ToastrService,
     private inventoryStockService: InventoryStockService,
     private businessInfoService: BusinessInfoService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -84,6 +86,9 @@ export class SupplierTransactionComponent implements OnInit {
     this.loadVariants();
     this.loadTransactions();
   }
+
+  ngOnDestroy() {}
+
   exportSupplierTransactionsPDF() {
     const supplierName = this.selectedSupplier ? (this.suppliers.find(s => s.id == this.selectedSupplier)?.name || '') : undefined;
     const variantName = this.filterVariantId ? (this.variants.find(v => v.id == this.filterVariantId)?.name || '') : undefined;
@@ -105,6 +110,7 @@ export class SupplierTransactionComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.suppliers = data.content || data;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading suppliers';
@@ -121,6 +127,7 @@ export class SupplierTransactionComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.variants = data.content || data;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
@@ -140,6 +147,7 @@ export class SupplierTransactionComponent implements OnInit {
           this.filteredTransactions = [...this.allTransactions];
           this.totalTransactions = data.totalElements || this.allTransactions.length;
           this.totalPages = data.totalPages || 1;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading transactions';
@@ -176,6 +184,7 @@ export class SupplierTransactionComponent implements OnInit {
     this.editingId = null;
     this.transactionForm.reset();
     this.showForm = true;
+    this.cdr.markForCheck();
   }
 
   editTransaction(transaction: any) {
@@ -190,6 +199,7 @@ export class SupplierTransactionComponent implements OnInit {
       amount: transaction.amount || 0
     });
     this.showForm = true;
+    this.cdr.markForCheck();
   }
 
   saveTransaction() {
@@ -287,6 +297,7 @@ export class SupplierTransactionComponent implements OnInit {
       filtered = filtered.filter(t => t.transactionDate <= this.filterToDate);
     }
     this.filteredTransactions = filtered.sort((a: any, b: any) => b.id - a.id);
+    this.cdr.markForCheck();
   }
 
   resetFilters() {
@@ -295,10 +306,12 @@ export class SupplierTransactionComponent implements OnInit {
     this.filterToDate = '';
     this.filterVariantId = '';
     this.filteredTransactions = [...this.allTransactions].sort((a: any, b: any) => b.id - a.id);
+    this.cdr.markForCheck();
   }
 
   closeForm() {
     this.showForm = false;
     this.editingId = null;
+    this.cdr.markForCheck();
   }
 }

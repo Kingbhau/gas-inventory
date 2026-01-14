@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -14,9 +14,10 @@ import { finalize } from 'rxjs';
     standalone: true,
     imports: [CommonModule, FontAwesomeModule, FormsModule, ReactiveFormsModule],
     templateUrl: './profile.component.html',
-    styleUrls: ['./profile.component.css']
+    styleUrls: ['./profile.component.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
 
     faUserCircle = faUserCircle;
     faEdit = faEdit;
@@ -32,7 +33,8 @@ export class ProfileComponent implements OnInit {
         private userService: UserService,
         private authService: AuthService,
         private toastr: ToastrService,
-        private loadingService: LoadingService
+        private loadingService: LoadingService,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
@@ -45,11 +47,13 @@ export class ProfileComponent implements OnInit {
                     next: (user) => {
                         this.user = user;
                         this.initForms();
+                        this.cdr.markForCheck();
                     },
                     error: () => {
                         // fallback to local user if backend fails
                         this.user = localUser;
                         this.initForms();
+                        this.cdr.markForCheck();
                     }
                 });
         } else {
@@ -57,17 +61,24 @@ export class ProfileComponent implements OnInit {
             this.initForms();
         }
     }
+
+    ngOnDestroy() {}
+
     openEditModal() {
         this.showEdit = true;
+        this.cdr.markForCheck();
     }
     closeEditModal() {
         this.showEdit = false;
+        this.cdr.markForCheck();
     }
     openPasswordModal() {
         this.showPassword = true;
+        this.cdr.markForCheck();
     }
     closePasswordModal() {
         this.showPassword = false;
+        this.cdr.markForCheck();
     }
     private initForms() {
         this.profileForm = this.fb.group({
@@ -97,9 +108,11 @@ export class ProfileComponent implements OnInit {
                     this.user = result;
                     this.showEdit = false;
                     this.toastr.success('Profile updated successfully.', 'Success');
+                    this.cdr.markForCheck();
                 },
                 error: () => {
                     this.toastr.error('Failed to update profile.', 'Error');
+                    this.cdr.markForCheck();
                 }
             });
         }
@@ -118,9 +131,11 @@ export class ProfileComponent implements OnInit {
                     } else {
                         this.toastr.error('Current password is incorrect.', 'Error');
                     }
+                    this.cdr.markForCheck();
                 },
                 error: () => {
                     this.toastr.error('Failed to change password.', 'Error');
+                    this.cdr.markForCheck();
                 }
             });
         } else {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -15,9 +15,10 @@ import { catchError, finalize } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule],
   templateUrl: './supplier-management.component.html',
-  styleUrl: './supplier-management.component.css'
+  styleUrl: './supplier-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SupplierManagementComponent implements OnInit {
+export class SupplierManagementComponent implements OnInit, OnDestroy {
     // Pagination state for suppliers table
     supplierPage = 1;
     supplierPageSize = 10;
@@ -57,7 +58,8 @@ export class SupplierManagementComponent implements OnInit {
     private fb: FormBuilder,
     private supplierService: SupplierService,
     private loadingService: LoadingService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -65,6 +67,8 @@ export class SupplierManagementComponent implements OnInit {
   ngOnInit() {
     this.loadSuppliers();
   }
+
+  ngOnDestroy() {}
 
   loadSuppliers() {
     this.loadingService.show('Loading suppliers...');
@@ -82,6 +86,7 @@ export class SupplierManagementComponent implements OnInit {
         this.suppliers = (data.content || data).sort((a: any, b: any) => b.id - a.id);
         this.totalSuppliers = data.totalElements || this.suppliers.length;
         this.totalPages = data.totalPages || 1;
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
   }
@@ -160,6 +165,7 @@ export class SupplierManagementComponent implements OnInit {
             this.toastr.success('Supplier updated successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
+            this.cdr.markForCheck();
           }
           sub.unsubscribe();
         });
@@ -179,6 +185,7 @@ export class SupplierManagementComponent implements OnInit {
             this.toastr.success('Supplier created successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
+            this.cdr.markForCheck();
           }
           sub.unsubscribe();
         });

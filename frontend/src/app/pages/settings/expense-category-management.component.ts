@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -15,9 +15,10 @@ import { finalize } from 'rxjs';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, FontAwesomeModule, SharedModule],
   templateUrl: './expense-category-management.component.html',
-  styleUrl: './expense-category-management.component.css'
+  styleUrl: './expense-category-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ExpenseCategoryManagementComponent implements OnInit {
+export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
   categories: ExpenseCategory[] = [];
   categoryForm!: FormGroup;
   isLoading = false;
@@ -36,7 +37,8 @@ export class ExpenseCategoryManagementComponent implements OnInit {
     private categoryService: ExpenseCategoryService,
     private fb: FormBuilder,
     private toastr: ToastrService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -52,6 +54,8 @@ export class ExpenseCategoryManagementComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {}
+
   loadCategories() {
     this.loadingService.show('Loading categories...');
     this.categoryService.getAllCategories(0, 100)
@@ -62,9 +66,11 @@ export class ExpenseCategoryManagementComponent implements OnInit {
       .subscribe({
         next: (response) => {
           this.categories = response.content || response;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error('Failed to load categories');
+          this.cdr.markForCheck();
         }
       });
   }
@@ -73,6 +79,7 @@ export class ExpenseCategoryManagementComponent implements OnInit {
     this.showModal = true;
     this.editingId = null;
     this.categoryForm.reset();
+    this.cdr.markForCheck();
   }
 
   onEdit(category: ExpenseCategory) {
@@ -82,12 +89,14 @@ export class ExpenseCategoryManagementComponent implements OnInit {
       name: category.name,
       description: category.description || ''
     });
+    this.cdr.markForCheck();
   }
 
   closeModal() {
     this.showModal = false;
     this.editingId = null;
     this.categoryForm.reset();
+    this.cdr.markForCheck();
   }
 
   onSubmit() {
@@ -107,10 +116,12 @@ export class ExpenseCategoryManagementComponent implements OnInit {
           this.loadCategories();
           this.closeModal();
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error(error?.error?.message || 'Failed to update category');
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -121,10 +132,12 @@ export class ExpenseCategoryManagementComponent implements OnInit {
           this.loadCategories();
           this.closeModal();
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error(error?.error?.message || 'Failed to create category');
           this.isSubmitting = false;
+          this.cdr.markForCheck();
         }
       });
     }
@@ -138,9 +151,11 @@ export class ExpenseCategoryManagementComponent implements OnInit {
         next: () => {
           this.toastr.success('Category deleted successfully');
           this.loadCategories();
+          this.cdr.markForCheck();
         },
         error: (error) => {
           this.toastr.error(error?.error?.message || 'Failed to delete category');
+          this.cdr.markForCheck();
         }
       });
     }
