@@ -54,6 +54,7 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>Warehouse</th>
                 <th>Variant</th>
                 <th class="text-center">Filled</th>
                 <th class="text-center">Empty</th>
@@ -62,6 +63,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let row of inventorySummary">
+                <td class="font-medium">{{ row.warehouse }}</td>
                 <td class="font-medium">{{ row.variant }}</td>
                 <td class="text-center text-success">{{ row.filled }}</td>
                 <td class="text-center text-warning">{{ row.empty }}</td>

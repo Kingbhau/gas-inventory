@@ -12,6 +12,7 @@ import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.util.LoggerUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class CustomerService {
     private final SaleRepository saleRepository;
     private final CustomerCylinderLedgerRepository ledgerRepository;
     private final CylinderVariantRepository cylinderVariantRepository;
+    private final ObjectMapper objectMapper;
 
     public CustomerService(CustomerRepository repository,
             SaleRepository saleRepository,
@@ -37,6 +39,7 @@ public class CustomerService {
         this.saleRepository = saleRepository;
         this.ledgerRepository = ledgerRepository;
         this.cylinderVariantRepository = cylinderVariantRepository;
+        this.objectMapper = new ObjectMapper();
     }
 
     @Transactional
@@ -68,7 +71,11 @@ public class CustomerService {
             LoggerUtil.logBusinessError(logger, "CREATE_CUSTOMER", "Duplicate mobile", "mobile", mobile);
             throw new IllegalArgumentException("A customer with this mobile number already exists.");
         }
+
         Customer customer = new Customer(dto.getName(), mobile, dto.getAddress());
+        customer.setSalePrice(dto.getSalePrice());
+        customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
         customer = repository.save(customer);
 
         LoggerUtil.logBusinessSuccess(logger, "CREATE_CUSTOMER", "id", customer.getId(), "name", customer.getName(),
@@ -152,6 +159,9 @@ public class CustomerService {
         customer.setName(dto.getName());
         customer.setMobile(mobileFinal);
         customer.setAddress(dto.getAddress());
+        customer.setSalePrice(dto.getSalePrice());
+        customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
         customer.setActive(dto.getActive());
         customer = repository.save(customer);
 
@@ -201,6 +211,11 @@ public class CustomerService {
         CustomerDTO dto = new CustomerDTO(customer.getId(), customer.getName(),
                 customer.getMobile(), customer.getAddress(), customer.getActive());
 
+        // Set pricing fields
+        dto.setSalePrice(customer.getSalePrice());
+        dto.setDiscountPrice(customer.getDiscountPrice());
+        dto.setConfiguredVariants(convertJsonToVariantList(customer.getConfiguredVariants()));
+
         // Get last sale date
         List<Sale> sales = saleRepository.findByCustomer(customer);
         if (!sales.isEmpty()) {
@@ -227,5 +242,36 @@ public class CustomerService {
     private boolean isValidMobileNumber(String mobile) {
         // Accept: +country codes, spaces, hyphens, parentheses, 10+ digits
         return mobile.matches("^[+]?[(]?[0-9]{1,3}[)]?[-\\s.]?[(]?[0-9]{1,4}[)]?[-\\s.]?[0-9]{1,4}[-\\s.]?[0-9]{1,9}$");
+    }
+
+    /**
+     * Convert List<Long> to JSON string for storage
+     */
+    private String convertVariantListToJson(List<Long> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(variants);
+        } catch (Exception e) {
+            logger.warn("Failed to convert variant list to JSON", e);
+            return null;
+        }
+    }
+
+    /**
+     * Convert JSON string back to List<Long>
+     */
+    private List<Long> convertJsonToVariantList(String json) {
+        if (json == null || json.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Long.class));
+        } catch (Exception e) {
+            logger.warn("Failed to convert JSON to variant list", e);
+            return null;
+        }
     }
 }

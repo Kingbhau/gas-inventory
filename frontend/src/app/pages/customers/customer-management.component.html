@@ -147,6 +147,32 @@
                     <div class="details-label">Filled Units</div>
                     <div class="details-value">{{ detailsCustomer.filledUnits }}</div>
                   </div>
+
+                  <!-- Variant Prices Section -->
+                  <div class="details-section">
+                    <div class="details-label">Variant Pricing</div>
+                    <div *ngIf="detailsVariantPrices && detailsVariantPrices.length > 0; else noPrices" class="variant-prices-table">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Variant</th>
+                            <th>Sale Price (₹)</th>
+                            <th>Discount Price (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let price of detailsVariantPrices">
+                            <td>{{ price.variantName }}</td>
+                            <td>{{ price.salePrice | number: '1.2-2' }}</td>
+                            <td>{{ price.discountPrice | number: '1.2-2' }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <ng-template #noPrices>
+                      <div class="no-prices-message">No pricing configured for any variants</div>
+                    </ng-template>
+                  </div>
                 </div>
                 <div class="modal-footer details-modal-footer">
                   <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
@@ -200,6 +226,74 @@
         <div class="form-group">
           <label class="form-label">Address</label>
           <textarea formControlName="address" class="form-control" rows="3" placeholder="Customer address and location details"></textarea>
+        </div>
+
+        <!-- Variant Configuration Section -->
+        <div class="form-group">
+          <label class="form-label">Select Variants <span class="required">*</span></label>
+          <div class="variant-selection">
+            <div *ngFor="let variant of variants" class="variant-checkbox">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  [value]="variant.id" 
+                  [checked]="isVariantSelected(variant.id)"
+                  (change)="toggleVariantSelection(variant.id)"
+                  class="checkbox-input">
+                <span class="checkbox-text">{{ variant.name }} ({{ variant.weightKg }}kg)</span>
+              </label>
+            </div>
+          </div>
+          <div *ngIf="customerForm.get('configuredVariants')?.invalid && customerForm.get('configuredVariants')?.touched" 
+               class="form-error">
+            <fa-icon [icon]="faExclamation"></fa-icon> Select at least one variant
+          </div>
+        </div>
+
+        <!-- Variant-Specific Pricing Section -->
+        <div class="form-section pricing-section" *ngIf="variantPricesArray.length > 0">
+          <h4 class="section-title">Pricing for Selected Variants (Required)</h4>
+          <div class="pricing-grid">
+            <div *ngFor="let priceControl of variantPricesArray.controls; let i = index" 
+                 [formGroup]="$any(priceControl)" class="pricing-card" 
+                 [class.has-error]="priceControl.invalid && priceControl.touched">
+              <div class="variant-header">
+                <strong>{{ priceControl.get('variantName')?.value }}</strong>
+              </div>
+              <div class="pricing-inputs">
+                <div class="price-input">
+                  <label class="form-label small">Sale Price <span class="required">*</span></label>
+                  <input formControlName="salePrice" type="number" class="form-control" 
+                         placeholder="0.00" step="0.01" min="0">
+                  <div *ngIf="priceControl.get('salePrice')?.hasError('required') && priceControl.get('salePrice')?.touched" 
+                       class="form-error">
+                    <fa-icon [icon]="faExclamation"></fa-icon> Sale price is required
+                  </div>
+                  <div *ngIf="priceControl.get('salePrice')?.hasError('min') && priceControl.get('salePrice')?.touched && priceControl.get('salePrice')?.value !== ''" 
+                       class="form-error">
+                    <fa-icon [icon]="faExclamation"></fa-icon> Must be non-negative
+                  </div>
+                </div>
+                <div class="price-input">
+                  <label class="form-label small">Discount Price <span class="required">*</span></label>
+                  <input formControlName="discountPrice" type="number" class="form-control" 
+                         placeholder="0.00" step="0.01" min="0">
+                  <div *ngIf="priceControl.get('discountPrice')?.hasError('required') && priceControl.get('discountPrice')?.touched" 
+                       class="form-error">
+                    <fa-icon [icon]="faExclamation"></fa-icon> Discount price is required
+                  </div>
+                  <div *ngIf="priceControl.get('discountPrice')?.hasError('min') && priceControl.get('discountPrice')?.touched && priceControl.get('discountPrice')?.value !== ''" 
+                       class="form-error">
+                    <fa-icon [icon]="faExclamation"></fa-icon> Must be non-negative
+                  </div>
+                  <div *ngIf="priceControl.get('discountPrice')?.hasError('discountGreaterThanSale') && priceControl.get('discountPrice')?.touched" 
+                       class="form-error">
+                    <fa-icon [icon]="faExclamation"></fa-icon> Discount price cannot be greater than sale price
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">

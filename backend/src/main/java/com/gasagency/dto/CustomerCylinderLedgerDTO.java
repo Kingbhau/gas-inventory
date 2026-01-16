@@ -1,6 +1,7 @@
 package com.gasagency.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class CustomerCylinderLedgerDTO {
     private Long id;
@@ -9,11 +10,16 @@ public class CustomerCylinderLedgerDTO {
     private Long variantId;
     private String variantName;
     private LocalDate transactionDate;
+    private LocalDateTime createdAt;
     private String refType;
     private Long refId;
     private Long filledOut;
     private Long emptyIn;
     private Long balance;
+    private Long fromWarehouseId;
+    private String fromWarehouseName;
+    private Long toWarehouseId;
+    private String toWarehouseName;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -31,6 +37,26 @@ public class CustomerCylinderLedgerDTO {
         this.filledOut = filledOut;
         this.emptyIn = emptyIn;
         this.balance = balance;
+    }
+
+    public CustomerCylinderLedgerDTO(Long id, Long customerId, String customerName, Long variantId, String variantName,
+            LocalDate transactionDate, String refType, Long refId, Long filledOut, Long emptyIn, Long balance,
+            Long fromWarehouseId, String fromWarehouseName, Long toWarehouseId, String toWarehouseName) {
+        this.id = id;
+        this.customerId = customerId;
+        this.customerName = customerName;
+        this.variantId = variantId;
+        this.variantName = variantName;
+        this.transactionDate = transactionDate;
+        this.refType = refType;
+        this.refId = refId;
+        this.filledOut = filledOut;
+        this.emptyIn = emptyIn;
+        this.balance = balance;
+        this.fromWarehouseId = fromWarehouseId;
+        this.fromWarehouseName = fromWarehouseName;
+        this.toWarehouseId = toWarehouseId;
+        this.toWarehouseName = toWarehouseName;
     }
 
     public Long getId() {
@@ -81,6 +107,14 @@ public class CustomerCylinderLedgerDTO {
         this.transactionDate = transactionDate;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public String getRefType() {
         return refType;
     }
@@ -119,5 +153,37 @@ public class CustomerCylinderLedgerDTO {
 
     public void setBalance(Long balance) {
         this.balance = balance;
+    }
+
+    public Long getFromWarehouseId() {
+        return fromWarehouseId;
+    }
+
+    public void setFromWarehouseId(Long fromWarehouseId) {
+        this.fromWarehouseId = fromWarehouseId;
+    }
+
+    public String getFromWarehouseName() {
+        return fromWarehouseName;
+    }
+
+    public void setFromWarehouseName(String fromWarehouseName) {
+        this.fromWarehouseName = fromWarehouseName;
+    }
+
+    public Long getToWarehouseId() {
+        return toWarehouseId;
+    }
+
+    public void setToWarehouseId(Long toWarehouseId) {
+        this.toWarehouseId = toWarehouseId;
+    }
+
+    public String getToWarehouseName() {
+        return toWarehouseName;
+    }
+
+    public void setToWarehouseName(String toWarehouseName) {
+        this.toWarehouseName = toWarehouseName;
     }
 }

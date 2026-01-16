@@ -12,6 +12,19 @@
     </div>
     <div class="card-body">
       <form [formGroup]="saleForm" (ngSubmit)="onSubmit()" class="sale-form">
+        <!-- Warehouse Selection (Autocomplete) -->
+        <app-autocomplete-input
+          label="Warehouse"
+          [required]="true"
+          [items]="warehouses"
+          [displayKey]="'name'"
+          placeholder="Warehouse name..."
+          (selectedChange)="onWarehouseSelected($event)"
+        ></app-autocomplete-input>
+        <div *ngIf="saleForm.get('warehouseId')?.invalid && saleForm.get('warehouseId')?.touched" class="error-message">
+          Warehouse is required
+        </div>
+
         <!-- Customer Selection (Autocomplete) -->
         <app-autocomplete-input
           label="Customer"
@@ -19,7 +32,7 @@
           [items]="customers"
           [displayKey]="'name'"
           placeholder="Customer name..."
-          (selectedChange)="saleForm.get('customerId')?.setValue($event)"
+          (selectedChange)="onCustomerSelected($event)"
         ></app-autocomplete-input>
         <div *ngIf="saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched" class="error-message">
           Customer is required
@@ -29,10 +42,10 @@
         <app-autocomplete-input
           label="Cylinder Variant"
           [required]="true"
-          [items]="variants"
+          [items]="filteredVariants"
           [displayKey]="'name'"
           placeholder="Variant name..."
-          (selectedChange)="saleForm.get('variantId')?.setValue($event)"
+          (selectedChange)="onVariantSelected($event)"
         ></app-autocomplete-input>
         <div *ngIf="saleForm.get('variantId')?.invalid && saleForm.get('variantId')?.touched" class="error-message">
           Variant is required
@@ -86,15 +99,16 @@
             </div>
           </div>
 
-          <!-- Discount -->
+          <!-- Discount Price (Read-only) -->
           <div class="form-group">
-            <label class="form-label">Discount</label>
+            <label class="form-label">Discount Amount Per Unit</label>
             <div class="input-with-prefix">
               <span class="currency">₹</span>
               <input 
-                formControlName="discount" 
                 type="number" 
                 class="form-control" 
+                [value]="discountPrice"
+                [readonly]="true"
                 placeholder="0.00"
                 (change)="calculateTotal()">
             </div>
@@ -104,15 +118,27 @@
         <!-- Summary Section -->
         <div class="summary-section">
           <div class="summary-row">
-            <span class="summary-label">Base Amount:</span>
-            <span class="summary-value">{{ baseAmount | indianCurrency }}</span>
+            <span class="summary-label">Quantity:</span>
+            <span class="summary-value">{{ saleForm.get('filledIssuedQty')?.value || 0 }} units</span>
           </div>
           <div class="summary-row">
-            <span class="summary-label">Discount:</span>
-            <span class="summary-value">-{{ (saleForm.get('discount')?.value || 0) | indianCurrency }}</span>
+            <span class="summary-label">Base Price Per Unit:</span>
+            <span class="summary-value">{{ saleForm.get('basePrice')?.value | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountPrice > 0">
+            <span class="summary-label">Discount Per Unit:</span>
+            <span class="summary-value" style="color: #d32f2f;">-{{ discountPrice | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountPrice > 0">
+            <span class="summary-label">Price Per Unit After Discount:</span>
+            <span class="summary-value" style="color: #28a745;">{{ (saleForm.get('basePrice')?.value - discountPrice) | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountAmount > 0">
+            <span class="summary-label">Total Discount (Savings):</span>
+            <span class="summary-value" style="color: #28a745;">-{{ discountAmount | indianCurrency }}</span>
           </div>
           <div class="summary-row total">
-            <span class="summary-label">Total Amount:</span>
+            <span class="summary-label">Total Amount to Pay:</span>
             <span class="summary-value">{{ totalAmount | indianCurrency }}</span>
           </div>
         </div>

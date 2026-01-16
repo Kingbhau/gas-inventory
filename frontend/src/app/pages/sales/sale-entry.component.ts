@@ -1,10 +1,16 @@
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule, FormControl } from '@angular/forms';
+import { Component, OnInit, ViewChild, ViewChildren, QueryList } from '@angular/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatOptionModule } from '@angular/material/core';
+import { startWith, map, finalize } from 'rxjs';
 import { catchError, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SharedModule } from '../../shared/shared.module';
+import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 import { CustomerService } from '../../services/customer.service';
@@ -12,35 +18,56 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { SaleService } from '../../services/sale.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-balance.service';
 import { MonthlyPriceService } from '../../services/monthly-price.service';
-import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
+import { LoadingService } from '../../services/loading.service';
+import { WarehouseService } from '../../services/warehouse.service';
 
 @Component({
   selector: 'app-sale-entry',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, MatAutocompleteModule, MatFormFieldModule, MatInputModule, MatOptionModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './sale-entry.component.html',
-  styleUrl: './sale-entry.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './sale-entry.component.css'
 })
-export class SaleEntryComponent implements OnInit, OnDestroy {
+export class SaleEntryComponent implements OnInit {
+  @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
+  
   saleForm!: FormGroup;
   successMessage = '';
   baseAmount = 0;
-  isSubmitting = false;
+  discountPrice: number = 0; // Customer-specific discount price
 
-  displayCustomerName(customer: any): string {
-    return customer && typeof customer === 'object' ? customer.name : '';
-  }
+  customerIdControl = new FormControl(null, Validators.required);
+  variantIdControl = new FormControl(null, Validators.required);
+  customerDropdownConfig: any = {
+    displayKey: 'name',
+    search: true,
+    placeholder: 'Select a customer',
+    noResultsFound: 'No customer found',
+    searchPlaceholder: 'Search customer...',
+    height: '200px',
+    customComparator: undefined,
+    limitTo: 100
+  };
+  variantDropdownConfig: any = {
+    displayKey: 'name',
+    search: true,
+    placeholder: 'Select variant',
+    noResultsFound: 'No variant found',
+    searchPlaceholder: 'Search variant...',
+    height: '200px',
+    customComparator: undefined,
+    limitTo: 100
+  };
 
-  displayVariantName(variant: any): string {
-    return variant && typeof variant === 'object' ? variant.name : '';
-  }
+
 
   // Font Awesome Icons
   faCheckCircle = faCheckCircle;
 
   customers: any[] = [];
   variants: any[] = [];
+  warehouses: any[] = [];
   filteredCustomers: any[] = [];
   filteredVariants: any[] = [];
   customerSearch: string = '';
@@ -58,8 +85,11 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     private variantService: CylinderVariantService,
     private saleService: SaleService,
     private monthlyPriceService: MonthlyPriceService,
+    private variantPriceService: CustomerVariantPriceService,
     private toastr: ToastrService,
-    private customerCylinderLedgerService: CustomerCylinderLedgerService
+    private customerCylinderLedgerService: CustomerCylinderLedgerService,
+    private loadingService: LoadingService,
+    private warehouseService: WarehouseService
   ) {
     this.initForm();
   }
@@ -67,98 +97,248 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadCustomers();
     this.loadVariants();
+    this.loadWarehouses();
     this.filteredCustomers = this.customers;
     this.filteredVariants = this.variants;
+    
+    // When customer changes, filter variants and prefill prices
+    this.saleForm.get('customerId')?.valueChanges.subscribe(customerObj => {
+      const customerId = customerObj && customerObj.id ? customerObj.id : null;
+      this.filterVariantsByCustomerConfig(customerId);
+      // Also check if variant is already selected to prefill prices
+      const variantObj = this.saleForm.get('variantId')?.value;
+      if (variantObj && variantObj.id) {
+        this.prefillPrice(customerId, variantObj.id);
+      }
+    });
+    
+    // When variant changes, prefill prices for the selected customer
     this.saleForm.get('variantId')?.valueChanges.subscribe(variantObj => {
-      this.prefillBasePrice(variantObj && variantObj.id ? variantObj.id : null);
+      const variantId = variantObj && variantObj.id ? variantObj.id : null;
+      const customerObj = this.saleForm.get('customerId')?.value;
+      const customerId = customerObj && customerObj.id ? customerObj.id : null;
+      this.prefillPrice(customerId, variantId);
     });
   }
 
-  ngOnDestroy() {}
+  displayCustomerName(customer: any): string {
+    return customer && typeof customer === 'object' ? customer.name : '';
+  }
+
+  displayVariantName(variant: any): string {
+    return variant && typeof variant === 'object' ? variant.name : '';
+  }
+
+  /**
+   * Filter variants based on customer's configured variants
+   */
+  filterVariantsByCustomerConfig(customerId: number | null) {
+    if (!customerId) {
+      this.filteredVariants = this.variants;
+      return;
+    }
+    
+    // Find the customer and get their configured variants
+    const customer = this.customers.find(c => c.id === customerId);
+    if (!customer || !customer.configuredVariants || customer.configuredVariants.length === 0) {
+      this.filteredVariants = this.variants;
+      return;
+    }
+    
+    // Filter variants to only show those configured for this customer
+    this.filteredVariants = this.variants.filter(v => 
+      customer.configuredVariants.includes(v.id)
+    );
+  }
+
+  /**
+   * Prefill price based on customer-specific pricing or monthly pricing
+   * Priority: Customer-specific pricing > Monthly pricing
+   */
+  prefillPrice(customerId: number | null, variantId: number | null) {
+    if (!customerId || !variantId) {
+      this.saleForm.get('basePrice')?.setValue(0);
+      this.discountPrice = 0;
+      return;
+    }
+
+    // First try to get customer-specific variant pricing
+    this.variantPriceService.getPriceByVariant(customerId, variantId).subscribe({
+      next: (response: any) => {
+        if (response && response.data) {
+          // Use customer-specific sale price and discount price
+          this.saleForm.get('basePrice')?.setValue(response.data.salePrice);
+          this.discountPrice = response.data.discountPrice || 0;
+          this.saleForm.get('basePrice')?.disable();
+          this.calculateTotal();
+          console.log('Using customer-specific pricing - Sale:', response.data.salePrice, 'Discount:', this.discountPrice);
+        } else {
+          // Fall back to monthly pricing
+          this.prefillBasePrice(variantId);
+        }
+      },
+      error: () => {
+        // Fall back to monthly pricing if customer pricing not found
+        console.log('Customer-specific pricing not found, using monthly pricing');
+        this.discountPrice = 0;
+        this.prefillBasePrice(variantId);
+      }
+    });
+  }
 
   prefillBasePrice(variantId: number) {
     if (!variantId) {
       this.saleForm.get('basePrice')?.setValue(0);
+      this.discountPrice = 0;
       return;
     }
     const now = new Date();
     const monthYear = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-    this.monthlyPriceService.getPriceForMonth(variantId, monthYear).subscribe({
+    this.monthlyPriceService.getLatestPriceForMonth(variantId, monthYear).subscribe({
       next: (price) => {
         this.saleForm.get('basePrice')?.setValue(price.basePrice);
+        this.discountPrice = 0; // Reset discount price for monthly pricing
         this.saleForm.get('basePrice')?.disable();
         this.calculateTotal();
       },
       error: () => {
         this.saleForm.get('basePrice')?.setValue(0);
+        this.discountPrice = 0;
         this.saleForm.get('basePrice')?.disable();
         this.calculateTotal();
       }
     });
   }
 
-  onCustomerSearchChange() {
-    const search = this.customerSearch.toLowerCase();
-    this.filteredCustomers = this.customers.filter(c => c.name.toLowerCase().includes(search));
-  }
-
-  onVariantSearchChange() {
-    const search = this.variantSearch.toLowerCase();
-    this.filteredVariants = this.variants.filter(v => v.name.toLowerCase().includes(search));
-  }
-
   loadCustomers() {
-    this.customerService.getAllCustomers(0, 100).subscribe({
-      next: (data) => {
-        this.customers = data.content || data;
-      },
-      error: (error) => {
-        const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
-        this.toastr.error(errorMessage, 'Error');
-        console.error('Full error:', error);
-      }
-    });
+    this.loadingService.show('Loading customers...');
+    this.customerService.getAllCustomers(0, 100)
+      .pipe(finalize(() => this.loadingService.hide()))
+      .subscribe({
+        next: (data) => {
+          this.customers = data.content || data;
+        },
+        error: (error) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+        }
+      });
   }
 
   loadVariants() {
-    this.variantService.getAllVariants(0, 100).subscribe({
-      next: (data) => {
-        this.variants = data.content || data;
-      },
-      error: (error) => {
-        const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
-        this.toastr.error(errorMessage, 'Error');
-        console.error('Full error:', error);
-      }
-    });
+    this.loadingService.show('Loading variants...');
+    this.variantService.getAllVariants(0, 100)
+      .pipe(finalize(() => this.loadingService.hide()))
+      .subscribe({
+        next: (data) => {
+          this.variants = data.content || data;
+        },
+        error: (error) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+        }
+      });
+  }
+
+  loadWarehouses() {
+    this.warehouseService.getActiveWarehouses()
+      .subscribe({
+        next: (response: any) => {
+          if (response.success) {
+            this.warehouses = response.data || [];
+          } else {
+            this.toastr.error('Failed to load warehouses', 'Error');
+          }
+        },
+        error: (error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading warehouses';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+        }
+      });
   }
 
   initForm() {
     this.saleForm = this.fb.group({
+      warehouseId: [null, Validators.required],
       customerId: [null, Validators.required],
       variantId: [null, Validators.required],
       filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
-      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
-      discount: [null, [Validators.min(0), Validators.max(10000)]]
+      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]]
     });
   }
 
   calculateTotal() {
     const filledQty = Number(this.saleForm.get('filledIssuedQty')?.value) || 0;
     const basePrice = Number(this.saleForm.get('basePrice')?.value) || 0;
-    // Prevent negative or non-integer quantities/prices
+    // Base amount calculated on actual base price
     this.baseAmount = Math.max(0, filledQty) * Math.max(0, basePrice);
     // Prevent negative baseAmount
     if (this.baseAmount < 0 || isNaN(this.baseAmount)) this.baseAmount = 0;
   }
 
   get totalAmount(): number {
-    const discount = Number(this.saleForm.get('discount')?.value) || 0;
-    let total = this.baseAmount - Math.max(0, discount);
-    // Prevent negative totals or discounts greater than baseAmount
-    if (total < 0) total = 0;
+    const filledQty = Number(this.saleForm.get('filledIssuedQty')?.value) || 0;
+    const basePrice = Number(this.saleForm.get('basePrice')?.value) || 0;
+    const discountAmount = this.discountPrice || 0;
+    
+    // Price per cylinder = Base Price - Discount Amount
+    const pricePerCylinder = Math.max(0, basePrice - discountAmount);
+    
+    // Total amount = Quantity × Price Per Cylinder
+    let total = Math.max(0, filledQty) * Math.max(0, pricePerCylinder);
+    if (total < 0 || isNaN(total)) total = 0;
     return total;
+  }
+
+  get discountAmount(): number {
+    const filledQty = Number(this.saleForm.get('filledIssuedQty')?.value) || 0;
+    const discountValue = this.discountPrice || 0;
+    
+    // Total discount = Discount Per Unit × Quantity
+    const discount = Math.max(0, filledQty) * Math.max(0, discountValue);
+    if (discount < 0 || isNaN(discount)) return 0;
+    return discount;
+  }
+
+  /**
+   * Handle warehouse selection from autocomplete
+   */
+  onWarehouseSelected(warehouse: any): void {
+    if (warehouse && warehouse.id) {
+      this.saleForm.get('warehouseId')?.setValue(warehouse.id);
+    } else {
+      this.saleForm.get('warehouseId')?.setValue(null);
+    }
+  }
+
+  onCustomerSelected(customer: any): void {
+    if (customer && customer.id) {
+      this.saleForm.get('customerId')?.setValue(customer.id);
+      this.saleForm.get('customerId')?.markAsTouched();
+      // Reload prices when customer changes
+      this.prefillPrice(customer.id, this.saleForm.get('variantId')?.value);
+    } else {
+      this.saleForm.get('customerId')?.setValue(null);
+      this.saleForm.get('basePrice')?.setValue(0);
+      this.discountPrice = 0;
+    }
+  }
+
+  onVariantSelected(variant: any): void {
+    if (variant && variant.id) {
+      this.saleForm.get('variantId')?.setValue(variant.id);
+      this.saleForm.get('variantId')?.markAsTouched();
+      // Reload prices when variant changes
+      this.prefillPrice(this.saleForm.get('customerId')?.value, variant.id);
+    } else {
+      this.saleForm.get('variantId')?.setValue(null);
+      this.saleForm.get('basePrice')?.setValue(0);
+      this.discountPrice = 0;
+    }
   }
 
   onSubmit() {
@@ -206,27 +386,35 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   }
 
   submitSale() {
-    // Prevent double submission
-    if (this.isSubmitting) {
+    // Validate warehouse is selected
+    if (!this.saleForm.get('warehouseId')?.value) {
+      this.toastr.error('Please select a warehouse', 'Validation Error');
+      this.saleForm.get('warehouseId')?.markAsTouched();
       return;
     }
 
-    const customerObj = this.saleForm.get('customerId')?.value;
-    const variantObj = this.saleForm.get('variantId')?.value;
+    // Validate form is valid
+    if (this.saleForm.invalid) {
+      this.toastr.error('Please fill all required fields', 'Validation Error');
+      return;
+    }
+
+    const customerId = this.saleForm.get('customerId')?.value;
+    const variantId = this.saleForm.get('variantId')?.value;
+    const warehouseId = this.saleForm.get('warehouseId')?.value;
+    
     const saleRequest = {
-      customerId: customerObj && customerObj.id ? customerObj.id : null,
+      warehouseId: warehouseId,
+      customerId: customerId,
       items: [
         {
-          variantId: variantObj && variantObj.id ? variantObj.id : null,
+          variantId: variantId,
           qtyIssued: parseInt(this.saleForm.get('filledIssuedQty')?.value),
           qtyEmptyReceived: parseInt(this.saleForm.get('emptyReceivedQty')?.value),
-          discount: parseFloat(this.saleForm.get('discount')?.value) || 0
+          discount: this.discountPrice || 0
         }
       ]
     };
-
-    this.isSubmitting = true;
-
     const sub = this.saleService.createSale(saleRequest)
       .pipe(
         catchError((error: any) => {
@@ -236,19 +424,42 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           return of(null);
         })
       )
-      .subscribe(response => {
-        if (response) {
-          this.toastr.success('Sale recorded successfully', 'Success');
-          this.resetForm();
+      .subscribe({
+        next: (response) => {
+          if (response) {
+            this.toastr.success('Sale recorded successfully', 'Success');
+            this.resetForm();
+          }
+        },
+        complete: () => {
+          sub.unsubscribe();
         }
-        this.isSubmitting = false;
-        sub.unsubscribe();
       });
   }
 
   resetForm() {
-    this.saleForm.reset({ customerId: null, variantId: null, filledIssuedQty: null, emptyReceivedQty: null, basePrice: null, discount: null });
+    // Reset the autocomplete components
+    if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+      this.autocompleteInputs.forEach(input => {
+        input.resetInput();
+      });
+    }
+    
+    // Rebuild the form completely with all fields
+    this.saleForm = this.fb.group({
+      warehouseId: [null, Validators.required],
+      customerId: [null, Validators.required],
+      variantId: [null, Validators.required],
+      filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
+      emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
+      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]]
+    });
+    
     this.saleForm.get('basePrice')?.disable();
+    this.saleForm.markAsPristine();
+    this.saleForm.markAsUntouched();
     this.baseAmount = 0;
+    this.discountPrice = 0;
+    this.filteredVariants = this.variants;
   }
 }

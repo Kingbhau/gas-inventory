@@ -5,9 +5,11 @@ import com.gasagency.dto.CustomerCylinderLedgerDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
+import com.gasagency.entity.Warehouse;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.repository.CustomerRepository;
 import com.gasagency.repository.CylinderVariantRepository;
+import com.gasagency.repository.WarehouseRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
 import org.springframework.data.domain.Page;
@@ -31,24 +33,125 @@ public class CustomerCylinderLedgerService {
         private final CustomerCylinderLedgerRepository repository;
         private final CustomerRepository customerRepository;
         private final CylinderVariantRepository variantRepository;
+        private final WarehouseRepository warehouseRepository;
         private final InventoryStockService inventoryStockService;
+        private final WarehouseTransferService warehouseTransferService;
 
         public CustomerCylinderLedgerService(CustomerCylinderLedgerRepository repository,
                         CustomerRepository customerRepository,
                         CylinderVariantRepository variantRepository,
-                        InventoryStockService inventoryStockService) {
+                        WarehouseRepository warehouseRepository,
+                        InventoryStockService inventoryStockService,
+                        WarehouseTransferService warehouseTransferService) {
                 this.repository = repository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
+                this.warehouseRepository = warehouseRepository;
                 this.inventoryStockService = inventoryStockService;
+                this.warehouseTransferService = warehouseTransferService;
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
         public List<CustomerCylinderLedgerDTO> getAllMovements() {
-                return repository.findAll().stream()
+                List<CustomerCylinderLedgerDTO> ledgerMovements = repository.findAll().stream()
                                 .sorted((a, b) -> b.getTransactionDate().compareTo(a.getTransactionDate()))
                                 .map(this::toDTO)
                                 .collect(Collectors.toList());
+
+                // Get all warehouse transfers
+                try {
+                        List<com.gasagency.dto.WarehouseTransferDTO> allTransfers = warehouseTransferService
+                                        .getAllTransfers();
+                        if (allTransfers != null && !allTransfers.isEmpty()) {
+                                List<CustomerCylinderLedgerDTO> transferMovements = allTransfers.stream()
+                                                .map(this::transferToLedgerDTO)
+                                                .collect(Collectors.toList());
+
+                                // Combine and sort by date, then by createdDate (latest timestamp first)
+                                List<CustomerCylinderLedgerDTO> combined = new ArrayList<>();
+                                combined.addAll(ledgerMovements);
+                                combined.addAll(transferMovements);
+                                combined.sort((a, b) -> {
+                                        LocalDate dateA = a.getTransactionDate() != null ? a.getTransactionDate()
+                                                        : LocalDate.now();
+                                        LocalDate dateB = b.getTransactionDate() != null ? b.getTransactionDate()
+                                                        : LocalDate.now();
+                                        int dateComparison = dateB.compareTo(dateA);
+                                        if (dateComparison != 0) {
+                                                return dateComparison;
+                                        }
+                                        // If dates are equal, sort by createdDate descending (latest record first)
+                                        java.time.LocalDateTime timeA = a.getCreatedAt();
+                                        java.time.LocalDateTime timeB = b.getCreatedAt();
+                                        if (timeA == null)
+                                                timeA = java.time.LocalDateTime.MIN;
+                                        if (timeB == null)
+                                                timeB = java.time.LocalDateTime.MIN;
+                                        return timeB.compareTo(timeA);
+                                });
+
+                                return combined;
+                        }
+                } catch (Exception e) {
+                        LoggerUtil.logBusinessError(logger, "GET_ALL_MOVEMENTS", "Error fetching transfers");
+                }
+
+                return ledgerMovements;
+        }
+
+        // Get ledger entries for a specific warehouse sorted by date descending
+        public List<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId) {
+                // Get customer ledger movements for this warehouse
+                List<CustomerCylinderLedgerDTO> ledgerMovements = repository.findByWarehouseId(warehouseId).stream()
+                                .sorted((a, b) -> b.getTransactionDate().compareTo(a.getTransactionDate()))
+                                .map(this::toDTO)
+                                .collect(Collectors.toList());
+
+                // Get warehouse transfers involving this warehouse
+                try {
+                        List<com.gasagency.dto.WarehouseTransferDTO> allTransfers = warehouseTransferService
+                                        .getAllTransfers();
+                        if (allTransfers != null && !allTransfers.isEmpty()) {
+                                List<CustomerCylinderLedgerDTO> transferMovements = allTransfers.stream()
+                                                .filter(t -> t.getFromWarehouseId() != null
+                                                                && t.getToWarehouseId() != null &&
+                                                                (t.getFromWarehouseId().equals(warehouseId)
+                                                                                || t.getToWarehouseId()
+                                                                                                .equals(warehouseId)))
+                                                .map(this::transferToLedgerDTO)
+                                                .collect(Collectors.toList());
+
+                                // Combine and sort by date, then by createdDate (latest timestamp first)
+                                List<CustomerCylinderLedgerDTO> combined = new ArrayList<>();
+                                combined.addAll(ledgerMovements);
+                                combined.addAll(transferMovements);
+                                combined.sort((a, b) -> {
+                                        LocalDate dateA = a.getTransactionDate() != null ? a.getTransactionDate()
+                                                        : LocalDate.now();
+                                        LocalDate dateB = b.getTransactionDate() != null ? b.getTransactionDate()
+                                                        : LocalDate.now();
+                                        int dateComparison = dateB.compareTo(dateA);
+                                        if (dateComparison != 0) {
+                                                return dateComparison;
+                                        }
+                                        // If dates are equal, sort by createdDate descending (latest record first)
+                                        java.time.LocalDateTime timeA = a.getCreatedAt();
+                                        java.time.LocalDateTime timeB = b.getCreatedAt();
+                                        if (timeA == null)
+                                                timeA = java.time.LocalDateTime.MIN;
+                                        if (timeB == null)
+                                                timeB = java.time.LocalDateTime.MIN;
+                                        return timeB.compareTo(timeA);
+                                });
+
+                                return combined;
+                        }
+                } catch (Exception e) {
+                        LoggerUtil.logBusinessError(logger, "GET_MOVEMENTS_BY_WAREHOUSE", "Error fetching transfers",
+                                        "warehouseId", warehouseId);
+                }
+
+                return ledgerMovements;
         }
 
         /**
@@ -99,11 +202,11 @@ public class CustomerCylinderLedgerService {
         }
 
         @Transactional
-        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long variantId,
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
                         LocalDate transactionDate, String refType, Long refId,
                         Long filledOut, Long emptyIn) {
-                LoggerUtil.logBusinessEntry(logger, "CREATE_LEDGER_ENTRY", "customerId", customerId, "variantId",
-                                variantId);
+                LoggerUtil.logBusinessEntry(logger, "CREATE_LEDGER_ENTRY", "customerId", customerId, "warehouseId",
+                                warehouseId, "variantId", variantId);
 
                 Customer customer = customerRepository.findById(customerId)
                                 .orElseThrow(() -> {
@@ -112,6 +215,16 @@ public class CustomerCylinderLedgerService {
                                         return new ResourceNotFoundException(
                                                         "Customer not found with id: " + customerId);
                                 });
+
+                Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                                .orElseThrow(() -> {
+                                        LoggerUtil.logBusinessError(logger, "CREATE_LEDGER_ENTRY",
+                                                        "Warehouse not found",
+                                                        "warehouseId", warehouseId);
+                                        return new ResourceNotFoundException(
+                                                        "Warehouse not found with id: " + warehouseId);
+                                });
+
                 CylinderVariant variant = variantRepository.findById(variantId)
                                 .orElseThrow(() -> {
                                         LoggerUtil.logBusinessError(logger, "CREATE_LEDGER_ENTRY", "Variant not found",
@@ -148,9 +261,10 @@ public class CustomerCylinderLedgerService {
                 if ((type == CustomerCylinderLedger.TransactionType.SALE) && refId == null) {
                         throw new IllegalArgumentException("Reference ID is required for SALE transactions");
                 }
-                // For EMPTY_RETURN and other types, refId can be null
+
+                // Create new ledger entry for each transaction
                 CustomerCylinderLedger ledger = new CustomerCylinderLedger(
-                                customer, variant, transactionDate,
+                                customer, warehouse, variant, transactionDate,
                                 type,
                                 refId, filledOut, emptyIn, balance);
                 ledger = repository.save(ledger);
@@ -161,7 +275,7 @@ public class CustomerCylinderLedgerService {
 
                 // Update inventory for EMPTY_RETURN
                 if (type == CustomerCylinderLedger.TransactionType.EMPTY_RETURN && emptyIn > 0) {
-                        inventoryStockService.incrementEmptyQty(variantId, emptyIn);
+                        inventoryStockService.incrementEmptyQty(warehouse, variant, emptyIn);
                 }
 
                 return toDTO(ledger);
@@ -300,7 +414,7 @@ public class CustomerCylinderLedgerService {
         }
 
         private CustomerCylinderLedgerDTO toDTO(CustomerCylinderLedger ledger) {
-                return new CustomerCylinderLedgerDTO(
+                CustomerCylinderLedgerDTO dto = new CustomerCylinderLedgerDTO(
                                 ledger.getId(),
                                 ledger.getCustomer().getId(),
                                 ledger.getCustomer().getName(),
@@ -312,5 +426,29 @@ public class CustomerCylinderLedgerService {
                                 ledger.getFilledOut(),
                                 ledger.getEmptyIn(),
                                 ledger.getBalance());
+                dto.setCreatedAt(ledger.getCreatedDate());
+                return dto;
+        }
+
+        private CustomerCylinderLedgerDTO transferToLedgerDTO(com.gasagency.dto.WarehouseTransferDTO transfer) {
+                // Convert transfer to ledger DTO format for display
+                CustomerCylinderLedgerDTO dto = new CustomerCylinderLedgerDTO(
+                                transfer.getId(),
+                                0L, // No customer for transfers
+                                "Transfer", // Show as system transfer
+                                transfer.getVariantId(),
+                                transfer.getVariantName(),
+                                transfer.getTransferDate(),
+                                "Transfer",
+                                transfer.getId(),
+                                transfer.getFilledQty(),
+                                transfer.getEmptyQty(),
+                                0L);
+                dto.setFromWarehouseId(transfer.getFromWarehouseId());
+                dto.setFromWarehouseName(transfer.getFromWarehouseName());
+                dto.setToWarehouseId(transfer.getToWarehouseId());
+                dto.setToWarehouseName(transfer.getToWarehouseName());
+                dto.setCreatedAt(transfer.getCreatedAt());
+                return dto;
         }
 }

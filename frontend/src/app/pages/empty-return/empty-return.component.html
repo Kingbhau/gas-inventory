@@ -12,6 +12,19 @@
     </div>
     <div class="card-body">
       <form [formGroup]="emptyReturnForm" (ngSubmit)="submit()" class="sale-form">
+        <!-- Warehouse Selection (Autocomplete) -->
+        <app-autocomplete-input
+          label="Warehouse"
+          [required]="true"
+          [items]="warehouses"
+          [displayKey]="'name'"
+          placeholder="Warehouse name..."
+          (selectedChange)="onWarehouseSelected($event)"
+        ></app-autocomplete-input>
+        <div *ngIf="emptyReturnForm.get('warehouseId')?.invalid && emptyReturnForm.get('warehouseId')?.touched" class="error-message">
+          Warehouse is required
+        </div>
+
         <!-- Customer Selection (Autocomplete) -->
         <app-autocomplete-input
           label="Customer"
@@ -19,7 +32,7 @@
           [items]="customers"
           [displayKey]="'name'"
           placeholder="Select a customer"
-          (selectedChange)="emptyReturnForm.get('customerId')?.setValue($event?.id || '')"
+          (selectedChange)="onCustomerSelected($event)"
         ></app-autocomplete-input>
         <div *ngIf="emptyReturnForm.get('customerId')?.invalid && emptyReturnForm.get('customerId')?.touched" class="error-message">
           Customer is required
@@ -32,7 +45,7 @@
           [items]="variants"
           [displayKey]="'name'"
           placeholder="Select variant"
-          (selectedChange)="emptyReturnForm.get('variantId')?.setValue($event?.id || '')"
+          (selectedChange)="onVariantSelected($event)"
         ></app-autocomplete-input>
         <div *ngIf="emptyReturnForm.get('variantId')?.invalid && emptyReturnForm.get('variantId')?.touched" class="error-message">
           Variant is required

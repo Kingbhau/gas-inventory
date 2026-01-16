@@ -1,0 +1,135 @@
+<div class="warehouse-management-wrapper">
+  <!-- Warehouse Form Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingWarehouseId ? 'Edit Warehouse' : 'Add New Warehouse' }}</h2>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="warehouseForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <!-- Warehouse Name -->
+        <div class="form-group">
+          <label class="form-label">Warehouse Name <span class="required">*</span></label>
+          <input 
+            formControlName="name" 
+            type="text" 
+            class="form-control" 
+            placeholder="e.g., Panvel, Karjat"
+            [class.is-invalid]="warehouseForm.get('name')?.invalid && warehouseForm.get('name')?.touched"
+          />
+          <div *ngIf="warehouseForm.get('name')?.invalid && warehouseForm.get('name')?.touched" class="form-error">
+            <span *ngIf="warehouseForm.get('name')?.errors?.['required']">Warehouse name is required</span>
+            <span *ngIf="warehouseForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters</span>
+            <span *ngIf="warehouseForm.get('name')?.errors?.['maxlength']">Name cannot exceed 100 characters</span>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="status" 
+            class="form-control"
+            [class.is-invalid]="warehouseForm.get('status')?.invalid && warehouseForm.get('status')?.touched"
+          >
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="warehouseForm.invalid || isSubmitting"
+          >
+            <span *ngIf="!isSubmitting">{{ editingWarehouseId ? 'Update' : 'Create' }}</span>
+            <span *ngIf="isSubmitting">{{ editingWarehouseId ? 'Updating...' : 'Creating...' }}</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Warehouses List Section -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Warehouses</h3>
+      <button (click)="onAddNew()" class="btn btn-primary">+ Add Warehouse</button>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <p>Loading warehouses...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && warehouses.length === 0" class="no-data-container">
+        <p>No warehouses found. Create one to get started.</p>
+      </div>
+
+      <!-- Warehouses Table -->
+      <div *ngIf="!isLoading && warehouses.length > 0" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Warehouse Name</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let warehouse of warehouses">
+              <td><strong>{{ warehouse.name }}</strong></td>
+              <td>
+                <span class="badge" [ngClass]="getStatusColor(warehouse.status)">
+                  {{ getStatusText(warehouse.status) }}
+                </span>
+              </td>
+              <td class="muted">{{ formatDate(warehouse.createdAt) }}</td>
+              <td class="text-center">
+                <!-- Edit Button -->
+                <button 
+                  class="btn-action" 
+                  (click)="editWarehouse(warehouse)"
+                  title="Edit warehouse"
+                >
+                  <fa-icon [icon]="faPencil"></fa-icon>
+                </button>
+
+                <!-- Activate Button -->
+                <button
+                  *ngIf="warehouse.status === 'INACTIVE'"
+                  class="btn-action"
+                  (click)="activateWarehouse(warehouse.id)"
+                  title="Activate warehouse"
+                >
+                  <fa-icon [icon]="faCheck"></fa-icon>
+                </button>
+
+                <!-- Deactivate Button -->
+                <button
+                  *ngIf="warehouse.status === 'ACTIVE' && !isDefaultWarehouse(warehouse.id)"
+                  class="btn-action delete"
+                  (click)="deactivateWarehouse(warehouse.id)"
+                  title="Deactivate warehouse"
+                >
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

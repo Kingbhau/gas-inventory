@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -19,6 +19,7 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
   @Input() selected: T | null = null;
 
   @Output() selectedChange = new EventEmitter<T | null>();
+  @ViewChild('searchInput') searchInput!: ElementRef;
 
   searchText: string = '';
   isOpen: boolean = false;
@@ -54,6 +55,15 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
     }, 150);
   }
 
+  onInputChange() {
+    // If input is cleared, emit null to clear the form value
+    if (!this.searchText || this.searchText.trim() === '') {
+      this.selected = null;
+      this.selectedChange.emit(null);
+      this.cdr.markForCheck();
+    }
+  }
+
   onSelect(item: T) {
     this.selected = item;
     this.selectedChange.emit(item);
@@ -68,6 +78,16 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
       return String((item as any)[this.displayKey] ?? '');
     }
     return String(item);
+  }
+
+  resetInput(): void {
+    this.searchText = '';
+    this.selected = null;
+    this.isOpen = false;
+    if (this.searchInput) {
+      this.searchInput.nativeElement.value = '';
+    }
+    this.cdr.markForCheck();
   }
 }
 

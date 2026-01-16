@@ -8,6 +8,10 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class CreateSupplierTransactionRequestDTO {
+    @NotNull(message = "Warehouse ID cannot be null")
+    @Positive(message = "Warehouse ID must be greater than 0")
+    private Long warehouseId;
+
     @NotNull(message = "Supplier ID cannot be null")
     @Positive(message = "Supplier ID must be greater than 0")
     private Long supplierId;
@@ -35,8 +39,10 @@ public class CreateSupplierTransactionRequestDTO {
     public CreateSupplierTransactionRequestDTO() {
     }
 
-    public CreateSupplierTransactionRequestDTO(Long supplierId, Long variantId, Long filledReceived, Long emptySent,
+    public CreateSupplierTransactionRequestDTO(Long warehouseId, Long supplierId, Long variantId, Long filledReceived,
+            Long emptySent,
             String reference, Double amount) {
+        this.warehouseId = warehouseId;
         this.supplierId = supplierId;
         this.variantId = variantId;
         this.filledReceived = filledReceived;
@@ -51,6 +57,14 @@ public class CreateSupplierTransactionRequestDTO {
 
     public void setAmount(Double amount) {
         this.amount = amount;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public Long getSupplierId() {

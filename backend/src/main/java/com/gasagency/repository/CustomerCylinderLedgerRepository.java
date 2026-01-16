@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CustomerCylinderLedgerRepository extends JpaRepository<CustomerCylinderLedger, Long> {
@@ -30,4 +31,8 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         @Param("variantId") Long variantId);
 
         List<CustomerCylinderLedger> findByVariant(CylinderVariant variant);
+
+        // Get all ledger entries for a specific warehouse
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.warehouse.id = :warehouseId ORDER BY l.transactionDate DESC")
+        List<CustomerCylinderLedger> findByWarehouseId(@Param("warehouseId") Long warehouseId);
 }

@@ -26,6 +26,7 @@ import { SaleService } from '../../services/sale.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { InventoryStockService } from '../../services/inventory-stock.service';
 import { SupplierTransactionService } from '../../services/supplier-transaction.service';
+import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { ExpenseReportComponent } from '../expenses/expense-report.component';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
@@ -133,8 +134,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
   filterReturnPendingVariantId: string = '';
+  filterInventoryWarehouseId: string = '';
   customersList: any[] = [];
   variantsList: any[] = [];
+  warehousesList: any[] = [];
   selectedReport = 'sales';
   filterFromDate = '';
   filterToDate = '';
@@ -180,6 +183,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private supplierTransactionService: SupplierTransactionService,
     private customerService: CustomerService,
     private variantService: CylinderVariantService,
+    private warehouseService: WarehouseService,
     private toastr: ToastrService,
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
@@ -214,6 +218,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
         this.variantsList = data.content || data;
       },
       error: () => { this.variantsList = []; }
+    });
+    this.warehouseService.getActiveWarehouses().subscribe({
+      next: (data: any) => {
+        this.warehousesList = (data && data.data) || [];
+      },
+      error: () => { this.warehousesList = []; }
     });
   }
 
@@ -264,7 +274,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   loadInventoryData() {
     this.loadingService.show('Loading inventory data...');
-    const sub = this.inventoryService.getAllStock(this.inventoryPage - 1, this.inventoryPageSize)
+    
+    // Use different API endpoints based on filter
+    const apiCall = this.filterInventoryWarehouseId 
+      ? this.inventoryService.getStockByWarehouse(parseInt(this.filterInventoryWarehouseId))
+      : this.inventoryService.getAllStock(this.inventoryPage - 1, this.inventoryPageSize);
+    
+    const sub = apiCall
       .pipe(
         finalize(() => this.loadingService.hide()),
         catchError((error: any) => {
@@ -275,17 +291,60 @@ export class ReportsComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe((data: any) => {
-        const stockArray = data.content || data;
-        this.inventoryData = stockArray.map((stock: any) => ({
-          variant: stock.variantName || 'Unknown',
-          filled: stock.filledQty || 0,
-          empty: stock.emptyQty || 0
-        }));
-        this.inventoryTotalElements = data.totalElements || this.inventoryData.length;
+        let stockArray = Array.isArray(data) ? data : (data.content || data);
+        console.log('Loaded stock array:', stockArray);
+        console.log('Filter warehouse ID:', this.filterInventoryWarehouseId);
+        
+        if (this.filterInventoryWarehouseId) {
+          // Get warehouse name from selected warehouse
+          const selectedWarehouse = this.warehousesList.find(w => w.id === parseInt(this.filterInventoryWarehouseId));
+          const warehouseName = selectedWarehouse ? selectedWarehouse.name : 'Unknown';
+          
+          // Show individual warehouse items
+          this.inventoryData = stockArray.map((stock: any) => ({
+            warehouseId: stock.warehouseId,
+            warehouse: warehouseName,
+            variant: stock.variantName || 'Unknown',
+            filled: stock.filledQty || 0,
+            empty: stock.emptyQty || 0
+          }));
+        } else {
+          // Group by variant and sum quantities when showing all warehouses
+          const groupedByVariant = new Map<string, any>();
+          stockArray.forEach((stock: any) => {
+            const variantName = stock.variantName || 'Unknown';
+            if (!groupedByVariant.has(variantName)) {
+              groupedByVariant.set(variantName, {
+                warehouse: 'All Warehouses',
+                variant: variantName,
+                filled: 0,
+                empty: 0
+              });
+            }
+            const item = groupedByVariant.get(variantName);
+            item.filled += stock.filledQty || 0;
+            item.empty += stock.emptyQty || 0;
+          });
+          this.inventoryData = Array.from(groupedByVariant.values());
+        }
+        
+        console.log('Final inventory data:', this.inventoryData);
+        this.inventoryTotalElements = this.inventoryData.length;
         this.cdr.markForCheck();
-        this.inventoryTotalPages = data.totalPages || 1;
+        this.inventoryTotalPages = Math.ceil(this.inventoryData.length / this.inventoryPageSize) || 1;
         sub.unsubscribe();
       });
+  }
+
+  onInventoryWarehouseChange() {
+    this.inventoryPage = 1;
+    this.loadInventoryData();
+  }
+
+  resetInventoryFilter() {
+    this.filterInventoryWarehouseId = '';
+    this.inventoryPage = 1;
+    this.loadInventoryData();
   }
 
   loadSupplierData() {

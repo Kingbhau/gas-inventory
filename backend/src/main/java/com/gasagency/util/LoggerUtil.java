@@ -140,6 +140,57 @@ public class LoggerUtil {
     }
 
     /**
+     * Log API endpoint entry
+     * 
+     * @param logger   Logger instance
+     * @param method   HTTP method (GET, POST, PUT, DELETE, etc.)
+     * @param endpoint API endpoint path
+     * @param details  Key-value pairs with request details
+     */
+    public static void logApiEntry(Logger logger, String method, String endpoint, Object... details) {
+        StringBuilder message = new StringBuilder("API_REQUEST | method=").append(method)
+                .append(" | endpoint=").append(endpoint);
+        appendDetails(message, details);
+        logger.info(message.toString());
+    }
+
+    /**
+     * Log successful API response
+     * 
+     * @param logger   Logger instance
+     * @param method   HTTP method (GET, POST, PUT, DELETE, etc.)
+     * @param endpoint API endpoint path
+     * @param details  Key-value pairs with response details
+     */
+    public static void logApiSuccess(Logger logger, String method, String endpoint, Object... details) {
+        StringBuilder message = new StringBuilder("API_RESPONSE | method=").append(method)
+                .append(" | endpoint=").append(endpoint)
+                .append(" | status=SUCCESS");
+        appendDetails(message, details);
+        logger.info(message.toString());
+    }
+
+    /**
+     * Log API error response
+     * 
+     * @param logger       Logger instance
+     * @param method       HTTP method (GET, POST, PUT, DELETE, etc.)
+     * @param endpoint     API endpoint path
+     * @param statusCode   HTTP status code
+     * @param errorMessage Error description
+     * @param details      Key-value pairs with additional context
+     */
+    public static void logApiError(Logger logger, String method, String endpoint, int statusCode, String errorMessage,
+            Object... details) {
+        StringBuilder message = new StringBuilder("API_ERROR | method=").append(method)
+                .append(" | endpoint=").append(endpoint)
+                .append(" | statusCode=").append(statusCode)
+                .append(" | error=").append(errorMessage);
+        appendDetails(message, details);
+        logger.warn(message.toString());
+    }
+
+    /**
      * Set transaction ID in MDC for correlation
      * 
      * @param transactionId Unique transaction identifier

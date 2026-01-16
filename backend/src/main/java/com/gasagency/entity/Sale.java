@@ -14,12 +14,22 @@ import java.util.Objects;
 @Entity
 @Table(name = "sale", indexes = {
         @Index(name = "idx_sale_customer_id", columnList = "customer_id"),
+        @Index(name = "idx_sale_warehouse_id", columnList = "warehouse_id"),
         @Index(name = "idx_sale_sale_date", columnList = "saleDate")
 })
 public class Sale extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
+    @NotNull(message = "Warehouse is required.")
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 
     @NotNull(message = "Customer is required.")
     @ManyToOne
@@ -45,7 +55,8 @@ public class Sale extends Auditable {
     public Sale() {
     }
 
-    public Sale(Customer customer, LocalDate saleDate, BigDecimal totalAmount) {
+    public Sale(Warehouse warehouse, Customer customer, LocalDate saleDate, BigDecimal totalAmount) {
+        this.warehouse = Objects.requireNonNull(warehouse, "Warehouse cannot be null");
         this.customer = Objects.requireNonNull(customer, "Customer cannot be null");
         this.saleDate = Objects.requireNonNull(saleDate, "Sale date cannot be null");
         this.totalAmount = Objects.requireNonNull(totalAmount, "Total amount cannot be null");
@@ -63,6 +74,22 @@ public class Sale extends Auditable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
 
     public Customer getCustomer() {
@@ -103,5 +130,32 @@ public class Sale extends Auditable {
 
     public void setSaleItems(List<SaleItem> saleItems) {
         this.saleItems = saleItems;
+    }
+
+    @Override
+    public String toString() {
+        return "Sale{" +
+                "id=" + id +
+                ", warehouse=" + (warehouse != null ? warehouse.getName() : "null") +
+                ", customer=" + (customer != null ? customer.getName() : "null") +
+                ", saleDate=" + saleDate +
+                ", totalAmount=" + totalAmount +
+                ", version=" + version +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Sale sale = (Sale) o;
+        return Objects.equals(id, sale.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

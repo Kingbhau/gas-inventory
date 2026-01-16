@@ -56,32 +56,16 @@
   </div>
 
   <!-- Monthly Pricing -->
-  <div *ngIf="activeTab === 'pricing'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Monthly Base Price</h3>
-      <button (click)="openPriceForm()" class="btn btn-primary">+ Add Price</button>
-    </div>
-    <div class="card-body">
-      <div class="pricing-grid">
-        <div class="pricing-card" *ngFor="let price of monthlyPrices">
-          <div class="price-month">{{ price.month || 'N/A' }}</div>
-          <div class="price-list">
-            <ng-container *ngIf="price.variants && price.variants.length > 0">
-              <div class="price-item" *ngFor="let variant of price.variants">
-                <span class="variant-name">{{ variant.name || 'Unknown' }}</span>
-                <span class="price-value">₹ {{ variant.price || 0 }}</span>
-              </div>
-            </ng-container>
-          </div>
-          <button (click)="editPrice(price)" class="btn btn-secondary">Edit</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Pricing section removed - now using customer-specific pricing -->
 
   <!-- Expense Categories -->
   <div *ngIf="activeTab === 'categories'" class="card">
     <app-expense-category-management></app-expense-category-management>
+  </div>
+
+  <!-- Warehouses -->
+  <div *ngIf="activeTab === 'warehouses'" class="card">
+    <app-warehouse-management></app-warehouse-management>
   </div>
 
   <!-- Business Info -->
@@ -177,37 +161,5 @@
     </div>
   </div>
 
-  <!-- Price Edit Modal -->
-  <div *ngIf="showPriceForm" class="modal-overlay" (click)="closePriceForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>{{ isEditingPrice ? 'Edit Prices - ' + editingPrice?.month : 'Add New Price' }}</h2>
-        <button class="modal-close" (click)="closePriceForm()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="!isEditingPrice" class="form-group">
-          <label class="form-label">Select Month <span class="required">*</span></label>
-          <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange(selectedMonth)" class="form-control" placeholder="Select month">
-        </div>
-        <div class="price-edit-list">
-          <ng-container *ngIf="editingPrice?.variants && editingPrice.variants.length > 0">
-            <div class="price-edit-item" *ngFor="let variant of editingPrice.variants">
-              <label class="form-label">{{ variant.name || 'Unknown' }}</label>
-              <div class="input-with-currency">
-                <span class="currency">₹</span>
-                <input type="number" [(ngModel)]="variant.price" class="form-control" placeholder="Enter price">
-              </div>
-            </div>
-          </ng-container>
-          <div *ngIf="!editingPrice?.variants || editingPrice.variants.length === 0" class="no-data">
-            <p>All variants already have prices for this month</p>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button (click)="savePrices()" class="btn btn-primary">Save Prices</button>
-        <button (click)="closePriceForm()" class="btn btn-secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
+  <!-- Price Edit Modal removed - now using customer-specific pricing -->
 </div>

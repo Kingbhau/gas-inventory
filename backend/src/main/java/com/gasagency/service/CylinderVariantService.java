@@ -101,6 +101,18 @@ public class CylinderVariantService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get CylinderVariant entity by ID (internal use)
+     */
+    public CylinderVariant getCylinderVariantEntity(Long id) {
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Variant ID must be positive");
+        }
+
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Variant not found with ID: " + id));
+    }
+
     public CylinderVariantDTO updateVariant(Long id, CylinderVariantDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "UPDATE_VARIANT", "id", id, "name", dto != null ? dto.getName() : "null");
 

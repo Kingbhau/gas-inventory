@@ -4,6 +4,8 @@ import java.time.LocalDate;
 
 public class SupplierTransactionDTO {
     private Long id;
+    private Long warehouseId;
+    private String warehouseName;
     private Long supplierId;
     private String supplierName;
     private Long variantId;
@@ -17,9 +19,12 @@ public class SupplierTransactionDTO {
     public SupplierTransactionDTO() {
     }
 
-    public SupplierTransactionDTO(Long id, Long supplierId, String supplierName, Long variantId, String variantName,
+    public SupplierTransactionDTO(Long id, Long warehouseId, String warehouseName, Long supplierId, String supplierName,
+            Long variantId, String variantName,
             LocalDate transactionDate, Long filledReceived, Long emptySent, String reference, Double amount) {
         this.id = id;
+        this.warehouseId = warehouseId;
+        this.warehouseName = warehouseName;
         this.supplierId = supplierId;
         this.supplierName = supplierName;
         this.variantId = variantId;
@@ -45,6 +50,22 @@ public class SupplierTransactionDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
     }
 
     public Long getSupplierId() {

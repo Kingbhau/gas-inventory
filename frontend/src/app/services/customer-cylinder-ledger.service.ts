@@ -15,6 +15,11 @@ export class CustomerCylinderLedgerService {
         return this.http.get<any[]>(`${this.apiUrl}/movements`, { withCredentials: true })
           .pipe(applyTimeout());
       }
+
+      getMovementsByWarehouse(warehouseId: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/movements/warehouse/${warehouseId}`, { withCredentials: true })
+          .pipe(applyTimeout());
+      }
     constructor(private http: HttpClient) { }
 
     // Rename to getAllReturnPendingSummary for clarity

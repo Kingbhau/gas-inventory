@@ -3,7 +3,7 @@ import { catchError, of, finalize } from 'rxjs';
 import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,7 @@ import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { CustomerBalance, VariantBalance } from '../../models/customer-balance.model';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
+import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
 import { LoadingService } from '../../services/loading.service';
 import { ToastrService } from 'ngx-toastr';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
@@ -24,6 +25,25 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomerManagementComponent implements OnInit, OnDestroy {
+
+  /**
+   * Custom validator: ensures discountPrice <= salePrice
+   */
+  discountNotGreaterThanSaleValidator(control: AbstractControl): ValidationErrors | null {
+    if (!control.parent) return null;
+    
+    const salePrice = control.parent.get('salePrice')?.value;
+    const discountPrice = control.value;
+    
+    // If both values exist and discount is greater than sale, return error
+    if (salePrice !== null && salePrice !== undefined && salePrice !== '' &&
+        discountPrice !== null && discountPrice !== undefined && discountPrice !== '') {
+      if (parseFloat(discountPrice) > parseFloat(salePrice)) {
+        return { discountGreaterThanSale: true };
+      }
+    }
+    return null;
+  }
 
   // Pagination state for customers table
   customerPage = 1;
@@ -92,6 +112,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   showDetailsModal = false;
   detailsCustomer: any = null;
+  detailsVariantPrices: any[] = [];
 
 
   // Rename all pendingUnits to returnPendingUnits for clarity
@@ -104,6 +125,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
     private variantService: CylinderVariantService,
+    private variantPriceService: CustomerVariantPriceService,
     private loadingService: LoadingService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
@@ -125,12 +147,30 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   openDetailsModal(customer: any) {
     this.detailsCustomer = customer;
+    this.detailsVariantPrices = [];
     this.showDetailsModal = true;
+    
+    // Load variant prices for this customer
+    this.variantPriceService.getPricesByCustomer(customer.id)
+      .subscribe({
+        next: (response: any) => {
+          // Response is ApiResponse<List<CustomerVariantPriceDTO>>
+          if (response && response.data) {
+            this.detailsVariantPrices = response.data;
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error loading variant prices:', err);
+          this.detailsVariantPrices = [];
+        }
+      });
   }
 
   closeDetailsModal() {
     this.showDetailsModal = false;
     this.detailsCustomer = null;
+    this.detailsVariantPrices = [];
   }
 
   loadVariantsAndCustomers() {
@@ -147,6 +187,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       )
       .subscribe((data: any) => {
         this.variants = data.content || data;
+        this.buildVariantPricingArray(); // Build form array with variants
         this.loadCustomersWithBalances();
         variantSub.unsubscribe();
       });
@@ -263,8 +304,83 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       mobile: ['', [Validators.required, Validators.pattern('^[6-9][0-9]{9}$')]],
       address: ['', [Validators.required, Validators.maxLength(255)]],
-      active: [true, Validators.required]
+      active: [true, Validators.required],
+      configuredVariants: [[], Validators.required],
+      variantPrices: this.fb.array([])
     });
+
+    // Listen for variant configuration changes
+    this.customerForm.get('configuredVariants')?.valueChanges.subscribe(selectedVariantIds => {
+      this.buildVariantPricingArray(selectedVariantIds);
+    });
+  }
+
+  /**
+   * Build variant pricing form controls only for selected variants
+   * Preserves existing prices when variants are added/removed
+   */
+  buildVariantPricingArray(selectedVariantIds?: any[]) {
+    const pricesArray = this.customerForm.get('variantPrices') as FormArray;
+    const variantIds = selectedVariantIds || this.customerForm.get('configuredVariants')?.value || [];
+    
+    // Create a map of existing prices by variantId for quick lookup
+    const existingPrices: { [key: number]: any } = {};
+    pricesArray.controls.forEach((control: any, index: number) => {
+      const variantId = control.get('variantId')?.value;
+      if (variantId) {
+        existingPrices[variantId] = {
+          salePrice: control.get('salePrice')?.value,
+          discountPrice: control.get('discountPrice')?.value,
+          variantName: control.get('variantName')?.value
+        };
+      }
+    });
+
+    // Clear and rebuild with selected variants
+    pricesArray.clear();
+    
+    this.variants
+      .filter(variant => variantIds.includes(variant.id))
+      .forEach(variant => {
+        // Get existing prices if available, otherwise empty
+        const existingPrice = existingPrices[variant.id];
+        
+        const priceGroup = this.fb.group({
+          variantId: [variant.id, Validators.required],
+          variantName: [variant.name],
+          salePrice: [existingPrice?.salePrice || '', [Validators.required, Validators.min(0)]],
+          discountPrice: [existingPrice?.discountPrice || '', [Validators.required, Validators.min(0), this.discountNotGreaterThanSaleValidator.bind(this)]]
+        });
+        pricesArray.push(priceGroup);
+      });
+  }
+
+  get variantPricesArray(): FormArray {
+    return this.customerForm.get('variantPrices') as FormArray;
+  }
+
+  /**
+   * Check if a variant is selected in the configuration
+   */
+  isVariantSelected(variantId: number): boolean {
+    const configuredVariants = this.customerForm.get('configuredVariants')?.value || [];
+    return configuredVariants.includes(variantId);
+  }
+
+  /**
+   * Toggle variant selection and rebuild pricing array
+   */
+  toggleVariantSelection(variantId: number) {
+    const configuredVariantsControl = this.customerForm.get('configuredVariants');
+    const currentValues = configuredVariantsControl?.value || [];
+    
+    if (currentValues.includes(variantId)) {
+      // Remove variant
+      configuredVariantsControl?.setValue(currentValues.filter((id: number) => id !== variantId));
+    } else {
+      // Add variant
+      configuredVariantsControl?.setValue([...currentValues, variantId]);
+    }
   }
 
   // (removed duplicate openAddForm)
@@ -278,7 +394,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showForm = true;
     this.editingId = null;
     this.customerForm.reset();
-    this.customerForm.patchValue({ active: true });
+    this.customerForm.patchValue({ active: true, configuredVariants: [] });
   }
 
   editCustomer(customer: any) {
@@ -286,8 +402,39 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.editingId = customer.id;
     this.customerForm.patchValue({
       ...customer,
-      active: customer.active !== undefined ? customer.active : true
+      active: customer.active !== undefined ? customer.active : true,
+      configuredVariants: customer.configuredVariants || []
     });
+
+    // Load existing variant prices from backend
+    if (customer.id) {
+      this.variantPriceService.getPricesByCustomer(customer.id).subscribe({
+        next: (response: any) => {
+          if (response && response.data && response.data.length > 0) {
+            // Convert API response to form array format
+            const pricesArray = this.customerForm.get('variantPrices') as FormArray;
+            const prices = response.data;
+            
+            // Map prices back to form controls
+            pricesArray.clear();
+            prices.forEach((price: any) => {
+              pricesArray.push(
+                this.fb.group({
+                  variantId: [price.variantId, Validators.required],
+                  variantName: [price.variantName],
+                  salePrice: [price.salePrice ? price.salePrice.toString() : '', [Validators.required, Validators.min(0)]],
+                  discountPrice: [price.discountPrice ? price.discountPrice.toString() : '', [Validators.required, Validators.min(0), this.discountNotGreaterThanSaleValidator.bind(this)]]
+                })
+              );
+            });
+          }
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error loading variant prices:', err);
+        }
+      });
+    }
   }
 
   saveCustomer() {
@@ -303,8 +450,21 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       this.toastr.error('A customer with this mobile number already exists.', 'Validation Error');
       return;
     }
+
+    // Separate customer data from variant pricing data
+    const formValue = this.customerForm.value;
+    const variantPrices = formValue.variantPrices || [];
+    const customerData = {
+      name: formValue.name,
+      mobile: formValue.mobile,
+      address: formValue.address,
+      active: formValue.active,
+      configuredVariants: formValue.configuredVariants
+    };
+
     if (this.editingId) {
-      const sub = this.customerService.updateCustomer(this.editingId, this.customerForm.value)
+      // Update customer
+      const sub = this.customerService.updateCustomer(this.editingId, customerData)
         .pipe(
           catchError((error: any) => {
             const errorMessage = error?.error?.message || error?.message || 'Error updating customer';
@@ -315,6 +475,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         )
         .subscribe((updatedCustomer: any) => {
           if (updatedCustomer) {
+            // Update variant prices (existing customer)
+            this.updateVariantPrices(updatedCustomer.id, variantPrices, false);
+
             const index = this.customers.findIndex(c => c.id === this.editingId);
             if (index !== -1) {
               this.customers[index] = updatedCustomer;
@@ -326,7 +489,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           }
         });
     } else {
-      const sub = this.customerService.createCustomer(this.customerForm.value)
+      // Create customer
+      const sub = this.customerService.createCustomer(customerData)
         .pipe(
           catchError((error: any) => {
             const errorMessage = error?.error?.message || error?.message || 'Error creating customer';
@@ -337,6 +501,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         )
         .subscribe((newCustomer: any) => {
           if (newCustomer) {
+            // Create variant prices for the new customer
+            this.updateVariantPrices(newCustomer.id, variantPrices, true);
+
             this.toastr.success('Customer added successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
@@ -346,6 +513,71 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           }
         });
     }
+  }
+
+  /**
+   * Save variant prices for a customer
+   * For existing customers: try UPDATE first, then CREATE if not found
+   * For new customers: CREATE directly
+   */
+  private updateVariantPrices(customerId: number, variantPrices: any[], isNewCustomer: boolean = false) {
+    variantPrices.forEach(priceData => {
+      const salePrice = priceData.salePrice ? parseFloat(priceData.salePrice) : null;
+      const discountPrice = priceData.discountPrice ? parseFloat(priceData.discountPrice) : null;
+      
+      // Both prices are required
+      if (salePrice !== null && discountPrice !== null) {
+        const payload: any = {
+          customerId: customerId,
+          variantId: priceData.variantId,
+          variantName: priceData.variantName,
+          salePrice: salePrice,
+          discountPrice: discountPrice
+        };
+
+        console.log('Saving variant pricing:', payload);
+
+        if (isNewCustomer) {
+          // For new customers, directly create
+          this.variantPriceService.createPrice(customerId, payload)
+            .subscribe({
+              next: (response: any) => {
+                console.log('Variant pricing created successfully for variant', priceData.variantId);
+              },
+              error: (error: any) => {
+                console.error('Error creating variant pricing:', error);
+              }
+            });
+        } else {
+          // For existing customers, try UPDATE first (more likely case), then CREATE
+          this.variantPriceService.updatePrice(customerId, priceData.variantId, payload)
+            .subscribe({
+              next: (response: any) => {
+                console.log('Variant pricing updated successfully for variant', priceData.variantId);
+              },
+              error: (error: any) => {
+                console.log('Update failed with status:', error?.status);
+                
+                // If update fails (404 means not found), try to create
+                if (error?.status === 404) {
+                  console.log('Pricing not found, attempting to create for variant', priceData.variantId);
+                  this.variantPriceService.createPrice(customerId, payload)
+                    .subscribe({
+                      next: (response: any) => {
+                        console.log('Variant pricing created successfully for variant', priceData.variantId);
+                      },
+                      error: (createError: any) => {
+                        console.error('Error creating variant pricing:', createError);
+                      }
+                    });
+                } else {
+                  console.error('Error updating variant pricing:', error);
+                }
+              }
+            });
+        }
+      }
+    });
   }
 
   deleteCustomer(customer: any) {

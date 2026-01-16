@@ -98,11 +98,11 @@ export function exportSupplierTransactionsToPDF({
   // Table Data
   const tableData = transactions.map(t => [
     t.transactionDate,
+    t.warehouseName,
     t.supplierName,
     t.variantName,
     t.filledReceived,
     t.emptySent,
-    t.reference,
     `Rs. ${Number(t.amount).toLocaleString()}`
   ]);
 
@@ -110,11 +110,11 @@ export function exportSupplierTransactionsToPDF({
     startY: y + 2,
     head: [[
       'Date',
+      'Warehouse',
       'Supplier',
       'Variant',
       'Filled Received',
       'Empty Sent',
-      'Reference',
       'Amount'
     ]],
     body: tableData,

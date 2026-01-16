@@ -47,4 +47,9 @@ export class SupplierTransactionService {
     return this.http.get<SupplierTransaction[]>(`${this.apiUrl}/supplier/${supplierId}`, { withCredentials: true })
       .pipe(applyTimeout());
   }
+
+  getTransactionsByWarehouse(warehouseId: number): Observable<SupplierTransaction[]> {
+    return this.http.get<SupplierTransaction[]>(`${this.apiUrl}/warehouse/${warehouseId}`, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
 }

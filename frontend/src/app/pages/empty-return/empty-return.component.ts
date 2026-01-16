@@ -12,6 +12,7 @@ import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { WarehouseService } from '../../services/warehouse.service';
 
 @Component({
     selector: 'app-empty-return',
@@ -26,6 +27,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     submitting = false;
     customers: any[] = [];
     variants: any[] = [];
+    warehouses: any[] = [];
     successMessage = '';
 
     constructor(
@@ -34,11 +36,13 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         private toastr: ToastrService,
         private customerService: CustomerService,
         private variantService: CylinderVariantService,
-        private loadingService: LoadingService
+        private loadingService: LoadingService,
+        private warehouseService: WarehouseService
     ) {
         this.emptyReturnForm = this.fb.group({
-            customerId: ['', Validators.required],
-            variantId: ['', Validators.required],
+            warehouseId: [null, Validators.required],
+            customerId: [null, Validators.required],
+            variantId: [null, Validators.required],
             emptyIn: [null, [Validators.required, Validators.min(1)]],
             transactionDate: [new Date().toISOString().substring(0, 10), Validators.required]
         });
@@ -65,17 +69,80 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                 })
             )
             .subscribe((data: any) => this.variants = data as any[]);
+
+        // Load warehouses
+        this.warehouseService.getActiveWarehouses()
+            .pipe(
+                catchError((err: any) => {
+                    const errorMessage = err?.error?.message || err?.message || 'Failed to load warehouses';
+                    this.toastr.error(errorMessage, 'Error');
+                    return of([]);
+                })
+            )
+            .subscribe((response: any) => {
+                if (response.success) {
+                    this.warehouses = response.data || [];
+                }
+            });
     }
 
     ngOnDestroy() {}
 
     resetForm() {
-        this.emptyReturnForm.reset({ emptyIn: null, transactionDate: new Date().toISOString().substring(0, 10) });
+        this.emptyReturnForm.reset({ 
+            warehouseId: null,
+            customerId: null,
+            variantId: null,
+            emptyIn: null,
+            transactionDate: new Date().toISOString().substring(0, 10)
+        });
         this.emptyReturnForm.markAsPristine();
         this.emptyReturnForm.markAsUntouched();
     }
 
+    /**
+     * Handle warehouse selection from autocomplete
+     */
+    onWarehouseSelected(warehouse: any): void {
+        if (warehouse && warehouse.id) {
+            this.emptyReturnForm.get('warehouseId')?.setValue(warehouse.id);
+        } else {
+            this.emptyReturnForm.get('warehouseId')?.setValue(null);
+        }
+    }
+
+    /**
+     * Handle customer selection from autocomplete
+     */
+    onCustomerSelected(customer: any): void {
+        if (customer && customer.id) {
+            this.emptyReturnForm.get('customerId')?.setValue(customer.id);
+            this.emptyReturnForm.get('customerId')?.markAsTouched();
+        } else {
+            this.emptyReturnForm.get('customerId')?.setValue(null);
+        }
+    }
+
+    /**
+     * Handle variant selection from autocomplete
+     */
+    onVariantSelected(variant: any): void {
+        if (variant && variant.id) {
+            this.emptyReturnForm.get('variantId')?.setValue(variant.id);
+            this.emptyReturnForm.get('variantId')?.markAsTouched();
+        } else {
+            this.emptyReturnForm.get('variantId')?.setValue(null);
+        }
+    }
+
     submit() {
+        // Validate warehouse is selected
+        if (!this.emptyReturnForm.get('warehouseId')?.value) {
+            this.toastr.error('Please select a warehouse', 'Validation Error');
+            this.emptyReturnForm.get('warehouseId')?.markAsTouched();
+            return;
+        }
+
         if (this.emptyReturnForm.invalid) {
             this.emptyReturnForm.markAllAsTouched();
             this.toastr.error('Please correct the errors in the form.', 'Validation Error');
@@ -97,15 +164,17 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     return of(null);
                 })
             )
-            .subscribe((result: any) => {
-                if (result) {
-                    // this.successMessage = 'Empty cylinder return recorded';
-                    this.toastr.success('Empty cylinder return recorded');
-                    this.resetForm();
-                    // setTimeout(() => this.successMessage = '', 2500);
+            .subscribe({
+                next: (result: any) => {
+                    if (result) {
+                        this.toastr.success('Empty cylinder return recorded');
+                        this.resetForm();
+                    }
+                    this.submitting = false;
+                },
+                complete: () => {
+                    sub.unsubscribe();
                 }
-                this.submitting = false;
-                sub.unsubscribe();
             });
     }
 }

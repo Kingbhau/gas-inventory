@@ -240,13 +240,21 @@
 
   <!-- Inventory Report -->
   <div *ngIf="selectedReport === 'inventory'" class="card">
-    <div class="card-header">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h3 class="card-title">Inventory Summary Report</h3>
+      <!-- Warehouse Filter -->
+      <div class="filter-group" style="margin: 0; width: 220px;">
+        <label class="filter-label" style="margin-bottom: 0.25rem;">Warehouse</label>
+        <select [(ngModel)]="filterInventoryWarehouseId" (ngModelChange)="onInventoryWarehouseChange()" class="filter-input">
+          <option value="">All Warehouses</option>
+          <option *ngFor="let warehouse of warehousesList" [value]="warehouse.id?.toString()">{{ warehouse.name }}</option>
+        </select>
+      </div>
     </div>
     <div class="card-body">
       <div class="inventory-grid">
         <div *ngFor="let item of inventoryData" class="inventory-item">
-          <div class="item-header">{{ item.variant }}</div>
+          <div class="item-header">{{ item.warehouse }} - {{ item.variant }}</div>
           <div class="item-content">
             <div class="stock-row">
               <span class="label">Filled:</span>
@@ -269,15 +277,16 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>Warehouse</th>
                 <th>Variant</th>
                 <th class="text-center">Filled</th>
                 <th class="text-center">Empty</th>
                 <th class="text-center">Total</th>
-                
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of paginatedInventoryData">
+                <td><strong>{{ item.warehouse }}</strong></td>
                 <td><strong>{{ item.variant }}</strong></td>
                 <td class="text-center">{{ item.filled }}</td>
                 <td class="text-center">{{ item.empty }}</td>

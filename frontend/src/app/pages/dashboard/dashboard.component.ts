@@ -23,6 +23,7 @@ interface KPICard {
 
 interface SalesSummaryRow {
   variant: string;
+  warehouse: string;
   filled: number;
   empty: number;
 }
@@ -145,6 +146,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         const pageRows = data.content || [];
         this.inventorySummary = pageRows.map((stock: any) => ({
           variant: stock.variantName || 'Unknown',
+          warehouse: stock.warehouseName || 'Unknown',
           filled: stock.filledQty || 0,
           empty: stock.emptyQty || 0
         }));

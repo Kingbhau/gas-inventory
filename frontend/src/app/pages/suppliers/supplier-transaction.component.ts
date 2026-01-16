@@ -13,6 +13,7 @@ import { SupplierService } from '../../services/supplier.service';
 import { SupplierTransactionService } from '../../services/supplier-transaction.service';
 import { InventoryStockService } from '../../services/inventory-stock.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
+import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
@@ -42,6 +43,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   showForm = false;
   editingId: string | null = null;
   selectedSupplier = '';
+  selectedWarehouse = '';
   filterFromDate: string = '';
   filterToDate: string = '';
   filterVariantId: string = '';
@@ -56,14 +58,30 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   suppliers: any[] = [];
   variants: any[] = [];
+  warehouses: any[] = [];
   allTransactions: any[] = [];
   filteredTransactions: any[] = [];
+
+  warehouseCompare = (w1: any, w2: any) => {
+    if (!w1 || !w2) return w1 === w2;
+    const id1 = typeof w1 === 'object' ? w1.id : w1;
+    const id2 = typeof w2 === 'object' ? w2.id : w2;
+    return id1 === id2;
+  };
+
+  getSelectedWarehouseName(): string {
+    const warehouseId = this.transactionForm.get('warehouseId')?.value;
+    if (!warehouseId) return 'No Warehouse Selected';
+    const warehouse = this.warehouses.find(w => w.id === warehouseId);
+    return warehouse ? warehouse.name : 'No Warehouse Selected';
+  }
 
   constructor(
     private fb: FormBuilder,
     private supplierService: SupplierService,
     private transactionService: SupplierTransactionService,
     private variantService: CylinderVariantService,
+    private warehouseService: WarehouseService,
     private toastr: ToastrService,
     private inventoryStockService: InventoryStockService,
     private businessInfoService: BusinessInfoService,
@@ -82,6 +100,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
         this.agencyName = '';
       }
     });
+    this.loadWarehouses();
     this.loadSuppliers();
     this.loadVariants();
     this.loadTransactions();
@@ -101,6 +120,23 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       variantName
     });
     this.toastr.success('PDF exported!', 'Success');
+  }
+
+  loadWarehouses() {
+    this.loadingService.show('Loading warehouses...');
+    this.warehouseService.getActiveWarehouses()
+      .pipe(finalize(() => this.loadingService.hide()))
+      .subscribe({
+        next: (response: any) => {
+          this.warehouses = (response && response.data) || [];
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading warehouses';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+        }
+      });
   }
 
   loadSuppliers() {
@@ -144,6 +180,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.allTransactions = (data.content || data).sort((a: any, b: any) => b.id - a.id);
+          console.log('Loaded transactions:', this.allTransactions); // Debug
           this.filteredTransactions = [...this.allTransactions];
           this.totalTransactions = data.totalElements || this.allTransactions.length;
           this.totalPages = data.totalPages || 1;
@@ -170,6 +207,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   initForm() {
     this.transactionForm = this.fb.group({
+      warehouseId: ['', Validators.required],
       supplierId: ['', Validators.required],
       variantId: ['', Validators.required],
       transactionDate: ['', Validators.required],
@@ -189,7 +227,11 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   editTransaction(transaction: any) {
     this.editingId = transaction.id;
+    const warehouseId = transaction.warehouseId ? parseInt(transaction.warehouseId) : (this.warehouses.length > 0 ? this.warehouses[0].id : null);
+    console.log('Editing transaction:', transaction); // Debug
+    console.log('Setting warehouseId to:', warehouseId); // Debug
     this.transactionForm.patchValue({
+      warehouseId: warehouseId,
       supplierId: transaction.supplierId,
       variantId: transaction.variantId,
       transactionDate: transaction.transactionDate,
@@ -205,6 +247,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   saveTransaction() {
     if (!this.transactionForm.valid) return;
     const formData = { ...this.transactionForm.value };
+    formData.warehouseId = parseInt(formData.warehouseId);
     formData.supplierId = parseInt(formData.supplierId);
     formData.variantId = parseInt(formData.variantId);
     formData.transactionDate = formData.transactionDate ? formData.transactionDate : new Date().toISOString().split('T')[0];
@@ -284,6 +327,11 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       const selectedSupplierId = parseInt(this.selectedSupplier);
       filtered = filtered.filter(t => t.supplierId === selectedSupplierId);
     }
+    // Warehouse filter
+    if (this.selectedWarehouse) {
+      const warehouseId = parseInt(this.selectedWarehouse);
+      filtered = filtered.filter(t => t.warehouseId === warehouseId);
+    }
     // Variant filter
     if (this.filterVariantId) {
       const variantId = parseInt(this.filterVariantId);
@@ -302,6 +350,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   resetFilters() {
     this.selectedSupplier = '';
+    this.selectedWarehouse = '';
     this.filterFromDate = '';
     this.filterToDate = '';
     this.filterVariantId = '';

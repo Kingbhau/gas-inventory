@@ -4,4 +4,6 @@ export interface Customer {
   mobile: string;
   address: string;
   active: boolean;
+  salePrice?: number;
+  discountPrice?: number;
 }

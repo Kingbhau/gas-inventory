@@ -55,4 +55,9 @@ public class SupplierTransactionController {
     public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsBySupplier(@PathVariable Long supplierId) {
         return ResponseEntity.ok(service.getTransactionsBySupplier(supplierId));
     }
+
+    @GetMapping("/warehouse/{warehouseId}")
+    public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsByWarehouse(@PathVariable Long warehouseId) {
+        return ResponseEntity.ok(service.getTransactionsByWarehouse(warehouseId));
+    }
 }

@@ -5,12 +5,14 @@
   </label>
 
   <input
+    #searchInput
     type="text"
     class="form-control"
     [placeholder]="placeholder"
     [(ngModel)]="searchText"
     (focus)="onFocus()"
     (blur)="onBlur()"
+    (input)="onInputChange()"
   />
 
   <div class="autocomplete-panel" *ngIf="isOpen && filteredItems.length > 0">

@@ -2,6 +2,8 @@ package com.gasagency.dto;
 
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.List;
 
 public class CustomerDTO {
     private Long id;
@@ -18,6 +20,14 @@ public class CustomerDTO {
     private String address;
 
     private Boolean active;
+
+    @DecimalMin(value = "0.0", message = "Sale price must be non-negative")
+    private BigDecimal salePrice;
+
+    @DecimalMin(value = "0.0", message = "Discount price must be non-negative")
+    private BigDecimal discountPrice;
+
+    private List<Long> configuredVariants; // Array of variant IDs configured for this customer
 
     private LocalDate lastSaleDate;
 
@@ -101,5 +111,29 @@ public class CustomerDTO {
 
     public void setTotalPending(Long totalPending) {
         this.totalPending = totalPending;
+    }
+
+    public BigDecimal getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(BigDecimal salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public BigDecimal getDiscountPrice() {
+        return discountPrice;
+    }
+
+    public void setDiscountPrice(BigDecimal discountPrice) {
+        this.discountPrice = discountPrice;
+    }
+
+    public List<Long> getConfiguredVariants() {
+        return configuredVariants;
+    }
+
+    public void setConfiguredVariants(List<Long> configuredVariants) {
+        this.configuredVariants = configuredVariants;
     }
 }

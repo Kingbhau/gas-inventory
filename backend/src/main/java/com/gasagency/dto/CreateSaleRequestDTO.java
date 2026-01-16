@@ -10,6 +10,10 @@ public class CreateSaleRequestDTO {
     @Positive(message = "Customer ID must be a positive number")
     private Long customerId;
 
+    @NotNull(message = "Warehouse ID cannot be null")
+    @Positive(message = "Warehouse ID must be a positive number")
+    private Long warehouseId;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -18,8 +22,9 @@ public class CreateSaleRequestDTO {
     public CreateSaleRequestDTO() {
     }
 
-    public CreateSaleRequestDTO(Long customerId, List<SaleItemRequestDTO> items) {
+    public CreateSaleRequestDTO(Long customerId, Long warehouseId, List<SaleItemRequestDTO> items) {
         this.customerId = customerId;
+        this.warehouseId = warehouseId;
         this.items = items;
     }
 
@@ -89,6 +94,14 @@ public class CreateSaleRequestDTO {
 
     public void setCustomerId(Long customerId) {
         this.customerId = customerId;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public List<SaleItemRequestDTO> getItems() {

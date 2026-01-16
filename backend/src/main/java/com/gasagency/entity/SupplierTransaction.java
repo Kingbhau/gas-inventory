@@ -11,12 +11,18 @@ import java.time.LocalDate;
 @Table(name = "supplier_transaction", indexes = {
         @Index(name = "idx_suppliertransaction_supplier_id", columnList = "supplier_id"),
         @Index(name = "idx_suppliertransaction_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_suppliertransaction_transaction_date", columnList = "transactionDate")
+        @Index(name = "idx_suppliertransaction_transaction_date", columnList = "transactionDate"),
+        @Index(name = "idx_suppliertransaction_warehouse_id", columnList = "warehouse_id")
 })
 public class SupplierTransaction extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull(message = "Warehouse is required.")
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 
     @NotNull(message = "Supplier is required.")
     @ManyToOne
@@ -55,8 +61,10 @@ public class SupplierTransaction extends Auditable {
     public SupplierTransaction() {
     }
 
-    public SupplierTransaction(Supplier supplier, CylinderVariant variant, LocalDate transactionDate,
+    public SupplierTransaction(Warehouse warehouse, Supplier supplier, CylinderVariant variant,
+            LocalDate transactionDate,
             Long filledReceived, Long emptySent, String reference, Double amount) {
+        this.warehouse = warehouse;
         this.supplier = supplier;
         this.variant = variant;
         this.transactionDate = transactionDate;
@@ -64,6 +72,14 @@ public class SupplierTransaction extends Auditable {
         this.emptySent = emptySent;
         this.reference = reference;
         this.amount = amount;
+    }
+
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
 
     public Double getAmount() {

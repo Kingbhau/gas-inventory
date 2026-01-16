@@ -19,13 +19,18 @@ export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // Handle other errors
+      // Don't show error toast for business logic errors (4xx errors with meaningful messages)
+      // Let components handle these with their own error messages
+      if (error.status >= 400 && error.status < 500 && error.error?.message) {
+        // Pass through without showing toast - component will handle
+        return throwError(() => error);
+      }
+
+      // Handle other errors with toastr
       let errorMessage = 'An error occurred. Please try again.';
 
       if (error.status === 0) {
         errorMessage = 'Network error. Please check your connection.';
-      } else if (error.status === 400) {
-        errorMessage = error.error?.message || 'Invalid request. Please check your input.';
       } else if (error.status === 401) {
         errorMessage = 'Session expired. Please login again.';
       } else if (error.status === 403) {
@@ -34,11 +39,9 @@ export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
         errorMessage = 'Resource not found.';
       } else if (error.status >= 500) {
         errorMessage = 'Server error. Please try again later.';
-      } else if (error.error?.message) {
-        errorMessage = error.error.message;
       }
 
-      // Only show toast for non-retry errors
+      // Only show toast for non-business-logic errors
       toastr.error(errorMessage, 'Error');
       return throwError(() => error);
     })

@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "customer", uniqueConstraints = { @UniqueConstraint(columnNames = { "mobile" }) }, indexes = {
@@ -37,6 +39,17 @@ public class Customer extends Auditable {
     @NotNull(message = "Active status is required.")
     @Column(nullable = false)
     private Boolean active = true;
+
+    @DecimalMin(value = "0.0", message = "Sale price must be non-negative.")
+    @Column(nullable = true)
+    private BigDecimal salePrice;
+
+    @DecimalMin(value = "0.0", message = "Discount price must be non-negative.")
+    @Column(nullable = true)
+    private BigDecimal discountPrice;
+
+    @Column(columnDefinition = "TEXT", nullable = true)
+    private String configuredVariants; // JSON array of variant IDs configured for this customer
 
     public Customer() {
     }
@@ -94,5 +107,29 @@ public class Customer extends Auditable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public BigDecimal getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(BigDecimal salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public BigDecimal getDiscountPrice() {
+        return discountPrice;
+    }
+
+    public void setDiscountPrice(BigDecimal discountPrice) {
+        this.discountPrice = discountPrice;
+    }
+
+    public String getConfiguredVariants() {
+        return configuredVariants;
+    }
+
+    public void setConfiguredVariants(String configuredVariants) {
+        this.configuredVariants = configuredVariants;
     }
 }

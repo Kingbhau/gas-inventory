@@ -1327,3 +1327,187 @@ textarea.form-control {
     padding: 0.75rem;
   }
 }
+
+/* Variant Pricing Section Styles */
+.pricing-section {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.pricing-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.pricing-card.has-error {
+  border-color: #f44336;
+  background-color: #ffebee;
+  box-shadow: 0 1px 3px rgba(244, 67, 54, 0.2);
+}
+
+.variant-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #2196F3;
+  color: #2196F3;
+  font-size: 0.95rem;
+}
+
+.pricing-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.price-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-input .form-label.small {
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.price-input .form-label.small .required {
+  color: #f44336;
+  margin-left: 0.25rem;
+  font-weight: bold;
+}
+
+.price-input .form-control {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .pricing-section {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .pricing-card {
+    padding: 0.75rem;
+  }
+}
+
+/* Variant Selection Styles */
+.variant-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.variant-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #2196F3;
+}
+
+.checkbox-text {
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .variant-selection {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Variant Prices Table Styling */
+.variant-prices-table {
+  margin-top: 0.75rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background: white;
+}
+
+.variant-prices-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.variant-prices-table thead {
+  background-color: #f5f5f5;
+  border-bottom: 2px solid #ddd;
+}
+
+.variant-prices-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+.variant-prices-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+  color: #666;
+}
+
+.variant-prices-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.variant-prices-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.no-prices-message {
+  padding: 1rem;
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  background: #f9f9f9;
+  border-radius: 4px;
+}

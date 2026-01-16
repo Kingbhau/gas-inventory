@@ -20,6 +20,7 @@ public class CustomerCylinderLedgerController {
 
     public static class EmptyReturnRequest {
         public Long customerId;
+        public Long warehouseId;
         public Long variantId;
         public LocalDate transactionDate;
         public Long emptyIn;
@@ -66,6 +67,7 @@ public class CustomerCylinderLedgerController {
         // For empty returns, set refId to 0L (not null) to satisfy DB constraint
         CustomerCylinderLedgerDTO dto = service.createLedgerEntry(
                 request.customerId,
+                request.warehouseId,
                 request.variantId,
                 request.transactionDate,
                 "EMPTY_RETURN",
@@ -97,6 +99,12 @@ public class CustomerCylinderLedgerController {
     @GetMapping("/movements")
     public ResponseEntity<List<CustomerCylinderLedgerDTO>> getAllMovements() {
         return ResponseEntity.ok(service.getAllMovements());
+    }
+
+    // Endpoint: Get stock movements for a specific warehouse
+    @GetMapping("/movements/warehouse/{warehouseId}")
+    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getMovementsByWarehouse(@PathVariable Long warehouseId) {
+        return ResponseEntity.ok(service.getMovementsByWarehouse(warehouseId));
     }
 
     @GetMapping("/customer/{customerId}/variant/{variantId}")

@@ -6,6 +6,8 @@ public class InventoryStockDTO {
     private Long id;
     private Long variantId;
     private String variantName;
+    private Long warehouseId;
+    private String warehouseName;
     private Long filledQty;
     private Long emptyQty;
     private LocalDateTime lastUpdated;
@@ -18,6 +20,18 @@ public class InventoryStockDTO {
         this.id = id;
         this.variantId = variantId;
         this.variantName = variantName;
+        this.filledQty = filledQty;
+        this.emptyQty = emptyQty;
+        this.lastUpdated = lastUpdated;
+    }
+
+    public InventoryStockDTO(Long id, Long variantId, String variantName, Long warehouseId, String warehouseName,
+            Long filledQty, Long emptyQty, LocalDateTime lastUpdated) {
+        this.id = id;
+        this.variantId = variantId;
+        this.variantName = variantName;
+        this.warehouseId = warehouseId;
+        this.warehouseName = warehouseName;
         this.filledQty = filledQty;
         this.emptyQty = emptyQty;
         this.lastUpdated = lastUpdated;
@@ -45,6 +59,22 @@ public class InventoryStockDTO {
 
     public void setVariantName(String variantName) {
         this.variantName = variantName;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
     }
 
     public Long getFilledQty() {

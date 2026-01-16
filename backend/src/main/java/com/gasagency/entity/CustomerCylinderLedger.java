@@ -5,12 +5,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Table(name = "customer_cylinder_ledger", indexes = {
         @Index(name = "idx_ledger_customer_id", columnList = "customer_id"),
+        @Index(name = "idx_ledger_warehouse_id", columnList = "warehouse_id"),
         @Index(name = "idx_ledger_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_ledger_transaction_date", columnList = "transactionDate")
+        @Index(name = "idx_ledger_transaction_date", columnList = "transactionDate"),
+        @Index(name = "idx_ledger_customer_warehouse", columnList = "customer_id, warehouse_id"),
+        @Index(name = "idx_customer_warehouse_variant", columnList = "customer_id, warehouse_id, variant_id")
 })
 public class CustomerCylinderLedger extends Auditable {
     @Id
@@ -25,6 +29,11 @@ public class CustomerCylinderLedger extends Auditable {
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    @NotNull(message = "Warehouse is required.")
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 
     @NotNull(message = "Variant is required.")
     @ManyToOne
@@ -64,10 +73,12 @@ public class CustomerCylinderLedger extends Auditable {
     public CustomerCylinderLedger() {
     }
 
-    public CustomerCylinderLedger(Customer customer, CylinderVariant variant, LocalDate transactionDate,
-            TransactionType refType, Long refId, Long filledOut, Long emptyIn, Long balance) {
-        this.customer = customer;
-        this.variant = variant;
+    public CustomerCylinderLedger(Customer customer, Warehouse warehouse, CylinderVariant variant,
+            LocalDate transactionDate, TransactionType refType, Long refId,
+            Long filledOut, Long emptyIn, Long balance) {
+        this.customer = Objects.requireNonNull(customer, "Customer cannot be null");
+        this.warehouse = Objects.requireNonNull(warehouse, "Warehouse cannot be null");
+        this.variant = Objects.requireNonNull(variant, "Variant cannot be null");
         this.transactionDate = transactionDate;
         this.refType = refType;
         this.refId = refId;
@@ -77,7 +88,7 @@ public class CustomerCylinderLedger extends Auditable {
     }
 
     public enum TransactionType {
-        SALE, EMPTY_RETURN
+        SALE, EMPTY_RETURN, TRANSFER
     }
 
     public Long getId() {
@@ -102,6 +113,14 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setCustomer(Customer customer) {
         this.customer = customer;
+    }
+
+    public Warehouse getWarehouse() {
+        return warehouse;
+    }
+
+    public void setWarehouse(Warehouse warehouse) {
+        this.warehouse = warehouse;
     }
 
     public CylinderVariant getVariant() {

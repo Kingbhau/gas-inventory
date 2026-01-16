@@ -123,6 +123,26 @@ export class AppComponent implements OnInit, OnDestroy {
         }
       }
     });
+    // Listen for keyboard shortcuts
+    this.renderer.listen('document', 'keydown', (event: KeyboardEvent) => {
+      // Only handle shortcuts when Shift is held
+      if (event.shiftKey) {
+        switch (event.key.toUpperCase()) {
+          case 'S':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/sales/entry']));
+            break;
+          case 'P':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/suppliers/transactions']));
+            break;
+          case 'E':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/expenses/entry']));
+            break;
+        }
+      }
+    });
   }
 
   ngOnDestroy() {

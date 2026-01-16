@@ -41,8 +41,10 @@ public class SaleService {
         private final CustomerRepository customerRepository;
         private final CylinderVariantRepository variantRepository;
         private final MonthlyPriceRepository monthlyPriceRepository;
+        private final CustomerVariantPriceRepository customerVariantPriceRepository;
         private final InventoryStockService inventoryStockService;
         private final CustomerCylinderLedgerService ledgerService;
+        private final WarehouseService warehouseService;
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
 
@@ -51,8 +53,10 @@ public class SaleService {
                         CustomerRepository customerRepository,
                         CylinderVariantRepository variantRepository,
                         MonthlyPriceRepository monthlyPriceRepository,
+                        CustomerVariantPriceRepository customerVariantPriceRepository,
                         InventoryStockService inventoryStockService,
                         CustomerCylinderLedgerService ledgerService,
+                        WarehouseService warehouseService,
                         AuditLogger auditLogger,
                         PerformanceTracker performanceTracker) {
                 this.saleRepository = saleRepository;
@@ -60,8 +64,10 @@ public class SaleService {
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
                 this.monthlyPriceRepository = monthlyPriceRepository;
+                this.customerVariantPriceRepository = customerVariantPriceRepository;
                 this.inventoryStockService = inventoryStockService;
                 this.ledgerService = ledgerService;
+                this.warehouseService = warehouseService;
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
         }
@@ -203,6 +209,14 @@ public class SaleService {
                         throw new InvalidOperationException("Cannot create sale for inactive customer");
                 }
 
+                // Validate and get warehouse
+                logger.debug("Looking up warehouse with id: {}", request.getWarehouseId());
+                Warehouse warehouse = warehouseService.getWarehouseEntity(request.getWarehouseId());
+                if (warehouse == null) {
+                        logger.error("Warehouse not found with id: {}", request.getWarehouseId());
+                        throw new ResourceNotFoundException("Warehouse not found with id: " + request.getWarehouseId());
+                }
+
                 BigDecimal totalAmount = BigDecimal.ZERO;
                 List<SaleItem> saleItems = new ArrayList<>();
                 logger.debug("Processing {} sale items", request.getItems().size());
@@ -249,34 +263,38 @@ public class SaleService {
                                                                                 + itemRequest.getVariantId());
                                         });
 
-                        // Check inventory sufficiency with lock
-                        InventoryStock inventoryStock = inventoryStockService.getStockEntityWithLock(variant.getId());
-                        logger.debug("Variant: {}, Available filled: {}, Requested: {}",
-                                        variant.getName(), inventoryStock.getFilledQty(), itemRequest.getQtyIssued());
+                        // Check inventory sufficiency with lock - WAREHOUSE-SPECIFIC
+                        InventoryStock inventoryStock = inventoryStockService
+                                        .getStockByWarehouseAndVariantWithLock(warehouse, variant);
+                        logger.debug("Warehouse: {}, Variant: {}, Available filled: {}, Requested: {}",
+                                        warehouse.getName(), variant.getName(), inventoryStock.getFilledQty(),
+                                        itemRequest.getQtyIssued());
 
                         if (inventoryStock.getFilledQty() < itemRequest.getQtyIssued()) {
-                                logger.error("Insufficient inventory for variant: {}. Available: {}, Requested: {}",
-                                                variant.getName(), inventoryStock.getFilledQty(),
+                                logger.error("Insufficient inventory in warehouse {} for variant: {}. Available: {}, Requested: {}",
+                                                warehouse.getName(), variant.getName(), inventoryStock.getFilledQty(),
                                                 itemRequest.getQtyIssued());
                                 throw new InvalidOperationException(
-                                                "Insufficient inventory for variant: " + variant.getName() +
+                                                "Insufficient inventory in warehouse " + warehouse.getName() +
+                                                                " for variant: " + variant.getName() +
                                                                 ". Available: " + inventoryStock.getFilledQty() +
                                                                 ", Requested: " + itemRequest.getQtyIssued());
                         }
 
-                        // Get current month price
-                        logger.debug("Fetching monthly price for variant: {}", variant.getName());
-                        MonthlyPrice monthlyPrice = monthlyPriceRepository
-                                        .findByVariantAndMonthYear(variant, LocalDate.now().withDayOfMonth(1))
+                        // Get customer-specific pricing - required for sales
+                        logger.debug("Fetching customer-specific pricing for variant: {} and customer: {}",
+                                        variant.getName(), customer.getId());
+                        var customerVariantPrice = customerVariantPriceRepository
+                                        .findByCustomerIdAndVariantId(customer.getId(), variant.getId())
                                         .orElseThrow(() -> {
-                                                logger.error("Monthly price not found for variant: {}",
-                                                                variant.getName());
+                                                logger.error("Customer-specific price not found for variant: {} and customer: {}",
+                                                                variant.getName(), customer.getId());
                                                 return new ResourceNotFoundException(
-                                                                "Monthly price not found for variant");
+                                                                "Customer-specific price not configured for variant: "
+                                                                                + variant.getName());
                                         });
 
-                        // Calculate final price
-                        BigDecimal basePrice = monthlyPrice.getBasePrice();
+                        BigDecimal basePrice = customerVariantPrice.getSalePrice();
                         BigDecimal subtotal = basePrice.multiply(BigDecimal.valueOf(itemRequest.getQtyIssued()));
                         BigDecimal discountAmount = itemRequest.getDiscount() != null ? itemRequest.getDiscount()
                                         : BigDecimal.ZERO;
@@ -300,8 +318,8 @@ public class SaleService {
                         logger.debug("Item price calculated - Subtotal: {}, Discount: {}, Final: {}",
                                         subtotal, discountAmount, finalPrice);
 
-                        // Create sale item
-                        SaleItem saleItem = new SaleItem(null, variant, itemRequest.getQtyIssued(),
+                        // Create sale item without sale (sale will be set after creation)
+                        SaleItem saleItem = new SaleItem(warehouse, variant, itemRequest.getQtyIssued(),
                                         itemRequest.getQtyEmptyReceived(), basePrice, discountAmount, finalPrice);
                         saleItems.add(saleItem);
                 }
@@ -315,7 +333,7 @@ public class SaleService {
                 }
 
                 // Create sale FIRST so we have a sale ID for ledger references
-                Sale sale = new Sale(customer, LocalDate.now(), totalAmount);
+                Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
                 sale = saleRepository.save(sale);
                 logger.info("Sale created with id: {} for customer: {} - Total: {}",
                                 sale.getId(), customer.getName(), totalAmount);
@@ -331,16 +349,19 @@ public class SaleService {
                         logger.debug("Processing sale item - Variant: {}, Qty: {}", variant.getName(),
                                         itemRequest.getQtyIssued());
 
-                        // Update inventory (decrement filled, increment empty)
-                        inventoryStockService.decrementFilledQtyWithCheck(variant.getId(), itemRequest.getQtyIssued());
-                        inventoryStockService.incrementEmptyQty(variant.getId(), itemRequest.getQtyEmptyReceived());
-                        logger.debug("Inventory updated - Variant: {}, Filled qty decrement: {}, Empty qty increment: {}",
-                                        variant.getName(), itemRequest.getQtyIssued(),
+                        // Update inventory (decrement filled, increment empty) - WAREHOUSE-SPECIFIC
+                        inventoryStockService.decrementFilledQty(warehouse, variant,
+                                        Long.valueOf(itemRequest.getQtyIssued()));
+                        inventoryStockService.incrementEmptyQty(warehouse, variant,
+                                        Long.valueOf(itemRequest.getQtyEmptyReceived()));
+                        logger.debug("Inventory updated in warehouse {} - Variant: {}, Filled qty decrement: {}, Empty qty increment: {}",
+                                        warehouse.getName(), variant.getName(), itemRequest.getQtyIssued(),
                                         itemRequest.getQtyEmptyReceived());
 
                         // Create ledger entry
                         ledgerService.createLedgerEntry(
                                         customer.getId(),
+                                        warehouse.getId(),
                                         variant.getId(),
                                         sale.getSaleDate(),
                                         "SALE",

@@ -27,7 +27,6 @@
   align-items: center;
   gap: 8px;
   width: 53%;
-  
 }
 .variant-filter #variantSelect{
  width: 45%;
@@ -49,6 +48,54 @@
   padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid #ccc;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.warehouse-filter-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+  margin-top: -1.5rem;
+  width: fit-content;
+  margin-left: auto;
+}
+
+.warehouse-filter-section label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.warehouse-filter-section select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  min-width: 200px;
+}
+
+.warehouse-filter-dropdown label {
+  font-weight: 500;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.warehouse-filter-dropdown .form-control {
+  flex: 1;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+}
+
+.warehouse-filter-dropdown .form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 /* Page Header */
@@ -293,6 +340,11 @@
   color: #b45309;
 }
 
+.badge-transfer {
+  background: #dbeafe;
+  color: #0284c7;
+}
+
 .muted {
   color: #64748b;
   font-size: 0.9rem;
@@ -439,6 +491,7 @@
 .btn-primary {
   background: #2563eb;
   color: white;
+  padding: 15px 40px 15px 40px;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -454,8 +507,159 @@
   background: #cbd5e1;
 }
 
+/* Stock Transfer Modal */
+.transfer-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(30, 34, 40, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transfer-modal-card {
+  background: #fff;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 95vw;
+  max-height: 90vh;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0 2rem 0;
+  animation: modalPopIn 0.18s cubic-bezier(.4,1.4,.6,1) both;
+  position: relative;
+  overflow-y: auto;
+}
+
+.transfer-modal-icon-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: -2.2rem;
+}
+
+.transfer-modal-icon-bg {
+  background: #e0f2fe;
+  border-radius: 50%;
+  box-shadow: 0 2px 12px rgba(3, 169, 244, 0.15);
+  padding: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transfer-modal-icon {
+  color: #0284c7;
+  font-size: 2.5rem;
+}
+
+.transfer-modal-content {
+  width: 100%;
+  text-align: center;
+  padding: 1.5rem 1.5rem 0 1.5rem;
+}
+
+.transfer-modal-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.transfer-modal-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.transfer-form {
+  width: 100%;
+  text-align: left;
+}
+
+.transfer-form .form-group {
+  margin-bottom: 1.2rem;
+}
+
+.transfer-form .form-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.transfer-form .required {
+  color: #dc2626;
+}
+
+.transfer-form .form-control {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.transfer-form .form-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.transfer-form .error-message {
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+.transfer-modal-actions {
+  width: 100%;
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding: 0 1.5rem;
+}
+
+.transfer-modal-actions .btn {
+  flex: 1;
+  text-align: center;
+}
+
+@keyframes modalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .page-header-with-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .warehouse-filter-dropdown {
+    min-width: auto;
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .stock-summary {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -533,3 +737,23 @@
     justify-content: flex-start;
   }
 }
+
+/* Input with hint - shows available quantity */
+.input-with-hint {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.input-hint {
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #f0f7ff;
+  border-radius: 3px;
+  border-left: 3px solid #2563eb;
+}
+
