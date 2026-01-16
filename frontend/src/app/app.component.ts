@@ -72,6 +72,7 @@ export class AppComponent implements OnInit, OnDestroy {
   faUser = faUser;
   faBox = faBox;
   faTruck = faTruck;
+  faRupeeSign = faRupeeSign;
   faCog = faCog;
   faSearch = faSearch;
   faBell = faBell;
@@ -125,8 +126,8 @@ export class AppComponent implements OnInit, OnDestroy {
     });
     // Listen for keyboard shortcuts
     this.renderer.listen('document', 'keydown', (event: KeyboardEvent) => {
-      // Only handle shortcuts when Shift is held
-      if (event.shiftKey) {
+      // Only handle shortcuts when Alt is held
+      if (event.altKey) {
         switch (event.key.toUpperCase()) {
           case 'S':
             event.preventDefault();

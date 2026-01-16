@@ -2,6 +2,7 @@ package com.gasagency.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public class CustomerCylinderLedgerDTO {
     private Long id;
@@ -20,6 +21,10 @@ public class CustomerCylinderLedgerDTO {
     private String fromWarehouseName;
     private Long toWarehouseId;
     private String toWarehouseName;
+    private BigDecimal totalAmount;
+    private BigDecimal amountReceived;
+    private BigDecimal dueAmount;
+    private String paymentMode;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -185,5 +190,37 @@ public class CustomerCylinderLedgerDTO {
 
     public void setToWarehouseName(String toWarehouseName) {
         this.toWarehouseName = toWarehouseName;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public BigDecimal getDueAmount() {
+        return dueAmount;
+    }
+
+    public void setDueAmount(BigDecimal dueAmount) {
+        this.dueAmount = dueAmount;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
     }
 }

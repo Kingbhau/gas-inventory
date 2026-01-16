@@ -1,0 +1,89 @@
+<div class="inventory-setup-wrapper">
+  <!-- Inventory Setup Card -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Warehouse Inventory Setup</h3>
+
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Warehouse Selection -->
+      <div class="warehouse-selector">
+        <label class="form-label">Select Warehouse <span class="required">*</span></label>
+        <select 
+          (change)="onWarehouseChange($any($event.target).value)"
+          [value]="selectedWarehouseId || ''"
+          class="form-control">
+          <option value="">-- Choose a warehouse --</option>
+          <option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+            {{ warehouse.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Inventory Table -->
+      <div *ngIf="selectedWarehouseId" class="inventory-table-section">
+        <div *ngIf="isLoading" class="loading-state">
+          <fa-icon [icon]="faSync" class="spinner"></fa-icon>
+          Loading inventory...
+        </div>
+
+        <div *ngIf="!isLoading && inventoryRows.length > 0" class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Cylinder Variant</th>
+                <th class="qty-col">Filled Cylinders</th>
+                <th class="qty-col">Empty Cylinders</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of inventoryRows; let i = index">
+                <td class="variant-name">{{ row.variantName }}</td>
+                <td class="qty-col">
+                  <input 
+                    type="number" 
+                    class="qty-input"
+                    [value]="row.filledQty"
+                    (change)="updateFilledQty(i, $any($event.target).value)"
+                    min="0">
+                </td>
+                <td class="qty-col">
+                  <input 
+                    type="number" 
+                    class="qty-input"
+                    [value]="row.emptyQty"
+                    (change)="updateEmptyQty(i, $any($event.target).value)"
+                    min="0">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <button 
+            (click)="saveInventory()"
+            [disabled]="isSaving"
+            class="btn btn-primary">
+            {{ isSaving ? 'Saving...' : 'Save Inventory Setup' }}
+          </button>
+          <button 
+            (click)="resetInventory()"
+            [disabled]="isSaving"
+            class="btn btn-secondary">
+            <fa-icon [icon]="faSync"></fa-icon>
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!selectedWarehouseId && warehouses.length === 0" class="no-data-container">
+        <p>No warehouses available. Please create warehouses first in the Warehouses tab.</p>
+      </div>
+    </div>
+  </div>
+</div>

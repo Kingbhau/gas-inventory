@@ -14,6 +14,12 @@ public class CreateSaleRequestDTO {
     @Positive(message = "Warehouse ID must be a positive number")
     private Long warehouseId;
 
+    @NotNull(message = "Amount received cannot be null")
+    @PositiveOrZero(message = "Amount received cannot be negative")
+    private BigDecimal amountReceived;
+
+    private String modeOfPayment;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -22,9 +28,12 @@ public class CreateSaleRequestDTO {
     public CreateSaleRequestDTO() {
     }
 
-    public CreateSaleRequestDTO(Long customerId, Long warehouseId, List<SaleItemRequestDTO> items) {
+    public CreateSaleRequestDTO(Long customerId, Long warehouseId, BigDecimal amountReceived, String modeOfPayment,
+            List<SaleItemRequestDTO> items) {
         this.customerId = customerId;
         this.warehouseId = warehouseId;
+        this.amountReceived = amountReceived;
+        this.modeOfPayment = modeOfPayment;
         this.items = items;
     }
 
@@ -102,6 +111,22 @@ public class CreateSaleRequestDTO {
 
     public void setWarehouseId(Long warehouseId) {
         this.warehouseId = warehouseId;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public String getModeOfPayment() {
+        return modeOfPayment;
+    }
+
+    public void setModeOfPayment(String modeOfPayment) {
+        this.modeOfPayment = modeOfPayment;
     }
 
     public List<SaleItemRequestDTO> getItems() {

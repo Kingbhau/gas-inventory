@@ -76,17 +76,17 @@
               <tr *ngFor="let movement of paginatedMovements" [class.outgoing]="movement.type === 'Sale'">
                 <td>{{ movement.date | date: 'dd MMM yyyy' }}</td>
                 <td>
-                  <span class="variant-badge" [ngStyle]="{'background-color': getVariantColor(movement.variant)}"></span>
-                  <strong>{{ movement.variant }}</strong>
+                  <div *ngIf="movement.variant">
+                    <strong>{{ movement.variant }}</strong>
+                  </div>
+                  <div *ngIf="!movement.variant">
+                    <div *ngIf="movement.paymentMode"><strong>By {{ getPaymentModeLabel(movement.paymentMode) }}</strong></div>
+                    <div *ngIf="!movement.paymentMode"><strong>PAYMENT</strong></div>
+                  </div>
                 </td>
                 <td>
-                  <span class="badge"
-                    [class.badge-sale]="movement.type === 'Sale'"
-                    [class.badge-purchase]="movement.type === 'Purchase'"
-                    [class.badge-empty]="movement.type === 'Empty Return'"
-                    [class.badge-return]="movement.type === 'Return'"
-                    [class.badge-transfer]="movement.type === 'Transfer'">
-                    {{ movement.type }}
+                  <span class="type-badge" [ngClass]="'type-' + getMovementTypeClass(movement.type)">
+                    {{ formatMovementType(movement.type) }}
                   </span>
                 </td>
                 <td class="text-center">{{ movement.filledQty }}</td>

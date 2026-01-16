@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { CustomerBalance, VariantBalance } from '../../models/customer-balance.model';
@@ -15,6 +15,7 @@ import { CustomerVariantPriceService } from '../../services/customer-variant-pri
 import { LoadingService } from '../../services/loading.service';
 import { ToastrService } from 'ngx-toastr';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { exportCustomerLedgerToPDF } from './export-ledger-report.util';
 
 @Component({
   selector: 'app-customer-management',
@@ -57,6 +58,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   totalLedgerItems = 0;
   totalLedgerPages = 1;
   isLoadingMoreLedger = false;
+
+  // Store initial stock entries to maintain disabled state when rebuilding
+  initialStockEntriesMap: { [variantId: number]: any } = {};
 
 
 
@@ -105,10 +109,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   faEye = faEye;
   faUsers = faUsers;
   faEllipsisV = faEllipsisV;
+  faDownload = faDownload;
 
   customers: any[] = [];
   ledgerEntries: any[] = [];
   variants: any[] = [];
+  variantSummary: any[] = [];
 
   showDetailsModal = false;
   detailsCustomer: any = null;
@@ -118,6 +124,14 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   // Rename all pendingUnits to returnPendingUnits for clarity
   // Add property to store filled units
   // This will be set per customer
+  showPaymentForm = false;
+  isSubmittingPayment = false;
+  paymentError = '';
+  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string } = {
+    amount: null,
+    paymentDate: '',
+    paymentMode: ''
+  };
   //filledUnits: number = 0;
 
   constructor(
@@ -138,6 +152,18 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {}
+
+  get defaultVariantFilter() {
+    return { id: null, name: 'All' };
+  }
+
+  get variantsWithAll() {
+    return [
+      { id: null, name: 'All' },
+      { id: null, name: 'Payment' },
+      ...this.variants
+    ];
+  }
 
   get filteredVariants() {
     if (!this.ledgerFilterVariant) return this.variants;
@@ -239,6 +265,46 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
               }
               return { ...customer, returnPendingUnits, filledUnits };
             });
+            
+            // Now fetch all ledger entries for each customer to calculate current due
+            this.customers.forEach(customer => {
+              this.ledgerService.getLedgerByCustomerPaginated(customer.id, 0, 1000).subscribe({
+                next: (data: any) => {
+                  const allEntries = data.content || data;
+                  if (allEntries.length > 0) {
+                    // Sort chronologically (oldest first)
+                    const chronoEntries = allEntries.sort((a: any, b: any) => {
+                      const dateA = new Date(a.transactionDate).getTime();
+                      const dateB = new Date(b.transactionDate).getTime();
+                      if (dateA === dateB) {
+                        return (a.id || 0) - (b.id || 0);
+                      }
+                      return dateA - dateB;
+                    });
+                    
+                    // Calculate cumulative balance
+                    let cumulativeBalance = 0;
+                    chronoEntries.forEach((entry: any) => {
+                      if (entry.refType === 'PAYMENT') {
+                        cumulativeBalance -= (entry.amountReceived || 0);
+                      } else {
+                        const transactionDue = (entry.totalAmount || 0) - (entry.amountReceived || 0);
+                        cumulativeBalance += transactionDue;
+                      }
+                    });
+                    
+                    // Update customer's due amount
+                    customer.dueAmount = cumulativeBalance;
+                  }
+                  this.cdr.markForCheck();
+                },
+                error: () => {
+                  // Keep original dueAmount on error
+                  this.cdr.markForCheck();
+                }
+              });
+            });
+            
             this.cdr.markForCheck();
           },
           error: (err: any) => {
@@ -257,9 +323,24 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   get filteredLedgerEntries() {
     let entries = this.ledgerEntries;
     if (this.ledgerFilterVariant) {
-      entries = entries.filter(e => e.variantName === this.ledgerFilterVariant);
+      if (this.ledgerFilterVariant === 'Payment') {
+        // Filter to show only PAYMENT transactions
+        entries = entries.filter(e => e.refType === 'PAYMENT');
+      } else {
+        // Filter by variant, but always show PAYMENT transactions (they apply to all variants)
+        entries = entries.filter(e => e.variantName === this.ledgerFilterVariant || e.refType === 'PAYMENT');
+      }
     }
-    // Already sorted newest to oldest from backend (id DESC)
+    // Sort by transaction date (newest first) for display
+    entries = entries.sort((a: any, b: any) => {
+      const dateA = new Date(a.transactionDate).getTime();
+      const dateB = new Date(b.transactionDate).getTime();
+      if (dateA === dateB) {
+        // If same date, sort by ID descending (newer entries have higher IDs)
+        return (b.id || 0) - (a.id || 0);
+      }
+      return dateB - dateA; // Newest first
+    });
     return entries;
   }
 
@@ -304,13 +385,15 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       mobile: ['', [Validators.required, Validators.pattern('^[6-9][0-9]{9}$')]],
       address: ['', [Validators.required, Validators.maxLength(255)]],
-      active: [true, Validators.required],
+      gstNo: ['', [Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$')]],      dueAmount: [0, [Validators.required, Validators.min(0)]],      active: [true, Validators.required],
       configuredVariants: [[], Validators.required],
+      variantFilledCylinders: this.fb.array([]),
       variantPrices: this.fb.array([])
     });
 
     // Listen for variant configuration changes
     this.customerForm.get('configuredVariants')?.valueChanges.subscribe(selectedVariantIds => {
+      this.buildVariantFilledCylindersArray(selectedVariantIds);
       this.buildVariantPricingArray(selectedVariantIds);
     });
   }
@@ -359,6 +442,54 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return this.customerForm.get('variantPrices') as FormArray;
   }
 
+  get variantFilledCylindersArray(): FormArray {
+    return this.customerForm.get('variantFilledCylinders') as FormArray;
+  }
+
+  /**
+   * Build variant filled cylinders form controls for each selected variant
+   */
+  buildVariantFilledCylindersArray(selectedVariantIds?: any[]) {
+    const filledCylArray = this.customerForm.get('variantFilledCylinders') as FormArray;
+    const variantIds = selectedVariantIds || this.customerForm.get('configuredVariants')?.value || [];
+    
+    // Create a map of existing filled cylinders by variantId for quick lookup
+    const existingFilled: { [key: number]: any } = {};
+    filledCylArray.controls.forEach((control: any) => {
+      const variantId = control.get('variantId')?.value;
+      if (variantId) {
+        existingFilled[variantId] = {
+          filledCylinders: control.get('filledCylinders')?.value,
+          variantName: control.get('variantName')?.value
+        };
+      }
+    });
+
+    // Clear and rebuild with selected variants
+    filledCylArray.clear();
+    
+    this.variants
+      .filter(variant => variantIds.includes(variant.id))
+      .forEach(variant => {
+        // Get existing filled cylinders if available, otherwise empty
+        const existingFil = existingFilled[variant.id];
+        
+        const filledCylGroup = this.fb.group({
+          variantId: [variant.id, Validators.required],
+          variantName: [variant.name, Validators.required],
+          filledCylinders: [existingFil?.filledCylinders || '', [Validators.required, Validators.min(0)]]
+        });
+        filledCylArray.push(filledCylGroup);
+        
+        // Disable the field if it has an initial stock entry (pre-filled data)
+        const initialStockEntry = this.initialStockEntriesMap[variant.id];
+        if (initialStockEntry) {
+          filledCylGroup.get('filledCylinders')?.setValue(initialStockEntry.filledOut);
+          filledCylGroup.get('filledCylinders')?.disable();
+        }
+      });
+  }
+
   /**
    * Check if a variant is selected in the configuration
    */
@@ -395,19 +526,26 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.editingId = null;
     this.customerForm.reset();
     this.customerForm.patchValue({ active: true, configuredVariants: [] });
+    // Clear the initial stock entries map for new customer
+    this.initialStockEntriesMap = {};
   }
 
   editCustomer(customer: any) {
     this.showForm = true;
     this.editingId = customer.id;
     this.customerForm.patchValue({
-      ...customer,
+      name: customer.name || '',
+      mobile: customer.mobile || '',
+      address: customer.address || '',
+      gstNo: customer.gstNo || '',
+      dueAmount: customer.dueAmount !== undefined ? customer.dueAmount : 0,
       active: customer.active !== undefined ? customer.active : true,
       configuredVariants: customer.configuredVariants || []
     });
 
-    // Load existing variant prices from backend
+    // Load existing variant prices from backend and initial filled cylinders
     if (customer.id) {
+      // Load variant prices
       this.variantPriceService.getPricesByCustomer(customer.id).subscribe({
         next: (response: any) => {
           if (response && response.data && response.data.length > 0) {
@@ -434,6 +572,44 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           console.error('Error loading variant prices:', err);
         }
       });
+
+      // Load initial filled cylinders from customer ledger (INITIAL_STOCK entries)
+      this.ledgerService.getLedgerByCustomer(customer.id).subscribe({
+        next: (ledgerEntries: any[]) => {
+          // Get INITIAL_STOCK entries to populate filled cylinders
+          const initialStockEntries = ledgerEntries.filter(entry => entry.refType === 'INITIAL_STOCK');
+          
+          // Store in map for later use when rebuilding array
+          this.initialStockEntriesMap = {};
+          initialStockEntries.forEach(entry => {
+            this.initialStockEntriesMap[entry.variantId] = entry;
+          });
+          
+          // Rebuild to populate with initial values
+          this.buildVariantFilledCylindersArray(customer.configuredVariants || []);
+          
+          // Re-apply the initial stock filled values and disable the fields
+          const filledCylArray = this.customerForm.get('variantFilledCylinders') as FormArray;
+          
+          filledCylArray.controls.forEach((control: any) => {
+            const variantId = control.get('variantId')?.value;
+            const initialStockEntry = this.initialStockEntriesMap[variantId];
+            
+            if (initialStockEntry) {
+              control.get('filledCylinders')?.setValue(initialStockEntry.filledOut);
+              // Disable the field since it's pre-filled from ledger
+              control.get('filledCylinders')?.disable();
+            }
+          });
+          
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error loading ledger entries:', err);
+          // Still rebuild the array even if ledger load fails
+          this.buildVariantFilledCylindersArray(customer.configuredVariants || []);
+        }
+      });
     }
   }
 
@@ -454,12 +630,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     // Separate customer data from variant pricing data
     const formValue = this.customerForm.value;
     const variantPrices = formValue.variantPrices || [];
+    const variantFilledCylinders = formValue.variantFilledCylinders || [];
     const customerData = {
       name: formValue.name,
       mobile: formValue.mobile,
       address: formValue.address,
+      gstNo: formValue.gstNo || null,
+      dueAmount: formValue.dueAmount || 0,
       active: formValue.active,
-      configuredVariants: formValue.configuredVariants
+      configuredVariants: formValue.configuredVariants,
+      variantFilledCylinders: variantFilledCylinders
     };
 
     if (this.editingId) {
@@ -620,6 +800,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   loadLedgerForCustomer(customerId: number, resetPage: boolean = true) {
     if (resetPage) {
       this.ledgerPage = 1;
+      this.ledgerFilterVariant = ''; // Reset filter to show all by default
     }
     
     if (resetPage) {
@@ -640,7 +821,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe((data: any) => {
-        const newEntries = (data.content || data).sort((a: any, b: any) => b.id - a.id);
+        // Sort by transaction date (ascending - oldest first) for accurate running balance calculation
+        const newEntries = (data.content || data).sort((a: any, b: any) => {
+          const dateA = new Date(a.transactionDate).getTime();
+          const dateB = new Date(b.transactionDate).getTime();
+          return dateA - dateB; // Oldest first
+        });
         
         if (resetPage) {
           this.ledgerEntries = newEntries;
@@ -653,6 +839,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         this.totalLedgerPages = data.totalPages || 1;
         this.cdr.markForCheck();
         ledgerSub.unsubscribe();
+        
+        // Fetch and load the summary data for accurate per-variant summary
+        if (resetPage) {
+          this.ledgerService.getCustomerLedgerSummary(customerId).subscribe({
+            next: (summaryData: any) => {
+              // Update variant summary with data from backend
+              if (summaryData && summaryData.variants) {
+                this.variantSummary = summaryData.variants;
+                this.cdr.markForCheck();
+              }
+            },
+            error: (err) => {
+              console.error('Error loading ledger summary:', err);
+            }
+          });
+        }
       });
   }
 
@@ -688,6 +890,193 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.ledgerEntries = [];
   }
 
+  exportLedgerToPDF() {
+    if (!this.selectedCustomer) {
+      this.toastr.warning('No customer selected', 'Warning');
+      return;
+    }
+
+    // First, get the total count to know how many records exist
+    this.loadingService.show('Preparing ledger export...');
+    this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1)
+      .pipe(
+        catchError((error: any) => {
+          this.toastr.error('Failed to load ledger data', 'Error');
+          this.loadingService.hide();
+          return of({ content: [], totalElements: 0 });
+        })
+      )
+      .subscribe((initialData: any) => {
+        // Now fetch ALL records using the total count
+        const totalRecords = initialData.totalElements || 0;
+        
+        if (totalRecords === 0) {
+          this.toastr.warning('No ledger data to export', 'Warning');
+          this.loadingService.hide();
+          return;
+        }
+
+        // Fetch all records in one request
+        this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, totalRecords)
+          .pipe(
+            catchError((error: any) => {
+              this.toastr.error('Failed to load ledger data', 'Error');
+              this.loadingService.hide();
+              return of({ content: [], totalElements: 0 });
+            }),
+            finalize(() => {
+              this.loadingService.hide();
+            })
+          )
+          .subscribe((data: any) => {
+            const allLedgerEntries = (data.content || []).sort((a: any, b: any) => {
+              const dateA = new Date(a.transactionDate).getTime();
+              const dateB = new Date(b.transactionDate).getTime();
+              return dateA - dateB; // Oldest first
+            });
+
+            if (allLedgerEntries.length === 0) {
+              this.toastr.warning('No ledger data to export', 'Warning');
+              return;
+            }
+
+            try {
+              const totalDebit = allLedgerEntries.reduce((sum: number, entry: any) => {
+                return sum + (entry.totalAmount || 0);
+              }, 0);
+
+              const totalCredit = allLedgerEntries.reduce((sum: number, entry: any) => {
+                return sum + (entry.amountReceived || 0);
+              }, 0);
+
+              const balanceDue = totalDebit - totalCredit;
+
+              exportCustomerLedgerToPDF({
+                customerName: this.selectedCustomer.name || 'Customer',
+                customerPhone: this.selectedCustomer.phone || this.selectedCustomer.mobile,
+                ledgerData: allLedgerEntries,
+                totalDebit: totalDebit,
+                totalCredit: totalCredit,
+                balanceDue: balanceDue,
+                businessName: 'GAS AGENCY SYSTEM',
+                fromDate: undefined,
+                toDate: undefined
+              });
+
+              this.toastr.success('Ledger exported to PDF successfully', 'Success');
+            } catch (error) {
+              console.error('Error exporting ledger to PDF:', error);
+              this.toastr.error('Failed to export ledger to PDF', 'Error');
+            }
+          });
+      });
+  }
+
+  // Calculate total amount from all ledger entries
+  getTotalAmount(): number {
+    return this.filteredLedgerEntries.reduce((sum, entry) => {
+      return sum + (entry.totalAmount || 0);
+    }, 0);
+  }
+
+  // Calculate total amount received from all ledger entries
+  getTotalAmountReceived(): number {
+    return this.filteredLedgerEntries.reduce((sum, entry) => {
+      return sum + (entry.amountReceived || 0);
+    }, 0);
+  }
+
+  // Calculate total due amount from all ledger entries
+  getTotalDueAmount(): number {
+    return this.filteredLedgerEntries.reduce((sum, entry) => {
+      return sum + (entry.dueAmount || 0);
+    }, 0);
+  }
+
+  // Get due amount for a specific row (Total Amount - Amount Received for that transaction)
+  getRowDueAmount(rowIndex: number): number {
+    const entry = this.filteredLedgerEntries[rowIndex];
+    const dueAmount = (entry.totalAmount || 0) - (entry.amountReceived || 0);
+    return Math.max(0, dueAmount);
+  }
+
+  // Get previous due received for a specific row (cumulative till that row)
+  getRowPreviousDueReceived(rowIndex: number): number {
+    if (rowIndex === 0) return 0;
+    
+    let previousDueReceived = 0;
+    for (let i = 0; i < rowIndex; i++) {
+      const entry = this.filteredLedgerEntries[i];
+      const dueThatDay = (entry.totalAmount || 0) - (entry.amountReceived || 0);
+      previousDueReceived += dueThatDay;
+    }
+    
+    return previousDueReceived;
+  }
+
+  // Get current balance owing for a specific row (use dueAmount directly from backend)
+  getRowCurrentBalance(rowIndex: number): number {
+    // Get the entry from filtered (display) view
+    const filteredEntry = this.filteredLedgerEntries[rowIndex];
+    
+    // Simply return the dueAmount from the backend - it's already calculated as the running balance
+    return filteredEntry.dueAmount || 0;
+  }
+
+  // Calculate total filled out cylinders from all ledger entries
+  getTotalFilledOut(): number {
+    return this.filteredLedgerEntries.reduce((sum, entry) => {
+      return sum + (entry.filledOut || 0);
+    }, 0);
+  }
+
+  // Calculate total return pending from variant summary
+  getTotalReturnPending(): number {
+    return this.getFilteredVariantSummary().reduce((sum, variant) => {
+      return sum + (variant.returnPending || 0);
+    }, 0);
+  }
+
+  // Get variant summary filtered by selected variant
+  getFilteredVariantSummary(): any[] {
+    if (!this.ledgerFilterVariant) {
+      return this.variantSummary;
+    }
+    return this.variantSummary.filter(v => v.variantName === this.ledgerFilterVariant);
+  }
+
+  // Calculate total empty in cylinders from all ledger entries
+  getTotalEmptyIn(): number {
+    return this.filteredLedgerEntries.reduce((sum, entry) => {
+      return sum + (entry.emptyIn || 0);
+    }, 0);
+  }
+
+  // Calculate total balance pending (cylinders with customer)
+  getTotalBalance(): number {
+    if (this.filteredLedgerEntries.length === 0) return 0;
+    // Balance is cumulative, so we take the last entry's balance which represents the net balance
+    const sortedEntries = [...this.filteredLedgerEntries].sort((a, b) => 
+      new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime()
+    );
+    
+    let totalBalance = 0;
+    const variantBalances = new Map<string, number>();
+    
+    // Iterate from oldest to newest to get the final balance per variant
+    for (let i = sortedEntries.length - 1; i >= 0; i--) {
+      const entry = sortedEntries[i];
+      variantBalances.set(entry.variantName, entry.balance);
+    }
+    
+    // Sum all variant balances
+    variantBalances.forEach(balance => {
+      totalBalance += balance;
+    });
+    
+    return totalBalance;
+  }
+
   // Get net filled units for a variant in the ledger modal (industry standard)
   getFilledUnitsForVariant(variantName: string): number {
     const entries = this.ledgerEntries.filter(e => e.variantName === variantName);
@@ -700,5 +1089,135 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   // Remove confusing pending calculation (industry standard: only show net filled)
   getPendingUnitsForVariant(variantName: string): number {
     return 0;
+  }
+
+  // Payment form methods
+  openPaymentForm() {
+    this.paymentForm = {
+      amount: null,
+      paymentDate: new Date().toISOString().split('T')[0],
+      paymentMode: ''
+    };
+    this.paymentError = '';
+    this.showPaymentForm = true;
+  }
+
+  openPaymentFormForCustomer(customer: any) {
+    this.selectedCustomer = customer;
+    this.loadLedgerForCustomer(customer.id);
+    this.openPaymentForm();
+  }
+
+  closePaymentForm() {
+    this.showPaymentForm = false;
+    this.paymentForm = { amount: null, paymentDate: '', paymentMode: '' };
+    this.paymentError = '';
+  }
+
+  submitPayment() {
+    this.paymentError = '';
+
+    if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
+      this.paymentError = 'Please enter a valid payment amount';
+      return;
+    }
+
+    if (!this.paymentForm.paymentDate) {
+      this.paymentError = 'Please select a payment date';
+      return;
+    }
+
+    if (!this.paymentForm.paymentMode) {
+      this.paymentError = 'Please select a payment mode';
+      return;
+    }
+
+    // Get the current due amount from the most recent ledger entry
+    const currentDue = this.ledgerEntries.length > 0 
+      ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0 
+      : 0;
+
+    // Validate payment amount doesn't exceed due amount
+    if (this.paymentForm.amount > currentDue) {
+      this.paymentError = `Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`;
+      return;
+    }
+
+    this.isSubmittingPayment = true;
+    const paymentData = {
+      customerId: this.selectedCustomer.id,
+      amount: this.paymentForm.amount,
+      paymentDate: this.paymentForm.paymentDate,
+      paymentMode: this.paymentForm.paymentMode
+    };
+
+    this.ledgerService.recordPayment(paymentData)
+      .pipe(
+        catchError((error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
+          this.paymentError = errorMessage;
+          this.toastr.error(errorMessage, 'Error');
+          this.isSubmittingPayment = false;
+          return of(null);
+        })
+      )
+      .subscribe((response: any) => {
+        if (response) {
+          this.toastr.success('Payment recorded successfully', 'Success');
+          this.closePaymentForm();
+          // Refresh ledger
+          this.loadLedgerForCustomer(this.selectedCustomer.id);
+          // Update customer's due amount from ledger
+          this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1000).subscribe({
+            next: (data: any) => {
+              const allEntries = data.content || data;
+              if (allEntries.length > 0) {
+                // Sort chronologically (oldest first)
+                const chronoEntries = allEntries.sort((a: any, b: any) => {
+                  const dateA = new Date(a.transactionDate).getTime();
+                  const dateB = new Date(b.transactionDate).getTime();
+                  if (dateA === dateB) {
+                    return (a.id || 0) - (b.id || 0);
+                  }
+                  return dateA - dateB;
+                });
+                
+                // Calculate cumulative balance
+                let cumulativeBalance = 0;
+                chronoEntries.forEach((entry: any) => {
+                  if (entry.refType === 'PAYMENT') {
+                    cumulativeBalance -= (entry.amountReceived || 0);
+                  } else {
+                    const transactionDue = (entry.totalAmount || 0) - (entry.amountReceived || 0);
+                    cumulativeBalance += transactionDue;
+                  }
+                });
+                
+                // Update customer's due amount in the table
+                const customer = this.customers.find(c => c.id === this.selectedCustomer.id);
+                if (customer) {
+                  customer.dueAmount = cumulativeBalance;
+                  this.cdr.markForCheck();
+                }
+              }
+            },
+            error: () => {
+              // Silently fail on error
+            }
+          });
+        }
+        this.isSubmittingPayment = false;
+      });
+  }
+
+  getPaymentModeLabel(mode: string): string {
+    const modeLabels: { [key: string]: string } = {
+      'CASH': 'Cash',
+      'CHEQUE': 'Cheque',
+      'BANK_TRANSFER': 'Online',
+      'CREDIT': 'Credit',
+      'UPI': 'UPI'
+    };
+    return modeLabels[mode] || mode;
   }
 }

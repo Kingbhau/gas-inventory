@@ -437,6 +437,10 @@
    RESPONSIVE DESIGN
    ==================================== */
 
+.mobile-only {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     width: 240px;
@@ -453,6 +457,10 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+
   .sidebar {
     position: fixed;
     left: 0;

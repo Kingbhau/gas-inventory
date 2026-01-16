@@ -13,6 +13,7 @@ import com.gasagency.dto.CustomerBalanceDTO;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ledger")
@@ -24,6 +25,64 @@ public class CustomerCylinderLedgerController {
         public Long variantId;
         public LocalDate transactionDate;
         public Long emptyIn;
+        public java.math.BigDecimal amountReceived;
+        public String paymentMode;
+
+        public Long getCustomerId() {
+            return customerId;
+        }
+
+        public void setCustomerId(Long customerId) {
+            this.customerId = customerId;
+        }
+
+        public Long getWarehouseId() {
+            return warehouseId;
+        }
+
+        public void setWarehouseId(Long warehouseId) {
+            this.warehouseId = warehouseId;
+        }
+
+        public Long getVariantId() {
+            return variantId;
+        }
+
+        public void setVariantId(Long variantId) {
+            this.variantId = variantId;
+        }
+
+        public LocalDate getTransactionDate() {
+            return transactionDate;
+        }
+
+        public void setTransactionDate(LocalDate transactionDate) {
+            this.transactionDate = transactionDate;
+        }
+
+        public Long getEmptyIn() {
+            return emptyIn;
+        }
+
+        public void setEmptyIn(Long emptyIn) {
+            this.emptyIn = emptyIn;
+        }
+
+        public java.math.BigDecimal getAmountReceived() {
+            return amountReceived;
+        }
+
+        public void setAmountReceived(java.math.BigDecimal amountReceived) {
+            this.amountReceived = amountReceived;
+        }
+
+        public String getPaymentMode() {
+            return paymentMode;
+        }
+
+        public void setPaymentMode(String paymentMode) {
+            this.paymentMode = paymentMode;
+        }
     }
 
     @GetMapping("/pending-summary")
@@ -65,6 +124,7 @@ public class CustomerCylinderLedgerController {
     @PostMapping("/empty-return")
     public ResponseEntity<CustomerCylinderLedgerDTO> recordEmptyReturn(@RequestBody EmptyReturnRequest request) {
         // For empty returns, set refId to 0L (not null) to satisfy DB constraint
+        // Create ledger entry with amount received
         CustomerCylinderLedgerDTO dto = service.createLedgerEntry(
                 request.customerId,
                 request.warehouseId,
@@ -73,7 +133,15 @@ public class CustomerCylinderLedgerController {
                 "EMPTY_RETURN",
                 0L,
                 0L,
-                request.emptyIn);
+                request.emptyIn,
+                java.math.BigDecimal.ZERO,
+                request.amountReceived != null ? request.amountReceived : java.math.BigDecimal.ZERO);
+
+        // If payment mode is provided, update the ledger entry
+        if (request.paymentMode != null && !request.paymentMode.isEmpty()) {
+            service.updatePaymentMode(dto.getId(), request.paymentMode);
+        }
+
         return ResponseEntity.ok(dto);
     }
 
@@ -121,5 +189,18 @@ public class CustomerCylinderLedgerController {
     @GetMapping("/customer/{customerId}/variant/{variantId}/balance")
     public ResponseEntity<Long> getBalance(@PathVariable Long customerId, @PathVariable Long variantId) {
         return ResponseEntity.ok(service.getCurrentBalance(customerId, variantId));
+    }
+
+    // Record a payment transaction
+    @PostMapping("/payment")
+    public ResponseEntity<CustomerCylinderLedgerDTO> recordPayment(
+            @RequestBody CustomerCylinderLedgerService.PaymentRequest paymentRequest) {
+        return ResponseEntity.ok(service.recordPayment(paymentRequest));
+    }
+
+    // Get complete summary for a customer (across all ledger entries)
+    @GetMapping("/customer/{customerId}/summary")
+    public ResponseEntity<Map<String, Object>> getCustomerSummary(@PathVariable Long customerId) {
+        return ResponseEntity.ok(service.getCustomerLedgerSummary(customerId));
     }
 }

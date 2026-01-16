@@ -193,6 +193,15 @@ public class SaleService {
                         throw new InvalidOperationException("Sale must contain at least one item");
                 }
 
+                // Validate modeOfPayment is provided only when amountReceived > 0
+                if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
+                        if (request.getModeOfPayment() == null || request.getModeOfPayment().trim().isEmpty()) {
+                                logger.error("Invalid sale request - modeOfPayment is required when amountReceived > 0");
+                                throw new InvalidOperationException(
+                                                "Mode of payment is required when payment is received");
+                        }
+                }
+
                 logger.debug("Looking up customer with id: {}", request.getCustomerId());
                 Customer customer = customerRepository.findById(request.getCustomerId())
                                 .orElseThrow(
@@ -367,7 +376,10 @@ public class SaleService {
                                         "SALE",
                                         sale.getId(),
                                         itemRequest.getQtyIssued(),
-                                        itemRequest.getQtyEmptyReceived());
+                                        itemRequest.getQtyEmptyReceived(),
+                                        totalAmount,
+                                        request.getAmountReceived(),
+                                        request.getModeOfPayment());
                         logger.debug("Ledger entry created for sale item");
                 }
 

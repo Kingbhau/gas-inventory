@@ -12,33 +12,40 @@
     </div>
     <div class="card-body">
       <form [formGroup]="emptyReturnForm" (ngSubmit)="submit()" class="sale-form">
-        <!-- Warehouse Selection (Autocomplete) -->
-        <app-autocomplete-input
-          label="Warehouse"
-          [required]="true"
-          [items]="warehouses"
-          [displayKey]="'name'"
-          placeholder="Warehouse name..."
-          (selectedChange)="onWarehouseSelected($event)"
-        ></app-autocomplete-input>
-        <div *ngIf="emptyReturnForm.get('warehouseId')?.invalid && emptyReturnForm.get('warehouseId')?.touched" class="error-message">
-          Warehouse is required
+        <!-- Two Column Layout for Selection Fields -->
+        <div class="form-row">
+          <!-- Warehouse Selection (Autocomplete) -->
+          <div class="form-group">
+            <app-autocomplete-input
+              label="Warehouse"
+              [required]="true"
+              [items]="warehouses"
+              [displayKey]="'name'"
+              placeholder="Warehouse name..."
+              (selectedChange)="onWarehouseSelected($event)"
+            ></app-autocomplete-input>
+            <div *ngIf="emptyReturnForm.get('warehouseId')?.invalid && emptyReturnForm.get('warehouseId')?.touched" class="error-message">
+              Warehouse is required
+            </div>
+          </div>
+
+          <!-- Customer Selection (Autocomplete) -->
+          <div class="form-group">
+            <app-autocomplete-input
+              label="Customer"
+              [required]="true"
+              [items]="customers"
+              [displayKey]="'name'"
+              placeholder="Select a customer"
+              (selectedChange)="onCustomerSelected($event)"
+            ></app-autocomplete-input>
+            <div *ngIf="emptyReturnForm.get('customerId')?.invalid && emptyReturnForm.get('customerId')?.touched" class="error-message">
+              Customer is required
+            </div>
+          </div>
         </div>
 
-        <!-- Customer Selection (Autocomplete) -->
-        <app-autocomplete-input
-          label="Customer"
-          [required]="true"
-          [items]="customers"
-          [displayKey]="'name'"
-          placeholder="Select a customer"
-          (selectedChange)="onCustomerSelected($event)"
-        ></app-autocomplete-input>
-        <div *ngIf="emptyReturnForm.get('customerId')?.invalid && emptyReturnForm.get('customerId')?.touched" class="error-message">
-          Customer is required
-        </div>
-
-        <!-- Variant Selection (Autocomplete) -->
+        <!-- Variant Selection -->
         <app-autocomplete-input
           label="Cylinder Variant"
           [required]="true"
@@ -64,6 +71,37 @@
           <div class="form-group">
             <label class="form-label">Date <span class="required">*</span></label>
             <input formControlName="transactionDate" type="date" class="form-control" required />
+          </div>
+        </div>
+
+        <!-- Two Column Layout for Amount and Payment Mode -->
+        <div class="form-row">
+          <!-- Amount Received -->
+          <div class="form-group">
+            <label class="form-label">Amount Received (₹)</label>
+            <div class="input-with-prefix">
+              <span class="currency">₹</span>
+              <input 
+                formControlName="amountReceived" 
+                type="number" 
+                class="form-control" 
+                placeholder="0.00"
+                step="0.01"
+                min="0">
+            </div>
+          </div>
+
+          <!-- Mode of Payment -->
+          <div class="form-group">
+            <label class="form-label">Mode of Payment</label>
+            <select formControlName="paymentMode" class="form-control">
+              <option value="">-- Select Payment Mode --</option>
+              <option value="CASH">Cash</option>
+              <option value="CHEQUE">Cheque</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+              <option value="CREDIT">Credit</option>
+              <option value="UPI">UPI</option>
+            </select>
           </div>
         </div>
 

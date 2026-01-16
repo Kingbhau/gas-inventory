@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 @Entity
@@ -30,14 +32,11 @@ public class CustomerCylinderLedger extends Auditable {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @NotNull(message = "Warehouse is required.")
     @ManyToOne
-    @JoinColumn(name = "warehouse_id", nullable = false)
+    @JoinColumn(name = "warehouse_id", nullable = true)
     private Warehouse warehouse;
-
-    @NotNull(message = "Variant is required.")
     @ManyToOne
-    @JoinColumn(name = "variant_id", nullable = false)
+    @JoinColumn(name = "variant_id", nullable = true)
     private CylinderVariant variant;
 
     @NotNull(message = "Transaction date is required.")
@@ -70,6 +69,21 @@ public class CustomerCylinderLedger extends Auditable {
     @Column(nullable = false)
     private Long balance;
 
+    @DecimalMin(value = "0.0", message = "Total amount must be non-negative.")
+    @Column(nullable = true)
+    private BigDecimal totalAmount;
+
+    @DecimalMin(value = "0.0", message = "Amount received must be non-negative.")
+    @Column(nullable = true)
+    private BigDecimal amountReceived;
+
+    @DecimalMin(value = "0.0", message = "Due amount must be non-negative.")
+    @Column(nullable = true)
+    private BigDecimal dueAmount;
+
+    @Column(nullable = true, length = 50)
+    private String paymentMode;
+
     public CustomerCylinderLedger() {
     }
 
@@ -77,7 +91,7 @@ public class CustomerCylinderLedger extends Auditable {
             LocalDate transactionDate, TransactionType refType, Long refId,
             Long filledOut, Long emptyIn, Long balance) {
         this.customer = Objects.requireNonNull(customer, "Customer cannot be null");
-        this.warehouse = Objects.requireNonNull(warehouse, "Warehouse cannot be null");
+        this.warehouse = warehouse; // Can be null for INITIAL_STOCK transactions
         this.variant = Objects.requireNonNull(variant, "Variant cannot be null");
         this.transactionDate = transactionDate;
         this.refType = refType;
@@ -88,7 +102,7 @@ public class CustomerCylinderLedger extends Auditable {
     }
 
     public enum TransactionType {
-        SALE, EMPTY_RETURN, TRANSFER
+        INITIAL_STOCK, SALE, EMPTY_RETURN, TRANSFER, PAYMENT
     }
 
     public Long getId() {
@@ -177,5 +191,37 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setBalance(Long balance) {
         this.balance = balance;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public BigDecimal getDueAmount() {
+        return dueAmount;
+    }
+
+    public void setDueAmount(BigDecimal dueAmount) {
+        this.dueAmount = dueAmount;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
     }
 }

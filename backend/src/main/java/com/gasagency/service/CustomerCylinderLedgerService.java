@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 import com.gasagency.dto.CustomerBalanceDTO;
 import java.util.ArrayList;
+import java.math.BigDecimal;
 
 import java.util.stream.Collectors;
 
@@ -216,14 +217,17 @@ public class CustomerCylinderLedgerService {
                                                         "Customer not found with id: " + customerId);
                                 });
 
-                Warehouse warehouse = warehouseRepository.findById(warehouseId)
-                                .orElseThrow(() -> {
-                                        LoggerUtil.logBusinessError(logger, "CREATE_LEDGER_ENTRY",
-                                                        "Warehouse not found",
-                                                        "warehouseId", warehouseId);
-                                        return new ResourceNotFoundException(
-                                                        "Warehouse not found with id: " + warehouseId);
-                                });
+                Warehouse warehouse = null;
+                if (warehouseId != null) {
+                        warehouse = warehouseRepository.findById(warehouseId)
+                                        .orElseThrow(() -> {
+                                                LoggerUtil.logBusinessError(logger, "CREATE_LEDGER_ENTRY",
+                                                                "Warehouse not found",
+                                                                "warehouseId", warehouseId);
+                                                return new ResourceNotFoundException(
+                                                                "Warehouse not found with id: " + warehouseId);
+                                        });
+                }
 
                 CylinderVariant variant = variantRepository.findById(variantId)
                                 .orElseThrow(() -> {
@@ -279,6 +283,130 @@ public class CustomerCylinderLedgerService {
                 }
 
                 return toDTO(ledger);
+        }
+
+        // Overloaded method for SALE transactions with amount details
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
+                        LocalDate transactionDate, String refType, Long refId,
+                        Long filledOut, Long emptyIn, BigDecimal totalAmount, BigDecimal amountReceived) {
+
+                CustomerCylinderLedgerDTO dto = createLedgerEntry(customerId, warehouseId, variantId,
+                                transactionDate, refType, refId, filledOut, emptyIn);
+
+                // Update the created entry with amount details
+                if (totalAmount != null || amountReceived != null) {
+                        CustomerCylinderLedger ledger = repository.findById(dto.getId())
+                                        .orElseThrow(() -> new ResourceNotFoundException("Ledger entry not found"));
+
+                        if (totalAmount != null) {
+                                ledger.setTotalAmount(totalAmount);
+                        }
+                        if (amountReceived != null) {
+                                ledger.setAmountReceived(amountReceived);
+                        }
+
+                        // Calculate running balance (due amount) - cumulative from all previous
+                        // transactions
+                        // Special case: if totalAmount is 0, check if there's amountReceived
+                        // (payment-only transaction)
+                        if (totalAmount != null && totalAmount.compareTo(java.math.BigDecimal.ZERO) == 0) {
+                                final Long ledgerId = ledger.getId();
+                                // Get previous running balance from latest entry
+                                List<CustomerCylinderLedger> previousEntries = repository
+                                                .findByCustomer(ledger.getCustomer())
+                                                .stream()
+                                                .filter(e -> !e.getId().equals(ledgerId))
+                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                                                .limit(1)
+                                                .collect(Collectors.toList());
+
+                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                if (!previousEntries.isEmpty()) {
+                                        previousBalance = previousEntries.get(0).getDueAmount() != null
+                                                        ? previousEntries.get(0).getDueAmount()
+                                                        : java.math.BigDecimal.ZERO;
+                                }
+
+                                // If amountReceived is provided, subtract it from previous balance (payment
+                                // reduces due amount)
+                                // Otherwise just carry forward the previous balance
+                                if (amountReceived != null && amountReceived.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                                        java.math.BigDecimal newDue = previousBalance.subtract(amountReceived);
+                                        ledger.setDueAmount(newDue);
+                                } else {
+                                        ledger.setDueAmount(previousBalance);
+                                }
+                        } else if (totalAmount != null && amountReceived != null) {
+                                final Long ledgerId = ledger.getId();
+                                // Get previous running balance from latest entry
+                                List<CustomerCylinderLedger> previousEntries = repository
+                                                .findByCustomer(ledger.getCustomer())
+                                                .stream()
+                                                .filter(e -> !e.getId().equals(ledgerId))
+                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                                                .limit(1)
+                                                .collect(Collectors.toList());
+
+                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                if (!previousEntries.isEmpty()) {
+                                        previousBalance = previousEntries.get(0).getDueAmount() != null
+                                                        ? previousEntries.get(0).getDueAmount()
+                                                        : java.math.BigDecimal.ZERO;
+                                }
+
+                                // Cumulative balance = previous balance + current transaction amount - payment
+                                // received
+                                java.math.BigDecimal currentTransactionDue = totalAmount.subtract(amountReceived);
+                                java.math.BigDecimal cumulativeDue = previousBalance.add(currentTransactionDue);
+                                ledger.setDueAmount(cumulativeDue);
+                        } else if (totalAmount != null) {
+                                final Long ledgerId = ledger.getId();
+                                // No payment received in this transaction
+                                List<CustomerCylinderLedger> previousEntries = repository
+                                                .findByCustomer(ledger.getCustomer())
+                                                .stream()
+                                                .filter(e -> !e.getId().equals(ledgerId))
+                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
+                                                .limit(1)
+                                                .collect(Collectors.toList());
+
+                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                if (!previousEntries.isEmpty()) {
+                                        previousBalance = previousEntries.get(0).getDueAmount() != null
+                                                        ? previousEntries.get(0).getDueAmount()
+                                                        : java.math.BigDecimal.ZERO;
+                                }
+
+                                // Cumulative balance = previous balance + current transaction amount
+                                java.math.BigDecimal cumulativeDue = previousBalance.add(totalAmount);
+                                ledger.setDueAmount(cumulativeDue);
+                        }
+
+                        ledger = repository.save(ledger);
+                        return toDTO(ledger);
+                }
+
+                return dto;
+        }
+
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
+                        LocalDate transactionDate, String refType, Long refId,
+                        Long filledOut, Long emptyIn, BigDecimal totalAmount, BigDecimal amountReceived,
+                        String modeOfPayment) {
+
+                CustomerCylinderLedgerDTO dto = createLedgerEntry(customerId, warehouseId, variantId,
+                                transactionDate, refType, refId, filledOut, emptyIn, totalAmount, amountReceived);
+
+                // Update the created entry with payment mode
+                if (modeOfPayment != null) {
+                        CustomerCylinderLedger ledger = repository.findById(dto.getId())
+                                        .orElseThrow(() -> new RuntimeException("Ledger entry not found"));
+                        ledger.setPaymentMode(modeOfPayment);
+                        ledger = repository.save(ledger);
+                        return toDTO(ledger);
+                }
+
+                return dto;
         }
 
         public CustomerCylinderLedgerDTO getLedgerEntryById(Long id) {
@@ -414,12 +542,15 @@ public class CustomerCylinderLedgerService {
         }
 
         private CustomerCylinderLedgerDTO toDTO(CustomerCylinderLedger ledger) {
+                Long variantId = ledger.getVariant() != null ? ledger.getVariant().getId() : null;
+                String variantName = ledger.getVariant() != null ? ledger.getVariant().getName() : null;
+
                 CustomerCylinderLedgerDTO dto = new CustomerCylinderLedgerDTO(
                                 ledger.getId(),
                                 ledger.getCustomer().getId(),
                                 ledger.getCustomer().getName(),
-                                ledger.getVariant().getId(),
-                                ledger.getVariant().getName(),
+                                variantId,
+                                variantName,
                                 ledger.getTransactionDate(),
                                 ledger.getRefType().toString(),
                                 ledger.getRefId(),
@@ -427,6 +558,10 @@ public class CustomerCylinderLedgerService {
                                 ledger.getEmptyIn(),
                                 ledger.getBalance());
                 dto.setCreatedAt(ledger.getCreatedDate());
+                dto.setTotalAmount(ledger.getTotalAmount());
+                dto.setAmountReceived(ledger.getAmountReceived());
+                dto.setDueAmount(ledger.getDueAmount());
+                dto.setPaymentMode(ledger.getPaymentMode());
                 return dto;
         }
 
@@ -450,5 +585,208 @@ public class CustomerCylinderLedgerService {
                 dto.setToWarehouseName(transfer.getToWarehouseName());
                 dto.setCreatedAt(transfer.getCreatedAt());
                 return dto;
+        }
+
+        /**
+         * Record a payment transaction
+         */
+        @Transactional
+        public CustomerCylinderLedgerDTO recordPayment(PaymentRequest paymentRequest) {
+                LoggerUtil.logDatabaseOperation(logger, "INSERT", "PAYMENT", "customerId", paymentRequest.customerId,
+                                "amount", paymentRequest.amount);
+
+                Customer customer = customerRepository.findById(paymentRequest.customerId)
+                                .orElseThrow(() -> {
+                                        LoggerUtil.logBusinessError(logger, "RECORD_PAYMENT", "Customer not found",
+                                                        "customerId", paymentRequest.customerId);
+                                        return new ResourceNotFoundException(
+                                                        "Customer not found with id: " + paymentRequest.customerId);
+                                });
+
+                // Payment is customer-level, not variant-specific
+                CustomerCylinderLedger ledger = new CustomerCylinderLedger();
+                ledger.setCustomer(customer);
+                ledger.setWarehouse(null);
+                ledger.setVariant(null); // Payment has no specific variant
+                ledger.setTransactionDate(
+                                paymentRequest.paymentDate != null ? paymentRequest.paymentDate : LocalDate.now());
+                ledger.setRefType(CustomerCylinderLedger.TransactionType.PAYMENT);
+                ledger.setFilledOut(0L);
+                ledger.setEmptyIn(0L);
+                ledger.setBalance(0L);
+                ledger.setTotalAmount(java.math.BigDecimal.ZERO);
+                ledger.setAmountReceived(paymentRequest.amount);
+
+                // Calculate running balance (remaining customer debt) BEFORE this payment
+                // Get all previous ledger entries for this customer
+                List<CustomerCylinderLedger> previousEntries = repository.findByCustomer(customer);
+                java.math.BigDecimal currentDue = java.math.BigDecimal.ZERO;
+
+                for (CustomerCylinderLedger entry : previousEntries) {
+                        if (entry.getRefType() == CustomerCylinderLedger.TransactionType.PAYMENT) {
+                                currentDue = currentDue
+                                                .subtract(entry.getAmountReceived() != null ? entry.getAmountReceived()
+                                                                : java.math.BigDecimal.ZERO);
+                        } else {
+                                java.math.BigDecimal transactionDue = (entry.getTotalAmount() != null
+                                                ? entry.getTotalAmount()
+                                                : java.math.BigDecimal.ZERO)
+                                                .subtract(entry.getAmountReceived() != null ? entry.getAmountReceived()
+                                                                : java.math.BigDecimal.ZERO);
+                                currentDue = currentDue.add(transactionDue);
+                        }
+                }
+
+                // Validate payment amount doesn't exceed current due
+                if (paymentRequest.amount.compareTo(currentDue) > 0) {
+                        LoggerUtil.logBusinessError(logger, "RECORD_PAYMENT", "Payment exceeds due amount",
+                                        "customerId", customer.getId(), "paymentAmount", paymentRequest.amount,
+                                        "dueAmount", currentDue);
+                        throw new IllegalArgumentException(
+                                        "Payment amount ₹" + paymentRequest.amount
+                                                        + " cannot exceed due amount ₹" + currentDue);
+                }
+
+                // Calculate running balance (remaining customer debt) AFTER this payment
+                java.math.BigDecimal cumulativeBalance = currentDue;
+
+                // Subtract current payment from balance
+                cumulativeBalance = cumulativeBalance.subtract(paymentRequest.amount);
+
+                // Set dueAmount to the running balance (can be 0 or negative if overpaid)
+                ledger.setDueAmount(cumulativeBalance.max(java.math.BigDecimal.ZERO)); // Don't store negative due
+                                                                                       // amounts
+                ledger.setRefId(null);
+                ledger.setPaymentMode(paymentRequest.paymentMode);
+
+                CustomerCylinderLedger savedLedger = repository.save(ledger);
+
+                LoggerUtil.logBusinessSuccess(logger, "RECORD_PAYMENT", "customerId", customer.getId(),
+                                "amount", paymentRequest.amount);
+
+                return toDTO(savedLedger);
+        }
+
+        /**
+         * Request class for recording payments
+         */
+        public static class PaymentRequest {
+                public Long customerId;
+                public java.math.BigDecimal amount;
+                public LocalDate paymentDate;
+                public String paymentMode;
+
+                public PaymentRequest() {
+                }
+
+                public PaymentRequest(Long customerId, java.math.BigDecimal amount, LocalDate paymentDate) {
+                        this.customerId = customerId;
+                        this.amount = amount;
+                        this.paymentDate = paymentDate;
+                }
+
+                public PaymentRequest(Long customerId, java.math.BigDecimal amount, LocalDate paymentDate,
+                                String paymentMode) {
+                        this.customerId = customerId;
+                        this.amount = amount;
+                        this.paymentDate = paymentDate;
+                        this.paymentMode = paymentMode;
+                }
+
+                // Getters and setters
+                public Long getCustomerId() {
+                        return customerId;
+                }
+
+                public void setCustomerId(Long customerId) {
+                        this.customerId = customerId;
+                }
+
+                public java.math.BigDecimal getAmount() {
+                        return amount;
+                }
+
+                public void setAmount(java.math.BigDecimal amount) {
+                        this.amount = amount;
+                }
+
+                public LocalDate getPaymentDate() {
+                        return paymentDate;
+                }
+
+                public void setPaymentDate(LocalDate paymentDate) {
+                        this.paymentDate = paymentDate;
+                }
+
+                public String getPaymentMode() {
+                        return paymentMode;
+                }
+
+                public void setPaymentMode(String paymentMode) {
+                        this.paymentMode = paymentMode;
+                }
+        }
+
+        // Get complete summary for a customer (across all ledger entries)
+        public java.util.Map<String, Object> getCustomerLedgerSummary(Long customerId) {
+                Customer customer = customerRepository.findById(customerId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Customer not found with id: " + customerId));
+
+                List<CustomerCylinderLedger> allEntries = repository.findByCustomer(customer);
+                java.util.Map<String, Object> summary = new java.util.HashMap<>();
+                java.util.Map<Long, java.util.Map<String, Object>> variantSummary = new java.util.HashMap<>();
+
+                // Get the latest balance for each variant (most recent entry per variant)
+                java.util.Map<Long, CustomerCylinderLedger> latestByVariant = new java.util.HashMap<>();
+
+                for (CustomerCylinderLedger entry : allEntries) {
+                        // Skip PAYMENT transactions (they don't affect variant-specific balances)
+                        if (entry.getRefType() == CustomerCylinderLedger.TransactionType.PAYMENT) {
+                                continue;
+                        }
+
+                        if (entry.getVariant() != null) {
+                                Long variantId = entry.getVariant().getId();
+                                // Keep the latest entry for each variant (by ID, assuming higher ID = later)
+                                if (!latestByVariant.containsKey(variantId)
+                                                || entry.getId() > latestByVariant.get(variantId).getId()) {
+                                        latestByVariant.put(variantId, entry);
+                                }
+                        }
+                }
+
+                // Build summary from latest entries per variant
+                for (java.util.Map.Entry<Long, CustomerCylinderLedger> entry : latestByVariant.entrySet()) {
+                        CustomerCylinderLedger ledger = entry.getValue();
+                        if (ledger.getVariant() != null) {
+                                Long variantId = ledger.getVariant().getId();
+                                String variantName = ledger.getVariant().getName();
+
+                                java.util.Map<String, Object> vSummary = new java.util.HashMap<>();
+                                vSummary.put("variantName", variantName);
+                                // Use the balance field which represents filled cylinders with customer
+                                Long filledCount = ledger.getBalance() != null && ledger.getBalance() > 0
+                                                ? ledger.getBalance()
+                                                : 0L;
+                                vSummary.put("filledCount", filledCount);
+                                // Return pending = cylinders with customer that need to be returned (same as
+                                // filledCount)
+                                vSummary.put("returnPending", filledCount);
+
+                                variantSummary.put(variantId, vSummary);
+                        }
+                }
+
+                summary.put("variants", new ArrayList<>(variantSummary.values()));
+                return summary;
+        }
+
+        // Update payment mode for a ledger entry
+        public void updatePaymentMode(Long ledgerId, String paymentMode) {
+                CustomerCylinderLedger ledger = repository.findById(ledgerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Ledger entry not found"));
+                ledger.setPaymentMode(paymentMode);
+                repository.save(ledger);
         }
 }

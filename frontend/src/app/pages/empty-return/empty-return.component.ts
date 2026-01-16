@@ -44,7 +44,22 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             customerId: [null, Validators.required],
             variantId: [null, Validators.required],
             emptyIn: [null, [Validators.required, Validators.min(1)]],
+            amountReceived: [null],
+            paymentMode: [''],
             transactionDate: [new Date().toISOString().substring(0, 10), Validators.required]
+        });
+
+        // Add conditional validation for paymentMode
+        this.emptyReturnForm.get('amountReceived')?.valueChanges.subscribe(() => {
+            const modeControl = this.emptyReturnForm.get('paymentMode');
+            const amountReceived = this.emptyReturnForm.get('amountReceived')?.value;
+            
+            if (amountReceived && amountReceived > 0) {
+                modeControl?.setValidators(Validators.required);
+            } else {
+                modeControl?.clearValidators();
+            }
+            modeControl?.updateValueAndValidity();
         });
     }
 
@@ -94,6 +109,8 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             customerId: null,
             variantId: null,
             emptyIn: null,
+            amountReceived: null,
+            paymentMode: '',
             transactionDate: new Date().toISOString().substring(0, 10)
         });
         this.emptyReturnForm.markAsPristine();

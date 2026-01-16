@@ -27,11 +27,55 @@ public class CustomerDTO {
     @DecimalMin(value = "0.0", message = "Discount price must be non-negative")
     private BigDecimal discountPrice;
 
+    @Size(max = 50, message = "GST number must be at most 50 characters")
+    @Pattern(regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$", message = "GST number must be in valid Indian GST format")
+    private String gstNo;
+
     private List<Long> configuredVariants; // Array of variant IDs configured for this customer
 
     private LocalDate lastSaleDate;
 
     private Long totalPending;
+
+    @Min(value = 0, message = "Filled cylinder must be non-negative")
+    private Long filledCylinder;
+
+    @DecimalMin(value = "0.0", message = "Due amount must be non-negative")
+    private BigDecimal dueAmount;
+
+    private List<VariantFilledCylinder> variantFilledCylinders; // Per-variant filled cylinder counts
+
+    /**
+     * Inner class to represent variant-specific filled cylinder data
+     */
+    public static class VariantFilledCylinder {
+        private Long variantId;
+        private Long filledCylinders;
+
+        public VariantFilledCylinder() {
+        }
+
+        public VariantFilledCylinder(Long variantId, Long filledCylinders) {
+            this.variantId = variantId;
+            this.filledCylinders = filledCylinders;
+        }
+
+        public Long getVariantId() {
+            return variantId;
+        }
+
+        public void setVariantId(Long variantId) {
+            this.variantId = variantId;
+        }
+
+        public Long getFilledCylinders() {
+            return filledCylinders;
+        }
+
+        public void setFilledCylinders(Long filledCylinders) {
+            this.filledCylinders = filledCylinders;
+        }
+    }
 
     public CustomerDTO() {
     }
@@ -135,5 +179,37 @@ public class CustomerDTO {
 
     public void setConfiguredVariants(List<Long> configuredVariants) {
         this.configuredVariants = configuredVariants;
+    }
+
+    public String getGstNo() {
+        return gstNo;
+    }
+
+    public void setGstNo(String gstNo) {
+        this.gstNo = gstNo;
+    }
+
+    public Long getFilledCylinder() {
+        return filledCylinder;
+    }
+
+    public void setFilledCylinder(Long filledCylinder) {
+        this.filledCylinder = filledCylinder;
+    }
+
+    public BigDecimal getDueAmount() {
+        return dueAmount;
+    }
+
+    public void setDueAmount(BigDecimal dueAmount) {
+        this.dueAmount = dueAmount;
+    }
+
+    public List<VariantFilledCylinder> getVariantFilledCylinders() {
+        return variantFilledCylinders;
+    }
+
+    public void setVariantFilledCylinders(List<VariantFilledCylinder> variantFilledCylinders) {
+        this.variantFilledCylinders = variantFilledCylinders;
     }
 }

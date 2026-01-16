@@ -30,15 +30,18 @@ public class CustomerService {
     private final SaleRepository saleRepository;
     private final CustomerCylinderLedgerRepository ledgerRepository;
     private final CylinderVariantRepository cylinderVariantRepository;
+    private final CustomerCylinderLedgerService ledgerService;
     private final ObjectMapper objectMapper;
 
     public CustomerService(CustomerRepository repository,
             SaleRepository saleRepository,
-            CustomerCylinderLedgerRepository ledgerRepository, CylinderVariantRepository cylinderVariantRepository) {
+            CustomerCylinderLedgerRepository ledgerRepository, CylinderVariantRepository cylinderVariantRepository,
+            CustomerCylinderLedgerService ledgerService) {
         this.repository = repository;
         this.saleRepository = saleRepository;
         this.ledgerRepository = ledgerRepository;
         this.cylinderVariantRepository = cylinderVariantRepository;
+        this.ledgerService = ledgerService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -75,8 +78,63 @@ public class CustomerService {
         Customer customer = new Customer(dto.getName(), mobile, dto.getAddress());
         customer.setSalePrice(dto.getSalePrice());
         customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setGstNo(dto.getGstNo());
         customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
         customer = repository.save(customer);
+
+        // Create initial ledger entries for all configured variants with
+        // variant-specific filled counts
+        List<Long> configuredVariantIds = convertJsonToVariantList(customer.getConfiguredVariants());
+        List<CustomerDTO.VariantFilledCylinder> variantFilledCylinders = dto.getVariantFilledCylinders();
+
+        if (configuredVariantIds != null && !configuredVariantIds.isEmpty() &&
+                variantFilledCylinders != null && !variantFilledCylinders.isEmpty()) {
+
+            java.math.BigDecimal dueAmount = dto.getDueAmount() != null ? dto.getDueAmount()
+                    : java.math.BigDecimal.ZERO;
+
+            // Create ledger entry for each variant with its specific filled cylinder count
+            // Due amount is only stored in the first variant's entry, others get 0
+            boolean isFirstVariant = true;
+            for (CustomerDTO.VariantFilledCylinder varFilled : variantFilledCylinders) {
+                Long variantId = varFilled.getVariantId();
+                Long filledOut = varFilled.getFilledCylinders() != null ? varFilled.getFilledCylinders() : 0L;
+
+                // Only create ledger if variant is in configured variants
+                if (configuredVariantIds.contains(variantId)) {
+                    CylinderVariant variant = cylinderVariantRepository.findById(variantId).orElse(null);
+                    if (variant != null) {
+                        long emptyIn = 0L; // No returns at initial creation
+                        long balance = filledOut; // All filled cylinders are pending
+
+                        // Use ledger service to properly calculate due amount
+                        // For first variant: pass totalAmount as dueAmount, for others pass 0 (will
+                        // carry forward)
+                        java.math.BigDecimal totalAmountForLedger = isFirstVariant ? dueAmount
+                                : java.math.BigDecimal.ZERO;
+                        java.math.BigDecimal amountReceivedForLedger = java.math.BigDecimal.ZERO;
+
+                        ledgerService.createLedgerEntry(
+                                customer.getId(),
+                                null, // No warehouse for INITIAL_STOCK
+                                variantId,
+                                java.time.LocalDate.now(),
+                                CustomerCylinderLedger.TransactionType.INITIAL_STOCK.name(),
+                                null, // No refId for initial stock
+                                filledOut,
+                                emptyIn,
+                                totalAmountForLedger,
+                                amountReceivedForLedger);
+
+                        LoggerUtil.logBusinessSuccess(logger, "CREATE_CUSTOMER_INITIAL_LEDGER", "customerId",
+                                customer.getId(),
+                                "variantId", variantId, "filledOut", filledOut, "balance", balance);
+
+                        isFirstVariant = false; // Only first variant gets the due amount
+                    }
+                }
+            }
+        }
 
         LoggerUtil.logBusinessSuccess(logger, "CREATE_CUSTOMER", "id", customer.getId(), "name", customer.getName(),
                 "mobile", customer.getMobile());
@@ -161,9 +219,56 @@ public class CustomerService {
         customer.setAddress(dto.getAddress());
         customer.setSalePrice(dto.getSalePrice());
         customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setGstNo(dto.getGstNo());
         customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
         customer.setActive(dto.getActive());
         customer = repository.save(customer);
+
+        // Create ledger entries for newly added variants (those in
+        // variantFilledCylinders but not in existing ledger)
+        List<Long> configuredVariantIds = convertJsonToVariantList(customer.getConfiguredVariants());
+        List<CustomerDTO.VariantFilledCylinder> variantFilledCylinders = dto.getVariantFilledCylinders();
+
+        if (configuredVariantIds != null && !configuredVariantIds.isEmpty() &&
+                variantFilledCylinders != null && !variantFilledCylinders.isEmpty()) {
+
+            for (CustomerDTO.VariantFilledCylinder varFilled : variantFilledCylinders) {
+                Long variantId = varFilled.getVariantId();
+                Long filledOut = varFilled.getFilledCylinders() != null ? varFilled.getFilledCylinders() : 0L;
+
+                if (configuredVariantIds.contains(variantId)) {
+                    CylinderVariant variant = cylinderVariantRepository.findById(variantId).orElse(null);
+                    if (variant != null) {
+                        // Check if INITIAL_STOCK entry already exists for this variant
+                        List<CustomerCylinderLedger> existingInitialStock = ledgerRepository.findByCustomer(customer)
+                                .stream()
+                                .filter(e -> e.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK &&
+                                        e.getVariant().getId().equals(variantId))
+                                .collect(Collectors.toList());
+
+                        // Only create if no INITIAL_STOCK entry exists for this variant
+                        if (existingInitialStock.isEmpty() && filledOut > 0) {
+                            long balance = filledOut;
+
+                            ledgerService.createLedgerEntry(
+                                    customer.getId(),
+                                    null,
+                                    variantId,
+                                    java.time.LocalDate.now(),
+                                    CustomerCylinderLedger.TransactionType.INITIAL_STOCK.name(),
+                                    null,
+                                    filledOut,
+                                    0L,
+                                    java.math.BigDecimal.ZERO,
+                                    java.math.BigDecimal.ZERO);
+
+                            LoggerUtil.logBusinessSuccess(logger, "UPDATE_CUSTOMER_NEW_VARIANT", "customerId",
+                                    customer.getId(), "variantId", variantId, "filledOut", filledOut);
+                        }
+                    }
+                }
+            }
+        }
 
         LoggerUtil.logBusinessSuccess(logger, "UPDATE_CUSTOMER", "id", customer.getId(), "name", customer.getName());
         LoggerUtil.logAudit("UPDATE", "CUSTOMER", "customerId", customer.getId(), "name", customer.getName());
@@ -214,6 +319,7 @@ public class CustomerService {
         // Set pricing fields
         dto.setSalePrice(customer.getSalePrice());
         dto.setDiscountPrice(customer.getDiscountPrice());
+        dto.setGstNo(customer.getGstNo());
         dto.setConfiguredVariants(convertJsonToVariantList(customer.getConfiguredVariants()));
 
         // Get last sale date
@@ -223,17 +329,52 @@ public class CustomerService {
             dto.setLastSaleDate(sales.get(0).getSaleDate());
         }
 
-        // Get total pending units: sum the latest balance for each variant
+        // Get total pending units: ONLY from ledger (filledOut - emptyIn balance)
         long totalPending = 0L;
-        List<CylinderVariant> variants = cylinderVariantRepository.findAllByActive(true);
-        for (CylinderVariant variant : variants) {
-            List<CustomerCylinderLedger> latestLedger = ledgerRepository
-                    .findLatestLedger(customer.getId(), variant.getId());
-            if (!latestLedger.isEmpty() && latestLedger.get(0).getBalance() != null) {
-                totalPending += latestLedger.get(0).getBalance();
+        long totalFilledCylinders = 0L;
+        java.math.BigDecimal totalDueAmount = java.math.BigDecimal.ZERO;
+
+        // Get customer's configured variants
+        List<Long> configuredVariantIds = convertJsonToVariantList(customer.getConfiguredVariants());
+
+        if (configuredVariantIds != null && !configuredVariantIds.isEmpty()) {
+            for (Long variantId : configuredVariantIds) {
+                CylinderVariant variant = cylinderVariantRepository.findById(variantId).orElse(null);
+                if (variant != null) {
+                    List<CustomerCylinderLedger> latestLedger = ledgerRepository
+                            .findLatestLedger(customer.getId(), variant.getId());
+                    if (!latestLedger.isEmpty()) {
+                        CustomerCylinderLedger ledger = latestLedger.get(0);
+                        if (ledger.getBalance() != null) {
+                            totalPending += ledger.getBalance();
+                        }
+                        // For INITIAL_STOCK entries, capture the filled value
+                        if (ledger.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK) {
+                            totalFilledCylinders += ledger.getFilledOut() != null ? ledger.getFilledOut() : 0L;
+                        }
+                    }
+                }
             }
         }
+
+        // Get due amount from the chronologically LATEST ledger entry across ALL
+        // transactions
+        // This ensures payments and empty returns with amountReceived reduce the
+        // cumulative due amount
+        List<CustomerCylinderLedger> allLedgers = ledgerRepository.findByCustomer(customer);
+        if (!allLedgers.isEmpty()) {
+            // Sort by ID (descending) to get the chronologically latest entry
+            CustomerCylinderLedger latestEntry = allLedgers.stream()
+                    .max((a, b) -> a.getId().compareTo(b.getId()))
+                    .orElse(null);
+            if (latestEntry != null && latestEntry.getDueAmount() != null) {
+                totalDueAmount = latestEntry.getDueAmount();
+            }
+        }
+
         dto.setTotalPending(totalPending);
+        dto.setFilledCylinder(totalFilledCylinders);
+        dto.setDueAmount(totalDueAmount);
 
         return dto;
     }

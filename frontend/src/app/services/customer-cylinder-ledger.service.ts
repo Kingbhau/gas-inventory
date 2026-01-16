@@ -85,6 +85,27 @@ export class CustomerCylinderLedgerService {
     return this.http.get<number>(`${this.apiUrl}/customer/${customerId}/variant/${variantId}/balance`, { withCredentials: true })
       .pipe(applyTimeout());
   }
+
+  /**
+   * Record a payment transaction
+   */
+  recordPayment(data: {
+    customerId: number,
+    amount: number,
+    paymentDate: string
+  }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/payment`, data, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  /**
+   * Get complete summary for a customer (across all ledger entries)
+   */
+  getCustomerLedgerSummary(customerId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/customer/${customerId}/summary`, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
   /**
    * Record empty cylinder return (no sale)
    */

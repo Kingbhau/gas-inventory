@@ -37,8 +37,8 @@
             <tr>
               <th>Customer Name</th>
               <th>Mobile</th>
+              <th class="text-center">Due Amount (₹)</th>
               <th class="text-center">Return Pending</th>
-              <th class="text-center">Filled Units</th>
               <th class="text-center" style="width: 120px;">Actions</th>
             </tr>
           </thead>
@@ -47,12 +47,12 @@
               <td class="font-semibold">{{ customer.name }}</td>
               <td>{{ customer.mobile }}</td>
               <td class="text-center">
-                <span *ngIf="customer.returnPendingUnits > 0" class="badge badge-warning">{{ customer.returnPendingUnits }}</span>
-                <span *ngIf="!customer.returnPendingUnits || customer.returnPendingUnits <= 0" class="text-muted">0</span>
+                <span *ngIf="customer.dueAmount > 0" class="badge badge-warning">₹{{ customer.dueAmount | number: '1.0-2' }}</span>
+                <span *ngIf="!customer.dueAmount || customer.dueAmount <= 0" class="text-muted">₹0</span>
               </td>
               <td class="text-center">
-                <span *ngIf="customer.filledUnits > 0" class="badge badge-success">{{ customer.filledUnits }}</span>
-                <span *ngIf="!customer.filledUnits || customer.filledUnits <= 0" class="text-muted">0</span>
+                <span *ngIf="customer.totalPending > 0" class="badge badge-danger">{{ customer.totalPending }}</span>
+                <span *ngIf="!customer.totalPending || customer.totalPending <= 0" class="text-muted">0</span>
               </td>
               <td class="text-center actions-cell">
                 <div class="dropdown" style="position: relative; display: inline-block;">
@@ -67,6 +67,9 @@
                       </button>
                       <button class="dropdown-item" (click)="viewLedger(customer.id); customer.showMenu = false">
                         <fa-icon [icon]="faBook"></fa-icon> View Ledger
+                      </button>
+                      <button class="dropdown-item" (click)="openPaymentFormForCustomer(customer); customer.showMenu = false">
+                        <fa-icon [icon]="faPlus"></fa-icon> Record Payment
                       </button>
                       <button class="dropdown-item" (click)="editCustomer(customer); customer.showMenu = false">
                         <fa-icon [icon]="faPencil"></fa-icon> Edit
@@ -135,17 +138,21 @@
                     <div class="details-label">Address</div>
                     <div class="details-value">{{ detailsCustomer.address }}</div>
                   </div>
+                  <div class="details-section" *ngIf="detailsCustomer.gstNo">
+                    <div class="details-label">GST Number</div>
+                    <div class="details-value">{{ detailsCustomer.gstNo }}</div>
+                  </div>
                   <div class="details-section">
                     <div class="details-label">Last Sale</div>
                     <div class="details-value">{{ detailsCustomer.lastSaleDate | date: 'dd MMM yyyy' }}</div>
                   </div>
                   <div class="details-section">
-                    <div class="details-label">Return Pending</div>
-                    <div class="details-value">{{ detailsCustomer.returnPendingUnits }}</div>
+                    <div class="details-label">Due Amount</div>
+                    <div class="details-value">₹{{ detailsCustomer.dueAmount | number: '1.0-2' }}</div>
                   </div>
                   <div class="details-section">
-                    <div class="details-label">Filled Units</div>
-                    <div class="details-value">{{ detailsCustomer.filledUnits }}</div>
+                    <div class="details-label">Return Pending</div>
+                    <div class="details-value">{{ detailsCustomer.totalPending }}</div>
                   </div>
 
                   <!-- Variant Prices Section -->
@@ -206,52 +213,106 @@
           <fa-icon [icon]="faTimes"></fa-icon>
         </button>
       </div>
-      <form [formGroup]="customerForm" (ngSubmit)="saveCustomer()" class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Full Name <span class="required">*</span></label>
-          <input formControlName="name" type="text" class="form-control" placeholder="Enter customer name">
-          <div *ngIf="customerForm.get('name')?.invalid && customerForm.get('name')?.touched" class="form-error">
-            <fa-icon [icon]="faExclamation"></fa-icon> Name is required
+      <form [formGroup]="customerForm" (ngSubmit)="saveCustomer()" class="modal-body form-two-column">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            <input formControlName="name" type="text" class="form-control" placeholder="Enter customer name">
+            <div *ngIf="customerForm.get('name')?.invalid && customerForm.get('name')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Name is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mobile Number <span class="required">*</span></label>
+            <input formControlName="mobile" type="tel" class="form-control" placeholder="10-digit mobile number">
+            <div *ngIf="customerForm.get('mobile')?.invalid && customerForm.get('mobile')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Valid 10-digit mobile required
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Mobile Number <span class="required">*</span></label>
-          <input formControlName="mobile" type="tel" class="form-control" placeholder="10-digit mobile number">
-          <div *ngIf="customerForm.get('mobile')?.invalid && customerForm.get('mobile')?.touched" class="form-error">
-            <fa-icon [icon]="faExclamation"></fa-icon> Valid 10-digit mobile required
+        <!-- GST Number and Due Amount on same row -->
+        <div class="form-row">
+          <div class="form-group form-group-half">
+            <label class="form-label">GST Number</label>
+            <input formControlName="gstNo" type="text" class="form-control" placeholder="Enter valid Indian GST number (e.g., 27AABCU9603R1Z5)">
+            <div *ngIf="customerForm.get('gstNo')?.invalid && customerForm.get('gstNo')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> GST number must be in valid Indian GST format (15 characters)
+            </div>
+          </div>
+
+          <div class="form-group form-group-half">
+            <label class="form-label">Initial Due Amount (₹) <span class="required">*</span></label>
+            <input formControlName="dueAmount" type="number" class="form-control" placeholder="0.00" step="0.01" min="0">
+            <div *ngIf="customerForm.get('dueAmount')?.invalid && customerForm.get('dueAmount')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Must be a non-negative amount
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-full-width">
           <label class="form-label">Address</label>
           <textarea formControlName="address" class="form-control" rows="3" placeholder="Customer address and location details"></textarea>
         </div>
 
-        <!-- Variant Configuration Section -->
-        <div class="form-group">
-          <label class="form-label">Select Variants <span class="required">*</span></label>
-          <div class="variant-selection">
-            <div *ngFor="let variant of variants" class="variant-checkbox">
-              <label class="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  [value]="variant.id" 
-                  [checked]="isVariantSelected(variant.id)"
-                  (change)="toggleVariantSelection(variant.id)"
-                  class="checkbox-input">
-                <span class="checkbox-text">{{ variant.name }} ({{ variant.weightKg }}kg)</span>
-              </label>
+        <!-- Active Status and Variant Configuration on same row -->
+        <div class="form-row-wrapper">
+          <div class="form-group form-group-half">
+            <label class="form-label">Active Status <span class="required">*</span></label>
+            <select formControlName="active" class="form-control">
+              <option [ngValue]="true">Active</option>
+              <option [ngValue]="false">Inactive</option>
+            </select>
+          </div>
+
+          <div class="form-group form-group-half">
+            <label class="form-label">Select Variants <span class="required">*</span></label>
+            <div class="variant-selection-compact">
+              <div *ngFor="let variant of variants" class="variant-checkbox-compact">
+                <label class="checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    [value]="variant.id" 
+                    [checked]="isVariantSelected(variant.id)"
+                    (change)="toggleVariantSelection(variant.id)"
+                    class="checkbox-input">
+                  <span class="checkbox-text">{{ variant.name }} ({{ variant.weightKg }}kg)</span>
+                </label>
+              </div>
+            </div>
+            <div *ngIf="customerForm.get('configuredVariants')?.invalid && customerForm.get('configuredVariants')?.touched" 
+                 class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Select at least one variant
             </div>
           </div>
-          <div *ngIf="customerForm.get('configuredVariants')?.invalid && customerForm.get('configuredVariants')?.touched" 
-               class="form-error">
-            <fa-icon [icon]="faExclamation"></fa-icon> Select at least one variant
+        </div>
+
+        <!-- Variant-Specific Filled Cylinders Section -->
+        <div class="form-section pricing-section form-full-width" *ngIf="variantFilledCylindersArray.length > 0">
+          <h4 class="section-title">Initial Filled Cylinders per Variant (Required)</h4>
+          <div class="pricing-grid">
+            <div *ngFor="let filledControl of variantFilledCylindersArray.controls; let i = index" 
+                 [formGroup]="$any(filledControl)" class="pricing-card"
+                 [class.has-error]="filledControl.invalid && filledControl.touched">
+              <div class="variant-header">
+                <strong>{{ filledControl.get('variantName')?.value }}</strong>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Filled Cylinders <span class="required">*</span></label>
+                <input formControlName="filledCylinders" type="number" class="form-control" placeholder="0" min="0"
+                       [readonly]="filledControl.get('filledCylinders')?.disabled"
+                       [class.readonly]="filledControl.get('filledCylinders')?.disabled">
+                <div *ngIf="filledControl.get('filledCylinders')?.invalid && filledControl.get('filledCylinders')?.touched" class="form-error">
+                  <fa-icon [icon]="faExclamation"></fa-icon> Must be a non-negative number
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Variant-Specific Pricing Section -->
-        <div class="form-section pricing-section" *ngIf="variantPricesArray.length > 0">
+        <div class="form-section pricing-section form-full-width" *ngIf="variantPricesArray.length > 0">
           <h4 class="section-title">Pricing for Selected Variants (Required)</h4>
           <div class="pricing-grid">
             <div *ngFor="let priceControl of variantPricesArray.controls; let i = index" 
@@ -296,15 +357,6 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Active Status <span class="required">*</span></label>
-          <select formControlName="active" class="form-control">
-            <option [ngValue]="true">Active</option>
-            <option [ngValue]="false">Inactive</option>
-          </select>
-        </div>
-       
-
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
           <button type="submit" class="btn btn-primary" [disabled]="!customerForm.valid">
@@ -323,44 +375,69 @@
         <button class="modal-close" (click)="closeLedger()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="variant-filter">
-          <label for="ledgerVariantSelect">Variant:</label>
-          <app-autocomplete-input
-            [items]="variants"
-            [displayKey]="'name'"
-            placeholder="All Variants"
-            (selectedChange)="ledgerFilterVariant = $event?.name || ''"
-          ></app-autocomplete-input>
+        <div class="variant-filter" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1rem;">
+          <div style="flex: 1;">
+            
+            <app-autocomplete-input
+              [items]="variantsWithAll"
+              [displayKey]="'name'"
+              placeholder="Select variant..."
+              (selectedChange)="ledgerFilterVariant = $event?.name === 'All' ? '' : ($event?.name || '')"
+            ></app-autocomplete-input>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-primary" (click)="exportLedgerToPDF()" style="height: fit-content;" title="Export to PDF">
+              <fa-icon [icon]="faDownload"></fa-icon> Export PDF
+            </button>
+            <button class="btn btn-primary" (click)="openPaymentForm()" style="height: fit-content;">
+               Record Payment
+            </button>
+          </div>
         </div>
         <div class="mobile-table-scroll">
           <table class="ledger-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Variant</th>
-                <th class="text-center">Filled Issued</th>
-                <th class="text-center">Empty Received</th>
+                <th class="text-center">Date</th>
+                <th class="text-center">Variant / Mode</th>
+                <th class="text-center">Type</th>
+                <th class="text-center">Filled Out</th>
+                <th class="text-center">Empty In</th>
                 <th class="text-center">Balance</th>
+                <th class="text-center">Total Amount (₹)</th>
+                <th class="text-center">Amount Received (₹)</th>
+                <th class="text-center">Running Balance (₹)</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let entry of filteredLedgerEntries">
-                <td>{{ entry.transactionDate | date: 'dd MMM yyyy' }}</td>
-                <td>
-                  <span class="variant-badge" [ngStyle]="{'background-color': getVariantColor(entry.variantName)}"></span>
-                  {{ entry.variantName }}
+              <tr *ngFor="let entry of filteredLedgerEntries; let i = index" [class.initial-stock]="entry.refType === 'INITIAL_STOCK'" [class.payment-row]="entry.refType === 'PAYMENT'">
+                <td class="text-center">{{ entry.transactionDate | date: 'dd MMM yyyy' }}</td>
+                <td class="text-center">
+                  <div *ngIf="entry.variantName">{{ entry.variantName }}</div>
+                  <div *ngIf="!entry.variantName">
+                    <div *ngIf="entry.paymentMode">By {{ getPaymentModeLabel(entry.paymentMode) }}</div>
+                    <div *ngIf="!entry.paymentMode">PAYMENT</div>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <span class="type-badge" [ngClass]="'type-' + entry.refType?.toLowerCase()">
+                    {{ entry.refType }}
+                  </span>
                 </td>
                 <td class="text-center">{{ entry.filledOut }}</td>
                 <td class="text-center">{{ entry.emptyIn }}</td>
                 <td class="text-center" [class.negative]="entry.balance < 0">
                   {{ entry.balance }}
                 </td>
+                <td class="text-center">₹{{ entry.totalAmount | number: '1.0-2' }}</td>
+                <td class="text-center received">₹{{ entry.amountReceived | number: '1.0-2' }}</td>
+                <td class="text-center received">₹{{ getRowCurrentBalance(i) | number: '1.0-2' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div style="text-align:center; margin-top:1rem;" *ngIf="canShowMoreLedger">
-          <button class="btn btn-secondary" (click)="showMoreLedger()" [disabled]="isLoadingMoreLedger">
+        <div style="text-align:center; margin-top:1rem; margin-bottom:1rem;">
+          <button class="btn btn-secondary" (click)="showMoreLedger()" [disabled]="isLoadingMoreLedger || !canShowMoreLedger">
             {{ isLoadingMoreLedger ? 'Loading...' : 'Show More' }}
           </button>
         </div>
@@ -368,15 +445,15 @@
           <div class="summary-row">
             <span class="label">Per Variant Summary:</span>
           </div>
-          <div class="summary-row" *ngFor="let variant of filteredVariants">
-            <span class="label">{{ variant.name }} ({{ variant.weightKg }}kg):</span>
+          <div class="summary-row" *ngFor="let variantSummary of getFilteredVariantSummary()">
+            <span class="label">{{ variantSummary.variantName }}:</span>
             <span class="value">
-              Filled with customer: {{ getFilledUnitsForVariant(variant.name) }}
+              Filled with customer: {{ variantSummary.filledCount }}
             </span>
           </div>
           <div class="summary-row">
             <span class="label">Return Pending:</span>
-            <span class="value">{{ totalPendingUnits }} units</span>
+            <span class="value">{{ getTotalReturnPending() }} units</span>
           </div>
         </div>
       </div>
@@ -385,4 +462,66 @@
       </div>
     </div>
   </div>
-</div>
+
+  <!-- Payment Form Modal -->
+  <div *ngIf="showPaymentForm && selectedCustomer" class="modal-overlay" (click)="$event.target === $event.currentTarget && closePaymentForm()">
+    <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Record Payment - {{ selectedCustomer?.name }}</h2>
+        <button class="modal-close" (click)="closePaymentForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Current Due Amount Display -->
+        <div class="info-box" style="background-color: #f0f7ff; border: 1px solid #d0e8ff; border-radius: 6px; padding: 12px; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #666; font-weight: 500;">Current Due Amount:</span>
+            <span style="font-size: 1.3rem; color: #d32f2f; font-weight: bold;">₹{{ selectedCustomer?.dueAmount | number: '1.0-2' }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Amount (₹) <span class="required">*</span></label>
+          <input 
+            [(ngModel)]="paymentForm.amount" 
+            type="number" 
+            class="form-control" 
+            placeholder="0.00" 
+            step="0.01" 
+            min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Mode <span class="required">*</span></label>
+          <select [(ngModel)]="paymentForm.paymentMode" class="form-control">
+            <option value="">-- Select Payment Mode --</option>
+            <option value="CASH">Cash</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="BANK_TRANSFER">Bank Transfer</option>
+            <option value="CREDIT">Credit</option>
+            <option value="UPI">UPI</option>
+          </select>
+        </div>
+        <!-- Remaining Balance Display -->
+        <div class="info-box" style="background-color: #f0f7f0; border: 1px solid #d0f0d0; border-radius: 6px; padding: 12px; margin: 1rem 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: #666; font-weight: 500;">Remaining Balance:</span>
+            <span style="font-size: 1.2rem; color: #1976d2; font-weight: bold;">₹{{ (selectedCustomer?.dueAmount - (paymentForm.amount || 0)) | number: '1.0-2' }}</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Date <span class="required">*</span></label>
+          <input 
+            [(ngModel)]="paymentForm.paymentDate" 
+            type="date" 
+            class="form-control">
+        </div>
+        <div *ngIf="paymentError" class="form-error" style="margin-top: 1rem;">
+          {{ paymentError }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePaymentForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitPayment()" [disabled]="isSubmittingPayment">
+          {{ isSubmittingPayment ? 'Processing...' : 'Record Payment' }}
+        </button>
+      </div>
+    </div>
+  </div>

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/inventory")
@@ -46,6 +47,22 @@ public class InventoryStockController {
         return ResponseEntity.ok(service.getAllStock(pageable));
     }
 
+    @PostMapping("/setup")
+    public ResponseEntity<Map<String, String>> setupWarehouseInventory(@RequestBody Map<String, Object> payload) {
+        Long warehouseId = Long.valueOf(payload.get("warehouseId").toString());
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> inventoryItems = (List<Map<String, Object>>) payload.get("inventoryItems");
+
+        service.setupWarehouseInventory(warehouseId, inventoryItems);
+
+        return ResponseEntity.ok(Map.of("message", "Warehouse inventory setup completed successfully"));
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<WarehouseTransferDTO> transferStock(@RequestBody WarehouseTransferDTO transferRequest) {
+        return ResponseEntity.ok(warehouseTransferService.transferCylinders(transferRequest));
+    }
+
     @GetMapping("/variant/{variantId}")
     public ResponseEntity<InventoryStockDTO> getStockByVariant(@PathVariable Long variantId) {
         return ResponseEntity.ok(service.getStockByVariant(variantId));
@@ -56,10 +73,5 @@ public class InventoryStockController {
         Warehouse warehouse = warehouseRepository.findById(warehouseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found with id: " + warehouseId));
         return ResponseEntity.ok(service.getStockDTOsByWarehouse(warehouse));
-    }
-
-    @PostMapping("/transfer")
-    public ResponseEntity<WarehouseTransferDTO> transferStock(@RequestBody WarehouseTransferDTO transferRequest) {
-        return ResponseEntity.ok(warehouseTransferService.transferCylinders(transferRequest));
     }
 }

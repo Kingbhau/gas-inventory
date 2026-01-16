@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBox, faBuilding, faPencil, faTrash, faReceipt, faWarehouse } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faBuilding, faPencil, faTrash, faReceipt, faWarehouse, faDatabase } from '@fortawesome/free-solid-svg-icons';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { ToastrService } from 'ngx-toastr';
 import { ToastrModule } from 'ngx-toastr';
@@ -12,6 +12,7 @@ import { IndianCurrencyPipe } from 'src/app/shared/indian-currency.pipe';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ExpenseCategoryManagementComponent } from './expense-category-management.component';
 import { WarehouseManagementComponent } from './warehouse-management.component';
+import { WarehouseInventorySetupComponent } from './warehouse-inventory-setup.component';
 
 interface SettingsTab {
   id: string;
@@ -22,7 +23,7 @@ interface SettingsTab {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent, WarehouseManagementComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent, WarehouseManagementComponent, WarehouseInventorySetupComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -58,10 +59,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
   faTrash = faTrash;
   faReceipt = faReceipt;
   faWarehouse = faWarehouse;
+  faDatabase = faDatabase;
 
   tabs: SettingsTab[] = [
     { id: 'variants', name: 'Variants', icon: faBox },
     { id: 'warehouses', name: 'Warehouses', icon: faWarehouse },
+    { id: 'inventory', name: 'Inventory Setup', icon: faDatabase },
     { id: 'categories', name: 'Expense Categories', icon: faReceipt },
     { id: 'business', name: 'Business', icon: faBuilding }
   ];

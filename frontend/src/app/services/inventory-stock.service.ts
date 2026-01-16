@@ -38,6 +38,16 @@ export class InventoryStockService {
       .pipe(applyTimeout());
   }
 
+  getInventoryByWarehouse(warehouseId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/warehouse/${warehouseId}`, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  setupWarehouseInventory(payload: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/setup`, payload, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
   transferStock(transferRequest: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/transfer`, transferRequest, { withCredentials: true })
       .pipe(applyTimeout());

@@ -267,7 +267,22 @@ export class SaleEntryComponent implements OnInit {
       variantId: [null, Validators.required],
       filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
-      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]]
+      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
+      amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
+      modeOfPayment: [null]
+    });
+
+    // Add conditional validation for modeOfPayment
+    this.saleForm.get('amountReceived')?.valueChanges.subscribe(() => {
+      const modeControl = this.saleForm.get('modeOfPayment');
+      const amountReceived = this.saleForm.get('amountReceived')?.value;
+      
+      if (amountReceived && amountReceived > 0) {
+        modeControl?.setValidators(Validators.required);
+      } else {
+        modeControl?.clearValidators();
+      }
+      modeControl?.updateValueAndValidity();
     });
   }
 
@@ -402,16 +417,22 @@ export class SaleEntryComponent implements OnInit {
     const customerId = this.saleForm.get('customerId')?.value;
     const variantId = this.saleForm.get('variantId')?.value;
     const warehouseId = this.saleForm.get('warehouseId')?.value;
+    const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
+    
+    // Calculate total discount (per-unit discount × quantity)
+    const totalDiscount = (this.discountPrice || 0) * qtyIssued;
     
     const saleRequest = {
       warehouseId: warehouseId,
       customerId: customerId,
+      amountReceived: this.saleForm.get('amountReceived')?.value || 0,
+      modeOfPayment: this.saleForm.get('modeOfPayment')?.value,
       items: [
         {
           variantId: variantId,
-          qtyIssued: parseInt(this.saleForm.get('filledIssuedQty')?.value),
+          qtyIssued: qtyIssued,
           qtyEmptyReceived: parseInt(this.saleForm.get('emptyReceivedQty')?.value),
-          discount: this.discountPrice || 0
+          discount: totalDiscount
         }
       ]
     };
@@ -452,7 +473,9 @@ export class SaleEntryComponent implements OnInit {
       variantId: [null, Validators.required],
       filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
-      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]]
+      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
+      amountReceived: [null, [Validators.required, Validators.min(0), Validators.max(100000)]],
+      modeOfPayment: [null, Validators.required]
     });
     
     this.saleForm.get('basePrice')?.disable();

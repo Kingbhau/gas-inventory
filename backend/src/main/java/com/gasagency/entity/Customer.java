@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
 
 @Entity
@@ -47,6 +48,11 @@ public class Customer extends Auditable {
     @DecimalMin(value = "0.0", message = "Discount price must be non-negative.")
     @Column(nullable = true)
     private BigDecimal discountPrice;
+
+    @Size(max = 50, message = "GST number must be at most 50 characters.")
+    @Pattern(regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$", message = "GST number must be in valid Indian GST format (15 characters).")
+    @Column(nullable = true)
+    private String gstNo;
 
     @Column(columnDefinition = "TEXT", nullable = true)
     private String configuredVariants; // JSON array of variant IDs configured for this customer
@@ -131,5 +137,13 @@ public class Customer extends Auditable {
 
     public void setConfiguredVariants(String configuredVariants) {
         this.configuredVariants = configuredVariants;
+    }
+
+    public String getGstNo() {
+        return gstNo;
+    }
+
+    public void setGstNo(String gstNo) {
+        this.gstNo = gstNo;
     }
 }

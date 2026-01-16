@@ -44,6 +44,58 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   selectedWarehouse: any = null;
   warehouses: any[] = [];
 
+  // Format movement type for display (e.g., INITIAL_STOCK -> Purchase, EMPTY_RETURN -> Empty Return)
+  formatMovementType(type: string): string {
+    if (!type) return '';
+    const typeMap: { [key: string]: string } = {
+      'INITIAL_STOCK': 'INITIAL_STOCK',
+      'Purchase': 'Purchase',
+      'SALE': 'Sale',
+      'Sale': 'Sale',
+      'EMPTY_RETURN': 'EMPTY_RETURN',
+      'Empty Return': 'Empty Return',
+      'RETURN': 'EMPTY_RETURN',
+      'Return': 'EMPTY_RETURN',
+      'TRANSFER': 'TRANSFER',
+      'Transfer': 'TRANSFER',
+      'PAYMENT': 'PAYMENT',
+      'Payment': 'PAYMENT'
+    };
+    return typeMap[type] || type;
+  }
+
+  // Get CSS class for badge based on movement type
+  getMovementTypeClass(type: string): string {
+    if (!type) return '';
+    const classMap: { [key: string]: string } = {
+      'INITIAL_STOCK': 'initial_stock',
+      'Purchase': 'initial_stock',
+      'SALE': 'sale',
+      'Sale': 'sale',
+      'EMPTY_RETURN': 'empty_return',
+      'Empty Return': 'empty_return',
+      'RETURN': 'empty_return',
+      'Return': 'empty_return',
+      'TRANSFER': 'transfer',
+      'Transfer': 'transfer',
+      'PAYMENT': 'payment',
+      'Payment': 'payment'
+    };
+    return classMap[type] || type.toLowerCase();
+  }
+
+  // Format payment mode label
+  getPaymentModeLabel(mode: string): string {
+    const modeLabels: { [key: string]: string } = {
+      'CASH': 'Cash',
+      'CHEQUE': 'Cheque',
+      'BANK_TRANSFER': 'Online',
+      'CREDIT': 'Credit',
+      'UPI': 'UPI'
+    };
+    return modeLabels[mode] || mode;
+  }
+
   // Font Awesome Icons
   faBox = faBox;
   faArrowUp = faArrowUp;
@@ -138,6 +190,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       )
       .subscribe((data: any[]) => {
         this.movements = (data || [])
+          .filter((entry: any) => entry.refType !== 'PAYMENT')
           .map((entry: any) => ({
             id: entry.id,
             date: entry.transactionDate,
@@ -149,7 +202,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
             balance: entry.balance,
             reference: entry.refId,
             fromWarehouse: entry.fromWarehouseName,
-            toWarehouse: entry.toWarehouseName
+            toWarehouse: entry.toWarehouseName,
+            paymentMode: entry.paymentMode
           }))
           .sort((a: any, b: any) => (b.id && a.id ? b.id - a.id : new Date(b.date).getTime() - new Date(a.date).getTime()));
         // Reset to page 1 when data is reloaded

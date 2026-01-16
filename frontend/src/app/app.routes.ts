@@ -11,6 +11,7 @@ import { SupplierTransactionComponent } from './pages/suppliers/supplier-transac
 import { ReportsComponent } from './pages/reports/reports.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { EmptyReturnComponent } from './pages/empty-return/empty-return.component';
+import { PaymentManagementComponent } from './pages/payment/payment-management.component';
 
 export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
@@ -45,6 +46,14 @@ export const routes: Routes = [
   {
     path: 'customers',
     loadComponent: () => import('./pages/customers/customer-management.component').then(m => m.CustomerManagementComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
+  },
+
+  // Payment Routes
+  {
+    path: 'payments',
+    loadComponent: () => import('./pages/payment/payment-management.component').then(m => m.PaymentManagementComponent),
     canActivate: [RoleGuard],
     data: { roles: ['MANAGER'] }
   },

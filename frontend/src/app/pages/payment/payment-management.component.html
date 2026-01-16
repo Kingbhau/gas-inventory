@@ -1,0 +1,159 @@
+<div class="payment-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Payments</h1>
+    <p class="page-subtitle">Record and track customer payments</p>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <div class="search-container">
+      <fa-icon [icon]="faSearch" class="search-icon"></fa-icon>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="filterCustomers()"
+        placeholder="Search by customer name or mobile..."
+        class="search-input">
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="payment-content">
+    <!-- Customers Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Customers</h3>
+        <span class="record-count">{{ filteredCustomers.length }} customers</span>
+      </div>
+      <div class="card-body">
+        <div *ngIf="filteredCustomers.length > 0; else noCustomers" class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Phone</th>
+                <th>Due Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let customer of filteredCustomers">
+                <td><strong>{{ customer.name }}</strong></td>
+                <td>{{ customer.mobile }}</td>
+                <td class="due-amount">₹{{ customer.dueAmount ? (customer.dueAmount | number: '1.2-2') : '0.00' }}</td>
+                <td>
+                  <button 
+                    class="btn-action" 
+                    (click)="selectAndPayment(customer)"
+                    title="Record Payment"
+                  >
+                    Pay
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #noCustomers>
+          <div class="no-data">
+            <p><fa-icon [icon]="faUsers"></fa-icon> No customers found</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div *ngIf="showPaymentForm && selectedCustomer" class="modal-overlay" (click)="$event.target === $event.currentTarget && closePaymentForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Record Payment</h2>
+          <p class="modal-subtitle">{{ selectedCustomer?.name }}</p>
+        </div>
+        <button (click)="closePaymentForm()" class="modal-close">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Customer Info Summary -->
+        <div class="info-section">
+          <div class="info-row">
+            <span class="info-label">Customer Name</span>
+            <span class="info-value">{{ selectedCustomer?.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone</span>
+            <span class="info-value">{{ selectedCustomer?.mobile }}</span>
+          </div>
+          <div class="info-row highlight">
+            <span class="info-label">Current Due Amount</span>
+            <span class="info-value amount">₹{{ getCurrentDue() | number: '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Payment Form -->
+        <form class="payment-form">
+          <!-- Payment Amount -->
+          <div class="form-group">
+            <label class="form-label">Payment Amount <span class="required">*</span></label>
+            <div class="amount-input-wrapper">
+            
+              <input
+                type="number"
+                [(ngModel)]="paymentForm.amount"
+                name="amount"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                class="form-control amount-input"
+              />
+            </div>
+          </div>
+
+          <!-- Payment Date -->
+          <div class="form-group">
+            <label class="form-label">Payment Date <span class="required">*</span></label>
+            <input
+              type="date"
+              [(ngModel)]="paymentForm.paymentDate"
+              name="paymentDate"
+              class="form-control"
+            />
+          </div>
+
+          <!-- Payment Mode -->
+          <div class="form-group">
+            <label class="form-label">Payment Mode <span class="required">*</span></label>
+            <select [(ngModel)]="paymentForm.paymentMode" name="paymentMode" class="form-control">
+              <option value="">Select payment mode</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode">{{ mode }}</option>
+            </select>
+          </div>
+
+          <!-- Error Message -->
+          <div *ngIf="paymentError" class="error-alert">
+            <fa-icon [icon]="faExclamation"></fa-icon>
+            {{ paymentError }}
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button (click)="closePaymentForm()" class="btn btn-secondary" [disabled]="isSubmittingPayment">
+          Cancel
+        </button>
+        <button (click)="submitPayment()" class="btn btn-primary" [disabled]="isSubmittingPayment">
+          {{ isSubmittingPayment ? 'Processing...' : 'Record Payment' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

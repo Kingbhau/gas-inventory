@@ -1,0 +1,36 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo/Title -->
+    <div class="navbar-brand">
+      <h1>{{ title }}</h1>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-toggle" (click)="toggleMobileMenu()" [class.active]="isMobileMenuOpen">
+      <fa-icon [icon]="isMobileMenuOpen ? faTimes : faBars"></fa-icon>
+    </button>
+
+    <!-- Navigation Links -->
+    <div class="navbar-menu" [class.active]="isMobileMenuOpen">
+      <div class="navbar-links">
+        <a
+          *ngFor="let link of links"
+          (click)="navigateTo(link.path)"
+          class="nav-link"
+        >
+          <fa-icon *ngIf="link.icon" [icon]="link.icon" class="nav-icon"></fa-icon>
+          {{ link.label }}
+        </a>
+      </div>
+
+      <!-- User Info & Logout -->
+      <div class="navbar-user">
+        <span class="user-name">{{ userName }}</span>
+        <button (click)="logout()" class="btn-logout" title="Logout">
+          <fa-icon [icon]="faSignOut"></fa-icon>
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>

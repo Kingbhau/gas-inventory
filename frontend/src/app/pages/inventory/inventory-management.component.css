@@ -4,8 +4,8 @@
 }
 /* Badge for Return type */
 .badge-return {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #c7d2fe;
+  color: #312e81;
 }
 .inventory-container {
   padding: 0;
@@ -317,7 +317,7 @@
   background: white;
 }
 
-.badge {
+.type-badge {
   display: inline-block;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
@@ -325,24 +325,29 @@
   font-weight: 600;
 }
 
-.badge-sale {
-  background: #fee2e2;
-  color: #dc2626;
+.type-badge.type-sale {
+  background: #fecaca;
+  color: #991b1b;
 }
 
-.badge-purchase {
+.type-badge.type-initial_stock {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.type-badge.type-empty_return {
+  background: #c7d2fe;
+  color: #312e81;
+}
+
+.type-badge.type-transfer {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.type-badge.type-payment {
   background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge-empty {
-  background: #fef9c3;
-  color: #b45309;
-}
-
-.badge-transfer {
-  background: #dbeafe;
-  color: #0284c7;
+  color: #166534;
 }
 
 .muted {

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -784,5 +785,52 @@ public class InventoryStockService {
                 transferRequest.setVariantName(variant.getName());
 
                 return transferRequest;
+        }
+
+        @Transactional
+        public void setupWarehouseInventory(Long warehouseId, List<Map<String, Object>> inventoryItems) {
+                LoggerUtil.logBusinessEntry(logger, "SETUP_WAREHOUSE_INVENTORY", "warehouseId", warehouseId,
+                                "itemsCount", inventoryItems.size());
+
+                Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Warehouse not found with id: " + warehouseId));
+
+                for (Map<String, Object> item : inventoryItems) {
+                        Long variantId = Long.valueOf(item.get("variantId").toString());
+                        Long filledQty = Long.valueOf(item.get("filledQty").toString());
+                        Long emptyQty = Long.valueOf(item.get("emptyQty").toString());
+
+                        CylinderVariant variant = variantRepository.findById(variantId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Variant not found with id: " + variantId));
+
+                        // Check if inventory exists for this warehouse-variant combination
+                        InventoryStock stock = repository.findByWarehouseAndVariant(warehouse, variant)
+                                        .orElse(null);
+
+                        if (stock == null) {
+                                // Create new inventory record
+                                stock = new InventoryStock(warehouse, variant);
+                                stock.setFilledQty(filledQty);
+                                stock.setEmptyQty(emptyQty);
+                                stock.setLastUpdated(LocalDateTime.now());
+                                repository.save(stock);
+                                LoggerUtil.logAudit("CREATE", "INVENTORY_STOCK", "warehouseId", warehouse.getId(),
+                                                "variantId", variant.getId(), "filledQty", filledQty, "emptyQty",
+                                                emptyQty);
+                        } else {
+                                // Update existing inventory record
+                                stock.setFilledQty(filledQty);
+                                stock.setEmptyQty(emptyQty);
+                                stock.setLastUpdated(LocalDateTime.now());
+                                repository.save(stock);
+                                LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "warehouseId", warehouse.getId(),
+                                                "variantId", variant.getId(), "filledQty", filledQty, "emptyQty",
+                                                emptyQty);
+                        }
+                }
+
+                LoggerUtil.logBusinessSuccess(logger, "SETUP_WAREHOUSE_INVENTORY", "warehouseId", warehouseId);
         }
 }

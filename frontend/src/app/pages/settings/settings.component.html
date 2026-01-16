@@ -68,6 +68,11 @@
     <app-warehouse-management></app-warehouse-management>
   </div>
 
+  <!-- Warehouse Inventory Setup -->
+  <div *ngIf="activeTab === 'inventory'" class="card">
+    <app-warehouse-inventory-setup></app-warehouse-inventory-setup>
+  </div>
+
   <!-- Business Info -->
   <div *ngIf="activeTab === 'business'" class="card">
     <div class="card-header">
