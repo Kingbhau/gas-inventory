@@ -16,11 +16,13 @@ import { ToastrService } from 'ngx-toastr';
 import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { SaleService } from '../../services/sale.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-balance.service';
 import { MonthlyPriceService } from '../../services/monthly-price.service';
 import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
 import { LoadingService } from '../../services/loading.service';
 import { WarehouseService } from '../../services/warehouse.service';
+import { BankAccount } from '../../models/bank-account.model';
 
 @Component({
   selector: 'app-sale-entry',
@@ -68,6 +70,7 @@ export class SaleEntryComponent implements OnInit {
   customers: any[] = [];
   variants: any[] = [];
   warehouses: any[] = [];
+  bankAccounts: BankAccount[] = [];
   filteredCustomers: any[] = [];
   filteredVariants: any[] = [];
   customerSearch: string = '';
@@ -84,6 +87,7 @@ export class SaleEntryComponent implements OnInit {
     private customerService: CustomerService,
     private variantService: CylinderVariantService,
     private saleService: SaleService,
+    private bankAccountService: BankAccountService,
     private monthlyPriceService: MonthlyPriceService,
     private variantPriceService: CustomerVariantPriceService,
     private toastr: ToastrService,
@@ -260,6 +264,19 @@ export class SaleEntryComponent implements OnInit {
       });
   }
 
+  loadBankAccounts() {
+    this.bankAccountService.getActiveBankAccounts()
+      .subscribe({
+        next: (response: any) => {
+          this.bankAccounts = response || [];
+        },
+        error: (error: any) => {
+          console.error('Error loading bank accounts:', error);
+          this.bankAccounts = [];
+        }
+      });
+  }
+
   initForm() {
     this.saleForm = this.fb.group({
       warehouseId: [null, Validators.required],
@@ -269,12 +286,14 @@ export class SaleEntryComponent implements OnInit {
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
       amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
-      modeOfPayment: [null]
+      modeOfPayment: [null],
+      bankAccountId: [null]
     });
 
-    // Add conditional validation for modeOfPayment
+    // Add conditional validation for modeOfPayment and bankAccountId
     this.saleForm.get('amountReceived')?.valueChanges.subscribe(() => {
       const modeControl = this.saleForm.get('modeOfPayment');
+      const bankAccountControl = this.saleForm.get('bankAccountId');
       const amountReceived = this.saleForm.get('amountReceived')?.value;
       
       if (amountReceived && amountReceived > 0) {
@@ -284,6 +303,21 @@ export class SaleEntryComponent implements OnInit {
       }
       modeControl?.updateValueAndValidity();
     });
+
+    // When modeOfPayment changes, show/hide bank account field
+    this.saleForm.get('modeOfPayment')?.valueChanges.subscribe((mode) => {
+      const bankAccountControl = this.saleForm.get('bankAccountId');
+      if (mode && mode.toUpperCase() !== 'CASH') {
+        bankAccountControl?.setValidators(Validators.required);
+      } else {
+        bankAccountControl?.clearValidators();
+        bankAccountControl?.reset();
+      }
+      bankAccountControl?.updateValueAndValidity();
+    });
+
+    // Load bank accounts on init
+    this.loadBankAccounts();
   }
 
   calculateTotal() {
@@ -418,15 +452,17 @@ export class SaleEntryComponent implements OnInit {
     const variantId = this.saleForm.get('variantId')?.value;
     const warehouseId = this.saleForm.get('warehouseId')?.value;
     const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
+    const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
+    const bankAccountIdValue = this.saleForm.get('bankAccountId')?.value;
     
     // Calculate total discount (per-unit discount × quantity)
     const totalDiscount = (this.discountPrice || 0) * qtyIssued;
     
-    const saleRequest = {
+    const saleRequest: any = {
       warehouseId: warehouseId,
       customerId: customerId,
       amountReceived: this.saleForm.get('amountReceived')?.value || 0,
-      modeOfPayment: this.saleForm.get('modeOfPayment')?.value,
+      modeOfPayment: modeOfPayment,
       items: [
         {
           variantId: variantId,
@@ -436,6 +472,11 @@ export class SaleEntryComponent implements OnInit {
         }
       ]
     };
+
+    // Add bankAccountId if payment is not CASH
+    if (modeOfPayment && modeOfPayment.toUpperCase() !== 'CASH' && bankAccountIdValue) {
+      saleRequest.bankAccountId = bankAccountIdValue;
+    }
     const sub = this.saleService.createSale(saleRequest)
       .pipe(
         catchError((error: any) => {
@@ -475,7 +516,8 @@ export class SaleEntryComponent implements OnInit {
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
       amountReceived: [null, [Validators.required, Validators.min(0), Validators.max(100000)]],
-      modeOfPayment: [null, Validators.required]
+      modeOfPayment: [null, Validators.required],
+      bankAccountId: [null]
     });
     
     this.saleForm.get('basePrice')?.disable();

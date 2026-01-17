@@ -9,10 +9,12 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { WarehouseService } from '../../services/warehouse.service';
+import { BankAccount } from '../../models/bank-account.model';
 
 @Component({
     selector: 'app-empty-return',
@@ -28,11 +30,13 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     customers: any[] = [];
     variants: any[] = [];
     warehouses: any[] = [];
+    bankAccounts: BankAccount[] = [];
     successMessage = '';
 
     constructor(
         private fb: FormBuilder,
         private ledgerService: CustomerCylinderLedgerService,
+        private bankAccountService: BankAccountService,
         private toastr: ToastrService,
         private customerService: CustomerService,
         private variantService: CylinderVariantService,
@@ -46,6 +50,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             emptyIn: [null, [Validators.required, Validators.min(1)]],
             amountReceived: [null],
             paymentMode: [''],
+            bankAccountId: [null],
             transactionDate: [new Date().toISOString().substring(0, 10), Validators.required]
         });
 
@@ -61,6 +66,34 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             }
             modeControl?.updateValueAndValidity();
         });
+
+        // When paymentMode changes, show/hide bank account field
+        this.emptyReturnForm.get('paymentMode')?.valueChanges.subscribe((mode) => {
+            const bankAccountControl = this.emptyReturnForm.get('bankAccountId');
+            if (mode && mode.toUpperCase() !== 'CASH') {
+                bankAccountControl?.setValidators(Validators.required);
+            } else {
+                bankAccountControl?.clearValidators();
+                bankAccountControl?.reset();
+            }
+            bankAccountControl?.updateValueAndValidity();
+        });
+
+        // Load bank accounts on init
+        this.loadBankAccounts();
+    }
+
+    loadBankAccounts() {
+        this.bankAccountService.getActiveBankAccounts()
+            .subscribe({
+                next: (response: any) => {
+                    this.bankAccounts = response || [];
+                },
+                error: (error: any) => {
+                    console.error('Error loading bank accounts:', error);
+                    this.bankAccounts = [];
+                }
+            });
     }
 
     ngOnInit() {
@@ -111,6 +144,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             emptyIn: null,
             amountReceived: null,
             paymentMode: '',
+            bankAccountId: null,
             transactionDate: new Date().toISOString().substring(0, 10)
         });
         this.emptyReturnForm.markAsPristine();
@@ -172,7 +206,21 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             return;
         }
         this.submitting = true;
-        const sub = this.ledgerService.recordEmptyReturn(this.emptyReturnForm.value)
+        
+        const formData = this.emptyReturnForm.value;
+        const paymentMode = formData.paymentMode;
+        const bankAccountId = formData.bankAccountId;
+        
+        // Add bankAccountId to request if payment is not CASH
+        const request: any = {
+            ...formData
+        };
+        
+        if (paymentMode && paymentMode.toUpperCase() !== 'CASH' && bankAccountId) {
+            request.bankAccountId = bankAccountId;
+        }
+        
+        const sub = this.ledgerService.recordEmptyReturn(request)
             .pipe(
                 catchError((err: any) => {
                     const errorMessage = err?.error?.message || err?.message || 'Failed to record return';

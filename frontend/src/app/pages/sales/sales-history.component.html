@@ -133,25 +133,41 @@
             <span class="label">Customer:</span>
             <span class="value">{{ selectedSale.customerName }}</span>
           </div>
-          <div class="invoice-row">
-            <span class="label">Variant:</span>
-            <span class="value">{{ selectedSale.variantName }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Quantity:</span>
-            <span class="value">{{ selectedSale.filledIssuedQty }} units</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Base Price:</span>
-            <span class="value">{{ selectedSale.basePrice | indianCurrency }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Discount:</span>
-            <span class="value">{{ selectedSale.discount | indianCurrency }}</span>
-          </div>
+          <ng-container *ngIf="selectedSale.saleItems && selectedSale.saleItems.length > 0">
+            <ng-container *ngFor="let item of selectedSale.saleItems">
+              <div class="invoice-row">
+                <span class="label">Variant:</span>
+                <span class="value">{{ item.variantName }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Quantity:</span>
+                <span class="value">{{ item.qtyIssued }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Base Price:</span>
+                <span class="value">{{ item.basePrice | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Discount:</span>
+                <span class="value">{{ item.discount | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Final Price:</span>
+                <span class="value">{{ item.finalPrice | indianCurrency }}</span>
+              </div>
+            </ng-container>
+          </ng-container>
           <div class="invoice-row total">
             <span class="label">Total Amount:</span>
             <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ selectedSale.paymentMode }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
+            <span class="label">Bank Name:</span>
+            <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>
         </div>
       </div>

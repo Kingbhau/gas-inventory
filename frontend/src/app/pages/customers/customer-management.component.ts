@@ -9,6 +9,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { CustomerBalance, VariantBalance } from '../../models/customer-balance.model';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
@@ -16,6 +17,7 @@ import { LoadingService } from '../../services/loading.service';
 import { ToastrService } from 'ngx-toastr';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { exportCustomerLedgerToPDF } from './export-ledger-report.util';
+import { BankAccount } from '../../models/bank-account.model';
 
 @Component({
   selector: 'app-customer-management',
@@ -127,10 +129,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   showPaymentForm = false;
   isSubmittingPayment = false;
   paymentError = '';
-  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string } = {
+  bankAccounts: BankAccount[] = [];
+  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
     paymentDate: '',
-    paymentMode: ''
+    paymentMode: '',
+    bankAccountId: null
   };
   //filledUnits: number = 0;
 
@@ -138,6 +142,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
+    private bankAccountService: BankAccountService,
     private variantService: CylinderVariantService,
     private variantPriceService: CustomerVariantPriceService,
     private loadingService: LoadingService,
@@ -149,9 +154,24 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadVariantsAndCustomers();
+    this.loadBankAccounts();
   }
 
   ngOnDestroy() {}
+
+  loadBankAccounts() {
+    this.bankAccountService.getActiveBankAccounts()
+      .subscribe({
+        next: (response: any) => {
+          this.bankAccounts = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading bank accounts:', error);
+          this.bankAccounts = [];
+        }
+      });
+  }
 
   get defaultVariantFilter() {
     return { id: null, name: 'All' };
@@ -170,6 +190,20 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return this.variants.filter(v => v.name === this.ledgerFilterVariant);
   }
 
+  /**
+   * Toggle action menu for a specific customer
+   * Closes all other dropdowns and toggles the current one
+   */
+  toggleCustomerMenu(customer: any) {
+    // Close all other menus
+    this.paginatedCustomers.forEach((c: any) => {
+      if (c !== customer) {
+        c.showMenu = false;
+      }
+    });
+    // Toggle current menu
+    customer.showMenu = !customer.showMenu;
+  }
 
   openDetailsModal(customer: any) {
     this.detailsCustomer = customer;
@@ -1096,7 +1130,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.paymentForm = {
       amount: null,
       paymentDate: new Date().toISOString().split('T')[0],
-      paymentMode: ''
+      paymentMode: '',
+      bankAccountId: null
     };
     this.paymentError = '';
     this.showPaymentForm = true;
@@ -1110,7 +1145,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   closePaymentForm() {
     this.showPaymentForm = false;
-    this.paymentForm = { amount: null, paymentDate: '', paymentMode: '' };
+    this.paymentForm = { amount: null, paymentDate: '', paymentMode: '', bankAccountId: null };
     this.paymentError = '';
   }
 
@@ -1132,6 +1167,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // If payment mode is not Cash, bank account is required
+    if (this.paymentForm.paymentMode && this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
+      this.paymentError = 'Please select a bank account for non-cash payments';
+      return;
+    }
+
     // Get the current due amount from the most recent ledger entry
     const currentDue = this.ledgerEntries.length > 0 
       ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0 
@@ -1144,12 +1185,17 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmittingPayment = true;
-    const paymentData = {
+    const paymentData: any = {
       customerId: this.selectedCustomer.id,
       amount: this.paymentForm.amount,
       paymentDate: this.paymentForm.paymentDate,
       paymentMode: this.paymentForm.paymentMode
     };
+
+    // Add bankAccountId if payment is not Cash
+    if (this.paymentForm.paymentMode && this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && this.paymentForm.bankAccountId) {
+      paymentData.bankAccountId = this.paymentForm.bankAccountId;
+    }
 
     this.ledgerService.recordPayment(paymentData)
       .pipe(

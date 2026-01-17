@@ -5,119 +5,177 @@
     <p class="page-subtitle">Manage business configuration and master data</p>
   </div>
 
-  <!-- Settings Tabs -->
-  <div class="settings-tabs">
-    <button 
-      *ngFor="let tab of tabs"
-      [class.active]="activeTab === tab.id"
-      (click)="activeTab = tab.id"
-      class="tab-btn">
-      <fa-icon [icon]="tab.icon"></fa-icon> {{ tab.name }}
-    </button>
-  </div>
-
-  <!-- Cylinder Variants -->
-  <div *ngIf="activeTab === 'variants'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Cylinder Variants</h3>
-      <button (click)="openVariantForm()" class="btn btn-primary">+ Add Variant</button>
-    </div>
-    <div class="card-body">
-      <div class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Variant Name</th>
-              <th>Code</th>
-              <th>Weight (kg)</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let variant of variantsList">
-              <td><strong>{{ variant.name }}</strong></td>
-              <td class="muted">{{ variant.code }}</td>
-              <td>{{ variant.weight }} kg</td>
-              <td>
-                <span class="badge" [class.badge-active]="variant.active">
-                  {{ variant.active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
-                <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- Accordion Sections -->
+  <div class="accordion">
+    <!-- Cylinder Variants -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('variants')"
+        [class.active]="expandedSections.includes('variants')">
+        <fa-icon [icon]="faBox" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Cylinder Variants</span>
+        <fa-icon [icon]="expandedSections.includes('variants') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('variants')">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Cylinder Variants</h3>
+            <button (click)="openVariantForm()" class="btn btn-primary">+ Add Variant</button>
+          </div>
+          <div class="card-body">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Variant Name</th>
+                    <th>Code</th>
+                    <th>Weight (kg)</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let variant of variantsList">
+                    <td><strong>{{ variant.name }}</strong></td>
+                    <td class="muted">{{ variant.code }}</td>
+                    <td>{{ variant.weight }} kg</td>
+                    <td>
+                      <span class="badge" [class.badge-active]="variant.active">
+                        {{ variant.active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+                      <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Monthly Pricing -->
-  <!-- Pricing section removed - now using customer-specific pricing -->
-
-  <!-- Expense Categories -->
-  <div *ngIf="activeTab === 'categories'" class="card">
-    <app-expense-category-management></app-expense-category-management>
-  </div>
-
-  <!-- Warehouses -->
-  <div *ngIf="activeTab === 'warehouses'" class="card">
-    <app-warehouse-management></app-warehouse-management>
-  </div>
-
-  <!-- Warehouse Inventory Setup -->
-  <div *ngIf="activeTab === 'inventory'" class="card">
-    <app-warehouse-inventory-setup></app-warehouse-inventory-setup>
-  </div>
-
-  <!-- Business Info -->
-  <div *ngIf="activeTab === 'business'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Business Information</h3>
+    <!-- Expense Categories -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('categories')"
+        [class.active]="expandedSections.includes('categories')">
+        <fa-icon [icon]="faReceipt" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Expense Categories</span>
+        <fa-icon [icon]="expandedSections.includes('categories') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('categories')">
+        <app-expense-category-management></app-expense-category-management>
+      </div>
     </div>
-    <div class="card-body">
-      <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="form">
-        <div class="form-group">
-          <label class="form-label">Agency Name <span class="required">*</span></label>
-          <input formControlName="agencyName" type="text" class="form-control" placeholder="Your agency name">
-        </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Registration Number</label>
-            <input formControlName="registrationNumber" type="text" class="form-control">
+    <!-- Warehouses -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('warehouses')"
+        [class.active]="expandedSections.includes('warehouses')">
+        <fa-icon [icon]="faWarehouse" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Warehouses</span>
+        <fa-icon [icon]="expandedSections.includes('warehouses') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('warehouses')">
+        <app-warehouse-management></app-warehouse-management>
+      </div>
+    </div>
+
+    <!-- Warehouse Inventory Setup -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('inventory')"
+        [class.active]="expandedSections.includes('inventory')">
+        <fa-icon [icon]="faDatabase" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Inventory Setup</span>
+        <fa-icon [icon]="expandedSections.includes('inventory') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('inventory')">
+        <app-warehouse-inventory-setup></app-warehouse-inventory-setup>
+      </div>
+    </div>
+
+    <!-- Bank Accounts -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('bank-accounts')"
+        [class.active]="expandedSections.includes('bank-accounts')">
+        <fa-icon [icon]="faBank" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Bank Accounts</span>
+        <fa-icon [icon]="expandedSections.includes('bank-accounts') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('bank-accounts')">
+        <app-bank-account-management></app-bank-account-management>
+      </div>
+    </div>
+
+    <!-- Business Info -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('business')"
+        [class.active]="expandedSections.includes('business')">
+        <fa-icon [icon]="faBuilding" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Business Information</span>
+        <fa-icon [icon]="expandedSections.includes('business') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('business')">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Business Information</h3>
           </div>
+          <div class="card-body">
+            <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="form">
+              <div class="form-group">
+                <label class="form-label">Agency Name <span class="required">*</span></label>
+                <input formControlName="agencyName" type="text" class="form-control" placeholder="Your agency name">
+              </div>
 
-          <div class="form-group">
-            <label class="form-label">GST Number</label>
-            <input formControlName="gstNumber" type="text" class="form-control">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Registration Number</label>
+                  <input formControlName="registrationNumber" type="text" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">GST Number</label>
+                  <input formControlName="gstNumber" type="text" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea formControlName="address" class="form-control" rows="3"></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Contact Number</label>
+                  <input formControlName="contactNumber" type="tel" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input formControlName="email" type="email" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">✓ Save Changes</button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Address</label>
-          <textarea formControlName="address" class="form-control" rows="3"></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Contact Number</label>
-            <input formControlName="contactNumber" type="tel" class="form-control">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input formControlName="email" type="email" class="form-control">
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">✓ Save Changes</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 

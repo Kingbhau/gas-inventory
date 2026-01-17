@@ -27,6 +27,7 @@ public class CustomerCylinderLedgerController {
         public Long emptyIn;
         public java.math.BigDecimal amountReceived;
         public String paymentMode;
+        public Long bankAccountId;
 
         public Long getCustomerId() {
             return customerId;
@@ -82,6 +83,14 @@ public class CustomerCylinderLedgerController {
 
         public void setPaymentMode(String paymentMode) {
             this.paymentMode = paymentMode;
+        }
+
+        public Long getBankAccountId() {
+            return bankAccountId;
+        }
+
+        public void setBankAccountId(Long bankAccountId) {
+            this.bankAccountId = bankAccountId;
         }
     }
 
@@ -140,6 +149,21 @@ public class CustomerCylinderLedgerController {
         // If payment mode is provided, update the ledger entry
         if (request.paymentMode != null && !request.paymentMode.isEmpty()) {
             service.updatePaymentMode(dto.getId(), request.paymentMode);
+        }
+
+        // Record bank account deposit if payment is via bank account
+        if (request.bankAccountId != null && request.paymentMode != null &&
+                !request.paymentMode.equalsIgnoreCase("CASH")) {
+            try {
+                service.recordBankAccountTransaction(
+                        request.bankAccountId,
+                        request.amountReceived != null ? request.amountReceived : java.math.BigDecimal.ZERO,
+                        dto.getId(),
+                        "EMPTY-RETURN-" + dto.getId(),
+                        "Empty cylinder return refund");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to record bank account deposit: " + e.getMessage());
+            }
         }
 
         return ResponseEntity.ok(dto);

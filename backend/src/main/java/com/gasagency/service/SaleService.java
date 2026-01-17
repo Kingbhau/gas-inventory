@@ -45,6 +45,8 @@ public class SaleService {
         private final InventoryStockService inventoryStockService;
         private final CustomerCylinderLedgerService ledgerService;
         private final WarehouseService warehouseService;
+        private final BankAccountRepository bankAccountRepository;
+        private final BankAccountService bankAccountService;
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
 
@@ -57,6 +59,8 @@ public class SaleService {
                         InventoryStockService inventoryStockService,
                         CustomerCylinderLedgerService ledgerService,
                         WarehouseService warehouseService,
+                        BankAccountRepository bankAccountRepository,
+                        BankAccountService bankAccountService,
                         AuditLogger auditLogger,
                         PerformanceTracker performanceTracker) {
                 this.saleRepository = saleRepository;
@@ -68,10 +72,13 @@ public class SaleService {
                 this.inventoryStockService = inventoryStockService;
                 this.ledgerService = ledgerService;
                 this.warehouseService = warehouseService;
+                this.bankAccountRepository = bankAccountRepository;
+                this.bankAccountService = bankAccountService;
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
         }
 
+        @Transactional(readOnly = true)
         public List<SaleDTO> getRecentSales() {
                 Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5,
                                 org.springframework.data.domain.Sort
@@ -343,9 +350,50 @@ public class SaleService {
 
                 // Create sale FIRST so we have a sale ID for ledger references
                 Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
+                sale.setPaymentMode(request.getModeOfPayment());
+
+                // If bank account ID is provided and payment mode is not cash, set the bank
+                // account
+                if (request.getBankAccountId() != null && request.getModeOfPayment() != null &&
+                                !request.getModeOfPayment().equalsIgnoreCase("CASH")) {
+                        BankAccount bankAccount = bankAccountRepository.findById(request.getBankAccountId())
+                                        .orElseThrow(() -> {
+                                                logger.error("Bank account not found with id: {}",
+                                                                request.getBankAccountId());
+                                                return new ResourceNotFoundException("Bank account not found with id: "
+                                                                + request.getBankAccountId());
+                                        });
+                        sale.setBankAccount(bankAccount);
+                        logger.info("Bank account linked to sale: {}", bankAccount.getBankName());
+                }
+
                 sale = saleRepository.save(sale);
                 logger.info("Sale created with id: {} for customer: {} - Total: {}",
                                 sale.getId(), customer.getName(), totalAmount);
+
+                // Refresh the sale entity to ensure bankAccount relationship is loaded
+                if (sale.getId() != null) {
+                        sale = saleRepository.findById(sale.getId()).orElse(sale);
+                }
+
+                // Record bank account deposit if payment is via bank account
+                if (sale.getBankAccount() != null && request.getAmountReceived() != null &&
+                                request.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
+                        try {
+                                bankAccountService.recordDeposit(
+                                                sale.getBankAccount().getId(),
+                                                request.getAmountReceived(),
+                                                sale.getId(),
+                                                "INV-" + sale.getId(),
+                                                "Payment received from customer: " + customer.getName());
+                                logger.info("Bank account deposit recorded for sale id: {} - Amount: {}",
+                                                sale.getId(), request.getAmountReceived());
+                        } catch (Exception e) {
+                                logger.error("Error recording bank account deposit for sale id: {}", sale.getId(), e);
+                                throw new InvalidOperationException(
+                                                "Failed to record bank account deposit: " + e.getMessage());
+                        }
+                }
 
                 // Now attach sale items and persist
                 for (int i = 0; i < saleItems.size(); i++) {
@@ -397,6 +445,7 @@ public class SaleService {
                 return toDTO(sale);
         }
 
+        @Transactional(readOnly = true)
         public SaleDTO getSaleById(Long id) {
                 logger.debug("Fetching sale with id: {}", id);
                 Sale sale = saleRepository.findById(id)
@@ -407,6 +456,7 @@ public class SaleService {
                 return toDTO(sale);
         }
 
+        @Transactional(readOnly = true)
         public Page<SaleDTO> getAllSales(Pageable pageable, String fromDate, String toDate, Long customerId,
                         Long variantId, Double minAmount, Double maxAmount) {
                 logger.debug("Fetching all sales with filters: page={}, size={}, customerId={}, variantId={}, minAmount={}, maxAmount={}",
@@ -456,12 +506,23 @@ public class SaleService {
                                                 item.getFinalPrice()))
                                 .collect(Collectors.toList());
 
+                String bankAccountName = null;
+                Long bankAccountId = null;
+                if (sale.getBankAccount() != null) {
+                        bankAccountId = sale.getBankAccount().getId();
+                        bankAccountName = sale.getBankAccount().getBankName() + " - " +
+                                        sale.getBankAccount().getAccountNumber();
+                }
+
                 return new SaleDTO(
                                 sale.getId(),
                                 sale.getCustomer().getId(),
                                 sale.getCustomer().getName(),
                                 sale.getSaleDate(),
                                 sale.getTotalAmount(),
+                                sale.getPaymentMode() != null ? sale.getPaymentMode() : "Cash",
+                                bankAccountId,
+                                bankAccountName,
                                 items);
         }
 }

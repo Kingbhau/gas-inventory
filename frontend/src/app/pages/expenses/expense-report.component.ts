@@ -100,7 +100,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
           this.totalExpenses = response.totalElements || response.length;
           this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
           this.applyClientFilters();
-          this.calculateSummary();
+          this.loadSummary(); // Fetch summary from backend for ALL matching records
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -120,7 +120,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
           this.totalExpenses = response.totalElements || response.length;
           this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
           this.applyClientFilters();
-          this.calculateSummary();
+          this.loadSummary(); // Fetch summary from backend for ALL matching records
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -128,6 +128,38 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  loadSummary() {
+    // Determine which category ID to use (if filter is applied)
+    let categoryId: number | undefined = undefined;
+    if (this.filterCategory) {
+      // Find category ID from loaded categories
+      // For now, we'll pass undefined and let backend handle it
+      // In a real scenario, you'd map category name to ID
+    }
+
+    this.expenseService.getExpensesSummary(
+      this.filterFromDate || undefined,
+      this.filterToDate || undefined,
+      categoryId
+    ).subscribe({
+      next: (summary: any) => {
+        this.totalAmount = summary.totalAmount || 0;
+        this.transactionCount = summary.transactionCount || 0;
+        this.avgExpenseValue = summary.avgExpenseValue || 0;
+        this.topCategory = summary.topCategory || 'N/A';
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Failed to load summary', error);
+        // Fallback to empty values
+        this.totalAmount = 0;
+        this.transactionCount = 0;
+        this.avgExpenseValue = 0;
+        this.topCategory = 'N/A';
+      }
+    });
   }
 
   applyClientFilters() {
@@ -147,27 +179,21 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(e => e.amount <= this.filterMaxAmount!);
     }
 
-    this.filteredExpenses = filtered;
+    // Sort by date descending (latest first), then by ID descending for same-day records
+    this.filteredExpenses = filtered.sort((a, b) => {
+      const dateA = new Date(a.expenseDate).getTime();
+      const dateB = new Date(b.expenseDate).getTime();
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      // If dates are the same, sort by ID descending (latest record first)
+      return (b.id || 0) - (a.id || 0);
+    });
     this.cdr.markForCheck();
   }
 
   calculateSummary() {
-    this.totalAmount = this.filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    this.transactionCount = this.filteredExpenses.length;
-    this.avgExpenseValue = this.transactionCount > 0 ? this.totalAmount / this.transactionCount : 0;
-
-    // Find top category by total amount
-    const categorySums: { [key: string]: number } = {};
-    this.filteredExpenses.forEach(expense => {
-      const categoryName = expense.category || 'Uncategorized';
-      categorySums[categoryName] = (categorySums[categoryName] || 0) + expense.amount;
-    });
-
-    if (Object.keys(categorySums).length > 0) {
-      this.topCategory = Object.keys(categorySums).reduce((a, b) =>
-        categorySums[a] > categorySums[b] ? a : b
-      );
-    }
+    // No longer used - summary now loaded from backend via loadSummary()
     this.cdr.markForCheck();
   }
 

@@ -10,18 +10,24 @@ public class SaleDTO {
     private String customerName;
     private LocalDate saleDate;
     private BigDecimal totalAmount;
+    private String paymentMode;
+    private Long bankAccountId;
+    private String bankAccountName;
     private List<SaleItemDTO> saleItems;
 
     public SaleDTO() {
     }
 
     public SaleDTO(Long id, Long customerId, String customerName, LocalDate saleDate, BigDecimal totalAmount,
-            List<SaleItemDTO> saleItems) {
+            String paymentMode, Long bankAccountId, String bankAccountName, List<SaleItemDTO> saleItems) {
         this.id = id;
         this.customerId = customerId;
         this.customerName = customerName;
         this.saleDate = saleDate;
         this.totalAmount = totalAmount;
+        this.paymentMode = paymentMode;
+        this.bankAccountId = bankAccountId;
+        this.bankAccountName = bankAccountName;
         this.saleItems = saleItems;
     }
 
@@ -71,5 +77,29 @@ public class SaleDTO {
 
     public void setSaleItems(List<SaleItemDTO> saleItems) {
         this.saleItems = saleItems;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public Long getBankAccountId() {
+        return bankAccountId;
+    }
+
+    public void setBankAccountId(Long bankAccountId) {
+        this.bankAccountId = bankAccountId;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
     }
 }

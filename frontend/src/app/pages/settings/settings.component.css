@@ -71,35 +71,88 @@
   margin: 0;
 }
 
-/* Settings Tabs */
-.settings-tabs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
+/* Accordion */
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 2rem;
 }
 
-.tab-btn {
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
+.accordion-item {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
   background: white;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.accordion-item:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.accordion-header {
+  width: 100%;
+  padding: 1.25rem;
+  border: none;
+  background: #f8fafc;
   cursor: pointer;
-  transition: all 0.3s;
-  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+.accordion-header:hover {
+  background: #f1f5f9;
 }
 
-.tab-btn.active {
-  border-color: #2563eb;
+.accordion-header.active {
   background: #2563eb;
   color: white;
+}
+
+.accordion-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.accordion-title {
+  flex: 1;
+  text-align: left;
+}
+
+.accordion-toggle {
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.accordion-body {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Settings Tabs (Removed - kept for reference if needed) */
+.settings-tabs {
+  display: none;
 }
 
 /* Card */

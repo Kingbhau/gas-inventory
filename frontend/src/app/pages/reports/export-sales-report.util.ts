@@ -131,7 +131,8 @@ export function exportSalesReportToPDF({
       item.qtyIssued,
       `Rs. ${Number(item.basePrice).toLocaleString()}`,
       `Rs. ${Number(item.discount).toLocaleString()}`,
-      `Rs. ${Number(item.finalPrice).toLocaleString()}`
+      `Rs. ${Number(item.finalPrice).toLocaleString()}`,
+      sale.paymentMode || 'N/A'
     ])
   );
 
@@ -144,7 +145,8 @@ export function exportSalesReportToPDF({
       'Quantity',
       'Base Price',
       'Discount',
-      'Amount'
+      'Amount',
+      'Payment Mode'
     ]],
     body: tableData,
     styles: { fontSize: 9, cellPadding: 2.2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },

@@ -70,4 +70,15 @@ export class ExpenseService {
   getCategories(): Observable<any[]> {
     return this.categoryService.getAllCategories(0, 100);
   }
+
+  // Get expenses summary (ALL matching records)
+  getExpensesSummary(fromDate?: string, toDate?: string, categoryId?: number): Observable<any> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (categoryId) params = params.set('categoryId', categoryId.toString());
+    
+    return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
+      .pipe(applyTimeout());
+  }
 }

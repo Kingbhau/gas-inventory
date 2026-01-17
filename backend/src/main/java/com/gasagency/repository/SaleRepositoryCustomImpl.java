@@ -24,7 +24,9 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Sale> cq = cb.createQuery(Sale.class);
         Root<Sale> sale = cq.from(Sale.class);
+        sale.fetch("customer", JoinType.LEFT);
         sale.fetch("saleItems", JoinType.LEFT);
+        sale.fetch("bankAccount", JoinType.LEFT);
         List<Predicate> predicates = new ArrayList<>();
 
         if (from != null) {

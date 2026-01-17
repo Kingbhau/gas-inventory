@@ -142,11 +142,11 @@
             </div>
           </div>
 
-          <!-- Mode of Payment -->
+          <!-- Payment Mode -->
           <div class="form-group">
-            <label class="form-label">Mode of Payment</label>
+            <label class="form-label">Payment Mode</label>
             <select formControlName="modeOfPayment" class="form-control">
-              <option value="">Select mode of payment</option>
+              <option [value]="null" disabled hidden>Select Payment Mode</option>
               <option value="CASH">Cash</option>
               <option value="CHEQUE">Cheque</option>
               <option value="BANK_TRANSFER">Bank Transfer</option>
@@ -154,7 +154,21 @@
               <option value="UPI">UPI</option>
             </select>
             <div *ngIf="saleForm.get('modeOfPayment')?.invalid && saleForm.get('modeOfPayment')?.touched" class="error-message">
-              Please select mode of payment
+              Please select payment mode
+            </div>
+          </div>
+
+          <!-- Bank Account Selection (visible only when payment mode is not CASH) -->
+          <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && saleForm.get('modeOfPayment')?.value.toUpperCase() !== 'CASH'">
+            <label class="form-label">Bank Account</label>
+            <select formControlName="bankAccountId" class="form-control">
+              <option [value]="null" disabled>Select Bank Account</option>
+              <option *ngFor="let account of bankAccounts" [value]="account.id">
+                {{ account.bankName }} - {{ account.accountNumber }}
+              </option>
+            </select>
+            <div *ngIf="saleForm.get('bankAccountId')?.invalid && saleForm.get('bankAccountId')?.touched" class="error-message">
+              Please select a bank account for non-cash payments
             </div>
           </div>
         </div>

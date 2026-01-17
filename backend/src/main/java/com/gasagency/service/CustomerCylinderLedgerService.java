@@ -6,10 +6,12 @@ import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.Warehouse;
+import com.gasagency.entity.BankAccount;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.repository.CustomerRepository;
 import com.gasagency.repository.CylinderVariantRepository;
 import com.gasagency.repository.WarehouseRepository;
+import com.gasagency.repository.BankAccountRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
 import org.springframework.data.domain.Page;
@@ -37,19 +39,25 @@ public class CustomerCylinderLedgerService {
         private final WarehouseRepository warehouseRepository;
         private final InventoryStockService inventoryStockService;
         private final WarehouseTransferService warehouseTransferService;
+        private final BankAccountRepository bankAccountRepository;
+        private final BankAccountService bankAccountService;
 
         public CustomerCylinderLedgerService(CustomerCylinderLedgerRepository repository,
                         CustomerRepository customerRepository,
                         CylinderVariantRepository variantRepository,
                         WarehouseRepository warehouseRepository,
                         InventoryStockService inventoryStockService,
-                        WarehouseTransferService warehouseTransferService) {
+                        WarehouseTransferService warehouseTransferService,
+                        BankAccountRepository bankAccountRepository,
+                        BankAccountService bankAccountService) {
                 this.repository = repository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
                 this.warehouseRepository = warehouseRepository;
                 this.inventoryStockService = inventoryStockService;
                 this.warehouseTransferService = warehouseTransferService;
+                this.bankAccountRepository = bankAccountRepository;
+                this.bankAccountService = bankAccountService;
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
@@ -562,6 +570,10 @@ public class CustomerCylinderLedgerService {
                 dto.setAmountReceived(ledger.getAmountReceived());
                 dto.setDueAmount(ledger.getDueAmount());
                 dto.setPaymentMode(ledger.getPaymentMode());
+                if (ledger.getBankAccount() != null) {
+                        dto.setBankAccountId(ledger.getBankAccount().getId());
+                        dto.setBankAccountName(ledger.getBankAccount().getBankName());
+                }
                 return dto;
         }
 
@@ -659,7 +671,35 @@ public class CustomerCylinderLedgerService {
                 ledger.setRefId(null);
                 ledger.setPaymentMode(paymentRequest.paymentMode);
 
+                // Set bank account if payment is via bank
+                if (paymentRequest.bankAccountId != null && paymentRequest.paymentMode != null &&
+                                !paymentRequest.paymentMode.equalsIgnoreCase("CASH")) {
+                        BankAccount bankAccount = bankAccountRepository.findById(paymentRequest.bankAccountId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Bank account not found with id: "
+                                                                        + paymentRequest.bankAccountId));
+                        ledger.setBankAccount(bankAccount);
+                }
+
                 CustomerCylinderLedger savedLedger = repository.save(ledger);
+
+                // Record bank account deposit if payment mode is bank account
+                if (paymentRequest.bankAccountId != null && paymentRequest.paymentMode != null &&
+                                !paymentRequest.paymentMode.equalsIgnoreCase("CASH")) {
+                        try {
+                                bankAccountService.recordDeposit(
+                                                paymentRequest.bankAccountId,
+                                                paymentRequest.amount,
+                                                savedLedger.getId(),
+                                                "DUE-PAYMENT-" + savedLedger.getId(),
+                                                "Due payment received from customer: " + customer.getName());
+                                logger.info("Bank account deposit recorded for due payment - Customer: {}, Amount: {}",
+                                                customer.getName(), paymentRequest.amount);
+                        } catch (Exception e) {
+                                logger.error("Error recording bank account deposit for due payment", e);
+                                throw new RuntimeException("Failed to record bank account deposit: " + e.getMessage());
+                        }
+                }
 
                 LoggerUtil.logBusinessSuccess(logger, "RECORD_PAYMENT", "customerId", customer.getId(),
                                 "amount", paymentRequest.amount);
@@ -675,6 +715,7 @@ public class CustomerCylinderLedgerService {
                 public java.math.BigDecimal amount;
                 public LocalDate paymentDate;
                 public String paymentMode;
+                public Long bankAccountId;
 
                 public PaymentRequest() {
                 }
@@ -691,6 +732,15 @@ public class CustomerCylinderLedgerService {
                         this.amount = amount;
                         this.paymentDate = paymentDate;
                         this.paymentMode = paymentMode;
+                }
+
+                public PaymentRequest(Long customerId, java.math.BigDecimal amount, LocalDate paymentDate,
+                                String paymentMode, Long bankAccountId) {
+                        this.customerId = customerId;
+                        this.amount = amount;
+                        this.paymentDate = paymentDate;
+                        this.paymentMode = paymentMode;
+                        this.bankAccountId = bankAccountId;
                 }
 
                 // Getters and setters
@@ -724,6 +774,14 @@ public class CustomerCylinderLedgerService {
 
                 public void setPaymentMode(String paymentMode) {
                         this.paymentMode = paymentMode;
+                }
+
+                public Long getBankAccountId() {
+                        return bankAccountId;
+                }
+
+                public void setBankAccountId(Long bankAccountId) {
+                        this.bankAccountId = bankAccountId;
                 }
         }
 
@@ -788,5 +846,43 @@ public class CustomerCylinderLedgerService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Ledger entry not found"));
                 ledger.setPaymentMode(paymentMode);
                 repository.save(ledger);
+        }
+
+        /**
+         * Record a bank account transaction for customer ledger operations (empty
+         * returns, due payments, etc.)
+         */
+        public void recordBankAccountTransaction(Long bankAccountId, BigDecimal amount, Long ledgerId,
+                        String referenceNumber, String description) {
+                if (bankAccountId == null || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                        return;
+                }
+
+                try {
+                        // Set bank account reference on the ledger entry
+                        CustomerCylinderLedger ledger = repository.findById(ledgerId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Ledger entry not found with id: " + ledgerId));
+
+                        BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Bank account not found with id: " + bankAccountId));
+
+                        ledger.setBankAccount(bankAccount);
+                        repository.save(ledger);
+
+                        // Record the deposit in bank account ledger
+                        bankAccountService.recordDeposit(
+                                        bankAccountId,
+                                        amount,
+                                        ledgerId,
+                                        referenceNumber,
+                                        description);
+                        logger.info("Bank account transaction recorded - BankAccountId: {}, Amount: {}, Reference: {}",
+                                        bankAccountId, amount, referenceNumber);
+                } catch (Exception e) {
+                        logger.error("Error recording bank account transaction", e);
+                        throw new RuntimeException("Failed to record bank account transaction: " + e.getMessage());
+                }
         }
 }

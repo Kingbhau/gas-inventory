@@ -108,6 +108,22 @@ export interface SalesSummary {
   emptyQty: number;
 }
 
+// Bank Account
+export interface BankAccount {
+  id?: number;
+  warehouseId: number;
+  warehouseName?: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolderName: string;
+  accountName?: string;
+  accountType?: string;
+  currentBalance: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // Pagination
 export interface PaginationRequest {
   page: number;
@@ -123,3 +139,4 @@ export interface PaginationResponse<T> {
   limit: number;
   totalPages: number;
 }
+

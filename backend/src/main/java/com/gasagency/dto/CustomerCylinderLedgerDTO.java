@@ -25,6 +25,8 @@ public class CustomerCylinderLedgerDTO {
     private BigDecimal amountReceived;
     private BigDecimal dueAmount;
     private String paymentMode;
+    private Long bankAccountId;
+    private String bankAccountName;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -222,5 +224,21 @@ public class CustomerCylinderLedgerDTO {
 
     public void setPaymentMode(String paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public Long getBankAccountId() {
+        return bankAccountId;
+    }
+
+    public void setBankAccountId(Long bankAccountId) {
+        this.bankAccountId = bankAccountId;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
     }
 }

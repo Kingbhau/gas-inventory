@@ -6,10 +6,12 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPlus, faSearch, faPencil, faTrash, faEye, faTimes, faChevronDown, faSignOut, faUsers, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
+import { BankAccount } from '../../models/bank-account.model';
 
 @Component({
   selector: 'app-payment-management',
@@ -41,7 +43,7 @@ export class PaymentManagementComponent implements OnInit {
   paymentPageSize = 10;
 
   showPaymentForm = false;
-  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string } = {
+  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
     paymentDate: new Date().toISOString().split('T')[0],
     paymentMode: ''
@@ -49,11 +51,13 @@ export class PaymentManagementComponent implements OnInit {
   paymentError = '';
   isSubmittingPayment = false;
   paymentModes = ['Cash', 'Cheque', 'Bank Transfer', 'UPI'];
+  bankAccounts: BankAccount[] = [];
   ledgerEntries: any[] = [];
 
   constructor(
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
+    private bankAccountService: BankAccountService,
     private authService: AuthService,
     private router: Router,
     private toastr: ToastrService,
@@ -63,6 +67,21 @@ export class PaymentManagementComponent implements OnInit {
   ngOnInit() {
     this.userName = this.authService.getLoggedInUserName();
     this.loadCustomers();
+    this.loadBankAccounts();
+  }
+
+  loadBankAccounts() {
+    this.bankAccountService.getActiveBankAccounts()
+      .subscribe({
+        next: (response: any) => {
+          this.bankAccounts = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading bank accounts:', error);
+          this.bankAccounts = [];
+        }
+      });
   }
 
   logout() {
@@ -139,7 +158,8 @@ export class PaymentManagementComponent implements OnInit {
     this.paymentForm = {
       amount: null,
       paymentDate: new Date().toISOString().split('T')[0],
-      paymentMode: ''
+      paymentMode: '',
+      bankAccountId: null
     };
     this.paymentError = '';
     this.showPaymentForm = true;
@@ -148,7 +168,7 @@ export class PaymentManagementComponent implements OnInit {
 
   closePaymentForm() {
     this.showPaymentForm = false;
-    this.paymentForm = { amount: null, paymentDate: '', paymentMode: '' };
+    this.paymentForm = { amount: null, paymentDate: '', paymentMode: '', bankAccountId: null };
     this.paymentError = '';
     this.cdr.markForCheck();
   }
@@ -174,6 +194,13 @@ export class PaymentManagementComponent implements OnInit {
       return;
     }
 
+    // If payment mode is not CASH, bank account is required
+    if (this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
+      this.paymentError = 'Please select a bank account for non-cash payments';
+      this.cdr.markForCheck();
+      return;
+    }
+
     // Get the current due amount from the most recent ledger entry
     const currentDue = this.ledgerEntries.length > 0
       ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0
@@ -187,12 +214,17 @@ export class PaymentManagementComponent implements OnInit {
     }
 
     this.isSubmittingPayment = true;
-    const paymentData = {
+    const paymentData: any = {
       customerId: this.selectedCustomer.id,
       amount: this.paymentForm.amount,
       paymentDate: this.paymentForm.paymentDate,
       paymentMode: this.paymentForm.paymentMode
     };
+
+    // Add bankAccountId if payment is not CASH
+    if (this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && this.paymentForm.bankAccountId) {
+      paymentData.bankAccountId = this.paymentForm.bankAccountId;
+    }
 
     this.ledgerService.recordPayment(paymentData)
       .pipe(

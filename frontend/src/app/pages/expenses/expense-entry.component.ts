@@ -123,6 +123,11 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
         this.toastr.success('Expense recorded successfully');
         this.expenseForm.reset();
         
+        // Explicitly reset category field
+        this.expenseForm.patchValue({
+          category: ''
+        });
+        
         // Set today's date as default for next entry
         const today = new Date().toISOString().split('T')[0];
         this.expenseForm.patchValue({
@@ -145,6 +150,10 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
 
   resetForm() {
     this.expenseForm.reset();
+    // Explicitly reset category field
+    this.expenseForm.patchValue({
+      category: ''
+    });
     const today = new Date().toISOString().split('T')[0];
     this.expenseForm.patchValue({
       expenseDate: today

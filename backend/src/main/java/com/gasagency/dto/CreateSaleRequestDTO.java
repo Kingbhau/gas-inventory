@@ -20,6 +20,8 @@ public class CreateSaleRequestDTO {
 
     private String modeOfPayment;
 
+    private Long bankAccountId;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -29,11 +31,12 @@ public class CreateSaleRequestDTO {
     }
 
     public CreateSaleRequestDTO(Long customerId, Long warehouseId, BigDecimal amountReceived, String modeOfPayment,
-            List<SaleItemRequestDTO> items) {
+            Long bankAccountId, List<SaleItemRequestDTO> items) {
         this.customerId = customerId;
         this.warehouseId = warehouseId;
         this.amountReceived = amountReceived;
         this.modeOfPayment = modeOfPayment;
+        this.bankAccountId = bankAccountId;
         this.items = items;
     }
 
@@ -135,5 +138,13 @@ public class CreateSaleRequestDTO {
 
     public void setItems(List<SaleItemRequestDTO> items) {
         this.items = items;
+    }
+
+    public Long getBankAccountId() {
+        return bankAccountId;
+    }
+
+    public void setBankAccountId(Long bankAccountId) {
+        this.bankAccountId = bankAccountId;
     }
 }

@@ -84,6 +84,10 @@ public class CustomerCylinderLedger extends Auditable {
     @Column(nullable = true, length = 50)
     private String paymentMode;
 
+    @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
+    @JoinColumn(name = "bank_account_id", nullable = true)
+    private BankAccount bankAccount;
+
     public CustomerCylinderLedger() {
     }
 
@@ -223,5 +227,13 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setPaymentMode(String paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public BankAccount getBankAccount() {
+        return bankAccount;
+    }
+
+    public void setBankAccount(BankAccount bankAccount) {
+        this.bankAccount = bankAccount;
     }
 }

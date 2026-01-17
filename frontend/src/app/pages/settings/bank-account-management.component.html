@@ -1,0 +1,214 @@
+<div class="bank-account-management-wrapper">
+  <!-- Add/Edit Bank Account Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingBankAccountId ? 'Edit Bank Account' : 'Add New Bank Account' }}</h2>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="bankAccountForm" (ngSubmit)="saveBankAccount()" class="modal-body">
+        <!-- Bank Name -->
+        <div class="form-group">
+          <label class="form-label">Bank Name <span class="required">*</span></label>
+          <input 
+            type="text"
+            id="bankName"
+            class="form-control"
+            formControlName="bankName"
+            placeholder="e.g., HDFC Bank"
+            [class.is-invalid]="bankAccountForm.get('bankName')?.invalid && bankAccountForm.get('bankName')?.touched"
+          />
+          <div *ngIf="bankAccountForm.get('bankName')?.invalid && bankAccountForm.get('bankName')?.touched" class="form-error">
+            <span *ngIf="bankAccountForm.get('bankName')?.errors?.['required']">Bank name is required</span>
+            <span *ngIf="bankAccountForm.get('bankName')?.errors?.['minlength']">Name must be at least 2 characters</span>
+            <span *ngIf="bankAccountForm.get('bankName')?.errors?.['maxlength']">Name cannot exceed 100 characters</span>
+          </div>
+        </div>
+
+        <!-- Account Number -->
+        <div class="form-group">
+          <label class="form-label">Account Number <span class="required">*</span></label>
+          <input 
+            type="text"
+            id="accountNumber"
+            class="form-control"
+            formControlName="accountNumber"
+            placeholder="e.g., 1234567890"
+            [class.is-invalid]="bankAccountForm.get('accountNumber')?.invalid && bankAccountForm.get('accountNumber')?.touched"
+          />
+          <div *ngIf="bankAccountForm.get('accountNumber')?.invalid && bankAccountForm.get('accountNumber')?.touched" class="form-error">
+            <span *ngIf="bankAccountForm.get('accountNumber')?.errors?.['required']">Account number is required</span>
+            <span *ngIf="bankAccountForm.get('accountNumber')?.errors?.['minlength']">Account number must be at least 5 characters</span>
+          </div>
+        </div>
+
+        <!-- Account Holder Name -->
+        <div class="form-group">
+          <label class="form-label">Account Holder Name <span class="required">*</span></label>
+          <input 
+            type="text"
+            id="accountHolderName"
+            class="form-control"
+            formControlName="accountHolderName"
+            placeholder="e.g., Business Name"
+            [class.is-invalid]="bankAccountForm.get('accountHolderName')?.invalid && bankAccountForm.get('accountHolderName')?.touched"
+          />
+          <div *ngIf="bankAccountForm.get('accountHolderName')?.invalid && bankAccountForm.get('accountHolderName')?.touched" class="form-error">
+            <span *ngIf="bankAccountForm.get('accountHolderName')?.errors?.['required']">Account holder name is required</span>
+            <span *ngIf="bankAccountForm.get('accountHolderName')?.errors?.['minlength']">Name must be at least 2 characters</span>
+          </div>
+        </div>
+
+        <!-- Account Name (Optional) -->
+        <div class="form-group">
+          <label class="form-label">Account Name (Optional)</label>
+          <input 
+            type="text"
+            id="accountName"
+            class="form-control"
+            formControlName="accountName"
+            placeholder="e.g., Main Operating Account"
+          />
+          <small class="form-text text-muted">A custom label to identify this account</small>
+        </div>
+
+        <!-- Account Type (Optional) -->
+        <div class="form-group">
+          <label class="form-label">Account Type (Optional)</label>
+          <select 
+            id="accountType"
+            class="form-control"
+            formControlName="accountType"
+          >
+            <option value="">Select account type</option>
+            <option value="SAVINGS">Savings Account</option>
+            <option value="CURRENT">Current Account</option>
+            <option value="BUSINESS">Business Account</option>
+            <option value="CASH_CREDIT">Cash Credit Account</option>
+            <option value="OVERDRAFT">Overdraft Account</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <!-- Current Balance -->
+        <div class="form-group">
+          <label class="form-label">Current Balance (₹) <span class="required">*</span></label>
+          <input 
+            type="number"
+            id="currentBalance"
+            class="form-control"
+            formControlName="currentBalance"
+            placeholder="0.00"
+            step="0.01"
+            min="0"
+            [class.is-invalid]="bankAccountForm.get('currentBalance')?.invalid && bankAccountForm.get('currentBalance')?.touched"
+          />
+          <div *ngIf="bankAccountForm.get('currentBalance')?.invalid && bankAccountForm.get('currentBalance')?.touched" class="form-error">
+            <span *ngIf="bankAccountForm.get('currentBalance')?.errors?.['required']">Current balance is required</span>
+            <span *ngIf="bankAccountForm.get('currentBalance')?.errors?.['min']">Current balance cannot be negative</span>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="isSubmitting || !bankAccountForm.valid"
+          >
+            <span *ngIf="!isSubmitting">{{ editingBankAccountId ? 'Update' : 'Create' }}</span>
+            <span *ngIf="isSubmitting">{{ editingBankAccountId ? 'Updating...' : 'Creating...' }}</span>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-secondary" 
+            (click)="closeModal()"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bank Accounts List Section -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Bank Accounts</h3>
+      <button (click)="openCreateModal()" class="btn btn-primary">+ Add Bank Account</button>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <p>Loading bank accounts...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && bankAccounts.length === 0" class="no-data-container">
+        <p>No bank accounts found. Create one to track online payments.</p>
+      </div>
+
+      <!-- Bank Accounts Table -->
+      <div *ngIf="!isLoading && bankAccounts.length > 0" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Bank Name</th>
+              <th>Account Number</th>
+              <th>Account Holder</th>
+              <th>Current Balance</th>
+              <th>Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let account of bankAccounts">
+              <td><strong>{{ account.bankName }}</strong></td>
+              <td>{{ account.accountNumber }}</td>
+              <td>{{ account.accountHolderName }}</td>
+              <td><strong>{{ formatCurrency(account.currentBalance) }}</strong></td>
+              <td>
+                <span class="badge" [ngClass]="getStatusColor(account.isActive)">
+                  {{ getStatusText(account.isActive) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <!-- Edit Button -->
+                <button 
+                  class="btn-action"
+                  (click)="openEditModal(account)"
+                  title="Edit">
+                  <fa-icon [icon]="faPencil"></fa-icon>
+                </button>
+                <!-- Deactivate Button -->
+                <button 
+                  *ngIf="account.isActive"
+                  class="btn-action deactivate"
+                  (click)="deactivateBankAccount(account)"
+                  title="Deactivate">
+                  <fa-icon [icon]="faBan"></fa-icon>
+                </button>
+                <!-- Activate Button -->
+                <button 
+                  *ngIf="!account.isActive"
+                  class="btn-action activate"
+                  (click)="activateBankAccount(account)"
+                  title="Activate">
+                  <fa-icon [icon]="faCheck"></fa-icon>
+                </button>
+                <!-- Delete Button -->
+                <button 
+                  class="btn-action delete"
+                  (click)="deleteBankAccount(account)"
+                  title="Delete">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -104,6 +104,12 @@ export const routes: Routes = [
     data: { roles: ['MANAGER'] }
   },
   {
+    path: 'settings/bank-accounts',
+    loadComponent: () => import('./pages/settings/bank-account-management.component').then(m => m.BankAccountManagementComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
+  },
+  {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [RoleGuard],

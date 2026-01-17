@@ -1,6 +1,7 @@
 package com.gasagency.controller;
 
 import com.gasagency.dto.ExpenseDTO;
+import com.gasagency.dto.ExpenseSummaryDTO;
 import com.gasagency.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -92,5 +93,13 @@ public class ExpenseController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId) {
+        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId));
     }
 }

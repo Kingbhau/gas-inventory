@@ -49,6 +49,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   filteredSales: any[] = [];
   selectedSale: any = null;
   customersList: any[] = [];
+  originalSalesMap: Map<number, any> = new Map();
 
   constructor(
     private saleService: SaleService,
@@ -114,6 +115,9 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                   customerName: sale.customerName,
                   saleDate: sale.saleDate,
                   totalAmount: sale.totalAmount,
+                  paymentMode: sale.paymentMode,
+                  bankAccountId: sale.bankAccountId,
+                  bankAccountName: sale.bankAccountName,
                   variantName: item.variantName,
                   filledIssuedQty: item.qtyIssued,
                   qtyEmptyReceived: item.qtyEmptyReceived,
@@ -130,6 +134,9 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                 customerName: sale.customerName,
                 saleDate: sale.saleDate,
                 totalAmount: sale.totalAmount,
+                paymentMode: sale.paymentMode,
+                bankAccountId: sale.bankAccountId,
+                bankAccountName: sale.bankAccountName,
                 variantName: 'N/A',
                 filledIssuedQty: 0
               });
@@ -139,6 +146,11 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
           this.filteredSales = [...this.allSales];
           this.totalElements = data.totalElements || this.filteredSales.length;
           this.totalPages = data.totalPages || 1;
+          // Store original sales for modal display
+          this.originalSalesMap.clear();
+          salesArray.forEach((sale: any) => {
+            this.originalSalesMap.set(sale.id, sale);
+          });
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -202,7 +214,8 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   }
 
   viewInvoice(saleId: string) {
-    this.selectedSale = this.filteredSales.find(s => s.id === saleId);
+    const numericId = Number(saleId);
+    this.selectedSale = this.originalSalesMap.get(numericId) || this.filteredSales.find(s => s.id === saleId);
   }
 
   closeInvoice() {

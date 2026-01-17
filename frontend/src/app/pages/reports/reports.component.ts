@@ -18,14 +18,19 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faShoppingCart, faHourglassEnd, faBox, faTruck, faDownload, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faHourglassEnd, faBox, faTruck, faDownload, faReceipt, faFileInvoice, faEye, faBank } from '@fortawesome/free-solid-svg-icons';
 import { exportSalesReportToPDF } from './export-sales-report.util';
+import { exportBankTransactionsReportToPDF } from './export-bank-transactions.util';
+import { exportDuePaymentReportToPDF } from './export-due-payment-report.util';
 import { BusinessInfoService } from '../../services/business-info.service';
 import { ToastrService } from 'ngx-toastr';
 import { SaleService } from '../../services/sale.service';
+import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { InventoryStockService } from '../../services/inventory-stock.service';
 import { SupplierTransactionService } from '../../services/supplier-transaction.service';
+import { BankAccountLedgerService } from '../../services/bank-account-ledger.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { ExpenseReportComponent } from '../expenses/expense-report.component';
@@ -70,6 +75,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
     supplierPageSize = 10;
     supplierTotalPages = 1;
     supplierTotalElements = 0;
+    duePaymentPage = 1;
+    duePaymentPageSize = 10;
+    duePaymentTotalPages = 1;
+    duePaymentTotalElements = 0;
+    bankTransactionsPage = 1;
+    bankTransactionsPageSize = 10;
+    bankTransactionsTotalPages = 1;
+    bankTransactionsTotalElements = 0;
 
     // Paginated getters
     // Flattened sale items for row-based pagination
@@ -103,19 +116,25 @@ export class ReportsComponent implements OnInit, OnDestroy {
             .map((item: any) => ({ sale, item }))
         );
       }
-      // Sort by sale date descending (latest first)
+      // Sort by sale date descending (latest first), then by ID descending for same-day records
       return items.sort((a, b) => {
         const dateA = new Date(a.sale.saleDate).getTime();
         const dateB = new Date(b.sale.saleDate).getTime();
-        return dateB - dateA;
+        if (dateB !== dateA) {
+          return dateB - dateA;
+        }
+        // If dates are the same, sort by ID descending (latest record first)
+        return (b.sale.id || 0) - (a.sale.id || 0);
       });
     }
     get paginatedSalesData() {
-      // Flatten and paginate items
-      const allItems = this.flattenedSaleItems;
-      const startIndex = (this.salesPage - 1) * this.salesPageSize;
-      const endIndex = startIndex + this.salesPageSize;
-      return allItems.slice(startIndex, endIndex);
+      // Backend returns SaleDTO objects with nested saleItems
+      // We need to flatten them for display: { sale, item } format
+      const sales = this.salesData || [];
+      const flattened = sales.flatMap(sale =>
+        (sale.saleItems || []).map((item: any) => ({ sale, item }))
+      );
+      return flattened;
     }
     get paginatedReturnPendingData() {
       const startIndex = (this.returnPendingPage - 1) * this.returnPendingPageSize;
@@ -128,6 +147,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
     get paginatedSupplierData() {
       return this.supplierData;
     }
+    get paginatedDuePaymentData() {
+      // Data is already paginated from backend, but sort by ID descending as backup
+      return (this.duePaymentData || []).sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+    }
   // Sales filters
   filterCustomerId: string = '';
   filterVariantId: string = '';
@@ -135,12 +158,22 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterMaxAmount: number | null = null;
   filterReturnPendingVariantId: string = '';
   filterInventoryWarehouseId: string = '';
+  filterDuePaymentCustomerId: string = '';
+  filterDuePaymentMinAmount: number | null = null;
+  filterDuePaymentMaxAmount: number | null = null;
+  filterBankAccountId: string = '';
+  filterBankTransactionType: string = '';
   customersList: any[] = [];
   variantsList: any[] = [];
   warehousesList: any[] = [];
+  bankAccountsList: any[] = [];
   selectedReport = 'sales';
   filterFromDate = '';
   filterToDate = '';
+  filterDuePaymentFromDate = '';
+  filterDuePaymentToDate = '';
+  filterBankFromDate = '';
+  filterBankToDate = '';
 
   // Font Awesome Icons
   faShoppingCart = faShoppingCart;
@@ -149,13 +182,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
   faTruck = faTruck;
   faDownload = faDownload;
   faReceipt = faReceipt;
+  faFileInvoice = faFileInvoice;
+  faEye = faEye;
+  faBank = faBank;
 
   availableReports: ReportOption[] = [
     { id: 'sales', name: 'Sales Report', icon: faShoppingCart },
     { id: 'expenses', name: 'Expenses Report', icon: faReceipt },
+    { id: 'customerDuePayment', name: 'Customer Due Payment', icon: faFileInvoice },
     { id: 'returnPending', name: 'Return Pending', icon: faHourglassEnd },
     { id: 'inventory', name: 'Inventory', icon: faBox },
-    { id: 'supplier', name: 'Supplier', icon: faTruck }
+    { id: 'supplier', name: 'Supplier', icon: faTruck },
+    { id: 'bankTransactions', name: 'Bank Transactions', icon: faBank }
   ];
 
   // Sales Data
@@ -170,20 +208,48 @@ export class ReportsComponent implements OnInit, OnDestroy {
   // Supplier Data
   supplierData: any[] = [];
 
+  // Bank Transactions Data
+  bankTransactionsData: any[] = [];
+  bankTransactionsSummary: any = {
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    netBalance: 0
+  };
+
+  // Customer Due Payment Data
+  duePaymentData: any[] = [];
+  duePaymentSummary: any = {
+    totalDueAmount: 0,
+    totalSalesAmount: 0,
+    totalAmountReceived: 0,
+    totalCustomersWithDue: 0,
+    averageDueAmount: 0
+  };
+
   // Summary card values
   summaryTotalSalesAmount: number = 0;
   summaryTransactionCount: number = 0;
   summaryAvgSaleValue: number = 0;
   summaryTopCustomer: string = 'N/A';
 
+  // Invoice modal properties
+  selectedSale: any = null;
+  originalSalesMap: Map<number, any> = new Map();
+
+  // Bank Transaction modal properties
+  selectedBankTransaction: any = null;
+
   constructor(
     private saleService: SaleService,
+    private duePaymentService: CustomerDuePaymentService,
     private ledgerService: CustomerCylinderLedgerService,
     private inventoryService: InventoryStockService,
     private supplierTransactionService: SupplierTransactionService,
+    private bankAccountLedgerService: BankAccountLedgerService,
     private customerService: CustomerService,
     private variantService: CylinderVariantService,
     private warehouseService: WarehouseService,
+    private bankAccountService: BankAccountService,
     private toastr: ToastrService,
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
@@ -225,6 +291,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.warehousesList = []; }
     });
+    
+    // Load bank accounts for filtering
+    this.bankAccountService.getActiveBankAccounts().subscribe({
+      next: (data: any) => {
+        this.bankAccountsList = data.content || data || [];
+      },
+      error: () => { this.bankAccountsList = []; }
+    });
   }
 
   ngOnDestroy() {}
@@ -242,6 +316,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
     }
     if (this.selectedReport === 'supplier') {
       this.loadSupplierData();
+    }
+    if (this.selectedReport === 'customerDuePayment') {
+      this.loadDuePaymentData();
+    }
+    if (this.selectedReport === 'bankTransactions') {
+      this.loadBankTransactionsData();
     }
   }
 
@@ -300,16 +380,18 @@ export class ReportsComponent implements OnInit, OnDestroy {
           const selectedWarehouse = this.warehousesList.find(w => w.id === parseInt(this.filterInventoryWarehouseId));
           const warehouseName = selectedWarehouse ? selectedWarehouse.name : 'Unknown';
           
-          // Show individual warehouse items
-          this.inventoryData = stockArray.map((stock: any) => ({
-            warehouseId: stock.warehouseId,
-            warehouse: warehouseName,
-            variant: stock.variantName || 'Unknown',
-            filled: stock.filledQty || 0,
-            empty: stock.emptyQty || 0
-          }));
+          // Show individual warehouse items sorted by ID descending
+          this.inventoryData = stockArray
+            .sort((a: any, b: any) => (b.id || 0) - (a.id || 0))
+            .map((stock: any) => ({
+              warehouseId: stock.warehouseId,
+              warehouse: warehouseName,
+              variant: stock.variantName || 'Unknown',
+              filled: stock.filledQty || 0,
+              empty: stock.emptyQty || 0
+            }));
         } else {
-          // Group by variant and sum quantities when showing all warehouses
+          // Group by variant and sum quantities when showing all warehouses, then sort by ID descending
           const groupedByVariant = new Map<string, any>();
           stockArray.forEach((stock: any) => {
             const variantName = stock.variantName || 'Unknown';
@@ -318,14 +400,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
                 warehouse: 'All Warehouses',
                 variant: variantName,
                 filled: 0,
-                empty: 0
+                empty: 0,
+                id: stock.id || 0
               });
             }
             const item = groupedByVariant.get(variantName);
             item.filled += stock.filledQty || 0;
             item.empty += stock.emptyQty || 0;
           });
-          this.inventoryData = Array.from(groupedByVariant.values());
+          this.inventoryData = Array.from(groupedByVariant.values())
+            .sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
         }
         
         console.log('Final inventory data:', this.inventoryData);
@@ -364,13 +448,19 @@ export class ReportsComponent implements OnInit, OnDestroy {
         const supplierMap = new Map();
         transactionArray.forEach((transaction: any) => {
           if (!supplierMap.has(transaction.supplierId)) {
-            supplierMap.set(transaction.supplierId, { filled: 0, empty: 0, name: transaction.supplierName });
+            supplierMap.set(transaction.supplierId, { 
+              filled: 0, 
+              empty: 0, 
+              name: transaction.supplierName,
+              id: transaction.id || 0
+            });
           }
           const supplier = supplierMap.get(transaction.supplierId);
           supplier.filled += transaction.filledReceived || 0;
           supplier.empty += transaction.emptySent || 0;
         });
-        this.supplierData = Array.from(supplierMap.values());
+        this.supplierData = Array.from(supplierMap.values())
+          .sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
         this.supplierTotalElements = data.totalElements || this.supplierData.length;
         this.cdr.markForCheck();
         this.supplierTotalPages = data.totalPages || 1;
@@ -478,8 +568,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
     
-    // Fetch data without pagination first to handle client-side item pagination
-    const sub = this.saleService.getAllSales(0, 1000, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    // Fetch current page data with backend-driven pagination
+    const sub = this.saleService.getAllSales(this.salesPage - 1, this.salesPageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -491,10 +581,15 @@ export class ReportsComponent implements OnInit, OnDestroy {
       .subscribe((data: any) => {
         this.salesData = data.content || data;
         
-        // Calculate total pages based on flattened items
-        const totalFlattenedItems = this.flattenedSaleItems.length;
-        this.salesTotalElements = totalFlattenedItems;
-        this.salesTotalPages = Math.ceil(totalFlattenedItems / this.salesPageSize) || 1;
+        // Store original sales by ID for modal display
+        this.originalSalesMap.clear();
+        this.salesData.forEach((sale: any) => {
+          this.originalSalesMap.set(sale.id, sale);
+        });
+        
+        // Get total pages from backend
+        this.salesTotalElements = data.totalElements || 0;
+        this.salesTotalPages = data.totalPages || Math.ceil(this.salesTotalElements / this.salesPageSize) || 1;
         
         if (showToastr) {
           this.toastr.info('Filters applied', 'Info');
@@ -502,7 +597,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
         sub.unsubscribe();
       });
-    // Fetch summary card values from backend summary endpoint
+    // Fetch summary card values from backend summary endpoint (for ALL data)
     this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount)
       .pipe(
         catchError((error: any) => {
@@ -589,9 +684,294 @@ export class ReportsComponent implements OnInit, OnDestroy {
           });
       };
       fetchPage();
+    } else if (this.selectedReport === 'customerDuePayment') {
+      // Export Customer Due Payment Report to PDF
+      const fromDate = this.filterDuePaymentFromDate ? this.filterDuePaymentFromDate : undefined;
+      const toDate = this.filterDuePaymentToDate ? this.filterDuePaymentToDate : undefined;
+      const customerId = this.filterDuePaymentCustomerId ? this.filterDuePaymentCustomerId : undefined;      const customerName = this.filterDuePaymentCustomerId ? (this.customersList.find(c => c.id == this.filterDuePaymentCustomerId)?.name || '') : undefined;      const minAmount = (typeof this.filterDuePaymentMinAmount === 'number' && !isNaN(this.filterDuePaymentMinAmount)) ? this.filterDuePaymentMinAmount : undefined;
+      const maxAmount = (typeof this.filterDuePaymentMaxAmount === 'number' && !isNaN(this.filterDuePaymentMaxAmount)) ? this.filterDuePaymentMaxAmount : undefined;
+      const pageSize = 1000;
+      let allDuePayments: any[] = [];
+      let page = 0;
+      let totalPages = 1;
+      const businessName = this.agencyName;
+
+      const fetchDuePaymentPage = () => {
+        this.duePaymentService.getDuePaymentReport(page, pageSize, 'dueAmount', 'DESC', fromDate, toDate, customerId, minAmount, maxAmount)
+          .pipe(
+            catchError((error: any) => {
+              const errorMessage = error?.error?.message || error?.message || 'Error loading due payment data';
+              this.toastr.error(errorMessage, 'Error');
+              console.error('Full error:', error);
+              return of({ content: [], totalPages: 0 });
+            })
+          )
+          .subscribe((data: any) => {
+            const content = data.content || data;
+            allDuePayments = allDuePayments.concat(content);
+            totalPages = data.totalPages || 1;
+            page++;
+            if (page < totalPages) {
+              fetchDuePaymentPage();
+            } else {
+              // Fetch backend summary for perfect consistency
+              this.duePaymentService.getDuePaymentReportSummary(fromDate, toDate, customerId, minAmount, maxAmount)
+                .pipe(
+                  catchError(() => of({
+                    totalDueAmount: 0,
+                    totalSalesAmount: 0,
+                    totalAmountReceived: 0,
+                    totalCustomersWithDue: 0,
+                    averageDueAmount: 0
+                  }))
+                )
+                .subscribe((summary: any) => {
+                  exportDuePaymentReportToPDF({
+                    duePaymentData: allDuePayments,
+                    fromDate: this.filterDuePaymentFromDate,
+                    toDate: this.filterDuePaymentToDate,
+                    customerName,
+                    totalDueAmount: summary.totalDueAmount,
+                    totalSalesAmount: summary.totalSalesAmount,
+                    totalAmountReceived: summary.totalAmountReceived,
+                    totalCustomersWithDue: summary.totalCustomersWithDue,
+                    averageDueAmount: summary.averageDueAmount,
+                    minAmount,
+                    maxAmount,
+                    businessName
+                  });
+                  this.toastr.success('PDF exported!', 'Success');
+                });
+            }
+          });
+      };
+      fetchDuePaymentPage();
     } else {
-      this.toastr.info('PDF export is only available for the Sales Report.', 'Info');
+      this.toastr.info('PDF export is not available for this report.', 'Info');
     }
   }
-}
 
+  loadDuePaymentData() {
+    this.loadingService.show('Loading due payment data...');
+    
+    const fromDate = this.filterDuePaymentFromDate || undefined;
+    const toDate = this.filterDuePaymentToDate || undefined;
+    const customerId = this.filterDuePaymentCustomerId || undefined;
+    const minAmount = (typeof this.filterDuePaymentMinAmount === 'number' && !isNaN(this.filterDuePaymentMinAmount)) ? this.filterDuePaymentMinAmount : undefined;
+    const maxAmount = (typeof this.filterDuePaymentMaxAmount === 'number' && !isNaN(this.filterDuePaymentMaxAmount)) ? this.filterDuePaymentMaxAmount : undefined;
+
+    // Fetch current page data with backend-driven pagination
+    const sub = this.duePaymentService.getDuePaymentReport(
+      this.duePaymentPage - 1, this.duePaymentPageSize, 'id', 'DESC', fromDate, toDate, customerId, minAmount, maxAmount
+    )
+      .pipe(
+        finalize(() => this.loadingService.hide()),
+        catchError((error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading due payment data';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+          return of({ content: [], totalElements: 0, totalPages: 1 });
+        })
+      )
+      .subscribe((data: any) => {
+        const content = data.content || data;
+        this.duePaymentData = content;
+        this.duePaymentTotalElements = data.totalElements || content.length;
+        this.duePaymentTotalPages = data.totalPages || Math.ceil(this.duePaymentTotalElements / this.duePaymentPageSize) || 1;
+        this.cdr.markForCheck();
+        sub.unsubscribe();
+      });
+
+    // Fetch summary
+    this.duePaymentService.getDuePaymentReportSummary(fromDate, toDate, customerId, minAmount, maxAmount)
+      .pipe(
+        catchError((error: any) => {
+          return of({
+            totalDueAmount: 0,
+            totalSalesAmount: 0,
+            totalAmountReceived: 0,
+            totalCustomersWithDue: 0,
+            averageDueAmount: 0
+          });
+        })
+      )
+      .subscribe((summary: any) => {
+        this.duePaymentSummary = summary;
+        this.cdr.markForCheck();
+      });
+  }
+
+  onGenerateDuePaymentClick() {
+    this.duePaymentPage = 1;
+    this.loadDuePaymentData();
+  }
+
+  onDuePaymentPageChange(page: number) {
+    if (page > 0 && page <= this.duePaymentTotalPages) {
+      this.duePaymentPage = page;
+      this.loadDuePaymentData();
+      this.cdr.markForCheck();
+    }
+  }
+
+  onDuePaymentPageSizeChange(size: number) {
+    this.duePaymentPageSize = size;
+    this.duePaymentPage = 1;
+    this.loadDuePaymentData();
+    this.cdr.markForCheck();
+  }
+
+  viewInvoice(saleId: number) {
+    const numericId = Number(saleId);
+    this.selectedSale = this.originalSalesMap.get(numericId);
+  }
+
+  closeInvoice() {
+    this.selectedSale = null;
+  }
+
+  viewBankTransactionDetails(transaction: any) {
+    this.selectedBankTransaction = transaction;
+  }
+
+  closeBankTransactionDetails() {
+    this.selectedBankTransaction = null;
+  }
+
+  exportBankTransactionsReport() {
+    const fromDate = this.filterBankFromDate ? this.filterBankFromDate : undefined;
+    const toDate = this.filterBankToDate ? this.filterBankToDate : undefined;
+    const bankAccountId = this.filterBankAccountId ? this.filterBankAccountId : undefined;
+    const transactionType = this.filterBankTransactionType ? this.filterBankTransactionType : undefined;
+    const bankAccountName = bankAccountId ? (this.bankAccountsList.find(b => b.id == bankAccountId)?.bankName || '') : undefined;
+    const pageSize = 500;
+    let allTransactions: any[] = [];
+    let page = 0;
+    let totalPages = 1;
+    const businessName = this.agencyName;
+
+    const fetchPage = () => {
+      this.bankAccountLedgerService.getAllBankTransactions(page, pageSize, 'transactionDate', 'DESC', fromDate, toDate, bankAccountId, transactionType)
+        .pipe(
+          catchError((error: any) => {
+            this.toastr.error('Error loading bank transactions for export', 'Error');
+            console.error('Error:', error);
+            return of({ content: [], totalPages: 0 });
+          })
+        )
+        .subscribe((data: any) => {
+          const content = data.content || data;
+          allTransactions = allTransactions.concat(content);
+          totalPages = data.totalPages || 1;
+          page++;
+
+          if (page < totalPages) {
+            fetchPage();
+          } else {
+            // Fetch summary for consistency
+            this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType)
+              .pipe(
+                catchError(() => of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0, balanceAfter: 0, transactionCount: 0 }))
+              )
+              .subscribe((summary: any) => {
+                exportBankTransactionsReportToPDF({
+                  transactions: allTransactions,
+                  fromDate: this.filterBankFromDate,
+                  toDate: this.filterBankToDate,
+                  bankAccountName,
+                  transactionType: this.filterBankTransactionType,
+                  totalDeposits: summary.totalDeposits || 0,
+                  totalWithdrawals: summary.totalWithdrawals || 0,
+                  netChange: summary.netBalance || 0,
+                  currentBalance: summary.balanceAfter || 0,
+                  transactionCount: summary.transactionCount || 0,
+                  businessName
+                });
+                this.toastr.success('PDF exported!', 'Success');
+              });
+          }
+        });
+    };
+
+    fetchPage();
+  }
+
+  loadBankTransactionsData() {
+    const fromDate = this.filterBankFromDate ? this.filterBankFromDate : undefined;
+    const toDate = this.filterBankToDate ? this.filterBankToDate : undefined;
+    const bankAccountId = this.filterBankAccountId ? this.filterBankAccountId : undefined;
+    const transactionType = this.filterBankTransactionType ? this.filterBankTransactionType : undefined;
+
+    this.loadingService.show('Loading bank transactions...');
+    this.bankAccountLedgerService.getAllBankTransactions(
+      this.bankTransactionsPage - 1,
+      this.bankTransactionsPageSize,
+      'transactionDate',
+      'DESC',
+      fromDate,
+      toDate,
+      bankAccountId,
+      transactionType
+    )
+      .pipe(
+        catchError((error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error loading bank transactions';
+          this.toastr.error(errorMessage, 'Error');
+          return of({ content: [], totalElements: 0, totalPages: 1 });
+        }),
+        finalize(() => this.loadingService.hide())
+      )
+      .subscribe((data: any) => {
+        this.bankTransactionsData = data.content || data;
+        this.bankTransactionsTotalElements = data.totalElements || 0;
+        this.bankTransactionsTotalPages = data.totalPages || 1;
+        this.cdr.markForCheck();
+      });
+
+    // Load summary
+    this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType)
+      .pipe(
+        catchError(() => {
+          return of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0 });
+        })
+      )
+      .subscribe((summary: any) => {
+        this.bankTransactionsSummary = summary;
+        this.cdr.markForCheck();
+      });
+  }
+
+  onBankTransactionsPageChange(page: number) {
+    if (page > 0 && page <= this.bankTransactionsTotalPages) {
+      this.bankTransactionsPage = page;
+      this.loadBankTransactionsData();
+      this.cdr.markForCheck();
+    }
+  }
+
+  onBankTransactionsPageSizeChange(size: number) {
+    this.bankTransactionsPageSize = size;
+    this.bankTransactionsPage = 1;
+    this.loadBankTransactionsData();
+    this.cdr.markForCheck();
+  }
+
+  onGenerateBankTransactionsClick() {
+    this.bankTransactionsPage = 1;
+    this.loadBankTransactionsData();
+  }
+
+  applyBankTransactionFilters() {
+    this.bankTransactionsPage = 1;
+    this.loadBankTransactionsData();
+  }
+
+  resetBankTransactionFilters() {
+    this.filterBankFromDate = '';
+    this.filterBankToDate = '';
+    this.filterBankAccountId = '';
+    this.filterBankTransactionType = '';
+    this.bankTransactionsPage = 1;
+    this.loadBankTransactionsData();
+  }
+}
