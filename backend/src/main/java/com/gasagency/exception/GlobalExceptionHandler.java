@@ -11,8 +11,11 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.transaction.TransactionSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -102,6 +105,49 @@ public class GlobalExceptionHandler {
                                 .collect(Collectors.joining("; "));
 
                 logger.warn("Validation error: {}", message);
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.BAD_REQUEST.value(),
+                                "VALIDATION_ERROR",
+                                message,
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        @ExceptionHandler(ConstraintViolationException.class)
+        public ResponseEntity<ErrorResponse> handleConstraintViolation(
+                        ConstraintViolationException ex, WebRequest request) {
+                String message = ex.getConstraintViolations().stream()
+                                .map(ConstraintViolation::getMessage)
+                                .collect(Collectors.joining("; "));
+
+                logger.warn("Constraint violation: {}", message);
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.BAD_REQUEST.value(),
+                                "VALIDATION_ERROR",
+                                message,
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+
+        @ExceptionHandler(TransactionSystemException.class)
+        public ResponseEntity<ErrorResponse> handleTransactionSystemException(
+                        TransactionSystemException ex, WebRequest request) {
+                String message = "An error occurred while processing the transaction.";
+
+                // Check if root cause is ConstraintViolationException
+                if (ex.getRootCause() instanceof ConstraintViolationException) {
+                        ConstraintViolationException cve = (ConstraintViolationException) ex.getRootCause();
+                        message = cve.getConstraintViolations().stream()
+                                        .map(ConstraintViolation::getMessage)
+                                        .collect(Collectors.joining("; "));
+                } else if (ex.getRootCause() != null) {
+                        String rootMsg = ex.getRootCause().getMessage();
+                        if (rootMsg != null && !rootMsg.isEmpty()) {
+                                message = rootMsg;
+                        }
+                }
+
+                logger.error("Transaction system exception: {}", message, ex);
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "VALIDATION_ERROR",

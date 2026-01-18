@@ -106,6 +106,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
 
   initForm() {
     this.supplierForm = this.fb.group({
+      code: [''],
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       contact: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(20), Validators.pattern('^[+0-9\-\s()]+$')]]
     });

@@ -401,6 +401,7 @@
                 <th class="text-center">Date</th>
                 <th class="text-center">Variant / Mode</th>
                 <th class="text-center">Type</th>
+                <th class="text-center">Reference</th>
                 <th class="text-center">Filled Out</th>
                 <th class="text-center">Empty In</th>
                 <th class="text-center">Balance</th>
@@ -423,6 +424,13 @@
                   <span class="type-badge" [ngClass]="'type-' + entry.refType?.toLowerCase()">
                     {{ entry.refType }}
                   </span>
+                </td>
+                <td class="text-center">
+                  <span *ngIf="entry.transactionReference">
+                    {{ entry.transactionReference }}
+                  </span>
+                  <span *ngIf="!entry.transactionReference && entry.refType !== 'PAYMENT' && entry.refType !== 'INITIAL_STOCK'" class="text-muted">-</span>
+                  <span *ngIf="!entry.transactionReference && (entry.refType === 'PAYMENT' || entry.refType === 'INITIAL_STOCK')" class="text-muted">-</span>
                 </td>
                 <td class="text-center">{{ entry.filledOut }}</td>
                 <td class="text-center">{{ entry.emptyIn }}</td>
@@ -527,9 +535,6 @@
             [(ngModel)]="paymentForm.paymentDate" 
             type="date" 
             class="form-control">
-        </div>
-        <div *ngIf="paymentError" class="form-error" style="margin-top: 1rem;">
-          {{ paymentError }}
         </div>
       </div>
       <div class="modal-footer">

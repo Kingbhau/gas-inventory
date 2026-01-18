@@ -10,4 +10,5 @@ export interface CustomerCylinderLedger {
   filledOut: number;
   emptyIn: number;
   balance: number;
+  transactionReference?: string;
 }

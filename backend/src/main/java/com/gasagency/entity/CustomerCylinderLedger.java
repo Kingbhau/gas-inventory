@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -83,6 +84,9 @@ public class CustomerCylinderLedger extends Auditable {
 
     @Column(nullable = true, length = 50)
     private String paymentMode;
+
+    @Column(name = "transaction_reference", nullable = true, length = 50, unique = true)
+    private String transactionReference; // Auto-generated for EMPTY_RETURN transactions
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "bank_account_id", nullable = true)
@@ -227,6 +231,14 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setPaymentMode(String paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
     }
 
     public BankAccount getBankAccount() {

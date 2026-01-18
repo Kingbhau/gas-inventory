@@ -5,6 +5,7 @@ import com.gasagency.entity.Warehouse;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.repository.WarehouseRepository;
+import com.gasagency.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,9 @@ public class WarehouseService {
 
     @Autowired
     private WarehouseRepository warehouseRepository;
+
+    @Autowired
+    private CodeGenerator codeGenerator;
 
     /**
      * Get all warehouses (active and inactive)
@@ -104,6 +108,10 @@ public class WarehouseService {
         }
 
         Warehouse warehouse = new Warehouse(trimmedName, "ACTIVE");
+        // Auto-generate unique warehouse code
+        String warehouseCode = codeGenerator.generateWarehouseCode();
+        warehouse.setCode(warehouseCode);
+
         Warehouse saved = warehouseRepository.save(warehouse);
 
         return convertToDTO(saved);
@@ -213,12 +221,14 @@ public class WarehouseService {
      * Convert Warehouse entity to DTO
      */
     private WarehouseDTO convertToDTO(Warehouse warehouse) {
-        return new WarehouseDTO(
+        WarehouseDTO dto = new WarehouseDTO(
                 warehouse.getId(),
                 warehouse.getName(),
                 warehouse.getStatus(),
                 warehouse.getCreatedAt(),
                 warehouse.getUpdatedAt(),
                 warehouse.getVersion());
+        dto.setCode(warehouse.getCode());
+        return dto;
     }
 }

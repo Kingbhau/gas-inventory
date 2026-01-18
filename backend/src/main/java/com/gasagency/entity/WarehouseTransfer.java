@@ -2,7 +2,9 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -12,7 +14,8 @@ import java.util.Objects;
         @Index(name = "idx_transfer_from_warehouse", columnList = "from_warehouse_id"),
         @Index(name = "idx_transfer_to_warehouse", columnList = "to_warehouse_id"),
         @Index(name = "idx_transfer_variant", columnList = "variant_id"),
-        @Index(name = "idx_transfer_date", columnList = "transferDate")
+        @Index(name = "idx_transfer_date", columnList = "transferDate"),
+        @Index(name = "idx_transfer_reference_number", columnList = "reference_number", unique = true)
 })
 public class WarehouseTransfer extends Auditable {
     @Id
@@ -22,6 +25,10 @@ public class WarehouseTransfer extends Auditable {
     @Version
     @Column(nullable = false)
     private Long version = 0L;
+
+    @Column(name = "reference_number", unique = true, nullable = false, length = 50)
+    @Pattern(regexp = "^WT-[A-Z0-9]+-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: WT-FROM_WH-TO_WH-YYYYMM-SEQUENCE")
+    private String referenceNumber;
 
     @NotNull(message = "From warehouse is required.")
     @ManyToOne
@@ -87,6 +94,14 @@ public class WarehouseTransfer extends Auditable {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 
     public Warehouse getFromWarehouse() {

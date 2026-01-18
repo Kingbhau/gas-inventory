@@ -9,6 +9,8 @@ public class WarehouseDTO {
     @NotBlank(message = "Warehouse name is required.")
     private String name;
 
+    private String code; // Auto-generated, read-only
+
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -48,6 +50,14 @@ public class WarehouseDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getStatus() {

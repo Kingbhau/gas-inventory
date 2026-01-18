@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -95,4 +96,9 @@ public interface BankAccountLedgerRepository extends JpaRepository<BankAccountLe
                         "ORDER BY bal.transactionDate DESC")
         List<BankAccountLedger> findByTransactionDateBetween(@Param("startDate") LocalDateTime startDate,
                         @Param("endDate") LocalDateTime endDate);
+
+        @Query("SELECT COUNT(bal) FROM BankAccountLedger bal " +
+                        "WHERE EXTRACT(MONTH FROM bal.transactionDate) = EXTRACT(MONTH FROM CAST(:date AS DATE)) " +
+                        "AND EXTRACT(YEAR FROM bal.transactionDate) = EXTRACT(YEAR FROM CAST(:date AS DATE))")
+        long countByCreatedAtMonthYear(@Param("date") LocalDate date);
 }

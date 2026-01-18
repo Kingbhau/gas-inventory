@@ -2,7 +2,9 @@ package com.gasagency.service;
 
 import com.gasagency.dto.BankAccountLedgerDTO;
 import com.gasagency.entity.BankAccountLedger;
+import com.gasagency.entity.Sale;
 import com.gasagency.repository.BankAccountLedgerRepository;
+import com.gasagency.repository.SaleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,12 @@ import java.util.stream.Collectors;
 public class BankAccountLedgerService {
 
     private final BankAccountLedgerRepository bankAccountLedgerRepository;
+    private final SaleRepository saleRepository;
 
-    public BankAccountLedgerService(BankAccountLedgerRepository bankAccountLedgerRepository) {
+    public BankAccountLedgerService(BankAccountLedgerRepository bankAccountLedgerRepository,
+            SaleRepository saleRepository) {
         this.bankAccountLedgerRepository = bankAccountLedgerRepository;
+        this.saleRepository = saleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -33,7 +38,8 @@ public class BankAccountLedgerService {
             Long bankAccountId,
             String transactionType,
             LocalDate fromDate,
-            LocalDate toDate) {
+            LocalDate toDate,
+            String referenceNumber) {
 
         Page<BankAccountLedger> transactions;
 
@@ -78,7 +84,18 @@ public class BankAccountLedgerService {
             transactions = bankAccountLedgerRepository.findAll(pageable);
         }
 
-        return transactions.map(this::convertToDTO);
+        // Apply reference filter in-memory after fetching
+        Page<BankAccountLedger> result = transactions;
+        if (referenceNumber != null && !referenceNumber.isEmpty()) {
+            final String refFilter = referenceNumber.toLowerCase();
+            List<BankAccountLedger> filteredList = transactions.getContent().stream()
+                    .filter(ledger -> ledger.getReferenceNumber() != null &&
+                            ledger.getReferenceNumber().toLowerCase().contains(refFilter))
+                    .toList();
+            result = new org.springframework.data.domain.PageImpl<>(filteredList, pageable, filteredList.size());
+        }
+
+        return result.map(this::convertToDTO);
     }
 
     @Transactional(readOnly = true)
@@ -90,7 +107,7 @@ public class BankAccountLedgerService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> getSummary(Long bankAccountId, String transactionType, LocalDate fromDate,
-            LocalDate toDate) {
+            LocalDate toDate, String referenceNumber) {
         List<BankAccountLedger> transactions;
 
         // Apply all filter combinations
@@ -132,10 +149,23 @@ public class BankAccountLedgerService {
             transactions = bankAccountLedgerRepository.findAll();
         }
 
+        // Apply reference filter
+        if (referenceNumber != null && !referenceNumber.isEmpty()) {
+            final String refFilter = referenceNumber.toLowerCase();
+            transactions = transactions.stream()
+                    .filter(t -> t.getReferenceNumber() != null
+                            && t.getReferenceNumber().toLowerCase().contains(refFilter))
+                    .toList();
+        }
+
         // Calculate summary
         BigDecimal totalDeposits = BigDecimal.ZERO;
         BigDecimal totalWithdrawals = BigDecimal.ZERO;
         BigDecimal balanceAfter = BigDecimal.ZERO;
+
+        // Track balance by bank account for multiple banks
+        Map<Long, BigDecimal> bankBalances = new java.util.HashMap<>();
+        Map<Long, String> bankNames = new java.util.HashMap<>();
 
         // Find the maximum balance (most recent transaction)
         for (BankAccountLedger transaction : transactions) {
@@ -150,7 +180,22 @@ public class BankAccountLedgerService {
                 totalWithdrawals = totalWithdrawals.add(amount);
             }
 
-            // Get the highest balance (most recent state)
+            // Track balance by bank account
+            if (transaction.getBankAccount() != null && transaction.getBalanceAfter() != null) {
+                Long bankId = transaction.getBankAccount().getId();
+                BigDecimal currentBalance = bankBalances.getOrDefault(bankId, BigDecimal.ZERO);
+
+                // Update balance if this transaction is more recent
+                if (transaction.getBalanceAfter().compareTo(currentBalance) > 0) {
+                    bankBalances.put(bankId, transaction.getBalanceAfter());
+                }
+
+                // Store bank name
+                bankNames.put(bankId, transaction.getBankAccount().getBankName() + " - " +
+                        transaction.getBankAccount().getAccountNumber());
+            }
+
+            // Get the highest balance across all banks
             if (transaction.getBalanceAfter() != null &&
                     transaction.getBalanceAfter().compareTo(balanceAfter) > 0) {
                 balanceAfter = transaction.getBalanceAfter();
@@ -165,6 +210,16 @@ public class BankAccountLedgerService {
         summary.put("netBalance", netBalance);
         summary.put("balanceAfter", balanceAfter);
         summary.put("transactionCount", transactions.size());
+
+        // Add bank-wise balances
+        if (!bankBalances.isEmpty()) {
+            Map<String, BigDecimal> bankwiseBalances = new java.util.LinkedHashMap<>();
+            for (Long bankId : bankBalances.keySet()) {
+                String bankName = bankNames.get(bankId);
+                bankwiseBalances.put(bankName, bankBalances.get(bankId));
+            }
+            summary.put("bankwiseBalances", bankwiseBalances);
+        }
 
         return summary;
     }
@@ -181,6 +236,15 @@ public class BankAccountLedgerService {
         dto.setAmount(entity.getAmount());
         dto.setBalanceAfter(entity.getBalanceAfter());
         dto.setSaleId(entity.getSaleId());
+
+        // Fetch and set sale reference number if saleId exists
+        if (entity.getSaleId() != null) {
+            Sale sale = saleRepository.findById(entity.getSaleId()).orElse(null);
+            if (sale != null) {
+                dto.setSaleReferenceNumber(sale.getReferenceNumber());
+            }
+        }
+
         dto.setReferenceNumber(entity.getReferenceNumber());
         dto.setDescription(entity.getDescription());
         dto.setTransactionDate(entity.getTransactionDate());

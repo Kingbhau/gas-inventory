@@ -7,6 +7,7 @@ import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
+import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,17 +26,20 @@ public class SupplierTransactionService {
         private final CylinderVariantRepository variantRepository;
         private final WarehouseRepository warehouseRepository;
         private final InventoryStockService inventoryStockService;
+        private final ReferenceNumberGenerator referenceNumberGenerator;
 
         public SupplierTransactionService(SupplierTransactionRepository repository,
                         SupplierRepository supplierRepository,
                         CylinderVariantRepository variantRepository,
                         WarehouseRepository warehouseRepository,
-                        InventoryStockService inventoryStockService) {
+                        InventoryStockService inventoryStockService,
+                        ReferenceNumberGenerator referenceNumberGenerator) {
                 this.repository = repository;
                 this.supplierRepository = supplierRepository;
                 this.variantRepository = variantRepository;
                 this.warehouseRepository = warehouseRepository;
                 this.inventoryStockService = inventoryStockService;
+                this.referenceNumberGenerator = referenceNumberGenerator;
         }
 
         @Transactional
@@ -188,7 +192,15 @@ public class SupplierTransactionService {
                                 warehouse, supplier, variant, LocalDate.now(),
                                 request.getFilledReceived(), request.getEmptySent(), request.getReference(),
                                 request.getAmount());
+
+                // Generate reference number BEFORE initial save
+                String referenceNumber = referenceNumberGenerator.generateSupplierPurchaseOrderReference(
+                                supplier.getCode());
+                transaction.setReference(referenceNumber);
+
                 transaction = repository.save(transaction);
+                logger.info("Supplier transaction created with id: {} - Reference: {}",
+                                transaction.getId(), referenceNumber);
 
                 // Update inventory for the specific warehouse using warehouse-aware methods
                 inventoryStockService.incrementFilledQty(warehouse, variant, request.getFilledReceived());
@@ -229,6 +241,27 @@ public class SupplierTransactionService {
 
                 return repository.findAll(pageable)
                                 .map(this::toDTO);
+        }
+
+        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber) {
+                LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "SUPPLIER_TRANSACTION", "page",
+                                pageable.getPageNumber(), "size", pageable.getPageSize(), "referenceNumber",
+                                referenceNumber);
+
+                Page<SupplierTransaction> result = repository.findAll(pageable);
+
+                if (referenceNumber != null && !referenceNumber.isEmpty()) {
+                        String refFilter = referenceNumber.toLowerCase();
+                        List<SupplierTransactionDTO> filteredList = result.getContent().stream()
+                                        .filter(transaction -> transaction.getReference() != null &&
+                                                        transaction.getReference().toLowerCase().contains(refFilter))
+                                        .map(this::toDTO)
+                                        .collect(Collectors.toList());
+                        return new org.springframework.data.domain.PageImpl<>(filteredList, pageable,
+                                        filteredList.size());
+                }
+
+                return result.map(this::toDTO);
         }
 
         public List<SupplierTransactionDTO> getTransactionsBySupplier(Long supplierId) {

@@ -1,5 +1,6 @@
 export interface BankAccount {
   id?: number;
+  code?: string; // Auto-generated bank code (e.g., BANK001, BANK002)
   bankName: string;
   accountNumber: string;
   accountHolderName: string;

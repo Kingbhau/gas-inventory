@@ -55,6 +55,10 @@
         <label class="filter-label">Max Amount</label>
         <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterSalesReference" class="filter-input" placeholder="Reference number">
+      </div>
       <div class="filter-actions">
         <button (click)="onGenerateClick()" class="btn btn-primary">Search</button>
         <button (click)="exportReport()" class="btn btn-secondary"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
@@ -183,6 +187,10 @@
           <option value="ADJUSTMENT">ADJUSTMENT</option>
         </select>
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterBankTransactionReference" class="filter-input" placeholder="Reference number">
+      </div>
       <div class="filter-actions">
         <button (click)="applyBankTransactionFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetBankTransactionFilters()" class="btn btn-secondary">Reset</button>
@@ -211,12 +219,16 @@
           <span class="value">{{ bankTransactionsSummary.netBalance | indianCurrency }}</span>
         </div>
         <div class="summary-card">
-          <span class="label">Current Balance</span>
-          <span class="value">{{ bankTransactionsSummary.balanceAfter | indianCurrency }}</span>
-        </div>
-        <div class="summary-card">
           <span class="label">Transactions</span>
           <span class="value">{{ bankTransactionsTotalElements }}</span>
+        </div>
+      </div>
+
+      <!-- Bank-wise Balance if multiple banks -->
+      <div *ngIf="bankTransactionsSummary.bankwiseBalances && (bankTransactionsSummary.bankwiseBalances | keyvalue).length > 0" class="report-summary" style="margin-top: 20px;">
+        <div *ngFor="let bank of bankTransactionsSummary.bankwiseBalances | keyvalue" class="summary-card">
+          <span class="label">{{ bank.key }}</span>
+          <span class="value">{{ $any(bank.value) | indianCurrency }}</span>
         </div>
       </div>
 
@@ -231,7 +243,6 @@
                 <th>Type</th>
                 <th class="text-center">Amount</th>
                 <th class="text-center">Balance</th>
-                <th>Reference</th>
                 <th class="text-center">Action</th>
               </tr>
             </thead>
@@ -249,7 +260,6 @@
                 </td>
                 <td class="text-center">{{ row.amount | indianCurrency }}</td>
                 <td class="text-center">{{ row.balanceAfter | indianCurrency }}</td>
-                <td>{{ row.referenceNumber || '-' }}</td>
                 <td class="text-center">
                   <button (click)="viewBankTransactionDetails(row)" class="btn btn-sm btn-info" title="View Details">
                     <fa-icon [icon]="faEye"></fa-icon>
@@ -302,6 +312,10 @@
           <div class="invoice-row">
             <span class="label">Date:</span>
             <span class="value">{{ selectedSale.saleDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedSale.referenceNumber || '-' }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Customer:</span>
@@ -395,9 +409,9 @@
             <span class="label">Description:</span>
             <span class="value">{{ selectedBankTransaction.description || '-' }}</span>
           </div>
-          <div class="invoice-row" *ngIf="selectedBankTransaction.saleId">
-            <span class="label">Sale ID:</span>
-            <span class="value">#{{ selectedBankTransaction.saleId }}</span>
+          <div class="invoice-row" *ngIf="selectedBankTransaction.saleReferenceNumber">
+            <span class="label">Sale Reference:</span>
+            <span class="value">{{ selectedBankTransaction.saleReferenceNumber }}</span>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 export interface WarehouseTransfer {
   id?: number;
+  referenceNumber?: string;
   fromWarehouseId: number;
   toWarehouseId: number;
   fromWarehouseName?: string;

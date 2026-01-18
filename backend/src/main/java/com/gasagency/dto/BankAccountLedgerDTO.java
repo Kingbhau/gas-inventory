@@ -11,6 +11,7 @@ public class BankAccountLedgerDTO {
     private BigDecimal amount;
     private BigDecimal balanceAfter;
     private Long saleId;
+    private String saleReferenceNumber;
     private String referenceNumber;
     private String description;
     private LocalDateTime transactionDate;
@@ -21,7 +22,7 @@ public class BankAccountLedgerDTO {
 
     public BankAccountLedgerDTO(Long id, Long bankAccountId, String bankAccountName, String transactionType,
             BigDecimal amount,
-            BigDecimal balanceAfter, Long saleId, String referenceNumber,
+            BigDecimal balanceAfter, Long saleId, String saleReferenceNumber, String referenceNumber,
             String description, LocalDateTime transactionDate, LocalDateTime createdAt) {
         this.id = id;
         this.bankAccountId = bankAccountId;
@@ -30,6 +31,7 @@ public class BankAccountLedgerDTO {
         this.amount = amount;
         this.balanceAfter = balanceAfter;
         this.saleId = saleId;
+        this.saleReferenceNumber = saleReferenceNumber;
         this.referenceNumber = referenceNumber;
         this.description = description;
         this.transactionDate = transactionDate;
@@ -91,6 +93,14 @@ public class BankAccountLedgerDTO {
 
     public void setSaleId(Long saleId) {
         this.saleId = saleId;
+    }
+
+    public String getSaleReferenceNumber() {
+        return saleReferenceNumber;
+    }
+
+    public void setSaleReferenceNumber(String saleReferenceNumber) {
+        this.saleReferenceNumber = saleReferenceNumber;
     }
 
     public String getReferenceNumber() {

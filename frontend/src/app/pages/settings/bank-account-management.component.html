@@ -154,6 +154,7 @@
         <table class="table">
           <thead>
             <tr>
+              <th>Bank Code</th>
               <th>Bank Name</th>
               <th>Account Number</th>
               <th>Account Holder</th>
@@ -164,6 +165,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let account of bankAccounts">
+              <td class="font-semibold">{{ account.code }}</td>
               <td><strong>{{ account.bankName }}</strong></td>
               <td>{{ account.accountNumber }}</td>
               <td>{{ account.accountHolderName }}</td>

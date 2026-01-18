@@ -81,6 +81,7 @@
         <table class="table">
           <thead>
             <tr>
+              <th>Warehouse Code</th>
               <th>Warehouse Name</th>
               <th>Status</th>
               <th>Created</th>
@@ -89,6 +90,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let warehouse of warehouses">
+              <td class="font-semibold">{{ warehouse.code }}</td>
               <td><strong>{{ warehouse.name }}</strong></td>
               <td>
                 <span class="badge" [ngClass]="getStatusColor(warehouse.status)">

@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPencil, faTrash, faBox, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faTrash, faBox, faDownload, faEye } from '@fortawesome/free-solid-svg-icons';
 import { exportSupplierTransactionsToPDF } from '../reports/export-supplier-transactions.util';
 import { BusinessInfoService } from '../../services/business-info.service';
 import { ToastrService } from 'ngx-toastr';
@@ -47,6 +47,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   filterFromDate: string = '';
   filterToDate: string = '';
   filterVariantId: string = '';
+  filterReference: string = '';
+  selectedTransaction: any = null;
   transactionForm!: FormGroup;
 
   // Font Awesome Icons
@@ -54,6 +56,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   faTrash = faTrash;
   faBox = faBox;
   faDownload = faDownload;
+  faEye = faEye;
 
 
   suppliers: any[] = [];
@@ -117,7 +120,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       toDate: this.filterToDate,
       businessName: this.agencyName,
       supplierName,
-      variantName
+      variantName,
+      referenceNumber: this.filterReference
     });
     this.toastr.success('PDF exported!', 'Success');
   }
@@ -175,7 +179,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadTransactions() {
     this.loadingService.show('Loading transactions...');
-    this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize)
+    this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize, 'id', 'ASC', this.filterReference)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
@@ -344,6 +348,16 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     if (this.filterToDate) {
       filtered = filtered.filter(t => t.transactionDate <= this.filterToDate);
     }
+    // Reference filter
+    if (this.filterReference) {
+      const refFilter = this.filterReference.toLowerCase();
+      filtered = filtered.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
+    }
+    // Reference filter
+    if (this.filterReference) {
+      const refFilter = this.filterReference.toLowerCase();
+      filtered = filtered.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
+    }
     this.filteredTransactions = filtered.sort((a: any, b: any) => b.id - a.id);
     this.cdr.markForCheck();
   }
@@ -354,6 +368,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.filterFromDate = '';
     this.filterToDate = '';
     this.filterVariantId = '';
+    this.filterReference = '';
     this.filteredTransactions = [...this.allTransactions].sort((a: any, b: any) => b.id - a.id);
     this.cdr.markForCheck();
   }
@@ -361,6 +376,16 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   closeForm() {
     this.showForm = false;
     this.editingId = null;
+    this.cdr.markForCheck();
+  }
+
+  viewTransactionDetails(transaction: any) {
+    this.selectedTransaction = transaction;
+    this.cdr.markForCheck();
+  }
+
+  closeTransactionDetails() {
+    this.selectedTransaction = null;
     this.cdr.markForCheck();
   }
 }

@@ -44,6 +44,12 @@
         <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
       </div>
       <br>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top: 1rem;">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -63,6 +69,7 @@
           <thead>
             <tr>
                 <th>Date</th>
+                <th>Reference #</th>
                 <th>Customer</th>
                 <th>Variant & Qty</th>
                 <th>Amount</th>
@@ -72,6 +79,7 @@
           <tbody>
             <tr *ngFor="let sale of paginatedSales" [class.highlight]="sale.totalAmount > 50000">
                 <td>{{ sale.saleDate | date: 'dd MMM yyyy' }}</td>
+                <td>{{ sale.referenceNumber }}</td>
                 <td><strong>{{ sale.customerName }}</strong></td>
                 <td>{{ sale.variantName }} - {{ sale.filledIssuedQty || 0 }} units</td>
                 <td class="amount">{{ sale.totalAmount | indianCurrency }}</td>
@@ -125,6 +133,10 @@
       </div>
       <div class="modal-body">
         <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedSale.referenceNumber || '-' }}</span>
+          </div>
           <div class="invoice-row">
             <span class="label">Date:</span>
             <span class="value">{{ selectedSale.saleDate | date: 'dd MMM yyyy' }}</span>

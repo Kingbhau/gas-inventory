@@ -28,6 +28,7 @@ public class WarehouseTransferDTO {
     private LocalDate transferDate;
     private LocalDateTime createdAt;
     private String notes;
+    private String referenceNumber;
 
     // Display fields
     private String fromWarehouseName;
@@ -130,6 +131,14 @@ public class WarehouseTransferDTO {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 
     public String getFromWarehouseName() {

@@ -23,6 +23,9 @@ public class Warehouse extends Auditable {
     @Column(nullable = false, unique = true, length = 100)
     private String name;
 
+    @Column(nullable = false, unique = true, updatable = false, length = 20)
+    private String code; // Auto-generated: WH001, WH002, etc. (Read-only)
+
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE"; // ACTIVE, INACTIVE
 
@@ -64,6 +67,14 @@ public class Warehouse extends Auditable {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getName() {

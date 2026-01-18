@@ -129,9 +129,25 @@ export class AppComponent implements OnInit, OnDestroy {
       // Only handle shortcuts when Alt is held
       if (event.altKey) {
         switch (event.key.toUpperCase()) {
+          case 'D':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/dashboard']));
+            break;
           case 'S':
             event.preventDefault();
             this.ngZone.run(() => this.router.navigate(['/sales/entry']));
+            break;
+          case 'H':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/sales/history']));
+            break;
+          case 'R':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/reports']));
+            break;
+          case 'I':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/inventory']));
             break;
           case 'P':
             event.preventDefault();

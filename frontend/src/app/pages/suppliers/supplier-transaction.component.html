@@ -25,9 +25,9 @@
         </select>
       </div>
     </div>
-    <!-- Row 2: Warehouse, Variant -->
+    <!-- Row 2: Warehouse, Variant, Reference -->
     <div class="filter-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%; margin-top: 1rem;">
-      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
+      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
         <label class="filter-label">Warehouse</label>
         <select [(ngModel)]="selectedWarehouse" class="filter-input">
           <option value="">All Warehouses</option>
@@ -40,6 +40,10 @@
           <option value="">All Variants</option>
           <option *ngFor="let variant of variants" [value]="variant.id?.toString()">{{ variant.name }}</option>
         </select>
+      </div>
+      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
       </div>
     </div>
     <!-- Row 3: Buttons -->
@@ -67,25 +71,26 @@
           <thead>
             <tr>
               <th>Date</th>
-              <th>Warehouse</th>
               <th>Supplier</th>
               <th>Variant</th>
               <th class="text-center">Filled Received</th>
               <th class="text-center">Empty Returned</th>
               <th class="text-center">Amount</th>
-              <th>Actions</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let transaction of paginatedTransactions">
               <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
-              <td><strong>{{ transaction.warehouseName }}</strong></td>
               <td><strong>{{ transaction.supplierName }}</strong></td>
               <td>{{ transaction.variantName }}</td>
               <td class="text-center received">{{ transaction.filledReceived }} units</td>
               <td class="text-center returned">{{ transaction.emptySent }} units</td>
               <td class="text-center">{{ transaction.amount | number:'1.2-2' }}</td>
-              <td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-info" (click)="viewTransactionDetails(transaction)" title="View Details" style="margin-right: 0.5rem;">
+                  <fa-icon [icon]="faEye"></fa-icon>
+                </button>
                 <button class="action-btn" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
               </td>
             </tr>
@@ -200,9 +205,9 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="editingId !== null">
           <label class="form-label">Reference Number</label>
-          <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001">
+          <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001" readonly style="background-color: #f5f5f5;">
         </div>
 
         <div class="form-group">
@@ -220,3 +225,53 @@
     </div>
   </div>
 
+  <!-- View Transaction Details Modal -->
+  <div *ngIf="selectedTransaction" class="modal-overlay" (click)="closeTransactionDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Transaction Details</h2>
+        <button class="modal-close" (click)="closeTransactionDetails()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ selectedTransaction.transactionDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedTransaction.reference || '-' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Warehouse:</span>
+            <span class="value">{{ selectedTransaction.warehouseName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Supplier:</span>
+            <span class="value">{{ selectedTransaction.supplierName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Variant:</span>
+            <span class="value">{{ selectedTransaction.variantName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Filled Received:</span>
+            <span class="value">{{ selectedTransaction.filledReceived }} units</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Empty Returned:</span>
+            <span class="value">{{ selectedTransaction.emptySent }} units</span>
+          </div>
+          <div class="invoice-row total">
+            <span class="label">Amount:</span>
+            <span class="value">{{ selectedTransaction.amount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeTransactionDetails()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>

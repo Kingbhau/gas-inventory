@@ -156,6 +156,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterVariantId: string = '';
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
+  filterSalesReference: string = '';
   filterReturnPendingVariantId: string = '';
   filterInventoryWarehouseId: string = '';
   filterDuePaymentCustomerId: string = '';
@@ -163,6 +164,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterDuePaymentMaxAmount: number | null = null;
   filterBankAccountId: string = '';
   filterBankTransactionType: string = '';
+  filterBankTransactionReference: string = '';
   customersList: any[] = [];
   variantsList: any[] = [];
   warehousesList: any[] = [];
@@ -567,9 +569,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const variantId = this.filterVariantId ? Number(this.filterVariantId) : undefined;
     const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
+    const referenceNumber = this.filterSalesReference ? this.filterSalesReference : undefined;
     
     // Fetch current page data with backend-driven pagination
-    const sub = this.saleService.getAllSales(this.salesPage - 1, this.salesPageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    const sub = this.saleService.getAllSales(this.salesPage - 1, this.salesPageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -598,7 +601,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         sub.unsubscribe();
       });
     // Fetch summary card values from backend summary endpoint (for ALL data)
-    this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
       .pipe(
         catchError((error: any) => {
           this.summaryTotalSalesAmount = 0;
@@ -640,8 +643,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
       let totalPages = 1;
       // Use agencyName fetched from backend
       const businessName = this.agencyName;
+      const referenceNumber = this.filterSalesReference ? this.filterSalesReference : undefined;
       const fetchPage = () => {
-        this.saleService.getAllSales(page, pageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+        this.saleService.getAllSales(page, pageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
           .pipe(
             catchError((error: any) => {
               const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -659,7 +663,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
               fetchPage();
             } else {
               // Fetch backend summary for perfect consistency
-              this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+              this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
                 .pipe(
                   catchError(() => of({ totalSalesAmount: 0, avgSaleValue: 0, topCustomer: 'N/A', transactionCount: 0 }))
                 )
@@ -675,6 +679,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
                     variantName,
                     minAmount,
                     maxAmount,
+                    referenceNumber: this.filterSalesReference,
                     transactionCount: summary.transactionCount,
                     businessName
                   });
@@ -869,7 +874,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
             fetchPage();
           } else {
             // Fetch summary for consistency
-            this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType)
+            this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType, this.filterBankTransactionReference)
               .pipe(
                 catchError(() => of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0, balanceAfter: 0, transactionCount: 0 }))
               )
@@ -880,6 +885,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
                   toDate: this.filterBankToDate,
                   bankAccountName,
                   transactionType: this.filterBankTransactionType,
+                  referenceNumber: this.filterBankTransactionReference,
                   totalDeposits: summary.totalDeposits || 0,
                   totalWithdrawals: summary.totalWithdrawals || 0,
                   netChange: summary.netBalance || 0,
@@ -901,6 +907,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const toDate = this.filterBankToDate ? this.filterBankToDate : undefined;
     const bankAccountId = this.filterBankAccountId ? this.filterBankAccountId : undefined;
     const transactionType = this.filterBankTransactionType ? this.filterBankTransactionType : undefined;
+    const referenceNumber = this.filterBankTransactionReference ? this.filterBankTransactionReference : undefined;
 
     this.loadingService.show('Loading bank transactions...');
     this.bankAccountLedgerService.getAllBankTransactions(
@@ -911,7 +918,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
       fromDate,
       toDate,
       bankAccountId,
-      transactionType
+      transactionType,
+      referenceNumber
     )
       .pipe(
         catchError((error: any) => {
@@ -929,7 +937,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       });
 
     // Load summary
-    this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType)
+    this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType, referenceNumber)
       .pipe(
         catchError(() => {
           return of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0 });
@@ -971,6 +979,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.filterBankToDate = '';
     this.filterBankAccountId = '';
     this.filterBankTransactionType = '';
+    this.filterBankTransactionReference = '';
     this.bankTransactionsPage = 1;
     this.loadBankTransactionsData();
   }

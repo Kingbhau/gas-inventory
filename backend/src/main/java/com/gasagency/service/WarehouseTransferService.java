@@ -8,9 +8,12 @@ import com.gasagency.entity.InventoryStock;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.repository.WarehouseTransferRepository;
+import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +31,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class WarehouseTransferService {
 
+    private static final Logger logger = LoggerFactory.getLogger(WarehouseTransferService.class);
+
     @Autowired
     private WarehouseTransferRepository warehouseTransferRepository;
 
@@ -39,6 +44,9 @@ public class WarehouseTransferService {
 
     @Autowired
     private CylinderVariantService cylinderVariantService;
+
+    @Autowired
+    private ReferenceNumberGenerator referenceNumberGenerator;
 
     /**
      * Perform warehouse transfer with comprehensive validation
@@ -117,7 +125,14 @@ public class WarehouseTransferService {
                 transfer.setTransferDate(transferDTO.getTransferDate());
             }
 
+            // Generate reference number BEFORE initial save
+            String referenceNumber = referenceNumberGenerator.generateWarehouseTransferReference(
+                    fromWarehouse, toWarehouse);
+            transfer.setReferenceNumber(referenceNumber);
+
             WarehouseTransfer savedTransfer = warehouseTransferRepository.save(transfer);
+            logger.info("Warehouse transfer created with id: {} - Reference: {}",
+                    savedTransfer.getId(), referenceNumber);
 
             return convertToDTO(savedTransfer);
 
@@ -255,6 +270,7 @@ public class WarehouseTransferService {
         dto.setTransferDate(transfer.getTransferDate());
         dto.setCreatedAt(transfer.getCreatedDate());
         dto.setNotes(transfer.getNotes());
+        dto.setReferenceNumber(transfer.getReferenceNumber());
         dto.setVersion(transfer.getVersion());
         return dto;
     }

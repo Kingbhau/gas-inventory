@@ -1,12 +1,15 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bank_account_ledger")
-public class BankAccountLedger {
+public class BankAccountLedger extends Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,8 +31,9 @@ public class BankAccountLedger {
     @Column(name = "sale_id")
     private Long saleId; // Reference to Sale if transaction is from a sale
 
-    @Column(name = "reference_number")
-    private String referenceNumber; // Invoice number, check number, etc.
+    @Pattern(regexp = "^(DEP|WIT|ADJ)-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE")
+    @Column(name = "reference_number", nullable = false, length = 50, unique = true)
+    private String referenceNumber;
 
     @Column(name = "description")
     private String description;
@@ -37,15 +41,8 @@ public class BankAccountLedger {
     @Column(nullable = false, updatable = false)
     private LocalDateTime transactionDate;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column
-    private LocalDateTime updatedAt;
-
     public BankAccountLedger() {
         this.transactionDate = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now();
     }
 
     public BankAccountLedger(BankAccount bankAccount, String transactionType, BigDecimal amount,
@@ -131,22 +128,6 @@ public class BankAccountLedger {
 
     public void setTransactionDate(LocalDateTime transactionDate) {
         this.transactionDate = transactionDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     @Override

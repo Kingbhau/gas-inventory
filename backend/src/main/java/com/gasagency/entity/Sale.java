@@ -2,8 +2,10 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,7 +17,8 @@ import java.util.Objects;
 @Table(name = "sale", indexes = {
         @Index(name = "idx_sale_customer_id", columnList = "customer_id"),
         @Index(name = "idx_sale_warehouse_id", columnList = "warehouse_id"),
-        @Index(name = "idx_sale_sale_date", columnList = "saleDate")
+        @Index(name = "idx_sale_sale_date", columnList = "saleDate"),
+        @Index(name = "idx_sale_reference_number", columnList = "reference_number", unique = true)
 })
 public class Sale extends Auditable {
     @Id
@@ -25,6 +28,10 @@ public class Sale extends Auditable {
     @Version
     @Column(nullable = false)
     private Long version = 0L;
+
+    @Column(name = "reference_number", unique = true, nullable = false, length = 50)
+    @Pattern(regexp = "^SO-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: SO-WAREHOUSE-YYYYMM-SEQUENCE")
+    private String referenceNumber;
 
     @NotNull(message = "Warehouse is required.")
     @ManyToOne
@@ -89,6 +96,14 @@ public class Sale extends Auditable {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 
     public Warehouse getWarehouse() {
@@ -159,6 +174,7 @@ public class Sale extends Auditable {
     public String toString() {
         return "Sale{" +
                 "id=" + id +
+                ", referenceNumber='" + referenceNumber + '\'' +
                 ", warehouse=" + (warehouse != null ? warehouse.getName() : "null") +
                 ", customer=" + (customer != null ? customer.getName() : "null") +
                 ", saleDate=" + saleDate +

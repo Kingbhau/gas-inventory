@@ -132,6 +132,17 @@ public class CustomerCylinderLedgerController {
     // Endpoint: Record empty cylinder return (without sale)
     @PostMapping("/empty-return")
     public ResponseEntity<CustomerCylinderLedgerDTO> recordEmptyReturn(@RequestBody EmptyReturnRequest request) {
+        // Validate amountReceived does not exceed customer's due amount
+        if (request.amountReceived != null && request.amountReceived.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            java.math.BigDecimal customerDueAmount = service.getCustomerPreviousDue(request.customerId);
+            if (request.amountReceived.compareTo(customerDueAmount) > 0) {
+                throw new com.gasagency.exception.InvalidOperationException(
+                        "Amount received (" + request.amountReceived.setScale(2, java.math.RoundingMode.HALF_UP) +
+                                ") cannot exceed customer due amount ("
+                                + customerDueAmount.setScale(2, java.math.RoundingMode.HALF_UP) + ")");
+            }
+        }
+
         // For empty returns, set refId to 0L (not null) to satisfy DB constraint
         // Create ledger entry with amount received
         CustomerCylinderLedgerDTO dto = service.createLedgerEntry(

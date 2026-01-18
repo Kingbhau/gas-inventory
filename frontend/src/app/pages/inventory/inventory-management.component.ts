@@ -194,6 +194,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
           .map((entry: any) => ({
             id: entry.id,
             date: entry.transactionDate,
+            timestamp: new Date(entry.createdAt).getTime(),
             customer: entry.customerName,
             variant: entry.variantName,
             type: entry.refType === 'SALE' ? 'Sale' : (entry.refType === 'EMPTY_RETURN' ? 'Return' : entry.refType),
@@ -205,7 +206,17 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
             toWarehouse: entry.toWarehouseName,
             paymentMode: entry.paymentMode
           }))
-          .sort((a: any, b: any) => (b.id && a.id ? b.id - a.id : new Date(b.date).getTime() - new Date(a.date).getTime()));
+          .sort((a: any, b: any) => {
+            // Sort by timestamp descending (latest first)
+            // Using createdAt gives us the exact time with millisecond precision
+            const timestampDiff = b.timestamp - a.timestamp;
+            if (timestampDiff !== 0) {
+              return timestampDiff;
+            }
+            
+            // If timestamps are identical, use ID as tiebreaker (descending for latest first)
+            return (b.id || 0) - (a.id || 0);
+          });
         // Reset to page 1 when data is reloaded
         this.movementPage = 1;
         this.cdr.markForCheck();
@@ -300,7 +311,17 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       if (this.filterType) {
         filtered = filtered.filter(m => m.type === this.filterType);
       }
-      return filtered;
+      // Ensure latest transactions are first after filtering - sort by timestamp
+      return filtered.sort((a: any, b: any) => {
+        // Sort by timestamp descending (latest first)
+        const timestampDiff = b.timestamp - a.timestamp;
+        if (timestampDiff !== 0) {
+          return timestampDiff;
+        }
+        
+        // If timestamps are identical, use ID as tiebreaker (descending for latest first)
+        return (b.id || 0) - (a.id || 0);
+      });
   }
 
   get paginatedMovements() {

@@ -29,6 +29,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     submitting = false;
     customers: any[] = [];
     variants: any[] = [];
+    filteredVariants: any[] = [];
     warehouses: any[] = [];
     bankAccounts: BankAccount[] = [];
     successMessage = '';
@@ -41,7 +42,8 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         private customerService: CustomerService,
         private variantService: CylinderVariantService,
         private loadingService: LoadingService,
-        private warehouseService: WarehouseService
+        private warehouseService: WarehouseService,
+        private cdr: ChangeDetectorRef
     ) {
         this.emptyReturnForm = this.fb.group({
             warehouseId: [null, Validators.required],
@@ -116,7 +118,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     return of([]);
                 })
             )
-            .subscribe((data: any) => this.variants = data as any[]);
+            .subscribe((data: any) => {
+                this.variants = data as any[];
+                this.filteredVariants = this.variants;
+            });
 
         // Load warehouses
         this.warehouseService.getActiveWarehouses()
@@ -169,8 +174,13 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         if (customer && customer.id) {
             this.emptyReturnForm.get('customerId')?.setValue(customer.id);
             this.emptyReturnForm.get('customerId')?.markAsTouched();
+            // Filter variants based on customer's configured variants
+            this.filterVariantsByCustomerConfig(customer.id);
+            // Clear variant selection when customer changes
+            this.emptyReturnForm.get('variantId')?.setValue(null);
         } else {
             this.emptyReturnForm.get('customerId')?.setValue(null);
+            this.filteredVariants = this.variants;
         }
     }
 
@@ -184,6 +194,47 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         } else {
             this.emptyReturnForm.get('variantId')?.setValue(null);
         }
+    }
+
+    /**
+     * Filter variants based on customer's configured variants
+     */
+    filterVariantsByCustomerConfig(customerId: number | null) {
+        if (!customerId) {
+            this.filteredVariants = this.variants;
+            return;
+        }
+        
+        // Find the customer and get their configured variants
+        const customer = this.customers.find(c => c.id === customerId);
+        if (!customer || !customer.configuredVariants) {
+            this.filteredVariants = this.variants;
+            return;
+        }
+        
+        // Parse configuredVariants if it's a JSON string, otherwise treat as array
+        let configuredVariantIds: any[] = [];
+        try {
+            if (typeof customer.configuredVariants === 'string') {
+                configuredVariantIds = JSON.parse(customer.configuredVariants);
+            } else if (Array.isArray(customer.configuredVariants)) {
+                configuredVariantIds = customer.configuredVariants;
+            }
+        } catch (e) {
+            console.error('Error parsing configuredVariants:', e);
+            this.filteredVariants = this.variants;
+            return;
+        }
+        
+        if (!configuredVariantIds || configuredVariantIds.length === 0) {
+            this.filteredVariants = this.variants;
+            return;
+        }
+        
+        // Filter variants to only show those configured for this customer
+        this.filteredVariants = this.variants.filter(v => 
+            configuredVariantIds.includes(v.id)
+        );
     }
 
     submit() {
@@ -226,16 +277,19 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     const errorMessage = err?.error?.message || err?.message || 'Failed to record return';
                     this.toastr.error(errorMessage, 'Error');
                     this.submitting = false;
+                    this.cdr.markForCheck();
                     return of(null);
                 })
             )
             .subscribe({
                 next: (result: any) => {
                     if (result) {
-                        this.toastr.success('Empty cylinder return recorded');
+                        const reference = result?.transactionReference || 'N/A';
+                        this.toastr.success(`Empty cylinder return recorded - Reference: ${reference}`, 'Success');
                         this.resetForm();
                     }
                     this.submitting = false;
+                    this.cdr.markForCheck();
                 },
                 complete: () => {
                     sub.unsubscribe();

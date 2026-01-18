@@ -7,14 +7,16 @@ export function exportSupplierTransactionsToPDF({
   toDate,
   businessName,
   supplierName,
-  variantName
+  variantName,
+  referenceNumber
 }: {
   transactions: any[],
   fromDate?: string,
   toDate?: string,
   businessName?: string,
   supplierName?: string,
-  variantName?: string
+  variantName?: string,
+  referenceNumber?: string
 }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -62,8 +64,13 @@ export function exportSupplierTransactionsToPDF({
   doc.text('Summary', 16, y + 7);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.text(`Total Transactions: ${transactions.length}`, 45, y + 7);
-  const totalAmount = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  let filteredTransactions = transactions;
+  if (referenceNumber) {
+    const refFilter = referenceNumber.toLowerCase();
+    filteredTransactions = transactions.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
+  }
+  doc.text(`Total Transactions: ${filteredTransactions.length}`, 45, y + 7);
+  const totalAmount = filteredTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
   doc.text(`Total Amount: Rs. ${totalAmount.toLocaleString()}`, 110, y + 7);
   y += 16;
 
@@ -79,7 +86,7 @@ export function exportSupplierTransactionsToPDF({
   filterArr.push(`Supplier: ${supplierName || 'All'}`);
   filterArr.push(`Variant: ${variantName || 'All'}`);
   if (fromDate || toDate) filterArr.push(`Date: ${fromDate || '...'} to ${toDate || '...'}`);
-  // Two-column filter display
+  if (referenceNumber) filterArr.push(`Reference: ${referenceNumber}`);
   let filterY = y + 6;
   let col1X = 35, col2X = 90;
   for (let i = 0; i < filterArr.length; i++) {
@@ -96,7 +103,7 @@ export function exportSupplierTransactionsToPDF({
   y += 2;
 
   // Table Data
-  const tableData = transactions.map(t => [
+  const tableData = filteredTransactions.map(t => [
     t.transactionDate,
     t.warehouseName,
     t.supplierName,

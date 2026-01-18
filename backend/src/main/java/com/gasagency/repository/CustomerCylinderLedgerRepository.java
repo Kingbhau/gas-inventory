@@ -3,6 +3,7 @@ package com.gasagency.repository;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
+import com.gasagency.entity.Warehouse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,4 +37,12 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
         // Get all ledger entries for a specific warehouse
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.warehouse.id = :warehouseId ORDER BY l.transactionDate DESC")
         List<CustomerCylinderLedger> findByWarehouseId(@Param("warehouseId") Long warehouseId);
+
+        // Count EMPTY_RETURN entries for a warehouse in a specific month
+        @Query("SELECT COUNT(l) FROM CustomerCylinderLedger l WHERE l.warehouse = :warehouse " +
+                        "AND l.refType = 'EMPTY_RETURN' " +
+                        "AND EXTRACT(MONTH FROM l.createdDate) = EXTRACT(MONTH FROM CAST(:date AS DATE)) " +
+                        "AND EXTRACT(YEAR FROM l.createdDate) = EXTRACT(YEAR FROM CAST(:date AS DATE))")
+        long countEmptyReturnsByWarehouseAndMonth(@Param("warehouse") Warehouse warehouse,
+                        @Param("date") LocalDate date);
 }

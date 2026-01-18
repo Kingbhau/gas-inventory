@@ -36,9 +36,11 @@ public class SaleController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String referenceNumber) {
         return ResponseEntity
-                .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount));
+                .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount,
+                        referenceNumber));
     }
 
     @PostMapping
@@ -62,10 +64,12 @@ public class SaleController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String referenceNumber) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return ResponseEntity
-                .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount));
+                .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount,
+                        referenceNumber));
     }
 
     @GetMapping("/customer/{customerId}")

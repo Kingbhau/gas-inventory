@@ -28,6 +28,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   filterVariantId: string = '';
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
+  filterReference: string = '';
   variantsList: any[] = [];
   currentPage = 1;
   pageSize = 10;
@@ -87,8 +88,9 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     const variantId = this.filterVariantId ? Number(this.filterVariantId) : undefined;
     const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
+    const referenceNumber = this.filterReference ? this.filterReference : undefined;
     this.loadingService.show('Loading sales...');
-    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
@@ -111,6 +113,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                 }
                 flattenedSales.push({
                   id: sale.id,
+                  referenceNumber: sale.referenceNumber,
                   customerId: sale.customerId,
                   customerName: sale.customerName,
                   saleDate: sale.saleDate,
@@ -130,6 +133,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
               // Handle sales without items
               flattenedSales.push({
                 id: sale.id,
+                referenceNumber: sale.referenceNumber,
                 customerId: sale.customerId,
                 customerName: sale.customerName,
                 saleDate: sale.saleDate,
@@ -190,6 +194,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.filterVariantId = '';
     this.filterMinAmount = null;
     this.filterMaxAmount = null;
+    this.filterReference = '';
     this.currentPage = 1;
     this.loadSales();
   }

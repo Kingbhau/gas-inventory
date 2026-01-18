@@ -1150,26 +1150,24 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   submitPayment() {
-    this.paymentError = '';
-
     if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
-      this.paymentError = 'Please enter a valid payment amount';
+      this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;
     }
 
     if (!this.paymentForm.paymentDate) {
-      this.paymentError = 'Please select a payment date';
+      this.toastr.error('Please select a payment date', 'Validation Error');
       return;
     }
 
     if (!this.paymentForm.paymentMode) {
-      this.paymentError = 'Please select a payment mode';
+      this.toastr.error('Please select a payment mode', 'Validation Error');
       return;
     }
 
     // If payment mode is not Cash, bank account is required
     if (this.paymentForm.paymentMode && this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
-      this.paymentError = 'Please select a bank account for non-cash payments';
+      this.toastr.error('Please select a bank account for non-cash payments', 'Validation Error');
       return;
     }
 
@@ -1180,7 +1178,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
     // Validate payment amount doesn't exceed due amount
     if (this.paymentForm.amount > currentDue) {
-      this.paymentError = `Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`;
+      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`, 'Validation Error');
       return;
     }
 
@@ -1201,7 +1199,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
-          this.paymentError = errorMessage;
           this.toastr.error(errorMessage, 'Error');
           this.isSubmittingPayment = false;
           return of(null);

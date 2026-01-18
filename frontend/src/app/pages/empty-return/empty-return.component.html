@@ -49,7 +49,7 @@
         <app-autocomplete-input
           label="Cylinder Variant"
           [required]="true"
-          [items]="variants"
+          [items]="filteredVariants"
           [displayKey]="'name'"
           placeholder="Select variant"
           (selectedChange)="onVariantSelected($event)"

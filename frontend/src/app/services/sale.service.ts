@@ -36,7 +36,8 @@ export class SaleService {
     customerId?: string,
     variantId?: number,
     minAmount?: number,
-    maxAmount?: number
+    maxAmount?: number,
+    referenceNumber?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -49,6 +50,7 @@ export class SaleService {
     if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(timeout(30000));
   }
@@ -67,7 +69,8 @@ export class SaleService {
     customerId?: string,
     variantId?: number,
     minAmount?: number,
-    maxAmount?: number
+    maxAmount?: number,
+    referenceNumber?: string
   ): Observable<any> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
@@ -76,6 +79,7 @@ export class SaleService {
     if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true });
   }
 }

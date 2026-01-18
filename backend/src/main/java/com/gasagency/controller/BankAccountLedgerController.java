@@ -33,11 +33,12 @@ public class BankAccountLedgerController {
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) String referenceNumber) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<BankAccountLedgerDTO> transactions = bankAccountLedgerService.getAllBankTransactions(
-                page, size, pageable, bankAccountId, transactionType, fromDate, toDate);
+                page, size, pageable, bankAccountId, transactionType, fromDate, toDate, referenceNumber);
 
         return ResponseEntity.ok(transactions);
     }
@@ -56,10 +57,11 @@ public class BankAccountLedgerController {
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) String referenceNumber) {
 
         Map<String, Object> summary = bankAccountLedgerService.getSummary(bankAccountId, transactionType, fromDate,
-                toDate);
+                toDate, referenceNumber);
 
         return ResponseEntity.ok(summary);
     }

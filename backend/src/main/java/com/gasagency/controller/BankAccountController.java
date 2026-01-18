@@ -38,9 +38,11 @@ public class BankAccountController {
     public ResponseEntity<Page<BankAccountDTO>> getAllBankAccounts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        // Only allow sorting by id to avoid issues with invalid field names
+        String validSortField = "id";
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, validSortField));
         return ResponseEntity.ok(bankAccountService.getAllBankAccounts(pageable));
     }
 

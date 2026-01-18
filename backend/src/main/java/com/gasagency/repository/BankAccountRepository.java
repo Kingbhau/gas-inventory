@@ -14,10 +14,10 @@ import java.util.Optional;
 @Repository
 public interface BankAccountRepository extends JpaRepository<BankAccount, Long> {
 
-    @Query("SELECT ba FROM BankAccount ba WHERE ba.isActive = true ORDER BY ba.createdAt DESC")
+    @Query("SELECT ba FROM BankAccount ba WHERE ba.isActive = true ORDER BY ba.createdDate DESC")
     List<BankAccount> findActiveAccounts();
 
-    @Query("SELECT ba FROM BankAccount ba ORDER BY ba.createdAt DESC")
+    @Query("SELECT ba FROM BankAccount ba")
     Page<BankAccount> findAllAccounts(Pageable pageable);
 
     @Query("SELECT ba FROM BankAccount ba WHERE ba.accountNumber = :accountNumber")

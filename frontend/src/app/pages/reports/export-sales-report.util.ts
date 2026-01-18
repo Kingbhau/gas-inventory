@@ -13,6 +13,7 @@ export function exportSalesReportToPDF({
   businessName,
   minAmount,
   maxAmount,
+  referenceNumber,
   transactionCount
 }: {
   salesData: any[],
@@ -26,6 +27,7 @@ export function exportSalesReportToPDF({
   businessName?: string,
   minAmount?: number,
   maxAmount?: number,
+  referenceNumber?: string,
   transactionCount?: number
 }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -104,6 +106,7 @@ export function exportSalesReportToPDF({
   filterArr.push(`Variant: ${variantName || 'All'}`);
   if (minAmount !== undefined && minAmount !== null) filterArr.push(`Min: Rs. ${minAmount}`);
   if (maxAmount !== undefined && maxAmount !== null) filterArr.push(`Max: Rs. ${maxAmount}`);
+  if (referenceNumber) filterArr.push(`Reference: ${referenceNumber}`);
   // Two-column filter display
   let filterY = y + 6;
   let col1X = 35, col2X = 90;
@@ -121,11 +124,10 @@ export function exportSalesReportToPDF({
   y += 2;
 
   // Table Data
-
-  // Table Data
   const tableData = salesData.flatMap(sale =>
     (sale.saleItems || []).map((item: any) => [
       sale.saleDate,
+      sale.referenceNumber || '-',
       sale.customerName,
       item.variantName,
       item.qtyIssued,
@@ -140,6 +142,7 @@ export function exportSalesReportToPDF({
     startY: y + 2,
     head: [[
       'Date',
+      'Reference #',
       'Customer',
       'Variant',
       'Quantity',
@@ -149,10 +152,21 @@ export function exportSalesReportToPDF({
       'Payment Mode'
     ]],
     body: tableData,
-    styles: { fontSize: 9, cellPadding: 2.2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
-    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
+    styles: { fontSize: 8, cellPadding: 2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
+    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
     alternateRowStyles: { fillColor: [245, 250, 255] },
-    margin: { left: 10, right: 10 },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 21 },
+      1: { halign: 'center', cellWidth: 33 },
+      2: { halign: 'left', cellWidth: 23 },
+      3: { halign: 'left', cellWidth: 21 },
+      4: { halign: 'center', cellWidth: 15 },
+      5: { halign: 'right', cellWidth: 21 },
+      6: { halign: 'right', cellWidth: 21 },
+      7: { halign: 'right', cellWidth: 23 },
+      8: { halign: 'left', cellWidth: 22 }
+    },
+    margin: { left: 5, right: 5 },
     didDrawPage: (data) => {
       // Professional footer: left "Confidential", right page number
       const pageCount = doc.getNumberOfPages();

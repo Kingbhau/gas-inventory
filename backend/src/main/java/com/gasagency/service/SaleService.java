@@ -12,6 +12,7 @@ import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.exception.ConcurrencyConflictException;
 import com.gasagency.util.AuditLogger;
 import com.gasagency.util.PerformanceTracker;
+import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class SaleService {
         private final BankAccountService bankAccountService;
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
+        private final ReferenceNumberGenerator referenceNumberGenerator;
 
         public SaleService(SaleRepository saleRepository,
                         SaleItemRepository saleItemRepository,
@@ -62,7 +64,8 @@ public class SaleService {
                         BankAccountRepository bankAccountRepository,
                         BankAccountService bankAccountService,
                         AuditLogger auditLogger,
-                        PerformanceTracker performanceTracker) {
+                        PerformanceTracker performanceTracker,
+                        ReferenceNumberGenerator referenceNumberGenerator) {
                 this.saleRepository = saleRepository;
                 this.saleItemRepository = saleItemRepository;
                 this.customerRepository = customerRepository;
@@ -76,6 +79,7 @@ public class SaleService {
                 this.bankAccountService = bankAccountService;
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
+                this.referenceNumberGenerator = referenceNumberGenerator;
         }
 
         @Transactional(readOnly = true)
@@ -89,7 +93,7 @@ public class SaleService {
         }
 
         public SaleSummaryDTO getSalesSummary(String fromDate, String toDate, Long customerId,
-                        Long variantId, Double minAmount, Double maxAmount) {
+                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber) {
                 LocalDate from = null;
                 LocalDate to = null;
                 try {
@@ -104,7 +108,7 @@ public class SaleService {
                 }
                 // Fetch all filtered sales (no paging)
                 List<Sale> sales = saleRepository.findFilteredSalesCustom(from, to, customerId, variantId,
-                                minAmount, maxAmount, Pageable.unpaged()).getContent();
+                                minAmount, maxAmount, referenceNumber, Pageable.unpaged()).getContent();
                 double totalSalesAmount = 0;
                 int transactionCount = 0;
                 Map<String, Double> customerTotals = new java.util.HashMap<>();
@@ -348,9 +352,42 @@ public class SaleService {
                         throw new InvalidOperationException("Sale total amount must be greater than zero.");
                 }
 
+                // Validate amountReceived does not exceed total due amount (previous due +
+                // current sale)
+                if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
+                        // Get customer's previous due amount
+                        BigDecimal previousDueAmount = ledgerService.getCustomerPreviousDue(request.getCustomerId());
+                        BigDecimal totalDueAmount = previousDueAmount.add(totalAmount);
+
+                        logger.info("Payment validation - customerId: {}, previousDue: {}, currentSale: {}, totalDue: {}, amountReceived: {}",
+                                        request.getCustomerId(), previousDueAmount, totalAmount, totalDueAmount,
+                                        request.getAmountReceived());
+
+                        if (request.getAmountReceived().compareTo(totalDueAmount) > 0) {
+                                logger.error("Amount received {} exceeds total due amount {} (previous due: {}, current sale: {})",
+                                                request.getAmountReceived(), totalDueAmount, previousDueAmount,
+                                                totalAmount);
+                                throw new InvalidOperationException(
+                                                "Amount received ("
+                                                                + request.getAmountReceived().setScale(2,
+                                                                                RoundingMode.HALF_UP)
+                                                                +
+                                                                ") cannot exceed total due amount ("
+                                                                + totalDueAmount.setScale(2, RoundingMode.HALF_UP) +
+                                                                "). Previous due: "
+                                                                + previousDueAmount.setScale(2, RoundingMode.HALF_UP) +
+                                                                ", Current sale: "
+                                                                + totalAmount.setScale(2, RoundingMode.HALF_UP));
+                        }
+                }
+
                 // Create sale FIRST so we have a sale ID for ledger references
                 Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
                 sale.setPaymentMode(request.getModeOfPayment());
+
+                // Generate and set reference number BEFORE saving
+                String referenceNumber = referenceNumberGenerator.generateSaleReference(warehouse);
+                sale.setReferenceNumber(referenceNumber);
 
                 // If bank account ID is provided and payment mode is not cash, set the bank
                 // account
@@ -368,8 +405,8 @@ public class SaleService {
                 }
 
                 sale = saleRepository.save(sale);
-                logger.info("Sale created with id: {} for customer: {} - Total: {}",
-                                sale.getId(), customer.getName(), totalAmount);
+                logger.info("Sale created with id: {} for customer: {} - Total: {} - Reference: {}",
+                                sale.getId(), customer.getName(), totalAmount, referenceNumber);
 
                 // Refresh the sale entity to ensure bankAccount relationship is loaded
                 if (sale.getId() != null) {
@@ -384,10 +421,10 @@ public class SaleService {
                                                 sale.getBankAccount().getId(),
                                                 request.getAmountReceived(),
                                                 sale.getId(),
-                                                "INV-" + sale.getId(),
+                                                sale.getReferenceNumber(),
                                                 "Payment received from customer: " + customer.getName());
-                                logger.info("Bank account deposit recorded for sale id: {} - Amount: {}",
-                                                sale.getId(), request.getAmountReceived());
+                                logger.info("Bank account deposit recorded for sale id: {} - Amount: {} - Reference: {}",
+                                                sale.getId(), request.getAmountReceived(), sale.getReferenceNumber());
                         } catch (Exception e) {
                                 logger.error("Error recording bank account deposit for sale id: {}", sale.getId(), e);
                                 throw new InvalidOperationException(
@@ -458,10 +495,10 @@ public class SaleService {
 
         @Transactional(readOnly = true)
         public Page<SaleDTO> getAllSales(Pageable pageable, String fromDate, String toDate, Long customerId,
-                        Long variantId, Double minAmount, Double maxAmount) {
-                logger.debug("Fetching all sales with filters: page={}, size={}, customerId={}, variantId={}, minAmount={}, maxAmount={}",
+                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber) {
+                logger.debug("Fetching all sales with filters: page={}, size={}, customerId={}, variantId={}, minAmount={}, maxAmount={}, referenceNumber={}",
                                 pageable.getPageNumber(), pageable.getPageSize(), customerId, variantId, minAmount,
-                                maxAmount);
+                                maxAmount, referenceNumber);
                 LocalDate from = null;
                 LocalDate to = null;
                 try {
@@ -477,6 +514,7 @@ public class SaleService {
                 // Use custom repository method for filtering
                 return saleRepository
                                 .findFilteredSalesCustom(from, to, customerId, variantId, minAmount, maxAmount,
+                                                referenceNumber,
                                                 pageable)
                                 .map(this::toDTO);
         }
@@ -516,6 +554,7 @@ public class SaleService {
 
                 return new SaleDTO(
                                 sale.getId(),
+                                sale.getReferenceNumber(),
                                 sale.getCustomer().getId(),
                                 sale.getCustomer().getName(),
                                 sale.getSaleDate(),

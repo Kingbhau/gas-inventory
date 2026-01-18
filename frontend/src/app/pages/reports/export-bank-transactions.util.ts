@@ -7,6 +7,7 @@ export function exportBankTransactionsReportToPDF({
   toDate,
   bankAccountName,
   transactionType,
+  referenceNumber,
   totalDeposits,
   totalWithdrawals,
   netChange,
@@ -19,6 +20,7 @@ export function exportBankTransactionsReportToPDF({
   toDate?: string,
   bankAccountName?: string,
   transactionType?: string,
+  referenceNumber?: string,
   totalDeposits: number,
   totalWithdrawals: number,
   netChange: number,
@@ -101,6 +103,7 @@ export function exportBankTransactionsReportToPDF({
   let filterArr = [];
   filterArr.push(`Bank: ${bankAccountName || 'All'}`);
   filterArr.push(`Type: ${transactionType || 'All'}`);
+  if (referenceNumber) filterArr.push(`Reference: ${referenceNumber}`);
   
   // Two-column filter display
   let filterY = y + 6;
@@ -118,8 +121,17 @@ export function exportBankTransactionsReportToPDF({
   doc.line(12, y, pageWidth - 12, y);
   y += 2;
 
+  // Filter transactions by reference if provided
+  let filteredTransactions = transactions;
+  if (referenceNumber) {
+    const refFilter = referenceNumber.toLowerCase();
+    filteredTransactions = transactions.filter(row => 
+      row.referenceNumber && row.referenceNumber.toLowerCase().includes(refFilter)
+    );
+  }
+
   // Table Data
-  const tableData = transactions.map(row => [
+  const tableData = filteredTransactions.map(row => [
     row.transactionDate ? new Date(row.transactionDate).toLocaleDateString('en-IN') : '-',
     row.bankAccountName?.split(' - ')[0] || row.bankAccountName || '-',
     row.transactionType || '-',
@@ -139,17 +151,17 @@ export function exportBankTransactionsReportToPDF({
       'Reference'
     ]],
     body: tableData,
-    styles: { fontSize: 9, cellPadding: 2.2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
-    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
+    styles: { fontSize: 8, cellPadding: 2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
+    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
     alternateRowStyles: { fillColor: [245, 250, 255] },
-    margin: { left: 10, right: 10 },
+    margin: { left: 5, right: 5 },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 25 },
-      1: { halign: 'left', cellWidth: 30 },
-      2: { halign: 'center', cellWidth: 22 },
-      3: { halign: 'right', cellWidth: 28 },
-      4: { halign: 'right', cellWidth: 28 },
-      5: { halign: 'center', cellWidth: 27 }
+      0: { halign: 'center', cellWidth: 28 },
+      1: { halign: 'left', cellWidth: 35 },
+      2: { halign: 'center', cellWidth: 28 },
+      3: { halign: 'right', cellWidth: 32 },
+      4: { halign: 'right', cellWidth: 32 },
+      5: { halign: 'center', cellWidth: 45 }
     },
     didDrawPage: (data: any) => {
       // Professional footer: left "Confidential", right page number

@@ -27,6 +27,7 @@ public class CustomerCylinderLedgerDTO {
     private String paymentMode;
     private Long bankAccountId;
     private String bankAccountName;
+    private String transactionReference;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -240,5 +241,13 @@ public class CustomerCylinderLedgerDTO {
 
     public void setBankAccountName(String bankAccountName) {
         this.bankAccountName = bankAccountName;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
     }
 }

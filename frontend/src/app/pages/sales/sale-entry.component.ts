@@ -144,14 +144,33 @@ export class SaleEntryComponent implements OnInit {
     
     // Find the customer and get their configured variants
     const customer = this.customers.find(c => c.id === customerId);
-    if (!customer || !customer.configuredVariants || customer.configuredVariants.length === 0) {
+    if (!customer || !customer.configuredVariants) {
+      this.filteredVariants = this.variants;
+      return;
+    }
+    
+    // Parse configuredVariants if it's a JSON string, otherwise treat as array
+    let configuredVariantIds: any[] = [];
+    try {
+      if (typeof customer.configuredVariants === 'string') {
+        configuredVariantIds = JSON.parse(customer.configuredVariants);
+      } else if (Array.isArray(customer.configuredVariants)) {
+        configuredVariantIds = customer.configuredVariants;
+      }
+    } catch (e) {
+      console.error('Error parsing configuredVariants:', e);
+      this.filteredVariants = this.variants;
+      return;
+    }
+    
+    if (!configuredVariantIds || configuredVariantIds.length === 0) {
       this.filteredVariants = this.variants;
       return;
     }
     
     // Filter variants to only show those configured for this customer
     this.filteredVariants = this.variants.filter(v => 
-      customer.configuredVariants.includes(v.id)
+      configuredVariantIds.includes(v.id)
     );
   }
 
@@ -368,10 +387,15 @@ export class SaleEntryComponent implements OnInit {
     if (customer && customer.id) {
       this.saleForm.get('customerId')?.setValue(customer.id);
       this.saleForm.get('customerId')?.markAsTouched();
+      // Filter variants based on customer's configured variants
+      this.filterVariantsByCustomerConfig(customer.id);
+      // Clear variant selection when customer changes
+      this.saleForm.get('variantId')?.setValue(null);
       // Reload prices when customer changes
       this.prefillPrice(customer.id, this.saleForm.get('variantId')?.value);
     } else {
       this.saleForm.get('customerId')?.setValue(null);
+      this.filteredVariants = this.variants;
       this.saleForm.get('basePrice')?.setValue(0);
       this.discountPrice = 0;
     }

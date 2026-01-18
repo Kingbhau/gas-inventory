@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public class BankAccountDTO {
     private Long id;
+    private String code;
     private String bankName;
     private String accountNumber;
     private String accountHolderName;
@@ -18,10 +19,12 @@ public class BankAccountDTO {
     public BankAccountDTO() {
     }
 
-    public BankAccountDTO(Long id, String bankName, String accountNumber, String accountHolderName, String accountName,
+    public BankAccountDTO(Long id, String code, String bankName, String accountNumber, String accountHolderName,
+            String accountName,
             String accountType, BigDecimal currentBalance, Boolean isActive, LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         this.id = id;
+        this.code = code;
         this.bankName = bankName;
         this.accountNumber = accountNumber;
         this.accountHolderName = accountHolderName;
@@ -39,6 +42,14 @@ public class BankAccountDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getBankName() {

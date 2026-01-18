@@ -131,6 +131,7 @@ export function exportCustomerLedgerToPDF({
 
     return [
       new Date(entry.transactionDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      entry.transactionReference || '-',
       variantMode,
       entry.refType || 'N/A',
       entry.filledOut || 0,
@@ -146,6 +147,7 @@ export function exportCustomerLedgerToPDF({
     startY: y + 2,
     head: [[
       'Date',
+      'Reference #',
       'Variant / Mode',
       'Type',
       'Filled Out',
@@ -175,17 +177,18 @@ export function exportCustomerLedgerToPDF({
       fillColor: [245, 250, 255]
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 21 },
-      1: { halign: 'left', cellWidth: 27 },
-      2: { halign: 'center', cellWidth: 28 },
-      3: { halign: 'center', cellWidth: 16 },
-      4: { halign: 'center', cellWidth: 16 },
-      5: { halign: 'center', cellWidth: 20 },
-      6: { halign: 'right', cellWidth: 22 },
-      7: { halign: 'right', cellWidth: 22 },
-      8: { halign: 'right', cellWidth: 27 }
+      0: { halign: 'center', cellWidth: 18 },
+      1: { halign: 'center', cellWidth: 32 },
+      2: { halign: 'left', cellWidth: 20 },
+      3: { halign: 'center', cellWidth: 30 },
+      4: { halign: 'center', cellWidth: 13 },
+      5: { halign: 'center', cellWidth: 13 },
+      6: { halign: 'center', cellWidth: 14 },
+      7: { halign: 'right', cellWidth: 20 },
+      8: { halign: 'right', cellWidth: 20 },
+      9: { halign: 'right', cellWidth: 20 }
     },
-    margin: { left: 5, right: 5 },
+    margin: { left: 5, right: 5, top: 5, bottom: 5 },
     didDrawPage: (data) => {
       // Professional footer: left "Confidential", right page number
       const pageCount = doc.getNumberOfPages();

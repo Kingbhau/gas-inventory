@@ -602,3 +602,22 @@
 .btn-secondary:hover {
   background: #cbd5e1;
 }
+/* Reference Badge - Consistent styling across all pages */
+.reference-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reference-badge:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}

@@ -1,4 +1,3 @@
-
 package com.gasagency.service;
 
 import com.gasagency.dto.CustomerCylinderLedgerDTO;
@@ -7,13 +6,20 @@ import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.Warehouse;
 import com.gasagency.entity.BankAccount;
+import com.gasagency.entity.Sale;
+import com.gasagency.entity.WarehouseTransfer;
+import com.gasagency.entity.BankAccountLedger;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.repository.CustomerRepository;
 import com.gasagency.repository.CylinderVariantRepository;
 import com.gasagency.repository.WarehouseRepository;
 import com.gasagency.repository.BankAccountRepository;
+import com.gasagency.repository.SaleRepository;
+import com.gasagency.repository.WarehouseTransferRepository;
+import com.gasagency.repository.BankAccountLedgerRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
+import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +47,10 @@ public class CustomerCylinderLedgerService {
         private final WarehouseTransferService warehouseTransferService;
         private final BankAccountRepository bankAccountRepository;
         private final BankAccountService bankAccountService;
+        private final ReferenceNumberGenerator referenceNumberGenerator;
+        private final SaleRepository saleRepository;
+        private final WarehouseTransferRepository warehouseTransferRepository;
+        private final BankAccountLedgerRepository bankAccountLedgerRepository;
 
         public CustomerCylinderLedgerService(CustomerCylinderLedgerRepository repository,
                         CustomerRepository customerRepository,
@@ -49,7 +59,11 @@ public class CustomerCylinderLedgerService {
                         InventoryStockService inventoryStockService,
                         WarehouseTransferService warehouseTransferService,
                         BankAccountRepository bankAccountRepository,
-                        BankAccountService bankAccountService) {
+                        BankAccountService bankAccountService,
+                        ReferenceNumberGenerator referenceNumberGenerator,
+                        SaleRepository saleRepository,
+                        WarehouseTransferRepository warehouseTransferRepository,
+                        BankAccountLedgerRepository bankAccountLedgerRepository) {
                 this.repository = repository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
@@ -58,6 +72,10 @@ public class CustomerCylinderLedgerService {
                 this.warehouseTransferService = warehouseTransferService;
                 this.bankAccountRepository = bankAccountRepository;
                 this.bankAccountService = bankAccountService;
+                this.referenceNumberGenerator = referenceNumberGenerator;
+                this.saleRepository = saleRepository;
+                this.warehouseTransferRepository = warehouseTransferRepository;
+                this.bankAccountLedgerRepository = bankAccountLedgerRepository;
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
@@ -281,6 +299,56 @@ public class CustomerCylinderLedgerService {
                                 refId, filledOut, emptyIn, balance);
                 ledger = repository.save(ledger);
 
+                // Populate transaction reference based on transaction type (Industry Standard -
+                // Denormalized for Performance)
+                String transactionReference = null;
+                if (refId != null) {
+                        try {
+                                switch (type) {
+                                        case SALE:
+                                                Sale sale = saleRepository.findById(refId).orElse(null);
+                                                if (sale != null) {
+                                                        transactionReference = sale.getReferenceNumber();
+                                                }
+                                                break;
+                                        case TRANSFER:
+                                                WarehouseTransfer transfer = warehouseTransferRepository.findById(refId)
+                                                                .orElse(null);
+                                                if (transfer != null) {
+                                                        transactionReference = transfer.getReferenceNumber();
+                                                }
+                                                break;
+                                        case PAYMENT:
+                                                BankAccountLedger bankLedger = bankAccountLedgerRepository
+                                                                .findById(refId).orElse(null);
+                                                if (bankLedger != null) {
+                                                        transactionReference = bankLedger.getReferenceNumber();
+                                                }
+                                                break;
+                                        default:
+                                                break;
+                                }
+
+                                if (transactionReference != null) {
+                                        ledger.setTransactionReference(transactionReference);
+                                }
+                        } catch (Exception e) {
+                                logger.warn("Could not fetch transaction reference for type: {} and refId: {}", type,
+                                                refId, e);
+                        }
+                }
+
+                // Generate return reference for EMPTY_RETURN transactions
+                if (type == CustomerCylinderLedger.TransactionType.EMPTY_RETURN && warehouse != null) {
+                        String returnReference = referenceNumberGenerator.generateEmptyReturnReference(warehouse);
+                        ledger.setTransactionReference(returnReference);
+                        ledger = repository.save(ledger);
+                        logger.info("Return reference generated for empty return: {} - Reference: {}",
+                                        ledger.getId(), returnReference);
+                } else if (transactionReference != null || ledger.getTransactionReference() != null) {
+                        ledger = repository.save(ledger);
+                }
+
                 LoggerUtil.logBusinessSuccess(logger, "CREATE_LEDGER_ENTRY", "id", ledger.getId(), "customerId",
                                 customerId, "balance", balance);
                 LoggerUtil.logAudit("CREATE", "LEDGER", "ledgerId", ledger.getId(), "customerId", customerId);
@@ -340,6 +408,10 @@ public class CustomerCylinderLedgerService {
                                 // Otherwise just carry forward the previous balance
                                 if (amountReceived != null && amountReceived.compareTo(java.math.BigDecimal.ZERO) > 0) {
                                         java.math.BigDecimal newDue = previousBalance.subtract(amountReceived);
+                                        // Ensure due amount doesn't go negative (customer overpaid)
+                                        if (newDue.signum() < 0) {
+                                                newDue = java.math.BigDecimal.ZERO;
+                                        }
                                         ledger.setDueAmount(newDue);
                                 } else {
                                         ledger.setDueAmount(previousBalance);
@@ -366,6 +438,10 @@ public class CustomerCylinderLedgerService {
                                 // received
                                 java.math.BigDecimal currentTransactionDue = totalAmount.subtract(amountReceived);
                                 java.math.BigDecimal cumulativeDue = previousBalance.add(currentTransactionDue);
+                                // Ensure due amount doesn't go negative (customer overpaid)
+                                if (cumulativeDue.signum() < 0) {
+                                        cumulativeDue = java.math.BigDecimal.ZERO;
+                                }
                                 ledger.setDueAmount(cumulativeDue);
                         } else if (totalAmount != null) {
                                 final Long ledgerId = ledger.getId();
@@ -570,6 +646,7 @@ public class CustomerCylinderLedgerService {
                 dto.setAmountReceived(ledger.getAmountReceived());
                 dto.setDueAmount(ledger.getDueAmount());
                 dto.setPaymentMode(ledger.getPaymentMode());
+                dto.setTransactionReference(ledger.getTransactionReference());
                 if (ledger.getBankAccount() != null) {
                         dto.setBankAccountId(ledger.getBankAccount().getId());
                         dto.setBankAccountName(ledger.getBankAccount().getBankName());
@@ -884,5 +961,55 @@ public class CustomerCylinderLedgerService {
                         logger.error("Error recording bank account transaction", e);
                         throw new RuntimeException("Failed to record bank account transaction: " + e.getMessage());
                 }
+        }
+
+        /**
+         * Get customer's previous due amount (the most recent ledger entry's due
+         * amount)
+         * This represents the total outstanding amount the customer owes
+         * 
+         * @param customerId The customer ID
+         * @return Previous due amount, or ZERO if no previous entries exist
+         */
+        public BigDecimal getCustomerPreviousDue(Long customerId) {
+                Customer customer = customerRepository.findById(customerId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Customer not found with id: " + customerId));
+
+                List<CustomerCylinderLedger> ledgerEntries = repository.findByCustomer(customer);
+
+                logger.info("getCustomerPreviousDue - customerId: {}, total entries found: {}", customerId,
+                                ledgerEntries != null ? ledgerEntries.size() : 0);
+
+                if (ledgerEntries == null || ledgerEntries.isEmpty()) {
+                        logger.info("No ledger entries found for customer {}", customerId);
+                        return BigDecimal.ZERO;
+                }
+
+                // Get the most recent entry (highest ID - latest created)
+                CustomerCylinderLedger latestEntry = null;
+                Long maxId = -1L;
+                for (CustomerCylinderLedger entry : ledgerEntries) {
+                        if (entry.getId() > maxId) {
+                                maxId = entry.getId();
+                                latestEntry = entry;
+                        }
+                }
+
+                if (latestEntry == null) {
+                        logger.info("No valid latest entry found for customer {}", customerId);
+                        return BigDecimal.ZERO;
+                }
+
+                BigDecimal dueAmount = latestEntry.getDueAmount();
+                if (dueAmount == null) {
+                        dueAmount = BigDecimal.ZERO;
+                }
+
+                logger.info("Latest ledger for customer {} - Entry ID: {}, Due Amount: {}, Total Amount: {}, Amount Received: {}",
+                                customerId, latestEntry.getId(), dueAmount, latestEntry.getTotalAmount(),
+                                latestEntry.getAmountReceived());
+
+                return dueAmount;
         }
 }

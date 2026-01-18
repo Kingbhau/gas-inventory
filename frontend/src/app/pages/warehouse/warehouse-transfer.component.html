@@ -98,6 +98,14 @@
     <mat-card-content>
       <div class="table-container">
         <table mat-table [dataSource]="transfers" class="transfers-table">
+          <!-- Reference Number Column -->
+          <ng-container matColumnDef="referenceNumber">
+            <th mat-header-cell *matHeaderCellDef>Reference #</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="reference-badge" [title]="element.referenceNumber">{{ element.referenceNumber || '-' }}</span>
+            </td>
+          </ng-container>
+
           <!-- From Warehouse Column -->
           <ng-container matColumnDef="fromWarehouse">
             <th mat-header-cell *matHeaderCellDef>From</th>

@@ -19,6 +19,9 @@ public class Supplier extends Auditable {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(nullable = false, unique = true, updatable = false, length = 20)
+    private String code; // Auto-generated: SUP001, SUP002, etc. (Read-only)
+
     @NotBlank(message = "Contact is required.")
     @Size(max = 20, message = "Contact must be at most 20 characters.")
     @Column(nullable = false)
@@ -38,6 +41,14 @@ public class Supplier extends Auditable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getName() {

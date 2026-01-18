@@ -44,7 +44,7 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
   
   isLoading = false;
   isTransferring = false;
-  displayedColumns: string[] = ['fromWarehouse', 'toWarehouse', 'variant', 'quantity', 'transferDate', 'notes'];
+  displayedColumns: string[] = ['referenceNumber', 'fromWarehouse', 'toWarehouse', 'variant', 'quantity', 'transferDate', 'notes'];
   
   private destroy$ = new Subject<void>();
 

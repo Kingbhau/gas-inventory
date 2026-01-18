@@ -5,11 +5,15 @@ import com.gasagency.dto.BankAccountLedgerDTO;
 import com.gasagency.dto.CreateBankAccountRequestDTO;
 import com.gasagency.entity.BankAccount;
 import com.gasagency.entity.BankAccountLedger;
+import com.gasagency.entity.Sale;
 import com.gasagency.entity.Warehouse;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.repository.BankAccountRepository;
 import com.gasagency.repository.BankAccountLedgerRepository;
+import com.gasagency.repository.SaleRepository;
 import com.gasagency.repository.WarehouseRepository;
+import com.gasagency.util.ReferenceNumberGenerator;
+import com.gasagency.util.CodeGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -26,11 +30,20 @@ import java.util.stream.Collectors;
 public class BankAccountService {
         private final BankAccountRepository bankAccountRepository;
         private final BankAccountLedgerRepository bankAccountLedgerRepository;
+        private final SaleRepository saleRepository;
+        private final ReferenceNumberGenerator referenceNumberGenerator;
+        private final CodeGenerator codeGenerator;
 
         public BankAccountService(BankAccountRepository bankAccountRepository,
-                        BankAccountLedgerRepository bankAccountLedgerRepository) {
+                        BankAccountLedgerRepository bankAccountLedgerRepository,
+                        SaleRepository saleRepository,
+                        ReferenceNumberGenerator referenceNumberGenerator,
+                        CodeGenerator codeGenerator) {
                 this.bankAccountRepository = bankAccountRepository;
                 this.bankAccountLedgerRepository = bankAccountLedgerRepository;
+                this.saleRepository = saleRepository;
+                this.referenceNumberGenerator = referenceNumberGenerator;
+                this.codeGenerator = codeGenerator;
         }
 
         public BankAccountDTO createBankAccount(CreateBankAccountRequestDTO request) {
@@ -40,7 +53,11 @@ public class BankAccountService {
                                         throw new IllegalArgumentException("Account number already exists");
                                 });
 
+                // Generate auto-assigned bank code
+                String bankCode = codeGenerator.generateBankCode();
+
                 BankAccount bankAccount = new BankAccount(
+                                bankCode,
                                 request.getBankName(),
                                 request.getAccountNumber(),
                                 request.getAccountHolderName(),
@@ -94,7 +111,7 @@ public class BankAccountService {
                 bankAccount.setAccountName(request.getAccountName());
                 bankAccount.setAccountType(request.getAccountType());
                 bankAccount.setCurrentBalance(request.getCurrentBalance());
-                bankAccount.setUpdatedAt(LocalDateTime.now());
+                bankAccount.setUpdatedDate(LocalDateTime.now());
 
                 BankAccount updatedBankAccount = bankAccountRepository.save(bankAccount);
                 return mapToDTO(updatedBankAccount);
@@ -114,7 +131,7 @@ public class BankAccountService {
                                                 "Bank account not found with id: " + bankAccountId));
 
                 bankAccount.setIsActive(false);
-                bankAccount.setUpdatedAt(LocalDateTime.now());
+                bankAccount.setUpdatedDate(LocalDateTime.now());
                 bankAccountRepository.save(bankAccount);
         }
 
@@ -124,7 +141,7 @@ public class BankAccountService {
                                                 "Bank account not found with id: " + bankAccountId));
 
                 bankAccount.setIsActive(true);
-                bankAccount.setUpdatedAt(LocalDateTime.now());
+                bankAccount.setUpdatedDate(LocalDateTime.now());
                 bankAccountRepository.save(bankAccount);
         }
 
@@ -134,14 +151,17 @@ public class BankAccountService {
         @Transactional
         public BankAccountLedger recordDeposit(Long bankAccountId, BigDecimal amount, Long saleId,
                         String referenceNumber, String description) {
-                org.slf4j.LoggerFactory.getLogger(this.getClass())
-                                .info("recordDeposit called - bankAccountId: {}, amount: {}, reference: {}",
-                                                bankAccountId, amount,
-                                                referenceNumber);
-
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Bank account not found with id: " + bankAccountId));
+
+                org.slf4j.LoggerFactory.getLogger(this.getClass())
+                                .info("recordDeposit called - bankAccountId: {}, amount: {}, saleId: {}",
+                                                bankAccountId, amount, saleId);
+
+                // Generate bank transaction reference
+                String bankReference = referenceNumberGenerator.generateBankTransactionReference(
+                                bankAccount.getCode(), "DEP");
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
                                 .info("Found bank account: {} - Current balance: {}", bankAccount.getBankName(),
@@ -150,27 +170,27 @@ public class BankAccountService {
                 // Update bank account balance
                 BigDecimal newBalance = bankAccount.getCurrentBalance().add(amount);
                 bankAccount.setCurrentBalance(newBalance);
-                bankAccount.setUpdatedAt(LocalDateTime.now());
+                bankAccount.setUpdatedDate(LocalDateTime.now());
                 BankAccount savedBankAccount = bankAccountRepository.save(bankAccount);
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
                                 .info("Bank account balance updated - Old: {}, New: {}",
                                                 bankAccount.getCurrentBalance().subtract(amount), newBalance);
 
-                // Create ledger entry
+                // Create ledger entry with generated bank reference
                 BankAccountLedger ledgerEntry = new BankAccountLedger(
                                 savedBankAccount,
                                 "DEPOSIT",
                                 amount,
                                 newBalance,
                                 saleId,
-                                referenceNumber,
+                                bankReference,
                                 description);
                 BankAccountLedger savedEntry = bankAccountLedgerRepository.save(ledgerEntry);
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
                                 .info("Bank account ledger entry created - ID: {}, Reference: {}", savedEntry.getId(),
-                                                referenceNumber);
+                                                bankReference);
 
                 return savedEntry;
         }
@@ -181,14 +201,17 @@ public class BankAccountService {
         @Transactional
         public BankAccountLedger recordWithdrawal(Long bankAccountId, BigDecimal amount,
                         String referenceNumber, String description) {
-                org.slf4j.LoggerFactory.getLogger(this.getClass())
-                                .info("recordWithdrawal called - bankAccountId: {}, amount: {}, reference: {}",
-                                                bankAccountId, amount,
-                                                referenceNumber);
-
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Bank account not found with id: " + bankAccountId));
+
+                org.slf4j.LoggerFactory.getLogger(this.getClass())
+                                .info("recordWithdrawal called - bankAccountId: {}, amount: {}",
+                                                bankAccountId, amount);
+
+                // Generate bank transaction reference
+                String bankReference = referenceNumberGenerator.generateBankTransactionReference(
+                                bankAccount.getCode(), "WIT");
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
                                 .info("Found bank account: {} - Current balance: {}", bankAccount.getBankName(),
@@ -197,7 +220,7 @@ public class BankAccountService {
                 // Update bank account balance
                 BigDecimal newBalance = bankAccount.getCurrentBalance().subtract(amount);
                 bankAccount.setCurrentBalance(newBalance);
-                bankAccount.setUpdatedAt(LocalDateTime.now());
+                bankAccount.setUpdatedDate(LocalDateTime.now());
                 BankAccount savedBankAccount = bankAccountRepository.save(bankAccount);
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
@@ -205,20 +228,20 @@ public class BankAccountService {
                                                 bankAccount.getCurrentBalance().add(amount),
                                                 newBalance);
 
-                // Create ledger entry
+                // Create ledger entry with generated bank reference
                 BankAccountLedger ledgerEntry = new BankAccountLedger(
                                 savedBankAccount,
                                 "WITHDRAWAL",
                                 amount,
                                 newBalance,
                                 null,
-                                referenceNumber,
+                                bankReference,
                                 description);
                 BankAccountLedger savedEntry = bankAccountLedgerRepository.save(ledgerEntry);
 
                 org.slf4j.LoggerFactory.getLogger(this.getClass())
                                 .info("Bank account ledger entry created - ID: {}, Reference: {}", savedEntry.getId(),
-                                                referenceNumber);
+                                                bankReference);
 
                 return savedEntry;
         }
@@ -242,6 +265,7 @@ public class BankAccountService {
         private BankAccountDTO mapToDTO(BankAccount bankAccount) {
                 return new BankAccountDTO(
                                 bankAccount.getId(),
+                                bankAccount.getCode(),
                                 bankAccount.getBankName(),
                                 bankAccount.getAccountNumber(),
                                 bankAccount.getAccountHolderName(),
@@ -249,11 +273,18 @@ public class BankAccountService {
                                 bankAccount.getAccountType(),
                                 bankAccount.getCurrentBalance(),
                                 bankAccount.getIsActive(),
-                                bankAccount.getCreatedAt(),
-                                bankAccount.getUpdatedAt());
+                                bankAccount.getCreatedDate(),
+                                bankAccount.getUpdatedDate());
         }
 
         private BankAccountLedgerDTO mapLedgerToDTO(BankAccountLedger ledger) {
+                String saleReferenceNumber = null;
+                if (ledger.getSaleId() != null) {
+                        Sale sale = saleRepository.findById(ledger.getSaleId()).orElse(null);
+                        if (sale != null) {
+                                saleReferenceNumber = sale.getReferenceNumber();
+                        }
+                }
                 return new BankAccountLedgerDTO(
                                 ledger.getId(),
                                 ledger.getBankAccount().getId(),
@@ -263,9 +294,10 @@ public class BankAccountService {
                                 ledger.getAmount(),
                                 ledger.getBalanceAfter(),
                                 ledger.getSaleId(),
+                                saleReferenceNumber,
                                 ledger.getReferenceNumber(),
                                 ledger.getDescription(),
                                 ledger.getTransactionDate(),
-                                ledger.getCreatedAt());
+                                ledger.getCreatedDate());
         }
 }

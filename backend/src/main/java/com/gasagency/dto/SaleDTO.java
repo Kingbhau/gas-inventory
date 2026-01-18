@@ -6,6 +6,7 @@ import java.util.List;
 
 public class SaleDTO {
     private Long id;
+    private String referenceNumber;
     private Long customerId;
     private String customerName;
     private LocalDate saleDate;
@@ -18,9 +19,11 @@ public class SaleDTO {
     public SaleDTO() {
     }
 
-    public SaleDTO(Long id, Long customerId, String customerName, LocalDate saleDate, BigDecimal totalAmount,
+    public SaleDTO(Long id, String referenceNumber, Long customerId, String customerName, LocalDate saleDate,
+            BigDecimal totalAmount,
             String paymentMode, Long bankAccountId, String bankAccountName, List<SaleItemDTO> saleItems) {
         this.id = id;
+        this.referenceNumber = referenceNumber;
         this.customerId = customerId;
         this.customerName = customerName;
         this.saleDate = saleDate;
@@ -37,6 +40,14 @@ public class SaleDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
     }
 
     public Long getCustomerId() {

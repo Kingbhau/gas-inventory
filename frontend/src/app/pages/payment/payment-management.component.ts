@@ -6,6 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPlus, faSearch, faPencil, faTrash, faEye, faTimes, faChevronDown, faSignOut, faUsers, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
+import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -57,6 +58,7 @@ export class PaymentManagementComponent implements OnInit {
   constructor(
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
+    private duePaymentService: CustomerDuePaymentService,
     private bankAccountService: BankAccountService,
     private authService: AuthService,
     private router: Router,
@@ -93,22 +95,25 @@ export class PaymentManagementComponent implements OnInit {
     this.customerService.getActiveCustomers().subscribe(
       (data: any[]) => {
         this.customers = data;
-        // Enrich customers with due amounts
+        // Enrich customers with due amounts using CustomerDuePaymentService
         data.forEach((customer: any) => {
-          this.ledgerService.getLedgerByCustomer(customer.id).subscribe(
-            (ledger: any[]) => {
-              if (ledger && ledger.length > 0) {
-                customer.dueAmount = ledger[ledger.length - 1].dueAmount || 0;
-              } else {
-                customer.dueAmount = 0;
+          this.duePaymentService.getDuePaymentReport(0, 1, 'dueAmount', 'DESC', undefined, undefined, customer.id.toString())
+            .pipe(
+              catchError((err: any) => {
+                console.error('Error loading due amount for customer:', err);
+                return of({ content: [] });
+              })
+            )
+            .subscribe(
+              (response: any) => {
+                if (response.content && response.content.length > 0) {
+                  customer.dueAmount = response.content[0].dueAmount || 0;
+                } else {
+                  customer.dueAmount = 0;
+                }
+                this.cdr.markForCheck();
               }
-              this.cdr.markForCheck();
-            },
-            (error: any) => {
-              customer.dueAmount = 0;
-              this.cdr.markForCheck();
-            }
-          );
+            );
         });
         this.filteredCustomers = data;
         this.cdr.markForCheck();
@@ -174,42 +179,33 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   submitPayment() {
-    this.paymentError = '';
-
     if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
-      this.paymentError = 'Please enter a valid payment amount';
-      this.cdr.markForCheck();
+      this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;
     }
 
     if (!this.paymentForm.paymentDate) {
-      this.paymentError = 'Please select a payment date';
-      this.cdr.markForCheck();
+      this.toastr.error('Please select a payment date', 'Validation Error');
       return;
     }
 
     if (!this.paymentForm.paymentMode) {
-      this.paymentError = 'Please select a payment mode';
-      this.cdr.markForCheck();
+      this.toastr.error('Please select a payment mode', 'Validation Error');
       return;
     }
 
     // If payment mode is not CASH, bank account is required
     if (this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
-      this.paymentError = 'Please select a bank account for non-cash payments';
-      this.cdr.markForCheck();
+      this.toastr.error('Please select a bank account for non-cash payments', 'Validation Error');
       return;
     }
 
-    // Get the current due amount from the most recent ledger entry
-    const currentDue = this.ledgerEntries.length > 0
-      ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0
-      : 0;
+    // Get the current due amount from the selected customer
+    const currentDue = this.selectedCustomer?.dueAmount || 0;
 
     // Validate payment amount doesn't exceed due amount
     if (this.paymentForm.amount > currentDue) {
-      this.paymentError = `Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`;
-      this.cdr.markForCheck();
+      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`, 'Validation Error');
       return;
     }
 
@@ -230,7 +226,6 @@ export class PaymentManagementComponent implements OnInit {
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
-          this.paymentError = errorMessage;
           this.toastr.error(errorMessage, 'Error');
           this.isSubmittingPayment = false;
           this.cdr.markForCheck();
@@ -252,10 +247,7 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   getCurrentDue(): number {
-    if (this.ledgerEntries.length > 0) {
-      return this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0;
-    }
-    return 0;
+    return this.selectedCustomer?.dueAmount || 0;
   }
 
   formatMovementType(type: string): string {

@@ -2,9 +2,11 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 
 @Entity
@@ -49,8 +51,9 @@ public class SupplierTransaction extends Auditable {
     @Column(nullable = false)
     private Long emptySent;
 
-    @Size(max = 255, message = "Reference must be at most 255 characters.")
-    @Column(columnDefinition = "TEXT")
+    @Size(max = 50, message = "Reference must be at most 50 characters.")
+    @Column(name = "reference_number", unique = true, nullable = false, length = 50)
+    @Pattern(regexp = "^PO-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: PO-SUPPLIER-YYYYMM-SEQUENCE")
     private String reference;
 
     @NotNull(message = "Amount is required.")

@@ -10,7 +10,6 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "bank_account", indexes = {
-        @Index(name = "idx_bank_account_warehouse_id", columnList = "warehouse_id"),
         @Index(name = "idx_bank_account_active", columnList = "is_active")
 })
 public class BankAccount extends Auditable {
@@ -21,6 +20,10 @@ public class BankAccount extends Auditable {
     @Version
     @Column(nullable = false)
     private Long version = 0L;
+
+    @NotBlank(message = "Bank code is required.")
+    @Column(nullable = false, length = 20, unique = true, updatable = false)
+    private String code;
 
     @NotBlank(message = "Bank name is required.")
     @Column(nullable = false, length = 100)
@@ -48,16 +51,12 @@ public class BankAccount extends Auditable {
     @Column(nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
     public BankAccount() {
     }
 
-    public BankAccount(String bankName, String accountNumber, String accountHolderName, BigDecimal currentBalance) {
+    public BankAccount(String code, String bankName, String accountNumber, String accountHolderName,
+            BigDecimal currentBalance) {
+        this.code = Objects.requireNonNull(code, "Bank code cannot be null");
         this.bankName = Objects.requireNonNull(bankName, "Bank name cannot be null");
         this.accountNumber = Objects.requireNonNull(accountNumber, "Account number cannot be null");
         this.accountHolderName = Objects.requireNonNull(accountHolderName, "Account holder name cannot be null");
@@ -66,9 +65,6 @@ public class BankAccount extends Auditable {
         if (currentBalance.signum() < 0) {
             throw new IllegalArgumentException("Current balance cannot be negative");
         }
-
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -85,6 +81,14 @@ public class BankAccount extends Auditable {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getBankName() {
@@ -143,22 +147,6 @@ public class BankAccount extends Auditable {
         this.isActive = isActive;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -179,12 +167,13 @@ public class BankAccount extends Auditable {
     public String toString() {
         return "BankAccount{" +
                 "id=" + id +
+                ", code='" + code + '\'' +
                 ", bankName='" + bankName + '\'' +
                 ", accountNumber='" + accountNumber + '\'' +
                 ", accountHolderName='" + accountHolderName + '\'' +
                 ", currentBalance=" + currentBalance +
                 ", isActive=" + isActive +
-                ", createdAt=" + createdAt +
+                ", createdDate=" + createdDate +
                 '}';
     }
 }

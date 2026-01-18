@@ -98,13 +98,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {}
 
-  // Accordion toggle method
+  // Accordion toggle method - only one section open at a time
   toggleSection(sectionId: string): void {
     const index = this.expandedSections.indexOf(sectionId);
     if (index > -1) {
       this.expandedSections.splice(index, 1); // Remove if exists (collapse)
     } else {
-      this.expandedSections.push(sectionId); // Add if not exists (expand)
+      this.expandedSections = [sectionId]; // Close all others and open this one
     }
     this.cdr.markForCheck();
   }

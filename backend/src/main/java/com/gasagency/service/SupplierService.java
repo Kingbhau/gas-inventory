@@ -5,6 +5,7 @@ import com.gasagency.entity.Supplier;
 import com.gasagency.repository.SupplierRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
+import com.gasagency.util.CodeGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,17 +20,24 @@ public class SupplierService {
     private static final Logger logger = LoggerFactory.getLogger(SupplierService.class);
     private final SupplierRepository repository;
     private final com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository;
+    private final CodeGenerator codeGenerator;
 
     public SupplierService(SupplierRepository repository,
-            com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository) {
+            com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository,
+            CodeGenerator codeGenerator) {
         this.repository = repository;
         this.supplierTransactionRepository = supplierTransactionRepository;
+        this.codeGenerator = codeGenerator;
     }
 
     public SupplierDTO createSupplier(SupplierDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "CREATE_SUPPLIER", "name", dto != null ? dto.getName() : "null");
 
         Supplier supplier = new Supplier(dto.getName(), dto.getContact());
+        // Auto-generate unique supplier code
+        String supplierCode = codeGenerator.generateSupplierCode();
+        supplier.setCode(supplierCode);
+
         supplier = repository.save(supplier);
 
         LoggerUtil.logBusinessSuccess(logger, "CREATE_SUPPLIER", "id", supplier.getId(), "name", supplier.getName());
@@ -108,6 +116,8 @@ public class SupplierService {
     }
 
     private SupplierDTO toDTO(Supplier supplier) {
-        return new SupplierDTO(supplier.getId(), supplier.getName(), supplier.getContact());
+        SupplierDTO dto = new SupplierDTO(supplier.getId(), supplier.getName(), supplier.getContact());
+        dto.setCode(supplier.getCode());
+        return dto;
     }
 }

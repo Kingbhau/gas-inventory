@@ -33,12 +33,15 @@ export class SupplierTransactionService {
       .pipe(applyTimeout());
   }
 
-  getAllTransactions(page: number = 0, size: number = 20, sortBy: string = 'id', direction: string = 'ASC'): Observable<any> {
+  getAllTransactions(page: number = 0, size: number = 20, sortBy: string = 'id', direction: string = 'ASC', referenceNumber?: string): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
+    if (referenceNumber) {
+      params = params.set('referenceNumber', referenceNumber);
+    }
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout());
   }

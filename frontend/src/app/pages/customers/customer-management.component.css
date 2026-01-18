@@ -1305,14 +1305,27 @@ textarea.form-control {
   color: #166534;
 }
 
-.payment-mode-label {
+.reference-badge {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  background: #f3f4f6;
-  color: #64748b;
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: 1px solid #d1d5db;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  font-family: 'Courier New', monospace;
   font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reference-badge:hover {
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+.text-muted {
+  color: #9ca3af;
 }
 
 /* Remove border from running balance when alert is applied */

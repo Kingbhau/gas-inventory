@@ -41,7 +41,8 @@ export class BankAccountLedgerService {
     fromDate?: string,
     toDate?: string,
     bankAccountId?: string,
-    transactionType?: string
+    transactionType?: string,
+    referenceNumber?: string
   ): Observable<PageResponse<BankAccountLedgerDTO>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -53,6 +54,7 @@ export class BankAccountLedgerService {
     if (toDate) params = params.set('toDate', toDate);
     if (bankAccountId) params = params.set('bankAccountId', bankAccountId);
     if (transactionType) params = params.set('transactionType', transactionType);
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
 
     return this.http.get<PageResponse<BankAccountLedgerDTO>>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout());
@@ -67,7 +69,8 @@ export class BankAccountLedgerService {
     fromDate?: string,
     toDate?: string,
     bankAccountId?: string,
-    transactionType?: string
+    transactionType?: string,
+    referenceNumber?: string
   ): Observable<any> {
     let params = new HttpParams();
 
@@ -75,6 +78,7 @@ export class BankAccountLedgerService {
     if (toDate) params = params.set('toDate', toDate);
     if (bankAccountId) params = params.set('bankAccountId', bankAccountId);
     if (transactionType) params = params.set('transactionType', transactionType);
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
 
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
       .pipe(applyTimeout());
