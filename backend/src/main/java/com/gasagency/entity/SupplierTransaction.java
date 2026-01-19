@@ -2,12 +2,13 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "supplier_transaction", indexes = {
@@ -24,6 +25,7 @@ public class SupplierTransaction extends Auditable {
     @NotNull(message = "Warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-supplierTransactions")
     private Warehouse warehouse;
 
     @NotNull(message = "Supplier is required.")
@@ -34,6 +36,7 @@ public class SupplierTransaction extends Auditable {
     @NotNull(message = "Variant is required.")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-supplierTransactions")
     private CylinderVariant variant;
 
     @NotNull(message = "Transaction date is required.")
@@ -58,15 +61,15 @@ public class SupplierTransaction extends Auditable {
 
     @NotNull(message = "Amount is required.")
     @Min(value = 0, message = "Amount cannot be negative.")
-    @Column(nullable = false)
-    private Double amount;
+    @Column(nullable = false, columnDefinition = "DECIMAL(10,2)")
+    private BigDecimal amount;
 
     public SupplierTransaction() {
     }
 
     public SupplierTransaction(Warehouse warehouse, Supplier supplier, CylinderVariant variant,
             LocalDate transactionDate,
-            Long filledReceived, Long emptySent, String reference, Double amount) {
+            Long filledReceived, Long emptySent, String reference, BigDecimal amount) {
         this.warehouse = warehouse;
         this.supplier = supplier;
         this.variant = variant;
@@ -85,11 +88,11 @@ public class SupplierTransaction extends Auditable {
         this.warehouse = warehouse;
     }
 
-    public Double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

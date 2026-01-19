@@ -1,6 +1,7 @@
 package com.gasagency.dto;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 public class SupplierTransactionDTO {
     private Long id;
@@ -14,14 +15,14 @@ public class SupplierTransactionDTO {
     private Long filledReceived;
     private Long emptySent;
     private String reference;
-    private Double amount;
+    private BigDecimal amount;
 
     public SupplierTransactionDTO() {
     }
 
     public SupplierTransactionDTO(Long id, Long warehouseId, String warehouseName, Long supplierId, String supplierName,
             Long variantId, String variantName,
-            LocalDate transactionDate, Long filledReceived, Long emptySent, String reference, Double amount) {
+            LocalDate transactionDate, Long filledReceived, Long emptySent, String reference, BigDecimal amount) {
         this.id = id;
         this.warehouseId = warehouseId;
         this.warehouseName = warehouseName;
@@ -37,11 +38,11 @@ public class SupplierTransactionDTO {
     }
 
     public Double getAmount() {
-        return amount;
+        return amount != null ? amount.doubleValue() : null;
     }
 
     public void setAmount(Double amount) {
-        this.amount = amount;
+        this.amount = amount != null ? BigDecimal.valueOf(amount) : null;
     }
 
     public Long getId() {

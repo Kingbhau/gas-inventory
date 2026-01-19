@@ -2,32 +2,26 @@ package com.gasagency.service;
 
 import com.gasagency.dto.BankAccountLedgerDTO;
 import com.gasagency.entity.BankAccountLedger;
-import com.gasagency.entity.Sale;
 import com.gasagency.repository.BankAccountLedgerRepository;
-import com.gasagency.repository.SaleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class BankAccountLedgerService {
 
     private final BankAccountLedgerRepository bankAccountLedgerRepository;
-    private final SaleRepository saleRepository;
 
-    public BankAccountLedgerService(BankAccountLedgerRepository bankAccountLedgerRepository,
-            SaleRepository saleRepository) {
+    public BankAccountLedgerService(BankAccountLedgerRepository bankAccountLedgerRepository) {
         this.bankAccountLedgerRepository = bankAccountLedgerRepository;
-        this.saleRepository = saleRepository;
     }
 
     @Transactional(readOnly = true)
@@ -235,15 +229,15 @@ public class BankAccountLedgerService {
         dto.setTransactionType(entity.getTransactionType());
         dto.setAmount(entity.getAmount());
         dto.setBalanceAfter(entity.getBalanceAfter());
-        dto.setSaleId(entity.getSaleId());
 
-        // Fetch and set sale reference number if saleId exists
-        if (entity.getSaleId() != null) {
-            Sale sale = saleRepository.findById(entity.getSaleId()).orElse(null);
-            if (sale != null) {
-                dto.setSaleReferenceNumber(sale.getReferenceNumber());
-            }
+        Long saleId = null;
+        String saleReferenceNumber = null;
+        if (entity.getSale() != null) {
+            saleId = entity.getSale().getId();
+            saleReferenceNumber = entity.getSale().getReferenceNumber();
         }
+        dto.setSaleId(saleId);
+        dto.setSaleReferenceNumber(saleReferenceNumber);
 
         dto.setReferenceNumber(entity.getReferenceNumber());
         dto.setDescription(entity.getDescription());

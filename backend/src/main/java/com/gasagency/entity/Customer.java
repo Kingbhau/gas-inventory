@@ -6,8 +6,10 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "customer", uniqueConstraints = { @UniqueConstraint(columnNames = { "mobile" }) }, indexes = {
@@ -145,5 +147,41 @@ public class Customer extends Auditable {
 
     public void setGstNo(String gstNo) {
         this.gstNo = gstNo;
+    }
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("customer-sales")
+    private List<Sale> sales = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("customer-variantPrices")
+    private List<CustomerVariantPrice> variantPrices = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("customer-ledgers")
+    private List<CustomerCylinderLedger> ledgerEntries = new ArrayList<>();
+
+    public List<Sale> getSales() {
+        return sales;
+    }
+
+    public void setSales(List<Sale> sales) {
+        this.sales = sales;
+    }
+
+    public List<CustomerVariantPrice> getVariantPrices() {
+        return variantPrices;
+    }
+
+    public void setVariantPrices(List<CustomerVariantPrice> variantPrices) {
+        this.variantPrices = variantPrices;
+    }
+
+    public List<CustomerCylinderLedger> getLedgerEntries() {
+        return ledgerEntries;
+    }
+
+    public void setLedgerEntries(List<CustomerCylinderLedger> ledgerEntries) {
+        this.ledgerEntries = ledgerEntries;
     }
 }

@@ -6,6 +6,14 @@ export interface Warehouse {
   createdAt?: string;
   updatedAt?: string;
   version?: number;
+  // Optional relationship collections (loaded when requested)
+  inventoryStocks?: any[];
+  sales?: any[];
+  saleItems?: any[];
+  supplierTransactions?: any[];
+  fromWarehouseTransfers?: any[];
+  toWarehouseTransfers?: any[];
+  customerCylinderLedgers?: any[];
 }
 
 export interface WarehouseDTO extends Warehouse {

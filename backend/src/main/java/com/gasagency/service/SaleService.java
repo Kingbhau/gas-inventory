@@ -14,7 +14,9 @@ import com.gasagency.util.AuditLogger;
 import com.gasagency.util.PerformanceTracker;
 import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +43,6 @@ public class SaleService {
         private final SaleItemRepository saleItemRepository;
         private final CustomerRepository customerRepository;
         private final CylinderVariantRepository variantRepository;
-        private final MonthlyPriceRepository monthlyPriceRepository;
         private final CustomerVariantPriceRepository customerVariantPriceRepository;
         private final InventoryStockService inventoryStockService;
         private final CustomerCylinderLedgerService ledgerService;
@@ -56,7 +57,6 @@ public class SaleService {
                         SaleItemRepository saleItemRepository,
                         CustomerRepository customerRepository,
                         CylinderVariantRepository variantRepository,
-                        MonthlyPriceRepository monthlyPriceRepository,
                         CustomerVariantPriceRepository customerVariantPriceRepository,
                         InventoryStockService inventoryStockService,
                         CustomerCylinderLedgerService ledgerService,
@@ -70,7 +70,6 @@ public class SaleService {
                 this.saleItemRepository = saleItemRepository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
-                this.monthlyPriceRepository = monthlyPriceRepository;
                 this.customerVariantPriceRepository = customerVariantPriceRepository;
                 this.inventoryStockService = inventoryStockService;
                 this.ledgerService = ledgerService;
@@ -84,9 +83,8 @@ public class SaleService {
 
         @Transactional(readOnly = true)
         public List<SaleDTO> getRecentSales() {
-                Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5,
-                                org.springframework.data.domain.Sort
-                                                .by(org.springframework.data.domain.Sort.Direction.DESC, "saleDate"));
+                Pageable pageable = PageRequest.of(0, 5,
+                                Sort.by(Sort.Direction.DESC, "saleDate"));
                 return saleRepository.findAll(pageable)
                                 .map(this::toDTO)
                                 .getContent();
@@ -528,6 +526,13 @@ public class SaleService {
                                                         "Customer not found with id: " + customerId);
                                 });
                 return saleRepository.findByCustomer(customer, pageable)
+                                .map(this::toDTO);
+        }
+
+        @Transactional(readOnly = true)
+        public Page<SaleDTO> getSalesByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+                logger.debug("Fetching sales between {} and {}", fromDate, toDate);
+                return saleRepository.findByDateRange(fromDate, toDate, pageable)
                                 .map(this::toDTO);
         }
 

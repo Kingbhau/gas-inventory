@@ -97,4 +97,40 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
 
         return new PageImpl<>(resultList, pageable, total);
     }
+
+    @Override
+    public Page<Sale> findByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Sale> cq = cb.createQuery(Sale.class);
+        Root<Sale> sale = cq.from(Sale.class);
+        sale.fetch("customer", JoinType.LEFT);
+        sale.fetch("saleItems", JoinType.LEFT);
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.greaterThanOrEqualTo(sale.get("saleDate"), fromDate));
+        predicates.add(cb.lessThanOrEqualTo(sale.get("saleDate"), toDate));
+
+        cq.select(sale).distinct(true).where(predicates.toArray(new Predicate[0]))
+                .orderBy(cb.desc(sale.get("saleDate")), cb.desc(sale.get("id")));
+
+        TypedQuery<Sale> query = entityManager.createQuery(cq);
+        List<Sale> resultList;
+        if (pageable.isUnpaged()) {
+            resultList = query.getResultList();
+        } else {
+            query.setFirstResult((int) pageable.getOffset());
+            query.setMaxResults(pageable.getPageSize());
+            resultList = query.getResultList();
+        }
+
+        // Count query
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<Sale> countRoot = countQuery.from(Sale.class);
+        countQuery.select(cb.countDistinct(countRoot))
+                .where(cb.greaterThanOrEqualTo(countRoot.get("saleDate"), fromDate),
+                        cb.lessThanOrEqualTo(countRoot.get("saleDate"), toDate));
+        Long total = entityManager.createQuery(countQuery).getSingleResult();
+
+        return new PageImpl<>(resultList, pageable, total);
+    }
 }

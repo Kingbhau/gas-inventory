@@ -2,12 +2,11 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "warehouse_transfer", indexes = {
@@ -33,16 +32,19 @@ public class WarehouseTransfer extends Auditable {
     @NotNull(message = "From warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "from_warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-fromTransfers")
     private Warehouse fromWarehouse;
 
     @NotNull(message = "To warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "to_warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-toTransfers")
     private Warehouse toWarehouse;
 
     @NotNull(message = "Cylinder variant is required.")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-transfers")
     private CylinderVariant variant;
 
     @NotNull(message = "Quantity is required.")

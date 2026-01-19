@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "customer_cylinder_ledger", indexes = {
@@ -31,13 +31,16 @@ public class CustomerCylinderLedger extends Auditable {
     @NotNull(message = "Customer is required.")
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonBackReference("customer-ledgers")
     private Customer customer;
 
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = true)
+    @JsonBackReference("warehouse-customerCylinderLedgers")
     private Warehouse warehouse;
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = true)
+    @JsonBackReference("variant-ledgers")
     private CylinderVariant variant;
 
     @NotNull(message = "Transaction date is required.")
@@ -54,6 +57,11 @@ public class CustomerCylinderLedger extends Auditable {
     // (e.g., SALE, PURCHASE)
     @Column(nullable = true)
     private Long refId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_id", nullable = true)
+    @JsonBackReference("sale-ledgers")
+    private Sale sale; // Direct reference to Sale when refType = SALE
 
     @NotNull(message = "Filled out is required.")
     @Min(value = 0, message = "Filled out cannot be negative.")
@@ -90,6 +98,7 @@ public class CustomerCylinderLedger extends Auditable {
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "bank_account_id", nullable = true)
+    @JsonBackReference("bankAccount-ledgers")
     private BankAccount bankAccount;
 
     public CustomerCylinderLedger() {
@@ -104,6 +113,7 @@ public class CustomerCylinderLedger extends Auditable {
         this.transactionDate = transactionDate;
         this.refType = refType;
         this.refId = refId;
+        this.sale = null; // Can be set separately if needed
         this.filledOut = filledOut;
         this.emptyIn = emptyIn;
         this.balance = balance;
@@ -247,5 +257,13 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setBankAccount(BankAccount bankAccount) {
         this.bankAccount = bankAccount;
+    }
+
+    public Sale getSale() {
+        return sale;
+    }
+
+    public void setSale(Sale sale) {
+        this.sale = sale;
     }
 }

@@ -11,6 +11,7 @@ public class SaleDTO {
     private String customerName;
     private LocalDate saleDate;
     private BigDecimal totalAmount;
+    private BigDecimal amountReceived;
     private String paymentMode;
     private Long bankAccountId;
     private String bankAccountName;
@@ -80,6 +81,14 @@ public class SaleDTO {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
     }
 
     public List<SaleItemDTO> getSaleItems() {

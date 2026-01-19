@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "customer_variant_price", uniqueConstraints = {
@@ -21,11 +22,13 @@ public class CustomerVariantPrice extends Auditable {
     @NotNull(message = "Customer is required")
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonBackReference("customer-variantPrices")
     private Customer customer;
 
     @NotNull(message = "Variant is required")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-customerPrices")
     private CylinderVariant variant;
 
     @NotNull(message = "Sale price is required")

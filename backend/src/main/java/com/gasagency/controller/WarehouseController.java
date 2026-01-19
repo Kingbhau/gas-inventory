@@ -112,7 +112,12 @@ public class WarehouseController {
                 return buildErrorResponse("Warehouse name is required", HttpStatus.BAD_REQUEST);
             }
 
-            WarehouseDTO warehouse = warehouseService.createWarehouse(name);
+            if (!request.containsKey("businessId")) {
+                return buildErrorResponse("businessId is required", HttpStatus.BAD_REQUEST);
+            }
+
+            Long businessId = Long.parseLong(request.get("businessId"));
+            WarehouseDTO warehouse = warehouseService.createWarehouse(name, businessId);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", warehouse);

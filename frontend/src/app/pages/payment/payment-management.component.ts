@@ -9,6 +9,7 @@ import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-
 import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { AuthService } from '../../services/auth.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
@@ -61,6 +62,7 @@ export class PaymentManagementComponent implements OnInit {
     private duePaymentService: CustomerDuePaymentService,
     private bankAccountService: BankAccountService,
     private authService: AuthService,
+    private dataRefreshService: DataRefreshService,
     private router: Router,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
@@ -235,6 +237,8 @@ export class PaymentManagementComponent implements OnInit {
       .subscribe((response: any) => {
         if (response) {
           this.toastr.success('Payment recorded successfully', 'Success');
+          // Notify dashboard of the payment
+          this.dataRefreshService.notifyPaymentReceived(response);
           this.closePaymentForm();
           // Refresh ledger
           this.loadLedgerForCustomer(this.selectedCustomer.id);

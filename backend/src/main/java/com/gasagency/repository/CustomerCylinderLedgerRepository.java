@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface CustomerCylinderLedgerRepository extends JpaRepository<CustomerCylinderLedger, Long> {
@@ -45,4 +44,11 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "AND EXTRACT(YEAR FROM l.createdDate) = EXTRACT(YEAR FROM CAST(:date AS DATE))")
         long countEmptyReturnsByWarehouseAndMonth(@Param("warehouse") Warehouse warehouse,
                         @Param("date") LocalDate date);
+
+        // Get ledger entries for a specific date and reference type (optimized query)
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.transactionDate = :transactionDate " +
+                        "AND l.refType = :refType ORDER BY l.id DESC")
+        List<CustomerCylinderLedger> findByTransactionDateAndRefType(
+                        @Param("transactionDate") LocalDate transactionDate,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType);
 }

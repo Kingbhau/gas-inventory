@@ -1,165 +1,405 @@
-<div class="dashboard-container">
-  <!-- Page Header -->
-  <div class="page-header">
+<div class="dashboard-wrapper">
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="dashboard-header">
     <div class="header-content">
       <h1 class="page-title">Dashboard</h1>
       <p class="page-subtitle">{{ todayDate | date: 'EEEE, MMMM d, yyyy' }}</p>
     </div>
     <div class="header-actions">
-      <!-- Removed Export and Generate Report buttons -->
+      <button class="btn-refresh" (click)="refreshDashboard()" title="Refresh dashboard">
+        <fa-icon [icon]="faRotateRight"></fa-icon>
+      </button>
     </div>
   </div>
 
-  <!-- KPI Cards Grid -->
-  <div class="kpi-grid">
-    <div *ngFor="let kpi of kpiCards" [ngClass]="'kpi-card kpi-' + kpi.color">
-      <div class="kpi-header">
-        <div>
-          <div class="kpi-label">{{ kpi.label }}</div>
-          <div class="kpi-subtext">
-            <ng-container *ngIf="kpi.label.toLowerCase().includes('sale') || kpi.label.toLowerCase().includes('value') || kpi.subtext.startsWith('₹'); else normalSubtext">
-              {{ kpi.subtext.replace('₹', '') | indianCurrency }}
-            </ng-container>
-            <ng-template #normalSubtext>{{ kpi.subtext }}</ng-template>
+  <!-- Critical Alerts Section -->
+  <div *ngIf="dashboardData?.alerts && (dashboardData?.alerts?.length || 0) > 0" class="alerts-section">
+    <div *ngFor="let alert of dashboardData?.alerts || []" 
+         [ngClass]="'alert-banner ' + getAlertSeverityClass(alert.severity)">
+      <div class="alert-icon">
+        <fa-icon [icon]="getAlertIcon(alert.severity)"></fa-icon>
+      </div>
+      <div class="alert-content">
+        <h4 class="alert-title">{{ alert.title }}</h4>
+        <p class="alert-message">{{ alert.message }}</p>
+      </div>
+      <a *ngIf="alert.actionLink" [routerLink]="alert.actionLink" class="alert-action">
+        {{ alert.actionLabel }} →
+      </a>
+    </div>
+  </div>
+
+  <!-- TODAY'S PERFORMANCE SECTION -->
+  <div class="section-container" *ngIf="dashboardData">
+    
+
+    <!-- Today's KPI Cards Grid (4 columns) -->
+    <div class="kpi-grid kpi-grid-4">
+      <div *ngFor="let kpi of todayKpiCards" [ngClass]="'kpi-card kpi-' + kpi.color">
+        <div class="kpi-header">
+          <div class="kpi-info">
+            <p class="kpi-label">{{ kpi.label }}</p>
+            <p class="kpi-subtext">{{ kpi.subtext }}</p>
+          </div>
+          <div class="kpi-icon-box">
+            <fa-icon [icon]="kpi.icon" class="kpi-icon"></fa-icon>
           </div>
         </div>
-        <div class="kpi-icon">
-          <fa-icon [icon]="kpi.icon"></fa-icon>
-        </div>
-      </div>
-      <div class="kpi-value">
-        <ng-container *ngIf="kpi.label.toLowerCase().includes('sale') || kpi.label.toLowerCase().includes('value') || (kpi.subtext && kpi.subtext.startsWith('₹')); else normalValue">
-          {{ kpi.value  }}
-        </ng-container>
-        <ng-template #normalValue>{{ kpi.value }}</ng-template>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Grid Section -->
-  <div class="grid-section">
-    <!-- Inventory Summary Card -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h3 class="card-title">Inventory Summary</h3>
-          <p class="card-subtitle">Current stock levels by cylinder variant</p>
-        </div>
-        <button class="card-action-btn" title="More options">
-          <fa-icon [icon]="faEllipsis"></fa-icon>
-        </button>
-      </div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Warehouse</th>
-                <th>Variant</th>
-                <th class="text-center">Filled</th>
-                <th class="text-center">Empty</th>
-                <th class="text-center">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of inventorySummary">
-                <td class="font-medium">{{ row.warehouse }}</td>
-                <td class="font-medium">{{ row.variant }}</td>
-                <td class="text-center text-success">{{ row.filled }}</td>
-                <td class="text-center text-warning">{{ row.empty }}</td>
-                <td class="text-center font-semibold">{{ (row.filled + row.empty) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div *ngIf="inventorySummary.length > 0" class="pagination" style="flex-wrap:nowrap; align-items:center; gap:1.5rem;">
-          <button 
-            (click)="onInventoryPageChange(inventoryPage - 1)" 
-            [disabled]="inventoryPage === 1"
-            class="btn btn-secondary">
-            ←Previous
-          </button>
-          <span class="page-info">Page {{ inventoryPage }} of {{ inventoryTotalPages }}</span>
-          <button 
-            (click)="onInventoryPageChange(inventoryPage + 1)" 
-            [disabled]="inventoryPage === inventoryTotalPages"
-            class="btn btn-secondary">
-            Next→
-          </button>
-          <span class="page-size-label">Show</span>
-          <select [(ngModel)]="inventoryPageSize" (ngModelChange)="onInventoryPageSizeChange($event)" class="page-size-select">
-            <option *ngFor="let size of inventoryPageSizeOptions" [value]="size">{{ size }}</option>
-          </select>
-          <span class="page-size-label">per page</span>
+        <div class="kpi-footer">
+          <div class="kpi-value">{{ kpi.value }}</div>
+          <div *ngIf="kpi.trend" [ngClass]="'trend ' + getTrendClass(kpi.trend)">
+            <fa-icon [icon]="getTrendIcon(kpi.trend) || faBoxes"></fa-icon>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Pending Empty Cylinders Card -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h3 class="card-title">Pending Collections</h3>
-          <p class="card-subtitle">Empty cylinders awaiting pickup</p>
+    <!-- Today's Charts Row -->
+    <div class="charts-grid charts-grid-2">
+      <!-- Sales vs Expenses Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Sales vs Expenses</h3>
+          <p class="chart-subtitle">Today's revenue and cost breakdown</p>
         </div>
-        <button class="card-action-btn" title="More options">
-          <fa-icon [icon]="faEllipsis"></fa-icon>
-        </button>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="salesVsExpensesChart?.data"
+                  [options]="salesVsExpensesChart?.options"
+                  type="doughnut">
+          </canvas>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Variant</th>
-                <th class="text-center">Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of pendingCylinders" [class.highlight-row]="row.pending > 0">
-                <td class="font-medium">{{ row.customer }}</td>
-                <td>{{ row.variant }}</td>
-                <td class="text-center" [ngClass]="row.pending > 0 ? 'text-danger font-semibold' : 'text-muted'">
-                  {{ row.pending }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+      <!-- Inventory by Warehouse Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Inventory Status</h3>
+          <p class="chart-subtitle">Filled vs Empty cylinders by warehouse</p>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="inventoryStatusChart?.data"
+                  [options]="inventoryStatusChart?.options"
+                  type="bar"
+                  (chartClick)="onChartClick($event)">
+          </canvas>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Recent Transactions Section -->
-  <div class="card mt-5">
-    <div class="card-header">
-      <div>
-        <h3 class="card-title">Recent Transactions</h3>
-        <p class="card-subtitle">Latest sales activities</p>
-      </div>
-     <a [routerLink]="['/sales/history']" class="link">View All →</a>
+  <!-- MONTHLY SUMMARY SECTION -->
+  <div class="section-container" *ngIf="dashboardData">
+    <div class="section-header">
+      <h2 class="section-title">Monthly Summary</h2>
+      <span class="section-date">{{ todayDate | date: 'MMMM yyyy' }}</span>
     </div>
-    <div class="card-body">
-      <div class="table-wrapper">
+
+    <!-- Month Selector -->
+    <div class="month-selector">
+      <div class="selector-group">
+        <label class="selector-label">Year:</label>
+        <select [(ngModel)]="selectedYear" (change)="onYearChange(selectedYear)" class="selector-dropdown">
+          <option *ngFor="let year of availableYears" [value]="year" [disabled]="!isYearSelectable(year)">
+            {{ year }}
+          </option>
+        </select>
+      </div>
+
+      <div class="selector-group">
+        <label class="selector-label">Month:</label>
+        <select [(ngModel)]="selectedMonth" (change)="onMonthChange(selectedMonth)" class="selector-dropdown">
+          <option *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12]" [value]="i" [disabled]="!isMonthSelectable(i, selectedYear)">
+            {{ monthNames[i-1] }}
+          </option>
+        </select>
+      </div>
+
+      <button class="btn-nav-month" (click)="previousMonth()" title="Previous month">← Previous</button>
+      <button class="btn-nav-month" 
+              (click)="nextMonth()" 
+              [disabled]="selectedYear === currentYear && selectedMonth === currentMonth"
+              title="Next month">Next →</button>
+      
+      <span class="month-display">{{ getCurrentMonthDisplay() }}</span>
+    </div>
+
+    <!-- Monthly KPI Cards Grid (4 columns) -->
+    <div class="kpi-grid kpi-grid-4">
+      <div *ngFor="let kpi of monthlyKpiCards" [ngClass]="'kpi-card kpi-' + kpi.color">
+        <div class="kpi-header">
+          <div class="kpi-info">
+            <p class="kpi-label">{{ kpi.label }}</p>
+            <p class="kpi-subtext">{{ kpi.subtext }}</p>
+          </div>
+          <div class="kpi-icon-box">
+            <fa-icon [icon]="kpi.icon" class="kpi-icon"></fa-icon>
+          </div>
+        </div>
+        <div class="kpi-footer">
+          <div class="kpi-value">{{ kpi.value }}</div>
+          <div *ngIf="kpi.trend" [ngClass]="'trend ' + getTrendClass(kpi.trend)">
+            <fa-icon [icon]="getTrendIcon(kpi.trend) || faBoxes"></fa-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Charts Row -->
+    <div class="charts-grid charts-grid-3">
+      <!-- Monthly Sales Trend Chart -->
+      <div class="chart-card chart-card-wide">
+        <div class="chart-header">
+          <h3 class="chart-title">Sales & Profit Trend</h3>
+          <p class="chart-subtitle">Daily trend throughout the month</p>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="monthlySalesTrendChart?.data"
+                  [options]="monthlySalesTrendChart?.options"
+                  type="line">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Expense Category Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Expense Breakdown</h3>
+          <p class="chart-subtitle">By category</p>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="expenseCategoryChart?.data"
+                  [options]="expenseCategoryChart?.options"
+                  type="pie">
+          </canvas>
+        </div>
+      </div>
+
+      <!-- Variant Sales Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Top Cylinder Sales</h3>
+          <p class="chart-subtitle">By variant</p>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="variantSalesChart?.data"
+                  [options]="variantSalesChart?.options"
+                  type="bar">
+          </canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLLECTIONS & PENDING SECTION -->
+  <div class="section-container" *ngIf="dashboardData">
+    <div class="section-header">
+      <h2 class="section-title">Collections & Pending</h2>
+      <span class="section-subtitle">Track pending returns and customer dues</span>
+    </div>
+
+    <!-- Top Debtors Chart -->
+    <div class="charts-grid charts-grid-1">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Top Debtors</h3>
+          <p class="chart-subtitle">Customers with highest outstanding amount</p>
+        </div>
+        <div class="chart-container">
+          <canvas baseChart 
+                  [data]="topDebtorsChart?.data"
+                  [options]="topDebtorsChart?.options"
+                  type="bar">
+          </canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debtors Table -->
+    <div class="data-card" *ngIf="dashboardData.customersDue && dashboardData.customersDue.length > 0">
+      <div class="card-header">
+        <h3 class="card-title">Overdue Customer Payments</h3>
+        <p class="card-subtitle">Customers with pending payments > 30 days</p>
+      </div>
+      <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Customer</th>
-              <th>Date & Time</th>
-              <th class="text-center">Amount</th>
+              <th>Customer Name</th>
+              <th>Outstanding Amount</th>
+              <th>Days Overdue</th>
+              <th>Last Payment</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let sale of recentSales">
-              <td class="font-medium">{{ sale.customer }}</td>
-              <td class="text-muted text-sm">{{ sale.date }}</td>
-              <td class="text-center font-semibold">{{ sale.amount | indianCurrency }}</td>
+            <tr *ngFor="let customer of dashboardData.customersDue | slice:0:5">
+              <td class="font-medium">{{ customer.customerName }}</td>
+              <td class="text-danger font-semibold">₹{{ customer.dueAmount | number: '1.0-0' }}</td>
+              <td class="text-center">
+                <span [ngClass]="customer.daysOverdue > 60 ? 'badge badge-danger' : 'badge badge-warning'">
+                  {{ customer.daysOverdue }}d
+                </span>
+              </td>
+              <td class="text-muted text-sm">{{ customer.lastPaymentDate | date: 'MMM d, yyyy' }}</td>
+              <td>
+                <span [ngClass]="customer.paymentBehavior === 'REGULAR' ? 'badge badge-success' : 'badge badge-warning'">
+                  {{ customer.paymentBehavior }}
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
 
+  <!-- BUSINESS INSIGHTS SECTION -->
+  <div class="section-container" *ngIf="dashboardData">
+    <div class="section-header">
+      <h2 class="section-title">Business Insights</h2>
+      <span class="section-subtitle">Trends, patterns & actionable metrics</span>
+    </div>
+
+    <div class="insights-grid insights-grid-3">
+      <!-- Growth Trend Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faArrowTrendUp" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Month vs Month</h4>
+        <p class="insight-value">
+          {{ dashboardData.businessInsights.monthlyGrowthPercentage | number: '1.1-1' }}%
+        </p>
+        <p class="insight-label">
+          <span *ngIf="(dashboardData.businessInsights.monthlyGrowthPercentage || 0) > 0" class="text-success">
+            ↑ Growth vs last month
+          </span>
+          <span *ngIf="(dashboardData.businessInsights.monthlyGrowthPercentage || 0) <= 0" class="text-danger">
+            ↓ Decline vs last month
+          </span>
+        </p>
+      </div>
+
+      <!-- Collection Efficiency Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faCreditCard" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Collection Rate</h4>
+        <p class="insight-value">
+          {{ dashboardData.businessInsights.averageCollectionRate | number: '1.0-0' }}%
+        </p>
+        <p class="insight-label">
+          <span class="text-info">Average across month</span>
+        </p>
+      </div>
+
+      <!-- Average Order Value Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faCalendar" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Avg Order Value</h4>
+        <p class="insight-value">
+          ₹{{ dashboardData.businessInsights.averageOrderValue | number: '1.0-0' }}
+        </p>
+        <p class="insight-label">
+          <span class="text-info">Per transaction</span>
+        </p>
+      </div>
+
+      <!-- Inventory Turnover Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faRotateRight" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Inventory Turnover</h4>
+        <p class="insight-value">
+          {{ dashboardData.businessInsights.inventoryTurnoverRate | number: '1.1-1' }}x
+        </p>
+        <p class="insight-label">
+          <span class="text-info">Times per month</span>
+        </p>
+      </div>
+
+      <!-- Top Selling Variant Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faCheckCircle" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Top Variant</h4>
+        <p class="insight-value">
+          {{ dashboardData.businessInsights.topSellingVariant }}
+        </p>
+        <p class="insight-label">
+          <span class="text-info">Best performing cylinder</span>
+        </p>
+      </div>
+
+      <!-- Profit Margin Card -->
+      <div class="insight-card">
+        <div class="insight-icon">
+          <fa-icon [icon]="faBell" class="icon-lg"></fa-icon>
+        </div>
+        <h4 class="insight-title">Profit Margin</h4>
+        <p class="insight-value">
+          {{ dashboardData.businessInsights.avgProfitMargin | number: '1.1-1' }}%
+        </p>
+        <p class="insight-label">
+          <span class="text-success">Healthy margin range</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREVIOUS 6 MONTHS COMPARISON SECTION -->
+  <div class="section-container" *ngIf="dashboardData?.previousMonthsMetrics && (dashboardData?.previousMonthsMetrics?.length || 0) > 0">
+    <div class="section-header">
+      <h2 class="section-title">Historical Performance</h2>
+      <span class="section-subtitle">Last 6 months comparison</span>
+    </div>
+
+    <div class="data-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="text-right">Total Sales</th>
+              <th class="text-right">Total Expenses</th>
+              <th class="text-right">Net Profit</th>
+              <th class="text-center">Profit Margin</th>
+              <th class="text-center">Growth %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let month of dashboardData?.previousMonthsMetrics || []">
+              <td class="font-medium">{{ month.month }}/{{ month.year }}</td>
+              <td class="text-right">₹{{ month.totalSales | number: '1.0-0' }}</td>
+              <td class="text-right">₹{{ month.totalExpenses | number: '1.0-0' }}</td>
+              <td class="text-right font-semibold" [ngClass]="month.netProfit > 0 ? 'text-success' : 'text-danger'">
+                ₹{{ month.netProfit | number: '1.0-0' }}
+              </td>
+              <td class="text-center">{{ month.profitMargin | number: '1.1-1' }}%</td>
+              <td class="text-center">
+                <span [ngClass]="month.growthPercentage > 0 ? 'text-success' : 'text-danger'">
+                  {{ month.growthPercentage | number: '1.1-1' }}%
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

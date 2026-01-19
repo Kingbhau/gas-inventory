@@ -3,6 +3,7 @@ package com.gasagency.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "supplier", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
@@ -26,6 +27,11 @@ public class Supplier extends Auditable {
     @Size(max = 20, message = "Contact must be at most 20 characters.")
     @Column(nullable = false)
     private String contact;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "business_id", nullable = false)
+    @JsonBackReference("business-suppliers")
+    private BusinessInfo business;
 
     public Supplier() {
     }
@@ -65,5 +71,13 @@ public class Supplier extends Auditable {
 
     public void setContact(String contact) {
         this.contact = contact;
+    }
+
+    public BusinessInfo getBusiness() {
+        return business;
+    }
+
+    public void setBusiness(BusinessInfo business) {
+        this.business = business;
     }
 }

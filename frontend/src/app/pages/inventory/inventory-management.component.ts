@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { InventoryStockService } from '../../services/inventory-stock.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { LoadingService } from '../../services/loading.service';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -118,6 +119,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private variantService: CylinderVariantService,
     private warehouseService: WarehouseService,
+    private dataRefreshService: DataRefreshService,
     private cdr: ChangeDetectorRef,
     private fb: FormBuilder
   ) {
@@ -483,6 +485,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     this.inventoryService.transferStock(transferRequest).subscribe({
       next: (response) => {
         this.toastr.success('Stock transferred successfully', 'Transfer Complete');
+        // Notify dashboard of inventory update
+        this.dataRefreshService.notifyInventoryUpdated(response);
         this.closeStockTransferModal();
         this.loadInventory();
         this.loadMovements();

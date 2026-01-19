@@ -5,8 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "bank_account", indexes = {
@@ -175,5 +177,41 @@ public class BankAccount extends Auditable {
                 ", isActive=" + isActive +
                 ", createdDate=" + createdDate +
                 '}';
+    }
+
+    @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("bankAccount-sales")
+    private List<Sale> sales = new ArrayList<>();
+
+    @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("bankAccount-ledgers")
+    private List<CustomerCylinderLedger> ledgers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "bankAccount", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("bankAccount-accountLedgers")
+    private List<BankAccountLedger> accountLedgers = new ArrayList<>();
+
+    public List<Sale> getSales() {
+        return sales;
+    }
+
+    public void setSales(List<Sale> sales) {
+        this.sales = sales;
+    }
+
+    public List<CustomerCylinderLedger> getLedgers() {
+        return ledgers;
+    }
+
+    public void setLedgers(List<CustomerCylinderLedger> ledgers) {
+        this.ledgers = ledgers;
+    }
+
+    public List<BankAccountLedger> getAccountLedgers() {
+        return accountLedgers;
+    }
+
+    public void setAccountLedgers(List<BankAccountLedger> accountLedgers) {
+        this.accountLedgers = accountLedgers;
     }
 }

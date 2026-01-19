@@ -11,7 +11,8 @@ import { UserService, User } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { LoadingService } from '../../services/loading.service';
-import { finalize } from 'rxjs';
+import { finalize, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 // import your UserService here
 // import { UserService } from '../../services/user.service';
 
@@ -30,6 +31,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   showDetailsModal = false;
   detailsUser: any = null;
   searchTerm = '';
+  isSubmitting = false;
+  private destroy$ = new Subject<void>();
 
   faSearch = faSearch;
   faPencil = faPencil;
@@ -79,7 +82,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.updatePagination();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   openDeleteModal(user: any) {
     this.deleteUserTarget = user;
@@ -96,23 +102,28 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   confirmDeleteUser() {
     if (!this.deleteUserTarget) return;
     const id = this.deleteUserTarget.id;
-    this.userService.deleteUser(id).subscribe({
-      next: () => {
-        this.toastr.success('User deleted successfully.', 'Success');
-        this.loadUsers();
-        this.closeDeleteModal();
-      },
-      error: () => {
-        this.toastr.error('Failed to delete user.', 'Error');
-        this.closeDeleteModal();
-      }
-    });
+    this.userService.deleteUser(id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toastr.success('User deleted successfully.', 'Success');
+          this.loadUsers();
+          this.closeDeleteModal();
+        },
+        error: () => {
+          this.toastr.error('Failed to delete user.', 'Error');
+          this.closeDeleteModal();
+        }
+      });
   }
 
   loadUsers() {
     this.loadingService.show('Loading users...');
     this.userService.getUsers()
-      .pipe(finalize(() => this.loadingService.hide()))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => this.loadingService.hide())
+      )
       .subscribe({
         next: (users) => {
           this.users = users;
@@ -218,83 +229,101 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       this.toastr.error('Please correct the errors in the form.', 'Validation Error');
       return;
     }
+
+    // Prevent duplicate submissions
+    if (this.isSubmitting) {
+      return;
+    }
+
     const mobileNo = this.userForm.get('mobileNo')?.value;
     const duplicate = this.users.some(u => u.mobileNo === mobileNo && u.id !== this.editingId);
     if (duplicate) {
       this.toastr.error('A user with this mobile number already exists.', 'Validation Error');
       return;
     }
+
+    this.isSubmitting = true;
+    this.cdr.markForCheck();
+
     if (this.editingId) {
-      this.userService.updateUser(this.editingId, this.userForm.value).subscribe({
-        next: (result) => {
-          this.toastr.success('User updated successfully.', 'Success');
-          this.loadUsers();
-          // Update localStorage if the edited user is the current user
-          const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-          if (currentUser && currentUser.id === result.id) {
-            // Only update user info (no token)
-            const userInfo = {
-              id: result.id,
-              name: result.name,
-              role: result.role,
-              mobileNo: result.mobileNo || '',
-              businessId: result.businessId || (currentUser && currentUser.businessId) || null
-            };
-            localStorage.setItem('user_info', JSON.stringify(userInfo));
-            if (result.name) localStorage.setItem('user_name', result.name);
-            if (result.role) localStorage.setItem('user_role', result.role);
+      this.userService.updateUser(this.editingId, this.userForm.value)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (result) => {
+            this.toastr.success('User updated successfully.', 'Success');
+            this.loadUsers();
+            // Update localStorage if the edited user is the current user
+            const currentUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+            if (currentUser && currentUser.id === result.id) {
+              // Only update user info (no token)
+              const userInfo = {
+                id: result.id,
+                name: result.name,
+                role: result.role,
+                mobileNo: result.mobileNo || '',
+                businessId: result.businessId || (currentUser && currentUser.businessId) || null
+              };
+              localStorage.setItem('user_info', JSON.stringify(userInfo));
+              if (result.name) localStorage.setItem('user_name', result.name);
+              if (result.role) localStorage.setItem('user_role', result.role);
+            }
+            this.closeForm();
+            this.isSubmitting = false;
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            const msg = err?.error?.message || 'Failed to update user.';
+            this.toastr.error(msg, 'Error');
+            this.isSubmitting = false;
+            this.cdr.markForCheck();
           }
-          this.showForm = false;
-          this.userForm.reset();
-          this.userForm.patchValue({ active: true });
-          this.updatePagination();
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.toastr.error('Failed to update user.', 'Error');
-        }
-      });
+        });
     } else {
       const userInfo = this.authService.getUserInfo();
       const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
       const userPayload = { ...this.userForm.value, businessId };
-      this.userService.addUser(userPayload).subscribe({
-        next: () => {
-          this.toastr.success('User added successfully.', 'Success');
-          this.loadUsers();
-          this.showForm = false;
-          this.userForm.reset();
-          this.userForm.patchValue({ active: true });
-          this.updatePagination();
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          const msg = err?.error?.message || 'Failed to add user.';
-          this.toastr.error(msg, 'Error');
-          // Do not close the form on error
-        }
-      });
+      this.userService.addUser(userPayload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('User added successfully.', 'Success');
+            this.loadUsers();
+            this.closeForm();
+            this.isSubmitting = false;
+            this.cdr.markForCheck();
+          },
+          error: (err) => {
+            const msg = err?.error?.message || 'Failed to add user.';
+            this.toastr.error(msg, 'Error');
+            this.isSubmitting = false;
+            this.cdr.markForCheck();
+            // Do not close the form on error
+          }
+        });
     }
   }
-
   deleteUser(id: number) {
     const user = this.users.find(u => u.id === id);
     if (!user) return;
     if (confirm(`Are you sure you want to delete user "${user.name}"?`)) {
-      this.userService.deleteUser(id).subscribe({
-        next: () => {
-          this.toastr.success('User deleted successfully.', 'Success');
-          this.loadUsers();
-        },
-        error: () => {
-          this.toastr.error('Failed to delete user.', 'Error');
-        }
-      });
+      this.userService.deleteUser(id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('User deleted successfully.', 'Success');
+            this.loadUsers();
+          },
+          error: () => {
+            this.toastr.error('Failed to delete user.', 'Error');
+          }
+        });
     }
   }
 
   closeForm() {
     this.showForm = false;
+    this.editingId = null;
+    this.isSubmitting = false;
     this.userForm.reset();
     this.userForm.patchValue({ active: true });
     this.cdr.markForCheck();

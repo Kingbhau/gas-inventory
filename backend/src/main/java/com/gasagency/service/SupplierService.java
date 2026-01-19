@@ -2,8 +2,11 @@ package com.gasagency.service;
 
 import com.gasagency.dto.SupplierDTO;
 import com.gasagency.entity.Supplier;
+import com.gasagency.entity.BusinessInfo;
 import com.gasagency.repository.SupplierRepository;
+import com.gasagency.repository.BusinessInfoRepository;
 import com.gasagency.exception.ResourceNotFoundException;
+import com.gasagency.repository.SupplierTransactionRepository;
 import com.gasagency.util.LoggerUtil;
 import com.gasagency.util.CodeGenerator;
 import org.springframework.data.domain.Page;
@@ -21,22 +24,35 @@ public class SupplierService {
     private final SupplierRepository repository;
     private final com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository;
     private final CodeGenerator codeGenerator;
+    private final BusinessInfoRepository businessInfoRepository;
 
     public SupplierService(SupplierRepository repository,
-            com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository,
-            CodeGenerator codeGenerator) {
+            SupplierTransactionRepository supplierTransactionRepository,
+            CodeGenerator codeGenerator,
+            BusinessInfoRepository businessInfoRepository) {
         this.repository = repository;
         this.supplierTransactionRepository = supplierTransactionRepository;
         this.codeGenerator = codeGenerator;
+        this.businessInfoRepository = businessInfoRepository;
     }
 
-    public SupplierDTO createSupplier(SupplierDTO dto) {
+    public SupplierDTO createSupplier(SupplierDTO dto, Long businessId) {
         LoggerUtil.logBusinessEntry(logger, "CREATE_SUPPLIER", "name", dto != null ? dto.getName() : "null");
+
+        // Validate businessId
+        if (businessId == null) {
+            throw new IllegalArgumentException("Business ID is required");
+        }
+
+        // Load business entity
+        BusinessInfo business = businessInfoRepository.findById(businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Business not found with id: " + businessId));
 
         Supplier supplier = new Supplier(dto.getName(), dto.getContact());
         // Auto-generate unique supplier code
         String supplierCode = codeGenerator.generateSupplierCode();
         supplier.setCode(supplierCode);
+        supplier.setBusiness(business);
 
         supplier = repository.save(supplier);
 

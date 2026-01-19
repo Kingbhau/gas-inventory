@@ -7,6 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPencil, faTrash, faCheck, faBan } from '@fortawesome/free-solid-svg-icons';
 import { WarehouseService } from '../../services/warehouse.service';
+import { AuthService } from '../../services/auth.service';
 import { Warehouse } from '../../models/warehouse.model';
 
 @Component({
@@ -41,6 +42,7 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private warehouseService: WarehouseService,
+    private authService: AuthService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone
@@ -183,7 +185,16 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
         );
     } else {
       // Create new warehouse
-      this.warehouseService.createWarehouse(this.warehouseForm.value.name)
+      const userInfo = this.authService.getUserInfo();
+      const businessId = userInfo?.businessId;
+      
+      if (!businessId) {
+        this.toastr.error('User business information not found');
+        this.isSubmitting = false;
+        return;
+      }
+
+      this.warehouseService.createWarehouse(this.warehouseForm.value.name, businessId)
         .pipe(takeUntil(this.destroy$))
         .subscribe(
           (response: any) => {

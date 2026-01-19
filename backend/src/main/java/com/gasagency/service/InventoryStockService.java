@@ -24,39 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class InventoryStockService {
-        /**
-         * Increment the empty quantity for a given variant by the specified qty.
-         * Throws ResourceNotFoundException if stock or variant not found.
-         */
-        @Transactional
-        public void incrementEmptyQty(Long variantId, Long qty) {
-                LoggerUtil.logBusinessEntry(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "qty", qty);
-                if (qty == null) {
-                        throw new IllegalArgumentException("Quantity to increment cannot be null");
-                }
-                if (qty == 0) {
-                        // No increment needed, but not an error. Log and return.
-                        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId,
-                                        "newEmptyQty", "No increment (qty=0)");
-                        return;
-                }
-                if (qty < 0) {
-                        throw new IllegalArgumentException("Quantity to increment cannot be negative");
-                }
-                CylinderVariant variant = variantRepository.findById(variantId)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Variant not found with id: " + variantId));
-                InventoryStock stock = repository.findByVariant(variant)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Stock not found for variant id: " + variantId));
-                Long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
-                stock.setEmptyQty(currentEmpty + qty);
-                repository.save(stock);
-                LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "newEmptyQty",
-                                stock.getEmptyQty());
-                LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "stockId", stock.getId(), "variantId", variantId,
-                                "emptyQty", stock.getEmptyQty());
-        }
+
 
         private static final Logger logger = LoggerFactory.getLogger(InventoryStockService.class);
 
@@ -93,6 +61,40 @@ public class InventoryStockService {
 
                 return toDTO(stock);
         }
+
+    /**
+     * Increment the empty quantity for a given variant by the specified qty.
+     * Throws ResourceNotFoundException if stock or variant not found.
+     */
+    @Transactional
+    public void incrementEmptyQty(Long variantId, Long qty) {
+        LoggerUtil.logBusinessEntry(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "qty", qty);
+        if (qty == null) {
+            throw new IllegalArgumentException("Quantity to increment cannot be null");
+        }
+        if (qty == 0) {
+            // No increment needed, but not an error. Log and return.
+            LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId,
+                    "newEmptyQty", "No increment (qty=0)");
+            return;
+        }
+        if (qty < 0) {
+            throw new IllegalArgumentException("Quantity to increment cannot be negative");
+        }
+        CylinderVariant variant = variantRepository.findById(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Variant not found with id: " + variantId));
+        InventoryStock stock = repository.findByVariant(variant)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Stock not found for variant id: " + variantId));
+        Long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
+        stock.setEmptyQty(currentEmpty + qty);
+        repository.save(stock);
+        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "newEmptyQty",
+                stock.getEmptyQty());
+        LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "stockId", stock.getId(), "variantId", variantId,
+                "emptyQty", stock.getEmptyQty());
+    }
 
         public InventoryStockDTO getStockById(Long id) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "INVENTORY_STOCK", "id", id);

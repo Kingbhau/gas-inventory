@@ -9,6 +9,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { ExpenseService } from '../../services/expense.service';
 import { Expense } from '../../models/expense.model';
 import { LoadingService } from '../../services/loading.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
@@ -34,7 +35,8 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private expenseService: ExpenseService,
     private toastr: ToastrService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private dataRefreshService: DataRefreshService
   ) {
     this.initForm();
   }
@@ -121,16 +123,17 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.successMessage = 'Expense recorded successfully!';
         this.toastr.success('Expense recorded successfully');
+        
+        // Notify dashboard of the change
+        this.dataRefreshService.notifyExpenseCreated(response);
+        
+        // Reset form completely
         this.expenseForm.reset();
         
-        // Explicitly reset category field
-        this.expenseForm.patchValue({
-          category: ''
-        });
-        
-        // Set today's date as default for next entry
+        // Set default values
         const today = new Date().toISOString().split('T')[0];
         this.expenseForm.patchValue({
+          category: '',
           expenseDate: today
         });
 
@@ -139,6 +142,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
           this.successMessage = '';
         }, 3000);
 
+        // Re-enable buttons
         this.isSubmitting = false;
       },
       error: (error) => {
@@ -149,13 +153,11 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   }
 
   resetForm() {
+    this.isSubmitting = false;
     this.expenseForm.reset();
-    // Explicitly reset category field
-    this.expenseForm.patchValue({
-      category: ''
-    });
     const today = new Date().toISOString().split('T')[0];
     this.expenseForm.patchValue({
+      category: '',
       expenseDate: today
     });
     this.successMessage = '';

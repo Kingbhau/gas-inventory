@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -90,8 +93,8 @@ public class CustomerService {
         if (configuredVariantIds != null && !configuredVariantIds.isEmpty() &&
                 variantFilledCylinders != null && !variantFilledCylinders.isEmpty()) {
 
-            java.math.BigDecimal dueAmount = dto.getDueAmount() != null ? dto.getDueAmount()
-                    : java.math.BigDecimal.ZERO;
+            BigDecimal dueAmount = dto.getDueAmount() != null ? dto.getDueAmount()
+                    : BigDecimal.ZERO;
 
             // Create ledger entry for each variant with its specific filled cylinder count
             // Due amount is only stored in the first variant's entry, others get 0
@@ -110,15 +113,15 @@ public class CustomerService {
                         // Use ledger service to properly calculate due amount
                         // For first variant: pass totalAmount as dueAmount, for others pass 0 (will
                         // carry forward)
-                        java.math.BigDecimal totalAmountForLedger = isFirstVariant ? dueAmount
-                                : java.math.BigDecimal.ZERO;
-                        java.math.BigDecimal amountReceivedForLedger = java.math.BigDecimal.ZERO;
+                        BigDecimal totalAmountForLedger = isFirstVariant ? dueAmount
+                                : BigDecimal.ZERO;
+                        BigDecimal amountReceivedForLedger = BigDecimal.ZERO;
 
                         ledgerService.createLedgerEntry(
                                 customer.getId(),
                                 null, // No warehouse for INITIAL_STOCK
                                 variantId,
-                                java.time.LocalDate.now(),
+                                LocalDate.now(),
                                 CustomerCylinderLedger.TransactionType.INITIAL_STOCK.name(),
                                 null, // No refId for initial stock
                                 filledOut,
@@ -248,8 +251,6 @@ public class CustomerService {
 
                         // Only create if no INITIAL_STOCK entry exists for this variant
                         if (existingInitialStock.isEmpty() && filledOut > 0) {
-                            long balance = filledOut;
-
                             ledgerService.createLedgerEntry(
                                     customer.getId(),
                                     null,
@@ -332,7 +333,7 @@ public class CustomerService {
         // Get total pending units: ONLY from ledger (filledOut - emptyIn balance)
         long totalPending = 0L;
         long totalFilledCylinders = 0L;
-        java.math.BigDecimal totalDueAmount = java.math.BigDecimal.ZERO;
+        BigDecimal totalDueAmount = BigDecimal.ZERO;
 
         // Get customer's configured variants
         List<Long> configuredVariantIds = convertJsonToVariantList(customer.getConfiguredVariants());

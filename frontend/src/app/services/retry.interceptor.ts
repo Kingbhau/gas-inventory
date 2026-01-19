@@ -1,10 +1,11 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { retry, timer, throwError, catchError } from 'rxjs';
 
 /**
- * Retry Interceptor - Automatically retries on 409 (Conflict) and 503 (Service Unavailable)
+ * Retry Interceptor - Automatically retries on 503 (Service Unavailable)
+ * Does NOT retry on 409 (Conflict) for POST/PUT/DELETE as data errors are not transient
  * Uses exponential backoff: 100ms, 200ms, 400ms for 3 retries
  */
 export const RetryInterceptor: HttpInterceptorFn = (req, next) => {
@@ -14,19 +15,15 @@ export const RetryInterceptor: HttpInterceptorFn = (req, next) => {
     retry({
       count: 3,
       delay: (error: HttpErrorResponse, retryCount: number) => {
-        // Retry only on 409 (Conflict) or 503 (Service Unavailable)
-        if (error.status === 409 || error.status === 503) {
+        // Only retry on 503 (Service Unavailable) - transient server errors
+        // DO NOT retry on 409 (Conflict) - data integrity errors are not transient
+        // DO NOT retry on POST/PUT/DELETE with 409 - these are client errors that won't change
+        if (error.status === 503) {
           const exponentialDelay = 100 * Math.pow(2, retryCount - 1);
-
-          // Show retry info only on 409 (user-facing issue)
-          if (error.status === 409 && retryCount === 1) {
-            toastr.info('Data was modified. Retrying automatically...', 'Retrying', {
-              timeOut: 3000,
-              progressBar: true
-            });
-          }
-
-          // Return delayed retry
+          toastr.info('Server busy. Retrying automatically...', 'Retrying', {
+            timeOut: 3000,
+            progressBar: true
+          });
           return timer(exponentialDelay);
         }
 
@@ -36,9 +33,7 @@ export const RetryInterceptor: HttpInterceptorFn = (req, next) => {
     }),
     catchError((error: HttpErrorResponse) => {
       // After retries exhausted
-      if (error.status === 409) {
-        toastr.error('Data conflict persists. Please refresh and try again.', 'Error');
-      } else if (error.status === 503) {
+      if (error.status === 503) {
         toastr.error('System is busy. Please try again in a moment.', 'Error');
       }
       return throwError(() => error);

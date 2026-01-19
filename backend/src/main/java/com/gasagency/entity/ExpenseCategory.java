@@ -1,6 +1,9 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "expense_categories")
@@ -61,5 +64,17 @@ public class ExpenseCategory extends Auditable {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("category-expenses")
+    private List<Expense> expenses = new ArrayList<>();
+
+    public List<Expense> getExpenses() {
+        return expenses;
+    }
+
+    public void setExpenses(List<Expense> expenses) {
+        this.expenses = expenses;
     }
 }

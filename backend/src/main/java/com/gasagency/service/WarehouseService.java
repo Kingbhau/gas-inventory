@@ -2,9 +2,11 @@ package com.gasagency.service;
 
 import com.gasagency.dto.WarehouseDTO;
 import com.gasagency.entity.Warehouse;
+import com.gasagency.entity.BusinessInfo;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.repository.WarehouseRepository;
+import com.gasagency.repository.BusinessInfoRepository;
 import com.gasagency.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class WarehouseService {
 
     @Autowired
     private WarehouseRepository warehouseRepository;
+
+    @Autowired
+    private BusinessInfoRepository businessInfoRepository;
 
     @Autowired
     private CodeGenerator codeGenerator;
@@ -95,9 +100,13 @@ public class WarehouseService {
     /**
      * Create new warehouse with validation
      */
-    public WarehouseDTO createWarehouse(String name) {
+    public WarehouseDTO createWarehouse(String name, Long businessId) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Warehouse name is required");
+        }
+
+        if (businessId == null || businessId <= 0) {
+            throw new IllegalArgumentException("Valid businessId is required");
         }
 
         String trimmedName = name.trim();
@@ -107,7 +116,12 @@ public class WarehouseService {
             throw new InvalidOperationException("Warehouse with name '" + trimmedName + "' already exists");
         }
 
+        // Load business to verify it exists
+        BusinessInfo business = businessInfoRepository.findById(businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Business not found with ID: " + businessId));
+
         Warehouse warehouse = new Warehouse(trimmedName, "ACTIVE");
+        warehouse.setBusiness(business);
         // Auto-generate unique warehouse code
         String warehouseCode = codeGenerator.generateWarehouseCode();
         warehouse.setCode(warehouseCode);

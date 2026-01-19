@@ -6,6 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faPencil, faTrash, faPlus, faTimes, faExclamation, faBuilding } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../services/supplier.service';
+import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -51,12 +52,12 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
   faTimes = faTimes;
   faExclamation = faExclamation;
   faBuilding = faBuilding;
-
   suppliers: any[] = [];
 
   constructor(
     private fb: FormBuilder,
     private supplierService: SupplierService,
+    private authService: AuthService,
     private loadingService: LoadingService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
@@ -171,7 +172,15 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
           sub.unsubscribe();
         });
     } else {
-      const sub = this.supplierService.createSupplier(this.supplierForm.value)
+      const userInfo = this.authService.getUserInfo();
+      const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
+      
+      if (!businessId) {
+        this.toastr.error('User business information not found', 'Error');
+        return;
+      }
+
+      const sub = this.supplierService.createSupplier(this.supplierForm.value, businessId)
         .pipe(
           catchError((error: any) => {
             const errorMessage = error?.error?.message || error?.message || 'Error creating supplier';

@@ -2,7 +2,6 @@ package com.gasagency.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
@@ -12,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "sale", indexes = {
@@ -36,11 +37,13 @@ public class Sale extends Auditable {
     @NotNull(message = "Warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-sales")
     private Warehouse warehouse;
 
     @NotNull(message = "Customer is required.")
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonBackReference("customer-sales")
     private Customer customer;
 
     @NotNull(message = "Sale date is required.")
@@ -58,6 +61,7 @@ public class Sale extends Auditable {
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "bank_account_id")
+    @JsonBackReference("bankAccount-sales")
     private BankAccount bankAccount;
 
     @Column(nullable = false, updatable = false)
@@ -65,6 +69,10 @@ public class Sale extends Auditable {
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SaleItem> saleItems = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("sale-ledgers")
+    private List<CustomerCylinderLedger> ledgers = new ArrayList<>();
 
     public Sale() {
     }
@@ -152,6 +160,14 @@ public class Sale extends Auditable {
 
     public void setSaleItems(List<SaleItem> saleItems) {
         this.saleItems = saleItems;
+    }
+
+    public List<CustomerCylinderLedger> getLedgers() {
+        return ledgers;
+    }
+
+    public void setLedgers(List<CustomerCylinderLedger> ledgers) {
+        this.ledgers = ledgers;
     }
 
     public String getPaymentMode() {

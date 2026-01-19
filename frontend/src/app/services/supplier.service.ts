@@ -13,8 +13,9 @@ export class SupplierService {
 
   constructor(private http: HttpClient) { }
 
-  createSupplier(supplier: Supplier): Observable<Supplier> {
-    return this.http.post<Supplier>(this.apiUrl, supplier, { withCredentials: true })
+  createSupplier(supplier: Supplier, businessId: number): Observable<Supplier> {
+    const payload = { ...supplier, businessId };
+    return this.http.post<Supplier>(this.apiUrl, payload, { withCredentials: true })
       .pipe(applyTimeout());
   }
 

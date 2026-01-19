@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "inventory_stock", indexes = {
@@ -25,11 +26,13 @@ public class InventoryStock extends Auditable {
     @NotNull(message = "Warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-inventoryStocks")
     private Warehouse warehouse;
 
     @NotNull(message = "Variant is required.")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-inventoryStocks")
     private CylinderVariant variant;
 
     @NotNull(message = "Filled quantity is required.")

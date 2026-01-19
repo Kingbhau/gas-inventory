@@ -43,8 +43,8 @@ export class WarehouseService {
   /**
    * Create new warehouse
    */
-  createWarehouse(name: string): Observable<any> {
-    return this.http.post<any>(this.apiUrl, { name }, { withCredentials: true });
+  createWarehouse(name: string, businessId: number): Observable<any> {
+    return this.http.post<any>(this.apiUrl, { name, businessId }, { withCredentials: true });
   }
 
   /**

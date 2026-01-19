@@ -223,4 +223,88 @@ public class LoggerUtil {
     public static void clearMDC() {
         MDC.clear();
     }
+
+    /**
+     * Log validation failure with detailed context
+     * 
+     * @param logger  Logger instance
+     * @param field   Field name that failed validation
+     * @param value   Value that failed validation
+     * @param reason  Reason for validation failure
+     * @param details Additional context key-value pairs
+     */
+    public static void logValidationFailure(Logger logger, String field, Object value, String reason,
+            Object... details) {
+        StringBuilder message = new StringBuilder("VALIDATION_FAILED | field=").append(field)
+                .append(" | value=").append(value)
+                .append(" | reason=").append(reason);
+        appendDetails(message, details);
+        logger.warn(message.toString());
+    }
+
+    /**
+     * Log data access (useful for security auditing)
+     * 
+     * @param logger  Logger instance
+     * @param entity  Entity being accessed
+     * @param action  Action performed (READ, WRITE, DELETE)
+     * @param details Key-value pairs with context
+     */
+    public static void logDataAccess(Logger logger, String entity, String action, Object... details) {
+        StringBuilder message = new StringBuilder("DATA_ACCESS | entity=").append(entity)
+                .append(" | action=").append(action);
+        appendDetails(message, details);
+        logger.info(message.toString());
+    }
+
+    /**
+     * Log concurrency issue or lock conflict
+     * 
+     * @param logger    Logger instance
+     * @param operation Operation that encountered concurrency issue
+     * @param details   Key-value pairs with context
+     */
+    public static void logConcurrencyIssue(Logger logger, String operation, Object... details) {
+        StringBuilder message = new StringBuilder("CONCURRENCY_ISSUE | operation=").append(operation);
+        appendDetails(message, details);
+        logger.warn(message.toString());
+    }
+
+    /**
+     * Log calculation details for debugging financial operations
+     * 
+     * @param logger      Logger instance
+     * @param calculation Calculation name
+     * @param inputs      Input parameters
+     * @param output      Result output
+     * @param details     Additional context
+     */
+    public static void logCalculation(Logger logger, String calculation, String inputs, String output,
+            Object... details) {
+        StringBuilder message = new StringBuilder("CALCULATION | name=").append(calculation)
+                .append(" | inputs=").append(inputs)
+                .append(" | output=").append(output);
+        appendDetails(message, details);
+        logger.debug(message.toString());
+    }
+
+    /**
+     * Log state transition for business entities
+     * 
+     * @param logger   Logger instance
+     * @param entity   Entity type
+     * @param entityId Entity identifier
+     * @param oldState Previous state
+     * @param newState New state
+     * @param details  Additional context
+     */
+    public static void logStateTransition(Logger logger, String entity, Long entityId, String oldState,
+            String newState, Object... details) {
+        StringBuilder message = new StringBuilder("STATE_TRANSITION | entity=").append(entity)
+                .append(" | id=").append(entityId)
+                .append(" | from=").append(oldState)
+                .append(" | to=").append(newState);
+        appendDetails(message, details);
+        logger.info(message.toString());
+    }
 }

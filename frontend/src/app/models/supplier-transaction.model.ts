@@ -11,5 +11,5 @@ export interface SupplierTransaction {
   emptySent: number;
   reference?: string;
   referenceNumber?: string;
-  amount: number;
+  amount: string | number; // Can be string or number from BigDecimal
 }

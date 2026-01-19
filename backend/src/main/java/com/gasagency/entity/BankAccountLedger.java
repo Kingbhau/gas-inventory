@@ -1,11 +1,10 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "bank_account_ledger")
@@ -17,6 +16,7 @@ public class BankAccountLedger extends Auditable {
 
     @ManyToOne
     @JoinColumn(name = "bank_account_id", nullable = false)
+    @JsonBackReference("bankAccount-accountLedgers")
     private BankAccount bankAccount;
 
     @Column(nullable = false)
@@ -28,8 +28,10 @@ public class BankAccountLedger extends Auditable {
     @Column(nullable = false)
     private BigDecimal balanceAfter;
 
-    @Column(name = "sale_id")
-    private Long saleId; // Reference to Sale if transaction is from a sale
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sale_id", nullable = true)
+    @JsonBackReference("bankAccount-ledgers")
+    private Sale sale; // Reference to Sale if transaction is from a sale
 
     @Pattern(regexp = "^(DEP|WIT|ADJ)-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE")
     @Column(name = "reference_number", nullable = false, length = 50, unique = true)
@@ -46,13 +48,13 @@ public class BankAccountLedger extends Auditable {
     }
 
     public BankAccountLedger(BankAccount bankAccount, String transactionType, BigDecimal amount,
-            BigDecimal balanceAfter, Long saleId, String referenceNumber, String description) {
+            BigDecimal balanceAfter, Sale sale, String referenceNumber, String description) {
         this();
         this.bankAccount = bankAccount;
         this.transactionType = transactionType;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
-        this.saleId = saleId;
+        this.sale = sale;
         this.referenceNumber = referenceNumber;
         this.description = description;
     }
@@ -98,12 +100,12 @@ public class BankAccountLedger extends Auditable {
         this.balanceAfter = balanceAfter;
     }
 
-    public Long getSaleId() {
-        return saleId;
+    public Sale getSale() {
+        return sale;
     }
 
-    public void setSaleId(Long saleId) {
-        this.saleId = saleId;
+    public void setSale(Sale sale) {
+        this.sale = sale;
     }
 
     public String getReferenceNumber() {
@@ -138,7 +140,7 @@ public class BankAccountLedger extends Auditable {
                 ", transactionType='" + transactionType + '\'' +
                 ", amount=" + amount +
                 ", balanceAfter=" + balanceAfter +
-                ", saleId=" + saleId +
+                ", sale=" + (sale != null ? sale.getId() : null) +
                 ", referenceNumber='" + referenceNumber + '\'' +
                 ", description='" + description + '\'' +
                 ", transactionDate=" + transactionDate +

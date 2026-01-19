@@ -28,11 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import com.gasagency.dto.CustomerBalanceDTO;
 import java.util.ArrayList;
 import java.math.BigDecimal;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -396,7 +398,7 @@ public class CustomerCylinderLedgerService {
                                                 .limit(1)
                                                 .collect(Collectors.toList());
 
-                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
                                         previousBalance = previousEntries.get(0).getDueAmount() != null
                                                         ? previousEntries.get(0).getDueAmount()
@@ -407,7 +409,7 @@ public class CustomerCylinderLedgerService {
                                 // reduces due amount)
                                 // Otherwise just carry forward the previous balance
                                 if (amountReceived != null && amountReceived.compareTo(java.math.BigDecimal.ZERO) > 0) {
-                                        java.math.BigDecimal newDue = previousBalance.subtract(amountReceived);
+                                        BigDecimal newDue = previousBalance.subtract(amountReceived);
                                         // Ensure due amount doesn't go negative (customer overpaid)
                                         if (newDue.signum() < 0) {
                                                 newDue = java.math.BigDecimal.ZERO;
@@ -427,7 +429,7 @@ public class CustomerCylinderLedgerService {
                                                 .limit(1)
                                                 .collect(Collectors.toList());
 
-                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
                                         previousBalance = previousEntries.get(0).getDueAmount() != null
                                                         ? previousEntries.get(0).getDueAmount()
@@ -436,8 +438,8 @@ public class CustomerCylinderLedgerService {
 
                                 // Cumulative balance = previous balance + current transaction amount - payment
                                 // received
-                                java.math.BigDecimal currentTransactionDue = totalAmount.subtract(amountReceived);
-                                java.math.BigDecimal cumulativeDue = previousBalance.add(currentTransactionDue);
+                                BigDecimal currentTransactionDue = totalAmount.subtract(amountReceived);
+                                BigDecimal cumulativeDue = previousBalance.add(currentTransactionDue);
                                 // Ensure due amount doesn't go negative (customer overpaid)
                                 if (cumulativeDue.signum() < 0) {
                                         cumulativeDue = java.math.BigDecimal.ZERO;
@@ -454,7 +456,7 @@ public class CustomerCylinderLedgerService {
                                                 .limit(1)
                                                 .collect(Collectors.toList());
 
-                                java.math.BigDecimal previousBalance = java.math.BigDecimal.ZERO;
+                                BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
                                         previousBalance = previousEntries.get(0).getDueAmount() != null
                                                         ? previousEntries.get(0).getDueAmount()
@@ -462,7 +464,7 @@ public class CustomerCylinderLedgerService {
                                 }
 
                                 // Cumulative balance = previous balance + current transaction amount
-                                java.math.BigDecimal cumulativeDue = previousBalance.add(totalAmount);
+                                BigDecimal cumulativeDue = previousBalance.add(totalAmount);
                                 ledger.setDueAmount(cumulativeDue);
                         }
 
@@ -709,7 +711,7 @@ public class CustomerCylinderLedgerService {
                 // Calculate running balance (remaining customer debt) BEFORE this payment
                 // Get all previous ledger entries for this customer
                 List<CustomerCylinderLedger> previousEntries = repository.findByCustomer(customer);
-                java.math.BigDecimal currentDue = java.math.BigDecimal.ZERO;
+                BigDecimal currentDue = BigDecimal.ZERO;
 
                 for (CustomerCylinderLedger entry : previousEntries) {
                         if (entry.getRefType() == CustomerCylinderLedger.TransactionType.PAYMENT) {
@@ -737,13 +739,13 @@ public class CustomerCylinderLedgerService {
                 }
 
                 // Calculate running balance (remaining customer debt) AFTER this payment
-                java.math.BigDecimal cumulativeBalance = currentDue;
+                BigDecimal cumulativeBalance = currentDue;
 
                 // Subtract current payment from balance
                 cumulativeBalance = cumulativeBalance.subtract(paymentRequest.amount);
 
                 // Set dueAmount to the running balance (can be 0 or negative if overpaid)
-                ledger.setDueAmount(cumulativeBalance.max(java.math.BigDecimal.ZERO)); // Don't store negative due
+                ledger.setDueAmount(cumulativeBalance.max(BigDecimal.ZERO)); // Don't store negative due
                                                                                        // amounts
                 ledger.setRefId(null);
                 ledger.setPaymentMode(paymentRequest.paymentMode);
@@ -863,17 +865,17 @@ public class CustomerCylinderLedgerService {
         }
 
         // Get complete summary for a customer (across all ledger entries)
-        public java.util.Map<String, Object> getCustomerLedgerSummary(Long customerId) {
+        public Map<String, Object> getCustomerLedgerSummary(Long customerId) {
                 Customer customer = customerRepository.findById(customerId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Customer not found with id: " + customerId));
 
                 List<CustomerCylinderLedger> allEntries = repository.findByCustomer(customer);
-                java.util.Map<String, Object> summary = new java.util.HashMap<>();
-                java.util.Map<Long, java.util.Map<String, Object>> variantSummary = new java.util.HashMap<>();
+                Map<String, Object> summary = new HashMap<>();
+                Map<Long, Map<String, Object>> variantSummary = new HashMap<>();
 
                 // Get the latest balance for each variant (most recent entry per variant)
-                java.util.Map<Long, CustomerCylinderLedger> latestByVariant = new java.util.HashMap<>();
+                Map<Long, CustomerCylinderLedger> latestByVariant = new HashMap<>();
 
                 for (CustomerCylinderLedger entry : allEntries) {
                         // Skip PAYMENT transactions (they don't affect variant-specific balances)
@@ -892,7 +894,7 @@ public class CustomerCylinderLedgerService {
                 }
 
                 // Build summary from latest entries per variant
-                for (java.util.Map.Entry<Long, CustomerCylinderLedger> entry : latestByVariant.entrySet()) {
+                for (Map.Entry<Long, CustomerCylinderLedger> entry : latestByVariant.entrySet()) {
                         CustomerCylinderLedger ledger = entry.getValue();
                         if (ledger.getVariant() != null) {
                                 Long variantId = ledger.getVariant().getId();

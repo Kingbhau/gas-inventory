@@ -14,6 +14,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExpenseService {
@@ -106,7 +109,7 @@ public class ExpenseService {
         }
 
         public ExpenseSummaryDTO getExpensesSummary(LocalDate fromDate, LocalDate toDate, Long categoryId) {
-                java.util.List<Expense> expenses;
+                List<Expense> expenses;
 
                 if (fromDate != null && toDate != null && categoryId != null) {
                         ExpenseCategory category = categoryRepository.findById(categoryId)
@@ -135,7 +138,7 @@ public class ExpenseService {
                 // Find top category by total amount
                 String topCategory = "N/A";
                 if (!expenses.isEmpty()) {
-                        java.util.Map<String, BigDecimal> categorySums = new java.util.HashMap<>();
+                        Map<String, BigDecimal> categorySums = new HashMap<>();
                         for (Expense expense : expenses) {
                                 String categoryName = expense.getCategory().getName();
                                 categorySums.put(categoryName, categorySums.getOrDefault(categoryName, BigDecimal.ZERO)

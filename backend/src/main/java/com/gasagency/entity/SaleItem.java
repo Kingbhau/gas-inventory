@@ -6,6 +6,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "sale_item", indexes = {
@@ -25,16 +26,19 @@ public class SaleItem extends Auditable {
     @NotNull(message = "Sale is required.")
     @ManyToOne
     @JoinColumn(name = "sale_id", nullable = false)
+    @JsonBackReference("sale-items")
     private Sale sale;
 
     @NotNull(message = "Warehouse is required.")
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
+    @JsonBackReference("warehouse-saleItems")
     private Warehouse warehouse;
 
     @NotNull(message = "Variant is required.")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-saleItems")
     private CylinderVariant variant;
 
     @NotNull(message = "Quantity issued is required.")

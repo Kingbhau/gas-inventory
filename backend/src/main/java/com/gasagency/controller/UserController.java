@@ -5,6 +5,8 @@ import com.gasagency.entity.User;
 import com.gasagency.dto.UserDTO;
 import com.gasagency.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,40 +22,51 @@ public class UserController {
 
     @PreAuthorize("hasRole('MANAGER')")
     @PostMapping
-    public UserDTO createUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         User createdUser = userService.createUser(userDTO);
-        return toDTO(createdUser);
+        return new ResponseEntity<>(toDTO(createdUser), HttpStatus.CREATED);
     }
 
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
-    public Optional<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {
-        return userService.updateUser(id, user).map(this::toDTO);
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {
+        Optional<User> updatedUser = userService.updateUser(id, user);
+        if (updatedUser.isPresent()) {
+            return new ResponseEntity<>(toDTO(updatedUser.get()), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
-    public boolean softDeleteUser(@PathVariable Long id) {
-        return userService.softDeleteUser(id);
+    public ResponseEntity<Boolean> softDeleteUser(@PathVariable Long id) {
+        boolean deleted = userService.softDeleteUser(id);
+        return new ResponseEntity<>(deleted, deleted ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping
-    public List<UserDTO> getAllActiveUsers() {
-        return userService.getAllActiveUsers().stream().map(this::toDTO).toList();
+    public ResponseEntity<List<UserDTO>> getAllActiveUsers() {
+        List<UserDTO> users = userService.getAllActiveUsers().stream().map(this::toDTO).toList();
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/{id}")
-    public Optional<UserDTO> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id).map(this::toDTO);
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        Optional<User> user = userService.getUserById(id);
+        if (user.isPresent()) {
+            return new ResponseEntity<>(toDTO(user.get()), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping("/{id}/change-password")
-    public boolean changePassword(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<Boolean> changePassword(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String currentPassword = payload.get("currentPassword");
         String newPassword = payload.get("newPassword");
-        return userService.changePassword(id, currentPassword, newPassword);
+        boolean changed = userService.changePassword(id, currentPassword, newPassword);
+        return new ResponseEntity<>(changed, changed ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
     private UserDTO toDTO(User user) {

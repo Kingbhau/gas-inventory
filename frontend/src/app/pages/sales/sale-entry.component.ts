@@ -17,6 +17,7 @@ import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { SaleService } from '../../services/sale.service';
 import { BankAccountService } from '../../services/bank-account.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-balance.service';
 import { MonthlyPriceService } from '../../services/monthly-price.service';
 import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
@@ -93,7 +94,8 @@ export class SaleEntryComponent implements OnInit {
     private toastr: ToastrService,
     private customerCylinderLedgerService: CustomerCylinderLedgerService,
     private loadingService: LoadingService,
-    private warehouseService: WarehouseService
+    private warehouseService: WarehouseService,
+    private dataRefreshService: DataRefreshService
   ) {
     this.initForm();
   }
@@ -514,6 +516,8 @@ export class SaleEntryComponent implements OnInit {
         next: (response) => {
           if (response) {
             this.toastr.success('Sale recorded successfully', 'Success');
+            // Notify dashboard of the sale
+            this.dataRefreshService.notifySaleCreated(response);
             this.resetForm();
           }
         },

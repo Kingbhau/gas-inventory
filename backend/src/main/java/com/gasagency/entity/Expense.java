@@ -3,6 +3,7 @@ package com.gasagency.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "expenses")
@@ -20,6 +21,7 @@ public class Expense extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonBackReference("category-expenses")
     private ExpenseCategory category;
 
     @Column(nullable = false)

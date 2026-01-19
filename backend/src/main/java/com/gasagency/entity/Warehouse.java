@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "warehouse", indexes = {
@@ -28,6 +31,39 @@ public class Warehouse extends Auditable {
 
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE"; // ACTIVE, INACTIVE
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "business_id", nullable = false)
+    @JsonBackReference("business-warehouses")
+    private BusinessInfo business;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-inventoryStocks")
+    private List<InventoryStock> inventoryStocks;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-sales")
+    private List<Sale> sales;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-saleItems")
+    private List<SaleItem> saleItems;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-supplierTransactions")
+    private List<SupplierTransaction> supplierTransactions;
+
+    @OneToMany(mappedBy = "fromWarehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-fromTransfers")
+    private List<WarehouseTransfer> fromWarehouseTransfers;
+
+    @OneToMany(mappedBy = "toWarehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-toTransfers")
+    private List<WarehouseTransfer> toWarehouseTransfers;
+
+    @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("warehouse-customerCylinderLedgers")
+    private List<CustomerCylinderLedger> customerCylinderLedgers;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -107,6 +143,70 @@ public class Warehouse extends Auditable {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public BusinessInfo getBusiness() {
+        return business;
+    }
+
+    public void setBusiness(BusinessInfo business) {
+        this.business = business;
+    }
+
+    public List<InventoryStock> getInventoryStocks() {
+        return inventoryStocks;
+    }
+
+    public void setInventoryStocks(List<InventoryStock> inventoryStocks) {
+        this.inventoryStocks = inventoryStocks;
+    }
+
+    public List<Sale> getSales() {
+        return sales;
+    }
+
+    public void setSales(List<Sale> sales) {
+        this.sales = sales;
+    }
+
+    public List<SaleItem> getSaleItems() {
+        return saleItems;
+    }
+
+    public void setSaleItems(List<SaleItem> saleItems) {
+        this.saleItems = saleItems;
+    }
+
+    public List<SupplierTransaction> getSupplierTransactions() {
+        return supplierTransactions;
+    }
+
+    public void setSupplierTransactions(List<SupplierTransaction> supplierTransactions) {
+        this.supplierTransactions = supplierTransactions;
+    }
+
+    public List<WarehouseTransfer> getFromWarehouseTransfers() {
+        return fromWarehouseTransfers;
+    }
+
+    public void setFromWarehouseTransfers(List<WarehouseTransfer> fromWarehouseTransfers) {
+        this.fromWarehouseTransfers = fromWarehouseTransfers;
+    }
+
+    public List<WarehouseTransfer> getToWarehouseTransfers() {
+        return toWarehouseTransfers;
+    }
+
+    public void setToWarehouseTransfers(List<WarehouseTransfer> toWarehouseTransfers) {
+        this.toWarehouseTransfers = toWarehouseTransfers;
+    }
+
+    public List<CustomerCylinderLedger> getCustomerCylinderLedgers() {
+        return customerCylinderLedgers;
+    }
+
+    public void setCustomerCylinderLedgers(List<CustomerCylinderLedger> customerCylinderLedgers) {
+        this.customerCylinderLedgers = customerCylinderLedgers;
     }
 
     public boolean isActive() {

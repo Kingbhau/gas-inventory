@@ -14,6 +14,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.transaction.TransactionSystemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.gasagency.util.LoggerUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
@@ -28,7 +29,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(ResourceNotFoundException.class)
         public ResponseEntity<ErrorResponse> handleResourceNotFound(
                         ResourceNotFoundException ex, WebRequest request) {
-                logger.warn("Resource not found: {}", ex.getMessage());
+                logger.warn("RESOURCE_NOT_FOUND | message={}", ex.getMessage());
+                LoggerUtil.logBusinessError(logger, "RESOURCE_LOOKUP", ex.getMessage());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.NOT_FOUND.value(),
                                 "RESOURCE_NOT_FOUND",
@@ -40,7 +42,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(ConcurrencyConflictException.class)
         public ResponseEntity<ErrorResponse> handleConcurrencyConflict(
                         ConcurrencyConflictException ex, WebRequest request) {
-                logger.warn("Concurrency conflict detected: {}", ex.getMessage());
+                logger.warn("CONCURRENCY_CONFLICT | message={}", ex.getMessage());
+                LoggerUtil.logConcurrencyIssue(logger, "CONCURRENCY_CONFLICT", "reason", ex.getMessage());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.CONFLICT.value(),
                                 "CONCURRENCY_CONFLICT",
@@ -52,7 +55,9 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
         public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(
                         ObjectOptimisticLockingFailureException ex, WebRequest request) {
-                logger.warn("Optimistic lock failure - concurrent modification detected: {}", ex.getMessage());
+                logger.warn("OPTIMISTIC_LOCK_FAILURE | message={}", ex.getMessage());
+                LoggerUtil.logConcurrencyIssue(logger, "OPTIMISTIC_LOCKING",
+                                "reason", "concurrent_modification", "exception", ex.getClass().getSimpleName());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.CONFLICT.value(),
                                 "CONCURRENCY_CONFLICT",
@@ -64,7 +69,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(jakarta.persistence.LockTimeoutException.class)
         public ResponseEntity<ErrorResponse> handleLockTimeout(
                         jakarta.persistence.LockTimeoutException ex, WebRequest request) {
-                logger.warn("Lock timeout - could not acquire database lock: {}", ex.getMessage());
+                logger.warn("LOCK_TIMEOUT | message={}", ex.getMessage());
+                LoggerUtil.logConcurrencyIssue(logger, "LOCK_TIMEOUT", "reason", ex.getMessage());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.SERVICE_UNAVAILABLE.value(),
                                 "LOCK_TIMEOUT",
@@ -76,7 +82,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(InvalidOperationException.class)
         public ResponseEntity<ErrorResponse> handleInvalidOperation(
                         InvalidOperationException ex, WebRequest request) {
-                logger.warn("Invalid operation: {}", ex.getMessage());
+                logger.warn("INVALID_OPERATION | message={}", ex.getMessage());
+                LoggerUtil.logBusinessError(logger, "INVALID_OPERATION", ex.getMessage());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "INVALID_OPERATION",
@@ -88,7 +95,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(IllegalArgumentException.class)
         public ResponseEntity<ErrorResponse> handleIllegalArgument(
                         IllegalArgumentException ex, WebRequest request) {
-                logger.warn("Illegal argument: {}", ex.getMessage());
+                logger.warn("ILLEGAL_ARGUMENT | message={}", ex.getMessage());
+                LoggerUtil.logBusinessError(logger, "ILLEGAL_ARGUMENT", ex.getMessage());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "INVALID_ARGUMENT",
@@ -104,7 +112,8 @@ public class GlobalExceptionHandler {
                                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                                 .collect(Collectors.joining("; "));
 
-                logger.warn("Validation error: {}", message);
+                logger.warn("VALIDATION_ERROR | fields={}", message);
+                LoggerUtil.logValidationFailure(logger, "multiple_fields", "N/A", message);
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "VALIDATION_ERROR",
@@ -120,7 +129,8 @@ public class GlobalExceptionHandler {
                                 .map(ConstraintViolation::getMessage)
                                 .collect(Collectors.joining("; "));
 
-                logger.warn("Constraint violation: {}", message);
+                logger.warn("CONSTRAINT_VIOLATION | violations={}", message);
+                LoggerUtil.logValidationFailure(logger, "constraint", "N/A", message);
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "VALIDATION_ERROR",
@@ -147,7 +157,13 @@ public class GlobalExceptionHandler {
                         }
                 }
 
-                logger.error("Transaction system exception: {}", message, ex);
+                logger.error("TRANSACTION_ERROR | message={} | rootCause={}", message,
+                                ex.getRootCause() != null ? ex.getRootCause().getClass().getSimpleName() : "UNKNOWN",
+                                ex);
+                LoggerUtil.logException(logger, "Transaction system error", ex,
+                                "rootCause",
+                                ex.getRootCause() != null ? ex.getRootCause().getClass().getSimpleName() : "UNKNOWN");
+
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.BAD_REQUEST.value(),
                                 "VALIDATION_ERROR",
@@ -174,7 +190,8 @@ public class GlobalExceptionHandler {
                 } else {
                         message += "A constraint violation occurred.";
                 }
-                logger.error("Data integrity violation occurred: {}", message, ex);
+                logger.error("DATA_INTEGRITY_VIOLATION | message={} | cause={}", message, cause, ex);
+                LoggerUtil.logBusinessError(logger, "DATA_INTEGRITY", message, "cause", cause);
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.CONFLICT.value(),
                                 "DATA_INTEGRITY_VIOLATION",
@@ -186,7 +203,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(JpaSystemException.class)
         public ResponseEntity<ErrorResponse> handleJpaSystemException(
                         JpaSystemException ex, WebRequest request) {
-                logger.error("Database error occurred", ex);
+                logger.error("DATABASE_ERROR | message={}", ex.getMessage(), ex);
+                LoggerUtil.logException(logger, "Database error", ex, "type", "JpaSystemException");
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                                 "DATABASE_ERROR",
@@ -198,7 +216,7 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
         public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
                         HttpMediaTypeNotSupportedException ex, WebRequest request) {
-                logger.warn("Unsupported media type: {}", ex.getContentType());
+                logger.warn("UNSUPPORTED_MEDIA_TYPE | contentType={}", ex.getContentType());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
                                 "UNSUPPORTED_MEDIA_TYPE",
@@ -210,7 +228,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
         public ResponseEntity<ErrorResponse> handleMethodNotSupported(
                         HttpRequestMethodNotSupportedException ex, WebRequest request) {
-                logger.warn("HTTP method not supported: {}", ex.getMethod());
+                logger.warn("METHOD_NOT_ALLOWED | method={} | supportedMethods={}",
+                                ex.getMethod(), ex.getSupportedHttpMethods());
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.METHOD_NOT_ALLOWED.value(),
                                 "METHOD_NOT_ALLOWED",
@@ -222,7 +241,10 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGlobalException(
                         Exception ex, WebRequest request) {
-                logger.error("Unexpected error occurred", ex);
+                logger.error("UNEXPECTED_ERROR | exception={} | message={}",
+                                ex.getClass().getSimpleName(), ex.getMessage(), ex);
+                LoggerUtil.logException(logger, "Unexpected error", ex,
+                                "exceptionClass", ex.getClass().getSimpleName());
 
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.INTERNAL_SERVER_ERROR.value(),

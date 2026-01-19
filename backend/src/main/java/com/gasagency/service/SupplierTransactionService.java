@@ -115,7 +115,8 @@ public class SupplierTransactionService {
                 transaction.setFilledReceived(request.getFilledReceived());
                 transaction.setEmptySent(request.getEmptySent());
                 transaction.setReference(request.getReference());
-                transaction.setAmount(request.getAmount());
+                transaction.setAmount(
+                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
                 transaction = repository.save(transaction);
 
                 LoggerUtil.logBusinessSuccess(logger, "UPDATE_TRANSACTION", "id", transaction.getId(), "supplierId",
@@ -191,7 +192,7 @@ public class SupplierTransactionService {
                 SupplierTransaction transaction = new SupplierTransaction(
                                 warehouse, supplier, variant, LocalDate.now(),
                                 request.getFilledReceived(), request.getEmptySent(), request.getReference(),
-                                request.getAmount());
+                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
 
                 // Generate reference number BEFORE initial save
                 String referenceNumber = referenceNumberGenerator.generateSupplierPurchaseOrderReference(

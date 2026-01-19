@@ -22,7 +22,7 @@ public interface BankAccountLedgerRepository extends JpaRepository<BankAccountLe
         List<BankAccountLedger> findByBankAccountIdOrderByTransactionDateDesc(
                         @Param("bankAccountId") Long bankAccountId);
 
-        @Query("SELECT bal FROM BankAccountLedger bal WHERE bal.saleId = :saleId")
+        @Query("SELECT bal FROM BankAccountLedger bal WHERE bal.sale.id = :saleId")
         List<BankAccountLedger> findBySaleId(@Param("saleId") Long saleId);
 
         @Query("SELECT bal FROM BankAccountLedger bal WHERE bal.bankAccount.id = :bankAccountId " +
