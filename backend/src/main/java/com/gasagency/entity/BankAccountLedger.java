@@ -25,7 +25,7 @@ public class BankAccountLedger extends Auditable {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private BigDecimal balanceAfter;
 
     @ManyToOne(fetch = FetchType.LAZY)

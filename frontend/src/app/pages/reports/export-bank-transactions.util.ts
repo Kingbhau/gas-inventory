@@ -11,7 +11,6 @@ export function exportBankTransactionsReportToPDF({
   totalDeposits,
   totalWithdrawals,
   netChange,
-  currentBalance,
   transactionCount,
   businessName
 }: {
@@ -24,7 +23,6 @@ export function exportBankTransactionsReportToPDF({
   totalDeposits: number,
   totalWithdrawals: number,
   netChange: number,
-  currentBalance: number,
   transactionCount: number,
   businessName?: string
 }) {
@@ -78,13 +76,11 @@ export function exportBankTransactionsReportToPDF({
   // Grid layout for summary (2 columns)
   doc.text(`Total Deposits:`, 16, y + 13);
   doc.text(`Rs. ${totalDeposits.toLocaleString()}`, 45, y + 13);
-  doc.text(`Current Balance:`, 80, y + 13);
-  doc.text(`Rs. ${currentBalance.toLocaleString()}`, 110, y + 13);
+  doc.text(`Transactions:`, 80, y + 13);
+  doc.text(`${transactionCount}`, 110, y + 13);
   
   doc.text(`Total Withdrawals:`, 16, y + 18);
   doc.text(`Rs. ${totalWithdrawals.toLocaleString()}`, 45, y + 18);
-  doc.text(`Transactions:`, 80, y + 18);
-  doc.text(`${transactionCount}`, 110, y + 18);
   
   doc.text(`Net Change:`, 16, y + 23);
   doc.text(`Rs. ${netChange.toLocaleString()}`, 45, y + 23);
@@ -136,7 +132,6 @@ export function exportBankTransactionsReportToPDF({
     row.bankAccountName?.split(' - ')[0] || row.bankAccountName || '-',
     row.transactionType || '-',
     `Rs. ${Number(row.amount).toLocaleString()}`,
-    `Rs. ${Number(row.balanceAfter).toLocaleString()}`,
     row.referenceNumber || '-'
   ]);
 
@@ -147,7 +142,6 @@ export function exportBankTransactionsReportToPDF({
       'Bank Account',
       'Type',
       'Amount',
-      'Balance',
       'Reference'
     ]],
     body: tableData,

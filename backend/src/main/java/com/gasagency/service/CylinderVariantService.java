@@ -6,11 +6,13 @@ import com.gasagency.entity.InventoryStock;
 import com.gasagency.entity.MonthlyPrice;
 import com.gasagency.entity.SaleItem;
 import com.gasagency.entity.CustomerCylinderLedger;
+import com.gasagency.entity.CustomerVariantPrice;
 import com.gasagency.repository.CylinderVariantRepository;
 import com.gasagency.repository.InventoryStockRepository;
 import com.gasagency.repository.MonthlyPriceRepository;
 import com.gasagency.repository.SaleItemRepository;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
+import com.gasagency.repository.CustomerVariantPriceRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.util.LoggerUtil;
@@ -31,17 +33,20 @@ public class CylinderVariantService {
     private final MonthlyPriceRepository monthlyPriceRepository;
     private final SaleItemRepository saleItemRepository;
     private final CustomerCylinderLedgerRepository ledgerRepository;
+    private final CustomerVariantPriceRepository customerVariantPriceRepository;
 
     public CylinderVariantService(CylinderVariantRepository repository,
             InventoryStockRepository inventoryStockRepository,
             MonthlyPriceRepository monthlyPriceRepository,
             SaleItemRepository saleItemRepository,
-            CustomerCylinderLedgerRepository ledgerRepository) {
+            CustomerCylinderLedgerRepository ledgerRepository,
+            CustomerVariantPriceRepository customerVariantPriceRepository) {
         this.repository = repository;
         this.inventoryStockRepository = inventoryStockRepository;
         this.monthlyPriceRepository = monthlyPriceRepository;
         this.saleItemRepository = saleItemRepository;
         this.ledgerRepository = ledgerRepository;
+        this.customerVariantPriceRepository = customerVariantPriceRepository;
     }
 
     public CylinderVariantDTO createVariant(CylinderVariantDTO dto) {
@@ -58,6 +63,7 @@ public class CylinderVariantService {
         }
 
         CylinderVariant variant = new CylinderVariant(dto.getName(), dto.getWeightKg());
+        variant.setBasePrice(dto.getBasePrice());
         variant = repository.save(variant);
 
         LoggerUtil.logBusinessSuccess(logger, "CREATE_VARIANT", "id", variant.getId(), "name", variant.getName());
@@ -131,9 +137,34 @@ public class CylinderVariantService {
                     LoggerUtil.logBusinessError(logger, "UPDATE_VARIANT", "Variant not found", "id", id);
                     return new ResourceNotFoundException("Variant not found with id: " + id);
                 });
+
         variant.setName(dto.getName());
         variant.setWeightKg(dto.getWeightKg());
         variant.setActive(dto.getActive());
+
+        // Check if basePrice has changed and cascade update to all customer variant
+        // prices
+        if (dto.getBasePrice() != null && !dto.getBasePrice().equals(variant.getBasePrice())) {
+            java.math.BigDecimal oldBasePrice = variant.getBasePrice();
+            variant.setBasePrice(dto.getBasePrice());
+
+            // Update all CustomerVariantPrice records where salePrice equals old basePrice
+            List<CustomerVariantPrice> pricesWithOldBase = customerVariantPriceRepository.findByVariantId(id);
+            for (CustomerVariantPrice cvp : pricesWithOldBase) {
+                // Only update if the current sale price matches the old base price (user hasn't
+                // customized)
+                if (oldBasePrice != null && oldBasePrice.equals(cvp.getSalePrice())) {
+                    cvp.setSalePrice(dto.getBasePrice());
+                    customerVariantPriceRepository.save(cvp);
+                    LoggerUtil.logBusinessSuccess(logger, "CASCADE_UPDATE_PRICE", "customerId",
+                            cvp.getCustomer().getId(),
+                            "variantId", id, "oldPrice", oldBasePrice, "newPrice", dto.getBasePrice());
+                }
+            }
+        } else if (dto.getBasePrice() != null) {
+            variant.setBasePrice(dto.getBasePrice());
+        }
+
         variant = repository.save(variant);
 
         LoggerUtil.logBusinessSuccess(logger, "UPDATE_VARIANT", "id", variant.getId(), "name", variant.getName());
@@ -200,6 +231,6 @@ public class CylinderVariantService {
 
     private CylinderVariantDTO toDTO(CylinderVariant variant) {
         return new CylinderVariantDTO(variant.getId(), variant.getName(),
-                variant.getWeightKg(), variant.getActive());
+                variant.getWeightKg(), variant.getActive(), variant.getBasePrice());
     }
 }

@@ -10,6 +10,7 @@ import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, fa
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { BankAccountService } from '../../services/bank-account.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
 import { CustomerBalance, VariantBalance } from '../../models/customer-balance.model';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { CustomerVariantPriceService } from '../../services/customer-variant-price.service';
@@ -18,6 +19,7 @@ import { ToastrService } from 'ngx-toastr';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { exportCustomerLedgerToPDF } from './export-ledger-report.util';
 import { BankAccount } from '../../models/bank-account.model';
+import { PaymentMode } from '../../models/payment-mode.model';
 
 @Component({
   selector: 'app-customer-management',
@@ -116,6 +118,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   ledgerEntries: any[] = [];
   variants: any[] = [];
+  existingCustomerPrices: { [key: number]: any } = {};
   variantSummary: any[] = [];
 
   showDetailsModal = false;
@@ -130,6 +133,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   isSubmittingPayment = false;
   paymentError = '';
   bankAccounts: BankAccount[] = [];
+  paymentModes: PaymentMode[] = [];
   paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
     paymentDate: '',
@@ -143,6 +147,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
     private bankAccountService: BankAccountService,
+    private paymentModeService: PaymentModeService,
     private variantService: CylinderVariantService,
     private variantPriceService: CustomerVariantPriceService,
     private loadingService: LoadingService,
@@ -155,6 +160,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadVariantsAndCustomers();
     this.loadBankAccounts();
+    this.loadPaymentModes();
   }
 
   ngOnDestroy() {}
@@ -171,6 +177,24 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.bankAccounts = [];
         }
       });
+  }
+
+  loadPaymentModes() {
+    this.paymentModeService.getActivePaymentModes()
+      .subscribe({
+        next: (response: PaymentMode[]) => {
+          this.paymentModes = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading payment modes:', error);
+          this.paymentModes = [];
+        }
+      });
+  }
+
+  getSelectedPaymentMode(modeName: string): PaymentMode | undefined {
+    return this.paymentModes.find(mode => mode.name === modeName);
   }
 
   get defaultVariantFilter() {
@@ -440,33 +464,24 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     const pricesArray = this.customerForm.get('variantPrices') as FormArray;
     const variantIds = selectedVariantIds || this.customerForm.get('configuredVariants')?.value || [];
     
-    // Create a map of existing prices by variantId for quick lookup
-    const existingPrices: { [key: number]: any } = {};
-    pricesArray.controls.forEach((control: any, index: number) => {
-      const variantId = control.get('variantId')?.value;
-      if (variantId) {
-        existingPrices[variantId] = {
-          salePrice: control.get('salePrice')?.value,
-          discountPrice: control.get('discountPrice')?.value,
-          variantName: control.get('variantName')?.value
-        };
-      }
-    });
-
     // Clear and rebuild with selected variants
     pricesArray.clear();
     
     this.variants
       .filter(variant => variantIds.includes(variant.id))
       .forEach(variant => {
-        // Get existing prices if available, otherwise empty
-        const existingPrice = existingPrices[variant.id];
+        // Get existing prices from backend load (this.existingCustomerPrices)
+        const existingPrice = this.existingCustomerPrices[variant.id];
+        // Use basePrice as default, or existing basePrice from backend
+        const basePriceValue = existingPrice?.basePrice !== undefined ? existingPrice.basePrice : (variant.basePrice || '');
+        // Use existing discountPrice from backend, or empty string
+        const discountPriceValue = existingPrice?.discountPrice !== undefined ? existingPrice.discountPrice : '';
         
         const priceGroup = this.fb.group({
           variantId: [variant.id, Validators.required],
           variantName: [variant.name],
-          salePrice: [existingPrice?.salePrice || '', [Validators.required, Validators.min(0)]],
-          discountPrice: [existingPrice?.discountPrice || '', [Validators.required, Validators.min(0), this.discountNotGreaterThanSaleValidator.bind(this)]]
+          basePrice: [basePriceValue, { value: basePriceValue, disabled: true }], // Read-only basePrice
+          discountPrice: [discountPriceValue, [Validators.required, Validators.min(0)]]
         });
         pricesArray.push(priceGroup);
       });
@@ -562,6 +577,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.customerForm.patchValue({ active: true, configuredVariants: [] });
     // Clear the initial stock entries map for new customer
     this.initialStockEntriesMap = {};
+    // Clear existing prices for new customer
+    this.existingCustomerPrices = {};
   }
 
   editCustomer(customer: any) {
@@ -584,26 +601,32 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         next: (response: any) => {
           if (response && response.data && response.data.length > 0) {
             // Convert API response to form array format
-            const pricesArray = this.customerForm.get('variantPrices') as FormArray;
             const prices = response.data;
             
-            // Map prices back to form controls
-            pricesArray.clear();
+            // Create a map of existing prices by variantId
+            const existingPrices: { [key: number]: any } = {};
             prices.forEach((price: any) => {
-              pricesArray.push(
-                this.fb.group({
-                  variantId: [price.variantId, Validators.required],
-                  variantName: [price.variantName],
-                  salePrice: [price.salePrice ? price.salePrice.toString() : '', [Validators.required, Validators.min(0)]],
-                  discountPrice: [price.discountPrice ? price.discountPrice.toString() : '', [Validators.required, Validators.min(0), this.discountNotGreaterThanSaleValidator.bind(this)]]
-                })
-              );
+              existingPrices[price.variantId] = {
+                basePrice: price.salePrice,
+                discountPrice: price.discountPrice
+              };
             });
+            
+            // Store for buildVariantPricingArray to use
+            this.existingCustomerPrices = existingPrices;
+            
+            // Rebuild the array with existing prices
+            this.buildVariantPricingArray(customer.configuredVariants || []);
+          } else {
+            // No existing prices, rebuild with empty
+            this.buildVariantPricingArray(customer.configuredVariants || []);
           }
           this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Error loading variant prices:', err);
+          // Still rebuild the array even if load fails
+          this.buildVariantPricingArray(customer.configuredVariants || []);
         }
       });
 
@@ -735,17 +758,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
    * For new customers: CREATE directly
    */
   private updateVariantPrices(customerId: number, variantPrices: any[], isNewCustomer: boolean = false) {
-    variantPrices.forEach(priceData => {
-      const salePrice = priceData.salePrice ? parseFloat(priceData.salePrice) : null;
-      const discountPrice = priceData.discountPrice ? parseFloat(priceData.discountPrice) : null;
+    // Get form array to access disabled controls
+    const pricesArray = this.customerForm.get('variantPrices') as FormArray;
+    
+    pricesArray.controls.forEach((control: any, index: number) => {
+      const basePrice = control.get('basePrice')?.value ? parseFloat(control.get('basePrice')?.value) : null;
+      const discountPrice = control.get('discountPrice')?.value ? parseFloat(control.get('discountPrice')?.value) : null;
+      const variantId = control.get('variantId')?.value;
+      const variantName = control.get('variantName')?.value;
       
-      // Both prices are required
-      if (salePrice !== null && discountPrice !== null) {
+      // Use basePrice as salePrice and discountPrice is required
+      if (basePrice !== null && discountPrice !== null) {
         const payload: any = {
           customerId: customerId,
-          variantId: priceData.variantId,
-          variantName: priceData.variantName,
-          salePrice: salePrice,
+          variantId: variantId,
+          variantName: variantName,
+          salePrice: basePrice,
           discountPrice: discountPrice
         };
 
@@ -756,7 +784,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.variantPriceService.createPrice(customerId, payload)
             .subscribe({
               next: (response: any) => {
-                console.log('Variant pricing created successfully for variant', priceData.variantId);
+                console.log('Variant pricing created successfully for variant', variantId);
               },
               error: (error: any) => {
                 console.error('Error creating variant pricing:', error);
@@ -764,21 +792,21 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             });
         } else {
           // For existing customers, try UPDATE first (more likely case), then CREATE
-          this.variantPriceService.updatePrice(customerId, priceData.variantId, payload)
+          this.variantPriceService.updatePrice(customerId, variantId, payload)
             .subscribe({
               next: (response: any) => {
-                console.log('Variant pricing updated successfully for variant', priceData.variantId);
+                console.log('Variant pricing updated successfully for variant', variantId);
               },
               error: (error: any) => {
                 console.log('Update failed with status:', error?.status);
                 
                 // If update fails (404 means not found), try to create
                 if (error?.status === 404) {
-                  console.log('Pricing not found, attempting to create for variant', priceData.variantId);
+                  console.log('Pricing not found, attempting to create for variant', variantId);
                   this.variantPriceService.createPrice(customerId, payload)
                     .subscribe({
                       next: (response: any) => {
-                        console.log('Variant pricing created successfully for variant', priceData.variantId);
+                        console.log('Variant pricing created successfully for variant', variantId);
                       },
                       error: (createError: any) => {
                         console.error('Error creating variant pricing:', createError);
@@ -1165,9 +1193,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // If payment mode is not Cash, bank account is required
-    if (this.paymentForm.paymentMode && this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
-      this.toastr.error('Please select a bank account for non-cash payments', 'Validation Error');
+    // If payment mode requires bank account, validate bank account is selected
+    const selectedMode = this.getSelectedPaymentMode(this.paymentForm.paymentMode);
+    const isBankAccountRequired = selectedMode ? selectedMode.isBankAccountRequired : false;
+    
+    if (isBankAccountRequired && !this.paymentForm.bankAccountId) {
+      this.toastr.error('Please select a bank account for this payment mode', 'Validation Error');
       return;
     }
 
@@ -1190,8 +1221,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       paymentMode: this.paymentForm.paymentMode
     };
 
-    // Add bankAccountId if payment is not Cash
-    if (this.paymentForm.paymentMode && this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && this.paymentForm.bankAccountId) {
+    // Add bankAccountId if required by payment mode configuration
+    if (isBankAccountRequired && this.paymentForm.bankAccountId) {
       paymentData.bankAccountId = this.paymentForm.bankAccountId;
     }
 

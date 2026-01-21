@@ -46,9 +46,10 @@ public class SaleService {
         private final CustomerVariantPriceRepository customerVariantPriceRepository;
         private final InventoryStockService inventoryStockService;
         private final CustomerCylinderLedgerService ledgerService;
+        private final CustomerCylinderLedgerRepository ledgerRepository;
         private final WarehouseService warehouseService;
         private final BankAccountRepository bankAccountRepository;
-        private final BankAccountService bankAccountService;
+        private final BankAccountLedgerRepository bankAccountLedgerRepository;
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
         private final ReferenceNumberGenerator referenceNumberGenerator;
@@ -60,9 +61,10 @@ public class SaleService {
                         CustomerVariantPriceRepository customerVariantPriceRepository,
                         InventoryStockService inventoryStockService,
                         CustomerCylinderLedgerService ledgerService,
+                        CustomerCylinderLedgerRepository ledgerRepository,
                         WarehouseService warehouseService,
                         BankAccountRepository bankAccountRepository,
-                        BankAccountService bankAccountService,
+                        BankAccountLedgerRepository bankAccountLedgerRepository,
                         AuditLogger auditLogger,
                         PerformanceTracker performanceTracker,
                         ReferenceNumberGenerator referenceNumberGenerator) {
@@ -73,9 +75,10 @@ public class SaleService {
                 this.customerVariantPriceRepository = customerVariantPriceRepository;
                 this.inventoryStockService = inventoryStockService;
                 this.ledgerService = ledgerService;
+                this.ledgerRepository = ledgerRepository;
                 this.warehouseService = warehouseService;
                 this.bankAccountRepository = bankAccountRepository;
-                this.bankAccountService = bankAccountService;
+                this.bankAccountLedgerRepository = bankAccountLedgerRepository;
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
                 this.referenceNumberGenerator = referenceNumberGenerator;
@@ -208,6 +211,21 @@ public class SaleService {
                                 logger.error("Invalid sale request - modeOfPayment is required when amountReceived > 0");
                                 throw new InvalidOperationException(
                                                 "Mode of payment is required when payment is received");
+                        }
+
+                        // Validate bankAccountId is provided when payment mode requires it
+                        if (request.getModeOfPayment() != null) {
+                                // Find the payment mode to check if bank account is required
+                                // This will help determine if we need to validate bankAccountId
+                                if (!request.getModeOfPayment().equalsIgnoreCase("CASH") &&
+                                                (request.getBankAccountId() == null
+                                                                || request.getBankAccountId() <= 0)) {
+                                        logger.error("Invalid sale request - bankAccountId is required for non-cash payment mode: {}",
+                                                        request.getModeOfPayment());
+                                        throw new InvalidOperationException(
+                                                        "Bank account is required for payment mode: "
+                                                                        + request.getModeOfPayment());
+                                }
                         }
                 }
 
@@ -411,22 +429,31 @@ public class SaleService {
                         sale = saleRepository.findById(sale.getId()).orElse(sale);
                 }
 
-                // Record bank account deposit if payment is via bank account
-                if (sale.getBankAccount() != null && request.getAmountReceived() != null &&
+                // Record bank account transaction if payment is via bank account
+                final Sale finalSale = sale;
+                if (finalSale.getBankAccount() != null && request.getAmountReceived() != null &&
                                 request.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
                         try {
-                                bankAccountService.recordDeposit(
-                                                sale.getBankAccount().getId(),
-                                                request.getAmountReceived(),
-                                                sale.getId(),
-                                                sale.getReferenceNumber(),
-                                                "Payment received from customer: " + customer.getName());
-                                logger.info("Bank account deposit recorded for sale id: {} - Amount: {} - Reference: {}",
-                                                sale.getId(), request.getAmountReceived(), sale.getReferenceNumber());
+                                bankAccountRepository.findById(finalSale.getBankAccount().getId())
+                                                .ifPresent(bankAccount -> {
+                                                        BankAccountLedger ledger = new BankAccountLedger(
+                                                                        bankAccount,
+                                                                        "DEPOSIT",
+                                                                        request.getAmountReceived(),
+                                                                        null,
+                                                                        finalSale,
+                                                                        referenceNumberGenerator
+                                                                                        .generateBankTransactionReference(
+                                                                                                        bankAccount.getCode(),
+                                                                                                        "DEP"),
+                                                                        "Payment received from customer: "
+                                                                                        + customer.getName());
+                                                        bankAccountLedgerRepository.save(ledger);
+                                                        logger.info("Bank ledger entry recorded for sale id: {} - Amount: {}",
+                                                                        finalSale.getId(), request.getAmountReceived());
+                                                });
                         } catch (Exception e) {
-                                logger.error("Error recording bank account deposit for sale id: {}", sale.getId(), e);
-                                throw new InvalidOperationException(
-                                                "Failed to record bank account deposit: " + e.getMessage());
+                                logger.error("Error recording bank ledger entry for sale id: {}", finalSale.getId(), e);
                         }
                 }
 
@@ -462,7 +489,8 @@ public class SaleService {
                                         itemRequest.getQtyEmptyReceived(),
                                         totalAmount,
                                         request.getAmountReceived(),
-                                        request.getModeOfPayment());
+                                        request.getModeOfPayment(),
+                                        request.getBankAccountId());
                         logger.debug("Ledger entry created for sale item");
                 }
 
@@ -534,6 +562,123 @@ public class SaleService {
                 logger.debug("Fetching sales between {} and {}", fromDate, toDate);
                 return saleRepository.findByDateRange(fromDate, toDate, pageable)
                                 .map(this::toDTO);
+        }
+
+        public com.gasagency.dto.PaymentModeSummaryDTO getPaymentModeSummary(String fromDate, String toDate,
+                        Long customerId,
+                        String paymentMode, Long variantId, Long bankAccountId, Double minAmount, Double maxAmount,
+                        Integer minTransactionCount) {
+                LocalDate from = null;
+                LocalDate to = null;
+                try {
+                        if (fromDate != null && !fromDate.isEmpty()) {
+                                from = LocalDate.parse(fromDate);
+                        }
+                        if (toDate != null && !toDate.isEmpty()) {
+                                to = LocalDate.parse(toDate);
+                        }
+                } catch (DateTimeParseException e) {
+                        // Optionally log or handle parse error
+                }
+
+                final LocalDate finalFrom = from;
+                final LocalDate finalTo = to;
+
+                // Get all ledger entries (using CustomerCylinderLedger instead of Sale)
+                List<CustomerCylinderLedger> ledgers = ledgerRepository.findAll().stream()
+                                .filter(ledger -> {
+                                        // Skip INITIAL_STOCK transactions
+                                        if (ledger.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK) {
+                                                return false;
+                                        }
+                                        if (finalFrom != null && ledger.getTransactionDate().isBefore(finalFrom)) {
+                                                return false;
+                                        }
+                                        if (finalTo != null && ledger.getTransactionDate().isAfter(finalTo)) {
+                                                return false;
+                                        }
+                                        if (customerId != null && (ledger.getCustomer() == null
+                                                        || !customerId.equals(ledger.getCustomer().getId()))) {
+                                                return false;
+                                        }
+                                        // Filter by payment mode
+                                        if (paymentMode != null && !paymentMode.isEmpty()) {
+                                                String ledgerPaymentMode = ledger.getPaymentMode() != null
+                                                                ? ledger.getPaymentMode().trim()
+                                                                : "";
+                                                if (!ledgerPaymentMode.equalsIgnoreCase(paymentMode.trim())) {
+                                                        return false;
+                                                }
+                                        }
+                                        // Filter by bank account
+                                        if (bankAccountId != null) {
+                                                if (ledger.getBankAccount() == null || !bankAccountId
+                                                                .equals(ledger.getBankAccount().getId())) {
+                                                        return false;
+                                                }
+                                        }
+                                        // Filter by variant
+                                        if (variantId != null) {
+                                                if (ledger.getVariant() == null
+                                                                || !variantId.equals(ledger.getVariant().getId())) {
+                                                        return false;
+                                                }
+                                        }
+                                        return true;
+                                })
+                                .collect(Collectors.toList());
+
+                com.gasagency.dto.PaymentModeSummaryDTO summary = new com.gasagency.dto.PaymentModeSummaryDTO();
+                Map<String, com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats> stats = new java.util.HashMap<>();
+                double totalAmount = 0;
+                int totalTransactions = 0;
+
+                for (CustomerCylinderLedger ledger : ledgers) {
+                        String ledgerPaymentMode = ledger.getPaymentMode() != null && !ledger.getPaymentMode().isEmpty()
+                                        ? ledger.getPaymentMode()
+                                        : "CASH";
+                        double ledgerAmount = ledger.getAmountReceived() != null
+                                        ? ledger.getAmountReceived().doubleValue()
+                                        : 0.0;
+
+                        // Apply min/max amount filter to individual ledger entries
+                        if (minAmount != null && ledgerAmount < minAmount) {
+                                continue;
+                        }
+                        if (maxAmount != null && ledgerAmount > maxAmount) {
+                                continue;
+                        }
+
+                        stats.computeIfAbsent(ledgerPaymentMode,
+                                        key -> new com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats(key, key, 0,
+                                                        0))
+                                        .setTotalAmount(stats.get(ledgerPaymentMode).getTotalAmount() + ledgerAmount);
+
+                        stats.get(ledgerPaymentMode)
+                                        .setTransactionCount(stats.get(ledgerPaymentMode).getTransactionCount() + 1);
+
+                        totalAmount += ledgerAmount;
+                        totalTransactions++;
+                }
+
+                // Apply min transaction count filter
+                if (minTransactionCount != null && minTransactionCount > 0) {
+                        stats.entrySet().removeIf(
+                                        entry -> entry.getValue().getTransactionCount() < minTransactionCount);
+                        // Recalculate totals
+                        totalAmount = 0;
+                        totalTransactions = 0;
+                        for (com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats stat : stats.values()) {
+                                totalAmount += stat.getTotalAmount();
+                                totalTransactions += stat.getTransactionCount();
+                        }
+                }
+
+                summary.setPaymentModeStats(stats);
+                summary.setTotalAmount(totalAmount);
+                summary.setTotalTransactions(totalTransactions);
+
+                return summary;
         }
 
         private SaleDTO toDTO(Sale sale) {

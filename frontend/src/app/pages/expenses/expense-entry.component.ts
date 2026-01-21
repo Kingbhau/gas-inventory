@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -22,6 +22,8 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ExpenseEntryComponent implements OnInit, OnDestroy {
+  @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
+  
   expenseForm!: FormGroup;
   successMessage = '';
   categories: any[] = [];
@@ -36,7 +38,8 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     private expenseService: ExpenseService,
     private toastr: ToastrService,
     private loadingService: LoadingService,
-    private dataRefreshService: DataRefreshService
+    private dataRefreshService: DataRefreshService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -119,47 +122,77 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       categoryId: categoryId
     };
 
-    this.expenseService.createExpense(expense).subscribe({
-      next: (response) => {
-        this.successMessage = 'Expense recorded successfully!';
-        this.toastr.success('Expense recorded successfully');
-        
-        // Notify dashboard of the change
-        this.dataRefreshService.notifyExpenseCreated(response);
-        
-        // Reset form completely
-        this.expenseForm.reset();
-        
-        // Set default values
-        const today = new Date().toISOString().split('T')[0];
-        this.expenseForm.patchValue({
-          category: '',
-          expenseDate: today
-        });
+    this.expenseService.createExpense(expense)
+      .pipe(
+        finalize(() => {
+          this.isSubmitting = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.toastr.success('Expense recorded successfully');
+          
+          // Notify dashboard of the change
+          this.dataRefreshService.notifyExpenseCreated(response);
+          
+          // Reset autocomplete inputs
+          if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+            this.autocompleteInputs.forEach(input => {
+              if (input.resetInput) {
+                input.resetInput();
+              }
+            });
+          }
+          
+          // Reset form completely
+          this.expenseForm.reset();
+          
+          // Set default values
+          const today = new Date().toISOString().split('T')[0];
+          this.expenseForm.patchValue({
+            category: '',
+            expenseDate: today
+          });
 
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          this.successMessage = '';
-        }, 3000);
-
-        // Re-enable buttons
-        this.isSubmitting = false;
-      },
-      error: (error) => {
-        this.toastr.error(error?.error?.message || 'Failed to record expense');
-        this.isSubmitting = false;
-      }
-    });
+          // Clear success message after 3 seconds
+          setTimeout(() => {
+            this.successMessage = '';
+            this.cdr.markForCheck();
+          }, 3000);
+        },
+        error: (error) => {
+          this.toastr.error(error?.error?.message || 'Failed to record expense');
+        }
+      });
   }
 
   resetForm() {
     this.isSubmitting = false;
+    
+    // Reset autocomplete inputs first
+    if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+      this.autocompleteInputs.forEach(input => {
+        if (input.resetInput) {
+          input.resetInput();
+        }
+      });
+    }
+    
+    // Reset form
     this.expenseForm.reset();
+    
     const today = new Date().toISOString().split('T')[0];
     this.expenseForm.patchValue({
       category: '',
       expenseDate: today
     });
+    
+    // Mark form as pristine and untouched
+    this.expenseForm.markAsPristine();
+    this.expenseForm.markAsUntouched();
+    
     this.successMessage = '';
+    this.cdr.markForCheck();
   }
 }

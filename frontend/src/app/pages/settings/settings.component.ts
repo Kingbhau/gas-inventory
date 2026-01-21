@@ -14,6 +14,7 @@ import { ExpenseCategoryManagementComponent } from './expense-category-managemen
 import { WarehouseManagementComponent } from './warehouse-management.component';
 import { WarehouseInventorySetupComponent } from './warehouse-inventory-setup.component';
 import { BankAccountManagementComponent } from './bank-account-management.component';
+import { PaymentModeManagementComponent } from './payment-mode-management.component';
 
 interface SettingsTab {
   id: string;
@@ -24,7 +25,7 @@ interface SettingsTab {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent, WarehouseManagementComponent, WarehouseInventorySetupComponent, BankAccountManagementComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent, WarehouseManagementComponent, WarehouseInventorySetupComponent, BankAccountManagementComponent, PaymentModeManagementComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -73,6 +74,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     { id: 'warehouses', name: 'Warehouses', icon: faWarehouse },
     { id: 'inventory', name: 'Inventory Setup', icon: faDatabase },
     { id: 'categories', name: 'Expense Categories', icon: faReceipt },
+    { id: 'payment-modes', name: 'Payment Modes', icon: faReceipt },
     { id: 'bank-accounts', name: 'Bank Accounts', icon: faBank },
     { id: 'business', name: 'Business', icon: faBuilding }
   ];
@@ -171,6 +173,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.variantForm = this.fb.group({
       name: ['', Validators.required],
       weightKg: ['', [Validators.required, Validators.min(0.1), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      basePrice: ['', [Validators.required, Validators.min(0), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       active: [true]
     });
 

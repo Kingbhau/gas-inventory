@@ -82,4 +82,28 @@ export class SaleService {
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true });
   }
+
+  getPaymentModeSummary(
+    fromDate?: string,
+    toDate?: string,
+    customerId?: string,
+    paymentMode?: string,
+    variantId?: number,
+    bankAccountId?: number,
+    minAmount?: number,
+    maxAmount?: number,
+    minTransactionCount?: number
+  ): Observable<any> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (customerId) params = params.set('customerId', customerId);
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
+    if (bankAccountId !== undefined && bankAccountId !== null) params = params.set('bankAccountId', bankAccountId.toString());
+    if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
+    if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (minTransactionCount !== undefined && minTransactionCount !== null) params = params.set('minTransactionCount', minTransactionCount.toString());
+    return this.http.get<any>(`${this.apiUrl}/payment-mode-summary`, { params, withCredentials: true });
+  }
 }

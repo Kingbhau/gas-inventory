@@ -8,12 +8,14 @@ import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { BankAccountService } from '../../services/bank-account.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
 import { AuthService } from '../../services/auth.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { BankAccount } from '../../models/bank-account.model';
+import { PaymentMode } from '../../models/payment-mode.model';
 
 @Component({
   selector: 'app-payment-management',
@@ -52,7 +54,7 @@ export class PaymentManagementComponent implements OnInit {
   };
   paymentError = '';
   isSubmittingPayment = false;
-  paymentModes = ['Cash', 'Cheque', 'Bank Transfer', 'UPI'];
+  paymentModes: PaymentMode[] = [];
   bankAccounts: BankAccount[] = [];
   ledgerEntries: any[] = [];
 
@@ -61,6 +63,7 @@ export class PaymentManagementComponent implements OnInit {
     private ledgerService: CustomerCylinderLedgerService,
     private duePaymentService: CustomerDuePaymentService,
     private bankAccountService: BankAccountService,
+    private paymentModeService: PaymentModeService,
     private authService: AuthService,
     private dataRefreshService: DataRefreshService,
     private router: Router,
@@ -72,6 +75,7 @@ export class PaymentManagementComponent implements OnInit {
     this.userName = this.authService.getLoggedInUserName();
     this.loadCustomers();
     this.loadBankAccounts();
+    this.loadPaymentModes();
   }
 
   loadBankAccounts() {
@@ -86,6 +90,29 @@ export class PaymentManagementComponent implements OnInit {
           this.bankAccounts = [];
         }
       });
+  }
+
+  loadPaymentModes() {
+    this.paymentModeService.getActivePaymentModes()
+      .subscribe({
+        next: (response: PaymentMode[]) => {
+          this.paymentModes = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading payment modes:', error);
+          this.paymentModes = [];
+        }
+      });
+  }
+
+  getSelectedPaymentMode(): PaymentMode | undefined {
+    return this.paymentModes.find(mode => mode.name === this.paymentForm.paymentMode);
+  }
+
+  isBankAccountRequired(): boolean {
+    const selectedMode = this.getSelectedPaymentMode();
+    return selectedMode ? selectedMode.isBankAccountRequired || false : false;
   }
 
   logout() {
@@ -196,9 +223,10 @@ export class PaymentManagementComponent implements OnInit {
       return;
     }
 
-    // If payment mode is not CASH, bank account is required
-    if (this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && !this.paymentForm.bankAccountId) {
-      this.toastr.error('Please select a bank account for non-cash payments', 'Validation Error');
+    // If payment mode requires bank account, validate it's selected
+    const selectedMode = this.getSelectedPaymentMode();
+    if (selectedMode?.isBankAccountRequired && !this.paymentForm.bankAccountId) {
+      this.toastr.error('Please select a bank account for this payment mode', 'Validation Error');
       return;
     }
 
@@ -219,8 +247,8 @@ export class PaymentManagementComponent implements OnInit {
       paymentMode: this.paymentForm.paymentMode
     };
 
-    // Add bankAccountId if payment is not CASH
-    if (this.paymentForm.paymentMode.toUpperCase() !== 'CASH' && this.paymentForm.bankAccountId) {
+    // Add bankAccountId if payment mode requires bank account
+    if (selectedMode?.isBankAccountRequired && this.paymentForm.bankAccountId) {
       paymentData.bankAccountId = this.paymentForm.bankAccountId;
     }
 

@@ -30,6 +30,7 @@
                   <tr>
                     <th>Variant Name</th>
                     <th>Weight (kg)</th>
+                    <th>Base Price</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -38,6 +39,7 @@
                   <tr *ngFor="let variant of variantsList">
                     <td><strong>{{ variant.name }}</strong></td>
                     <td>{{ variant.weightKg }} kg</td>
+                    <td>₹ {{ variant.basePrice | number: '1.2-2' }}</td>
                     <td>
                       <span class="badge" [class.badge-active]="variant.active">
                         {{ variant.active ? 'Active' : 'Inactive' }}
@@ -68,6 +70,21 @@
       </button>
       <div class="accordion-body" *ngIf="expandedSections.includes('categories')">
         <app-expense-category-management></app-expense-category-management>
+      </div>
+    </div>
+
+    <!-- Payment Modes -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('payment-modes')"
+        [class.active]="expandedSections.includes('payment-modes')">
+        <fa-icon [icon]="faReceipt" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Payment Modes</span>
+        <fa-icon [icon]="expandedSections.includes('payment-modes') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('payment-modes')">
+        <app-payment-mode-management></app-payment-mode-management>
       </div>
     </div>
 
@@ -197,6 +214,16 @@
             <span *ngIf="variantForm.get('weightKg')?.errors?.['required']">Weight is required</span>
             <span *ngIf="variantForm.get('weightKg')?.errors?.['min']">Weight must be greater than 0</span>
             <span *ngIf="variantForm.get('weightKg')?.errors?.['pattern']">Enter a valid weight (e.g., 19 or 2.5)</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Base Price <span class="required">*</span></label>
+          <input formControlName="basePrice" type="number" class="form-control" placeholder="0.00" step="0.01" min="0">
+          <div *ngIf="variantForm.get('basePrice')?.invalid && variantForm.get('basePrice')?.touched" class="form-error">
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['required']">Base price is required</span>
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['min']">Base price must be non-negative</span>
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['pattern']">Enter a valid price (e.g., 500 or 450.50)</span>
           </div>
         </div>
 

@@ -1,6 +1,5 @@
 package com.gasagency.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class BankAccountDTO {
@@ -11,7 +10,6 @@ public class BankAccountDTO {
     private String accountHolderName;
     private String accountName;
     private String accountType;
-    private BigDecimal currentBalance;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -21,7 +19,7 @@ public class BankAccountDTO {
 
     public BankAccountDTO(Long id, String code, String bankName, String accountNumber, String accountHolderName,
             String accountName,
-            String accountType, BigDecimal currentBalance, Boolean isActive, LocalDateTime createdAt,
+            String accountType, Boolean isActive, LocalDateTime createdAt,
             LocalDateTime updatedAt) {
         this.id = id;
         this.code = code;
@@ -30,7 +28,6 @@ public class BankAccountDTO {
         this.accountHolderName = accountHolderName;
         this.accountName = accountName;
         this.accountType = accountType;
-        this.currentBalance = currentBalance;
         this.isActive = isActive;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -90,14 +87,6 @@ public class BankAccountDTO {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
-    }
-
-    public BigDecimal getCurrentBalance() {
-        return currentBalance;
-    }
-
-    public void setCurrentBalance(BigDecimal currentBalance) {
-        this.currentBalance = currentBalance;
     }
 
     public Boolean getIsActive() {

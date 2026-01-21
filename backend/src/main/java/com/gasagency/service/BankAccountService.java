@@ -59,8 +59,7 @@ public class BankAccountService {
                                 bankCode,
                                 request.getBankName(),
                                 request.getAccountNumber(),
-                                request.getAccountHolderName(),
-                                request.getCurrentBalance());
+                                request.getAccountHolderName());
 
                 bankAccount.setAccountName(request.getAccountName());
                 bankAccount.setAccountType(request.getAccountType());
@@ -109,7 +108,6 @@ public class BankAccountService {
                 bankAccount.setAccountHolderName(request.getAccountHolderName());
                 bankAccount.setAccountName(request.getAccountName());
                 bankAccount.setAccountType(request.getAccountType());
-                bankAccount.setCurrentBalance(request.getCurrentBalance());
                 bankAccount.setUpdatedDate(LocalDateTime.now());
 
                 BankAccount updatedBankAccount = bankAccountRepository.save(bankAccount);
@@ -146,6 +144,7 @@ public class BankAccountService {
 
         /**
          * Record a deposit to the bank account and create a ledger entry
+         * Note: This method no longer updates bank balance, only tracks the transaction
          */
         @Transactional
         public BankAccountLedger recordDeposit(Long bankAccountId, BigDecimal amount, Long saleId,
@@ -163,29 +162,20 @@ public class BankAccountService {
                                 bankAccount.getCode(), "DEP");
 
                 LoggerFactory.getLogger(this.getClass())
-                                .info("Found bank account: {} - Current balance: {}", bankAccount.getBankName(),
-                                                bankAccount.getCurrentBalance());
-
-                // Update bank account balance
-                BigDecimal newBalance = bankAccount.getCurrentBalance().add(amount);
-                bankAccount.setCurrentBalance(newBalance);
-                bankAccount.setUpdatedDate(LocalDateTime.now());
-                BankAccount savedBankAccount = bankAccountRepository.save(bankAccount);
-
-                LoggerFactory.getLogger(this.getClass())
-                                .info("Bank account balance updated - Old: {}, New: {}",
-                                                bankAccount.getCurrentBalance().subtract(amount), newBalance);
+                                .info("Recording deposit for bank account: {} - Amount: {}",
+                                                bankAccount.getBankName(), amount);
 
                 // Create ledger entry with generated bank reference
+                // Note: balanceAfter is no longer calculated, set to null
                 Sale sale = null;
                 if (saleId != null) {
                         sale = saleRepository.findById(saleId).orElse(null);
                 }
                 BankAccountLedger ledgerEntry = new BankAccountLedger(
-                                savedBankAccount,
+                                bankAccount,
                                 "DEPOSIT",
                                 amount,
-                                newBalance,
+                                null,
                                 sale,
                                 bankReference,
                                 description);
@@ -200,6 +190,7 @@ public class BankAccountService {
 
         /**
          * Record a withdrawal from the bank account and create a ledger entry
+         * Note: This method no longer updates bank balance, only tracks the transaction
          */
         @Transactional
         public BankAccountLedger recordWithdrawal(Long bankAccountId, BigDecimal amount,
@@ -217,26 +208,16 @@ public class BankAccountService {
                                 bankAccount.getCode(), "WIT");
 
                 LoggerFactory.getLogger(this.getClass())
-                                .info("Found bank account: {} - Current balance: {}", bankAccount.getBankName(),
-                                                bankAccount.getCurrentBalance());
-
-                // Update bank account balance
-                BigDecimal newBalance = bankAccount.getCurrentBalance().subtract(amount);
-                bankAccount.setCurrentBalance(newBalance);
-                bankAccount.setUpdatedDate(LocalDateTime.now());
-                BankAccount savedBankAccount = bankAccountRepository.save(bankAccount);
-
-                LoggerFactory.getLogger(this.getClass())
-                                .info("Bank account balance updated - Old: {}, New: {}",
-                                                bankAccount.getCurrentBalance().add(amount),
-                                                newBalance);
+                                .info("Recording withdrawal for bank account: {} - Amount: {}",
+                                                bankAccount.getBankName(), amount);
 
                 // Create ledger entry with generated bank reference
+                // Note: balanceAfter is no longer calculated, set to null
                 BankAccountLedger ledgerEntry = new BankAccountLedger(
-                                savedBankAccount,
+                                bankAccount,
                                 "WITHDRAWAL",
                                 amount,
-                                newBalance,
+                                null,
                                 null,
                                 bankReference,
                                 description);
@@ -274,7 +255,6 @@ public class BankAccountService {
                                 bankAccount.getAccountHolderName(),
                                 bankAccount.getAccountName(),
                                 bankAccount.getAccountType(),
-                                bankAccount.getCurrentBalance(),
                                 bankAccount.getIsActive(),
                                 bankAccount.getCreatedDate(),
                                 bankAccount.getUpdatedDate());
@@ -294,7 +274,7 @@ public class BankAccountService {
                                                 + ledger.getBankAccount().getAccountNumber(),
                                 ledger.getTransactionType(),
                                 ledger.getAmount(),
-                                ledger.getBalanceAfter(),
+                                null,
                                 saleId,
                                 saleReferenceNumber,
                                 ledger.getReferenceNumber(),

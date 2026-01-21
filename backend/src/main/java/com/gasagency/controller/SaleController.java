@@ -43,6 +43,21 @@ public class SaleController {
                         referenceNumber));
     }
 
+    @GetMapping("/payment-mode-summary")
+    public ResponseEntity<com.gasagency.dto.PaymentModeSummaryDTO> getPaymentModeSummary(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) Integer minTransactionCount) {
+        return ResponseEntity.ok(service.getPaymentModeSummary(fromDate, toDate, customerId, paymentMode,
+                variantId, bankAccountId, minAmount, maxAmount, minTransactionCount));
+    }
+
     @PostMapping
     public ResponseEntity<SaleDTO> createSale(@Valid @RequestBody CreateSaleRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.createSale(request));

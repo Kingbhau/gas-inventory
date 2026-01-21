@@ -67,8 +67,7 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
       accountNumber: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(50)]],
       accountHolderName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       accountName: ['', [Validators.maxLength(100)]],
-      accountType: [''],
-      currentBalance: ['', [Validators.required, Validators.min(0)]]
+      accountType: ['']
     });
   }
 
@@ -115,8 +114,7 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
       accountNumber: bankAccount.accountNumber,
       accountHolderName: bankAccount.accountHolderName,
       accountName: bankAccount.accountName || '',
-      accountType: bankAccount.accountType || '',
-      currentBalance: bankAccount.currentBalance
+      accountType: bankAccount.accountType || ''
     });
     this.showModal = true;
     this.cdr.markForCheck();

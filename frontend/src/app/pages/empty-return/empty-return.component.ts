@@ -1,7 +1,7 @@
 import { catchError, of, finalize } from 'rxjs';
 
 
-import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomerService } from '../../services/customer.service';
@@ -10,11 +10,13 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { BankAccountService } from '../../services/bank-account.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
+import { PaymentMode } from '../../models/payment-mode.model';
 
 @Component({
     selector: 'app-empty-return',
@@ -25,6 +27,8 @@ import { BankAccount } from '../../models/bank-account.model';
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyReturnComponent implements OnInit, OnDestroy {
+    @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
+    
     emptyReturnForm: FormGroup;
     submitting = false;
     customers: any[] = [];
@@ -32,12 +36,14 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     filteredVariants: any[] = [];
     warehouses: any[] = [];
     bankAccounts: BankAccount[] = [];
+    paymentModes: PaymentMode[] = [];
     successMessage = '';
 
     constructor(
         private fb: FormBuilder,
         private ledgerService: CustomerCylinderLedgerService,
         private bankAccountService: BankAccountService,
+        private paymentModeService: PaymentModeService,
         private toastr: ToastrService,
         private customerService: CustomerService,
         private variantService: CylinderVariantService,
@@ -67,18 +73,23 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                 modeControl?.clearValidators();
             }
             modeControl?.updateValueAndValidity();
+            this.emptyReturnForm.updateValueAndValidity();
         });
 
         // When paymentMode changes, show/hide bank account field
         this.emptyReturnForm.get('paymentMode')?.valueChanges.subscribe((mode) => {
             const bankAccountControl = this.emptyReturnForm.get('bankAccountId');
-            if (mode && mode.toUpperCase() !== 'CASH') {
+            const selectedMode = this.getSelectedPaymentMode(mode);
+            const isBankAccountRequired = selectedMode ? selectedMode.isBankAccountRequired : false;
+            
+            if (mode && isBankAccountRequired) {
                 bankAccountControl?.setValidators(Validators.required);
             } else {
                 bankAccountControl?.clearValidators();
                 bankAccountControl?.reset();
             }
             bankAccountControl?.updateValueAndValidity();
+            this.emptyReturnForm.updateValueAndValidity();
         });
 
         // Load bank accounts on init
@@ -98,8 +109,26 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             });
     }
 
+    loadPaymentModes() {
+        this.paymentModeService.getActivePaymentModes()
+            .subscribe({
+                next: (response: PaymentMode[]) => {
+                    this.paymentModes = response || [];
+                },
+                error: (error: any) => {
+                    console.error('Error loading payment modes:', error);
+                    this.paymentModes = [];
+                }
+            });
+    }
+
+    getSelectedPaymentMode(modeName: string): PaymentMode | undefined {
+        return this.paymentModes.find(mode => mode.name === modeName);
+    }
+
     ngOnInit() {
         this.loadingService.show('Loading customers and variants...');
+        this.loadPaymentModes();
         const customerSub = this.customerService.getActiveCustomers()
             .pipe(
                 catchError((err: any) => {
@@ -142,7 +171,20 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     ngOnDestroy() {}
 
     resetForm() {
-        this.emptyReturnForm.reset({ 
+        // Reset autocomplete components
+        if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+            this.autocompleteInputs.forEach(input => {
+                if (input.resetInput) {
+                    input.resetInput();
+                }
+            });
+        }
+
+        // Reset form completely
+        this.emptyReturnForm.reset();
+        
+        // Reset with default values
+        this.emptyReturnForm.patchValue({
             warehouseId: null,
             customerId: null,
             variantId: null,
@@ -152,8 +194,22 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             bankAccountId: null,
             transactionDate: new Date().toISOString().substring(0, 10)
         });
+
         this.emptyReturnForm.markAsPristine();
         this.emptyReturnForm.markAsUntouched();
+        this.filteredVariants = this.variants;
+        this.successMessage = '';
+        
+        // Clear validation state on all controls
+        Object.keys(this.emptyReturnForm.controls).forEach(key => {
+            const control = this.emptyReturnForm.get(key);
+            if (control) {
+                control.markAsPristine();
+                control.markAsUntouched();
+            }
+        });
+        
+        this.cdr.markForCheck();
     }
 
     /**
@@ -262,22 +318,27 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         const paymentMode = formData.paymentMode;
         const bankAccountId = formData.bankAccountId;
         
-        // Add bankAccountId to request if payment is not CASH
+        // Add bankAccountId to request if required by payment mode configuration
         const request: any = {
             ...formData
         };
         
-        if (paymentMode && paymentMode.toUpperCase() !== 'CASH' && bankAccountId) {
+        const selectedMode = this.getSelectedPaymentMode(paymentMode);
+        const isBankAccountRequired = selectedMode ? selectedMode.isBankAccountRequired : false;
+        
+        if (paymentMode && isBankAccountRequired && bankAccountId) {
             request.bankAccountId = bankAccountId;
         }
         
         const sub = this.ledgerService.recordEmptyReturn(request)
             .pipe(
+                finalize(() => {
+                    this.submitting = false;
+                    this.cdr.markForCheck();
+                }),
                 catchError((err: any) => {
                     const errorMessage = err?.error?.message || err?.message || 'Failed to record return';
                     this.toastr.error(errorMessage, 'Error');
-                    this.submitting = false;
-                    this.cdr.markForCheck();
                     return of(null);
                 })
             )
@@ -286,13 +347,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     if (result) {
                         const reference = result?.transactionReference || 'N/A';
                         this.toastr.success(`Empty cylinder return recorded - Reference: ${reference}`, 'Success');
+                        // Reset form after successful submission
                         this.resetForm();
+                        this.filteredVariants = this.variants;
                     }
-                    this.submitting = false;
-                    this.cdr.markForCheck();
-                },
-                complete: () => {
-                    sub.unsubscribe();
                 }
             });
     }

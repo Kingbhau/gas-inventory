@@ -6,7 +6,6 @@ export interface BankAccount {
   accountHolderName: string;
   accountName?: string;
   accountType?: string;
-  currentBalance: number;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;

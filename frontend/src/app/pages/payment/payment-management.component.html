@@ -132,12 +132,12 @@
             <label class="form-label">Payment Mode <span class="required">*</span></label>
             <select [(ngModel)]="paymentForm.paymentMode" name="paymentMode" class="form-control">
               <option value="" disabled selected hidden>Select Payment Mode</option>
-              <option *ngFor="let mode of paymentModes" [value]="mode">{{ mode }}</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
             </select>
           </div>
 
-          <!-- Bank Account (shown for non-cash payments) -->
-          <div class="form-group" *ngIf="paymentForm.paymentMode && paymentForm.paymentMode.toUpperCase() !== 'CASH'">
+          <!-- Bank Account (shown when required by payment mode) -->
+          <div class="form-group" *ngIf="paymentForm.paymentMode && isBankAccountRequired()">
             <label class="form-label">Bank Account <span class="required">*</span></label>
             <select [(ngModel)]="paymentForm.bankAccountId" name="bankAccountId" class="form-control">
               <option [ngValue]="null" disabled>Select Bank Account</option>

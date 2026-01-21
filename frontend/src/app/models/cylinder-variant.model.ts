@@ -3,4 +3,5 @@ export interface CylinderVariant {
   name: string;
   weightKg: number;
   active: boolean;
+  basePrice?: number;
 }

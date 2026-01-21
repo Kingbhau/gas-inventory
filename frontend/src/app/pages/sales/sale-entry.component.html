@@ -147,19 +147,15 @@
             <label class="form-label">Payment Mode</label>
             <select formControlName="modeOfPayment" class="form-control">
               <option [value]="null" disabled hidden>Select Payment Mode</option>
-              <option value="CASH">Cash</option>
-              <option value="CHEQUE">Cheque</option>
-              <option value="BANK_TRANSFER">Bank Transfer</option>
-              <option value="CREDIT">Credit</option>
-              <option value="UPI">UPI</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
             </select>
             <div *ngIf="saleForm.get('modeOfPayment')?.invalid && saleForm.get('modeOfPayment')?.touched" class="error-message">
               Please select payment mode
             </div>
           </div>
 
-          <!-- Bank Account Selection (visible only when payment mode is not CASH) -->
-          <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && saleForm.get('modeOfPayment')?.value.toUpperCase() !== 'CASH'">
+          <!-- Bank Account Selection (visible only when payment mode requires bank account) -->
+          <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired">
             <label class="form-label">Bank Account</label>
             <select formControlName="bankAccountId" class="form-control">
               <option [value]="null" disabled>Select Bank Account</option>
@@ -168,7 +164,7 @@
               </option>
             </select>
             <div *ngIf="saleForm.get('bankAccountId')?.invalid && saleForm.get('bankAccountId')?.touched" class="error-message">
-              Please select a bank account for non-cash payments
+              Please select a bank account for this payment mode
             </div>
           </div>
         </div>

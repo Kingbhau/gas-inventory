@@ -228,7 +228,6 @@ public class BankAccountLedgerService {
         }
         dto.setTransactionType(entity.getTransactionType());
         dto.setAmount(entity.getAmount());
-        dto.setBalanceAfter(entity.getBalanceAfter());
 
         Long saleId = null;
         String saleReferenceNumber = null;

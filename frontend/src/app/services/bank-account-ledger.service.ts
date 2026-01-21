@@ -18,7 +18,6 @@ export interface BankAccountLedgerDTO {
   bankAccountName: string;
   transactionType: string;
   amount: number;
-  balanceAfter: number;
   saleId: number;
   referenceNumber: string;
   description: string;

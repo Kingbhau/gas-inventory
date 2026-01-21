@@ -158,16 +158,41 @@
     </div>
   </div>
 
-  <!-- Bank Transactions Report -->
-  <div *ngIf="selectedReport === 'bankTransactions'" class="filters-card">
+  <!-- Payment Mode Report Filters -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="filters-card">
     <div class="filter-row">
       <div class="filter-group">
         <label class="filter-label">From Date</label>
-        <input type="date" [(ngModel)]="filterBankFromDate" class="filter-input">
+        <input type="date" [(ngModel)]="filterPaymentModeFromDate" class="filter-input">
       </div>
       <div class="filter-group">
         <label class="filter-label">To Date</label>
-        <input type="date" [(ngModel)]="filterBankToDate" class="filter-input" [min]="filterBankFromDate">
+        <input type="date" [(ngModel)]="filterPaymentModeToDate" class="filter-input" [min]="filterPaymentModeFromDate">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Payment Mode</label>
+        <select [(ngModel)]="filterPaymentModePaymentMode" class="filter-input">
+          <option value="">All Modes</option>
+          <option *ngFor="let mode of paymentModesList" [value]="mode.name">{{ mode.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Cylinder Variant"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
       </div>
       <div class="filter-group">
         <app-autocomplete-input
@@ -175,127 +200,73 @@
           [items]="bankAccountsList"
           [displayKey]="'bankName'"
           placeholder="All"
-          (selectedChange)="filterBankAccountId = $event?.id?.toString() || ''"
+          (selectedChange)="filterPaymentModeBankAccountId = $event?.id?.toString() || ''"
         ></app-autocomplete-input>
       </div>
+    </div>
+    <div class="filter-row">
       <div class="filter-group">
-        <label class="filter-label">Transaction Type</label>
-        <select [(ngModel)]="filterBankTransactionType" class="filter-input">
-          <option value="">All Types</option>
-          <option value="DEPOSIT">DEPOSIT</option>
-          <option value="WITHDRAWAL">WITHDRAWAL</option>
-          <option value="ADJUSTMENT">ADJUSTMENT</option>
-        </select>
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinAmount" class="filter-input" placeholder="0" step="0.01">
       </div>
       <div class="filter-group">
-        <label class="filter-label">Reference #</label>
-        <input type="text" [(ngModel)]="filterBankTransactionReference" class="filter-input" placeholder="Reference number">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMaxAmount" class="filter-input" placeholder="Unlimited" step="0.01">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Transactions</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinTransactions" class="filter-input" placeholder="0" min="0" step="1">
       </div>
       <div class="filter-actions">
-        <button (click)="applyBankTransactionFilters()" class="btn btn-primary">Search</button>
-        <button (click)="resetBankTransactionFilters()" class="btn btn-secondary">Reset</button>
-        <button (click)="exportBankTransactionsReport()" class="btn btn-secondary"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+        <button (click)="applyPaymentModeFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetPaymentModeFilters()" class="btn btn-secondary">Reset</button>
       </div>
     </div>
   </div>
 
-  <!-- Bank Transactions Report Card -->
-  <div *ngIf="selectedReport === 'bankTransactions'" class="card">
+  <!-- Payment Mode Report Card -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="card">
     <div class="card-header">
-      <h3 class="card-title">Bank Transactions Report</h3>
+      <h3 class="card-title">Payment Mode Report</h3>
     </div>
     <div class="card-body">
+      <!-- Summary Cards -->
       <div class="report-summary">
         <div class="summary-card">
-          <span class="label">Total Deposits</span>
-          <span class="value">{{ bankTransactionsSummary.totalDeposits | indianCurrency }}</span>
+          <span class="label">Total Amount</span>
+          <span class="value">{{ paymentModesSummary.totalAmount | indianCurrency }}</span>
         </div>
         <div class="summary-card">
-          <span class="label">Total Withdrawals</span>
-          <span class="value">{{ bankTransactionsSummary.totalWithdrawals | indianCurrency }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Net Change</span>
-          <span class="value">{{ bankTransactionsSummary.netBalance | indianCurrency }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Transactions</span>
-          <span class="value">{{ bankTransactionsTotalElements }}</span>
-        </div>
-      </div>
-
-      <!-- Bank-wise Balance if multiple banks -->
-      <div *ngIf="bankTransactionsSummary.bankwiseBalances && (bankTransactionsSummary.bankwiseBalances | keyvalue).length > 0" class="report-summary" style="margin-top: 20px;">
-        <div *ngFor="let bank of bankTransactionsSummary.bankwiseBalances | keyvalue" class="summary-card">
-          <span class="label">{{ bank.key }}</span>
-          <span class="value">{{ $any(bank.value) | indianCurrency }}</span>
+          <span class="label">Total Transactions</span>
+          <span class="value">{{ paymentModesSummary.totalTransactions }}</span>
         </div>
       </div>
 
       <!-- Data Table -->
-      <div *ngIf="bankTransactionsData.length > 0" class="table-wrapper">
+      <div *ngIf="paymentModesData && paymentModesData.length > 0" class="table-wrapper" style="margin-top: 20px;">
         <div class="mobile-table-scroll">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Bank Account</th>
-                <th>Type</th>
-                <th class="text-center">Amount</th>
-                <th class="text-center">Balance</th>
-                <th class="text-center">Action</th>
+                <th>Payment Mode</th>
+                <th class="text-center">Transactions</th>
+                <th class="text-center">Total Amount</th>
+                <th class="text-center">Percentage</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let row of bankTransactionsData">
-                <td>{{ row.transactionDate | date: 'dd MMM yyyy' }}</td>
-                <td><strong>{{ row.bankAccountName?.split(' - ')[0] || row.bankAccountName }}</strong></td>
-                <td>
-                  <span class="badge" 
-                    [class.badge-success]="row.transactionType === 'DEPOSIT'"
-                    [class.badge-danger]="row.transactionType === 'WITHDRAWAL'"
-                    [class.badge-info]="row.transactionType === 'ADJUSTMENT'">
-                    {{ row.transactionType }}
-                  </span>
-                </td>
-                <td class="text-center">{{ row.amount | indianCurrency }}</td>
-                <td class="text-center">{{ row.balanceAfter | indianCurrency }}</td>
-                <td class="text-center">
-                  <button (click)="viewBankTransactionDetails(row)" class="btn btn-sm btn-info" title="View Details">
-                    <fa-icon [icon]="faEye"></fa-icon>
-                  </button>
-                </td>
+              <tr *ngFor="let row of paymentModesData">
+                <td><strong>{{ row.paymentMode }}</strong></td>
+                <td class="text-center">{{ row.transactionCount }}</td>
+                <td class="text-center">{{ row.totalAmount | indianCurrency }}</td>
+                <td class="text-center">{{ (row.totalAmount / paymentModesSummary.totalAmount * 100 | number: '1.1-1') }}%</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div *ngIf="bankTransactionsData.length === 0" class="empty-state">
-        <p>No bank transaction data available.</p>
-      </div>
-
-      <!-- Pagination Controls -->
-      <div *ngIf="bankTransactionsData.length > 0" class="pagination">
-        <button 
-          (click)="onBankTransactionsPageChange(bankTransactionsPage - 1)" 
-          [disabled]="bankTransactionsPage === 1"
-          class="btn btn-secondary">
-          ← Previous
-        </button>
-        <span class="page-info">Page {{ bankTransactionsPage }} of {{ bankTransactionsTotalPages }}</span>
-        <button 
-          (click)="onBankTransactionsPageChange(bankTransactionsPage + 1)" 
-          [disabled]="bankTransactionsPage === bankTransactionsTotalPages"
-          class="btn btn-secondary">
-          Next →
-        </button>
-        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
-          <span class="page-size-label">Show</span>
-          <select [(ngModel)]="bankTransactionsPageSize" (ngModelChange)="onBankTransactionsPageSizeChange($event)" class="page-size-select">
-            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
-          </select>
-          <span class="page-size-label">per page</span>
-        </div>
+      <div *ngIf="!paymentModesData || paymentModesData.length === 0" class="empty-state">
+        <p>No payment mode data available. Click Search to load data.</p>
       </div>
     </div>
   </div>
@@ -361,62 +332,6 @@
       </div>
       <div class="modal-footer">
         <button (click)="closeInvoice()" class="btn btn-secondary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bank Transaction Details Modal -->
-  <div *ngIf="selectedBankTransaction" class="modal-overlay" (click)="closeBankTransactionDetails()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Transaction Details</h2>
-        <button class="modal-close" (click)="closeBankTransactionDetails()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="invoice-section">
-          <div class="invoice-row">
-            <span class="label">Date:</span>
-            <span class="value">{{ selectedBankTransaction.transactionDate | date: 'dd MMM yyyy' }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Bank Account:</span>
-            <span class="value">{{ selectedBankTransaction.bankAccountName }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Transaction Type:</span>
-            <span class="value">
-              <span class="badge" 
-                [class.badge-success]="selectedBankTransaction.transactionType === 'DEPOSIT'"
-                [class.badge-danger]="selectedBankTransaction.transactionType === 'WITHDRAWAL'"
-                [class.badge-info]="selectedBankTransaction.transactionType === 'ADJUSTMENT'">
-                {{ selectedBankTransaction.transactionType }}
-              </span>
-            </span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Amount:</span>
-            <span class="value">{{ selectedBankTransaction.amount | indianCurrency }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Balance After:</span>
-            <span class="value">{{ selectedBankTransaction.balanceAfter | indianCurrency }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Reference Number:</span>
-            <span class="value">{{ selectedBankTransaction.referenceNumber || '-' }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Description:</span>
-            <span class="value">{{ selectedBankTransaction.description || '-' }}</span>
-          </div>
-          <div class="invoice-row" *ngIf="selectedBankTransaction.saleReferenceNumber">
-            <span class="label">Sale Reference:</span>
-            <span class="value">{{ selectedBankTransaction.saleReferenceNumber }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button (click)="closeBankTransactionDetails()" class="btn btn-secondary">Close</button>
       </div>
     </div>
   </div>

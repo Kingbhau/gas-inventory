@@ -14,7 +14,6 @@ public class CreateSaleRequestDTO {
     @Positive(message = "Warehouse ID must be a positive number")
     private Long warehouseId;
 
-    @NotNull(message = "Amount received cannot be null")
     @PositiveOrZero(message = "Amount received cannot be negative")
     private BigDecimal amountReceived;
 

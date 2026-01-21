@@ -33,6 +33,10 @@ public class CylinderVariant extends Auditable {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @DecimalMin(value = "0.0", inclusive = true, message = "Base price must be non-negative.")
+    @Column(nullable = true)
+    private java.math.BigDecimal basePrice;
+
     public CylinderVariant() {
     }
 
@@ -72,6 +76,14 @@ public class CylinderVariant extends Auditable {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public java.math.BigDecimal getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(java.math.BigDecimal basePrice) {
+        this.basePrice = basePrice;
     }
 
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

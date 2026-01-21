@@ -24,6 +24,8 @@ import { CustomerVariantPriceService } from '../../services/customer-variant-pri
 import { LoadingService } from '../../services/loading.service';
 import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
+import { PaymentModeService } from '../../services/payment-mode.service';
+import { PaymentMode } from '../../models/payment-mode.model';
 
 @Component({
   selector: 'app-sale-entry',
@@ -72,6 +74,7 @@ export class SaleEntryComponent implements OnInit {
   variants: any[] = [];
   warehouses: any[] = [];
   bankAccounts: BankAccount[] = [];
+  paymentModes: PaymentMode[] = [];
   filteredCustomers: any[] = [];
   filteredVariants: any[] = [];
   customerSearch: string = '';
@@ -95,7 +98,8 @@ export class SaleEntryComponent implements OnInit {
     private customerCylinderLedgerService: CustomerCylinderLedgerService,
     private loadingService: LoadingService,
     private warehouseService: WarehouseService,
-    private dataRefreshService: DataRefreshService
+    private dataRefreshService: DataRefreshService,
+    private paymentModeService: PaymentModeService
   ) {
     this.initForm();
   }
@@ -104,6 +108,7 @@ export class SaleEntryComponent implements OnInit {
     this.loadCustomers();
     this.loadVariants();
     this.loadWarehouses();
+    this.loadPaymentModes();
     this.filteredCustomers = this.customers;
     this.filteredVariants = this.variants;
     
@@ -298,6 +303,24 @@ export class SaleEntryComponent implements OnInit {
       });
   }
 
+  loadPaymentModes() {
+    this.paymentModeService.getActivePaymentModes()
+      .subscribe({
+        next: (modes: PaymentMode[]) => {
+          this.paymentModes = modes;
+        },
+        error: (error: any) => {
+          console.error('Error loading payment modes:', error);
+          this.paymentModes = [];
+          this.toastr.error('Error loading payment modes', 'Error');
+        }
+      });
+  }
+
+  getSelectedPaymentMode(modeName: string): PaymentMode | undefined {
+    return this.paymentModes.find(mode => mode.name === modeName);
+  }
+
   initForm() {
     this.saleForm = this.fb.group({
       warehouseId: [null, Validators.required],
@@ -306,7 +329,7 @@ export class SaleEntryComponent implements OnInit {
       filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
-      amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
+      amountReceived: [null, [Validators.max(100000)]],
       modeOfPayment: [null],
       bankAccountId: [null]
     });
@@ -323,18 +346,21 @@ export class SaleEntryComponent implements OnInit {
         modeControl?.clearValidators();
       }
       modeControl?.updateValueAndValidity();
+      this.saleForm.updateValueAndValidity();
     });
 
     // When modeOfPayment changes, show/hide bank account field
     this.saleForm.get('modeOfPayment')?.valueChanges.subscribe((mode) => {
       const bankAccountControl = this.saleForm.get('bankAccountId');
-      if (mode && mode.toUpperCase() !== 'CASH') {
+      const selectedMode = this.getSelectedPaymentMode(mode);
+      if (mode && selectedMode?.isBankAccountRequired) {
         bankAccountControl?.setValidators(Validators.required);
       } else {
         bankAccountControl?.clearValidators();
         bankAccountControl?.reset();
       }
       bankAccountControl?.updateValueAndValidity();
+      this.saleForm.updateValueAndValidity();
     });
 
     // Load bank accounts on init
@@ -499,8 +525,9 @@ export class SaleEntryComponent implements OnInit {
       ]
     };
 
-    // Add bankAccountId if payment is not CASH
-    if (modeOfPayment && modeOfPayment.toUpperCase() !== 'CASH' && bankAccountIdValue) {
+    // Add bankAccountId if payment requires bank account
+    const selectedPaymentMode = this.getSelectedPaymentMode(modeOfPayment);
+    if (modeOfPayment && selectedPaymentMode?.isBankAccountRequired && bankAccountIdValue) {
       saleRequest.bankAccountId = bankAccountIdValue;
     }
     const sub = this.saleService.createSale(saleRequest)
@@ -521,6 +548,11 @@ export class SaleEntryComponent implements OnInit {
             this.resetForm();
           }
         },
+        error: (error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error recording sale. Please try again.';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('Full error:', error);
+        },
         complete: () => {
           sub.unsubscribe();
         }
@@ -535,7 +567,7 @@ export class SaleEntryComponent implements OnInit {
       });
     }
     
-    // Rebuild the form completely with all fields
+    // Rebuild the form with correct validators (amountReceived and modeOfPayment are optional)
     this.saleForm = this.fb.group({
       warehouseId: [null, Validators.required],
       customerId: [null, Validators.required],
@@ -543,12 +575,45 @@ export class SaleEntryComponent implements OnInit {
       filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
-      amountReceived: [null, [Validators.required, Validators.min(0), Validators.max(100000)]],
-      modeOfPayment: [null, Validators.required],
+      amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
+      modeOfPayment: [null],
       bankAccountId: [null]
     });
     
     this.saleForm.get('basePrice')?.disable();
+    
+    // Re-add conditional validators for payment mode and bank account
+    this.saleForm.get('amountReceived')?.valueChanges.subscribe(() => {
+      const modeControl = this.saleForm.get('modeOfPayment');
+      const bankAccountControl = this.saleForm.get('bankAccountId');
+      const amountReceived = this.saleForm.get('amountReceived')?.value;
+      
+      if (amountReceived && amountReceived > 0) {
+        modeControl?.setValidators(Validators.required);
+      } else {
+        modeControl?.clearValidators();
+      }
+      modeControl?.updateValueAndValidity();
+      
+      // Update form validity
+      this.saleForm.updateValueAndValidity();
+    });
+
+    this.saleForm.get('modeOfPayment')?.valueChanges.subscribe((mode) => {
+      const bankAccountControl = this.saleForm.get('bankAccountId');
+      const selectedMode = this.getSelectedPaymentMode(mode);
+      if (mode && selectedMode?.isBankAccountRequired) {
+        bankAccountControl?.setValidators(Validators.required);
+      } else {
+        bankAccountControl?.clearValidators();
+        bankAccountControl?.reset();
+      }
+      bankAccountControl?.updateValueAndValidity();
+      
+      // Update form validity
+      this.saleForm.updateValueAndValidity();
+    });
+    
     this.saleForm.markAsPristine();
     this.saleForm.markAsUntouched();
     this.baseAmount = 0;

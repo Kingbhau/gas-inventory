@@ -9,7 +9,6 @@ public class BankAccountLedgerDTO {
     private String bankAccountName;
     private String transactionType;
     private BigDecimal amount;
-    private BigDecimal balanceAfter;
     private Long saleId;
     private String saleReferenceNumber;
     private String referenceNumber;
@@ -29,7 +28,7 @@ public class BankAccountLedgerDTO {
         this.bankAccountName = bankAccountName;
         this.transactionType = transactionType;
         this.amount = amount;
-        this.balanceAfter = balanceAfter;
+        // Note: balanceAfter parameter is deprecated and ignored
         this.saleId = saleId;
         this.saleReferenceNumber = saleReferenceNumber;
         this.referenceNumber = referenceNumber;
@@ -77,14 +76,6 @@ public class BankAccountLedgerDTO {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
-    }
-
-    public BigDecimal getBalanceAfter() {
-        return balanceAfter;
-    }
-
-    public void setBalanceAfter(BigDecimal balanceAfter) {
-        this.balanceAfter = balanceAfter;
     }
 
     public Long getSaleId() {
@@ -142,7 +133,6 @@ public class BankAccountLedgerDTO {
                 ", bankAccountId=" + bankAccountId +
                 ", transactionType='" + transactionType + '\'' +
                 ", amount=" + amount +
-                ", balanceAfter=" + balanceAfter +
                 ", saleId=" + saleId +
                 ", referenceNumber='" + referenceNumber + '\'' +
                 ", description='" + description + '\'' +

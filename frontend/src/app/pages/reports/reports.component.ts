@@ -20,11 +20,11 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faShoppingCart, faHourglassEnd, faBox, faTruck, faDownload, faReceipt, faFileInvoice, faEye, faBank } from '@fortawesome/free-solid-svg-icons';
 import { exportSalesReportToPDF } from './export-sales-report.util';
-import { exportBankTransactionsReportToPDF } from './export-bank-transactions.util';
 import { exportDuePaymentReportToPDF } from './export-due-payment-report.util';
 import { BusinessInfoService } from '../../services/business-info.service';
 import { ToastrService } from 'ngx-toastr';
 import { SaleService } from '../../services/sale.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
 import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { InventoryStockService } from '../../services/inventory-stock.service';
@@ -79,10 +79,6 @@ export class ReportsComponent implements OnInit, OnDestroy {
     duePaymentPageSize = 10;
     duePaymentTotalPages = 1;
     duePaymentTotalElements = 0;
-    bankTransactionsPage = 1;
-    bankTransactionsPageSize = 10;
-    bankTransactionsTotalPages = 1;
-    bankTransactionsTotalElements = 0;
 
     // Paginated getters
     // Flattened sale items for row-based pagination
@@ -162,20 +158,25 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterDuePaymentCustomerId: string = '';
   filterDuePaymentMinAmount: number | null = null;
   filterDuePaymentMaxAmount: number | null = null;
-  filterBankAccountId: string = '';
-  filterBankTransactionType: string = '';
-  filterBankTransactionReference: string = '';
+  filterPaymentModeCustomerId: string = '';
+  filterPaymentModePaymentMode: string = '';
+  filterPaymentModeVariantId: string = '';
+  filterPaymentModeBankAccountId: string = '';
+  filterPaymentModeMinAmount: number | null = null;
+  filterPaymentModeMaxAmount: number | null = null;
+  filterPaymentModeMinTransactions: number | null = null;
   customersList: any[] = [];
   variantsList: any[] = [];
   warehousesList: any[] = [];
   bankAccountsList: any[] = [];
+  paymentModesList: any[] = [];
   selectedReport = 'sales';
   filterFromDate = '';
   filterToDate = '';
   filterDuePaymentFromDate = '';
   filterDuePaymentToDate = '';
-  filterBankFromDate = '';
-  filterBankToDate = '';
+  filterPaymentModeFromDate = '';
+  filterPaymentModeToDate = '';
 
   // Font Awesome Icons
   faShoppingCart = faShoppingCart;
@@ -195,7 +196,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     { id: 'returnPending', name: 'Return Pending', icon: faHourglassEnd },
     { id: 'inventory', name: 'Inventory', icon: faBox },
     { id: 'supplier', name: 'Supplier', icon: faTruck },
-    { id: 'bankTransactions', name: 'Bank Transactions', icon: faBank }
+    { id: 'paymentModes', name: 'Payment Mode Report', icon: faBank }
   ];
 
   // Sales Data
@@ -210,12 +211,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
   // Supplier Data
   supplierData: any[] = [];
 
-  // Bank Transactions Data
-  bankTransactionsData: any[] = [];
-  bankTransactionsSummary: any = {
-    totalDeposits: 0,
-    totalWithdrawals: 0,
-    netBalance: 0
+  // Payment Mode Data
+  paymentModesData: any[] = [];
+  paymentModesSummary: any = {
+    paymentModeStats: {},
+    totalAmount: 0,
+    totalTransactions: 0
   };
 
   // Customer Due Payment Data
@@ -238,9 +239,6 @@ export class ReportsComponent implements OnInit, OnDestroy {
   selectedSale: any = null;
   originalSalesMap: Map<number, any> = new Map();
 
-  // Bank Transaction modal properties
-  selectedBankTransaction: any = null;
-
   constructor(
     private saleService: SaleService,
     private duePaymentService: CustomerDuePaymentService,
@@ -248,6 +246,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private inventoryService: InventoryStockService,
     private supplierTransactionService: SupplierTransactionService,
     private bankAccountLedgerService: BankAccountLedgerService,
+    private paymentModeService: PaymentModeService,
     private customerService: CustomerService,
     private variantService: CylinderVariantService,
     private warehouseService: WarehouseService,
@@ -301,6 +300,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.bankAccountsList = []; }
     });
+    
+    // Load payment modes for filtering
+    this.paymentModeService.getActivePaymentModes().subscribe({
+      next: (data: any) => {
+        this.paymentModesList = Array.isArray(data) ? data : (data.content || []);
+      },
+      error: () => { this.paymentModesList = []; }
+    });
   }
 
   ngOnDestroy() {}
@@ -322,8 +329,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
     if (this.selectedReport === 'customerDuePayment') {
       this.loadDuePaymentData();
     }
-    if (this.selectedReport === 'bankTransactions') {
-      this.loadBankTransactionsData();
+    if (this.selectedReport === 'paymentModes') {
+      this.loadPaymentModesData();
     }
   }
 
@@ -835,152 +842,56 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.selectedSale = null;
   }
 
-  viewBankTransactionDetails(transaction: any) {
-    this.selectedBankTransaction = transaction;
-  }
+  loadPaymentModesData() {
+    this.loadingService.show('Loading payment mode data...');
+    const fromDate = this.filterPaymentModeFromDate ? this.filterPaymentModeFromDate : undefined;
+    const toDate = this.filterPaymentModeToDate ? this.filterPaymentModeToDate : undefined;
+    const customerId = this.filterPaymentModeCustomerId ? this.filterPaymentModeCustomerId : undefined;
+    const paymentMode = this.filterPaymentModePaymentMode ? this.filterPaymentModePaymentMode : undefined;
+    const variantId = this.filterPaymentModeVariantId ? Number(this.filterPaymentModeVariantId) : undefined;
+    const bankAccountId = this.filterPaymentModeBankAccountId ? Number(this.filterPaymentModeBankAccountId) : undefined;
+    const minAmount = (typeof this.filterPaymentModeMinAmount === 'number' && !isNaN(this.filterPaymentModeMinAmount)) ? this.filterPaymentModeMinAmount : undefined;
+    const maxAmount = (typeof this.filterPaymentModeMaxAmount === 'number' && !isNaN(this.filterPaymentModeMaxAmount)) ? this.filterPaymentModeMaxAmount : undefined;
+    const minTransactions = (typeof this.filterPaymentModeMinTransactions === 'number' && !isNaN(this.filterPaymentModeMinTransactions)) ? this.filterPaymentModeMinTransactions : undefined;
 
-  closeBankTransactionDetails() {
-    this.selectedBankTransaction = null;
-  }
-
-  exportBankTransactionsReport() {
-    const fromDate = this.filterBankFromDate ? this.filterBankFromDate : undefined;
-    const toDate = this.filterBankToDate ? this.filterBankToDate : undefined;
-    const bankAccountId = this.filterBankAccountId ? this.filterBankAccountId : undefined;
-    const transactionType = this.filterBankTransactionType ? this.filterBankTransactionType : undefined;
-    const bankAccountName = bankAccountId ? (this.bankAccountsList.find(b => b.id == bankAccountId)?.bankName || '') : undefined;
-    const pageSize = 500;
-    let allTransactions: any[] = [];
-    let page = 0;
-    let totalPages = 1;
-    const businessName = this.agencyName;
-
-    const fetchPage = () => {
-      this.bankAccountLedgerService.getAllBankTransactions(page, pageSize, 'transactionDate', 'DESC', fromDate, toDate, bankAccountId, transactionType)
-        .pipe(
-          catchError((error: any) => {
-            this.toastr.error('Error loading bank transactions for export', 'Error');
-            console.error('Error:', error);
-            return of({ content: [], totalPages: 0 });
-          })
-        )
-        .subscribe((data: any) => {
-          const content = data.content || data;
-          allTransactions = allTransactions.concat(content);
-          totalPages = data.totalPages || 1;
-          page++;
-
-          if (page < totalPages) {
-            fetchPage();
-          } else {
-            // Fetch summary for consistency
-            this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType, this.filterBankTransactionReference)
-              .pipe(
-                catchError(() => of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0, balanceAfter: 0, transactionCount: 0 }))
-              )
-              .subscribe((summary: any) => {
-                exportBankTransactionsReportToPDF({
-                  transactions: allTransactions,
-                  fromDate: this.filterBankFromDate,
-                  toDate: this.filterBankToDate,
-                  bankAccountName,
-                  transactionType: this.filterBankTransactionType,
-                  referenceNumber: this.filterBankTransactionReference,
-                  totalDeposits: summary.totalDeposits || 0,
-                  totalWithdrawals: summary.totalWithdrawals || 0,
-                  netChange: summary.netBalance || 0,
-                  currentBalance: summary.balanceAfter || 0,
-                  transactionCount: summary.transactionCount || 0,
-                  businessName
-                });
-                this.toastr.success('PDF exported!', 'Success');
-              });
-          }
-        });
-    };
-
-    fetchPage();
-  }
-
-  loadBankTransactionsData() {
-    const fromDate = this.filterBankFromDate ? this.filterBankFromDate : undefined;
-    const toDate = this.filterBankToDate ? this.filterBankToDate : undefined;
-    const bankAccountId = this.filterBankAccountId ? this.filterBankAccountId : undefined;
-    const transactionType = this.filterBankTransactionType ? this.filterBankTransactionType : undefined;
-    const referenceNumber = this.filterBankTransactionReference ? this.filterBankTransactionReference : undefined;
-
-    this.loadingService.show('Loading bank transactions...');
-    this.bankAccountLedgerService.getAllBankTransactions(
-      this.bankTransactionsPage - 1,
-      this.bankTransactionsPageSize,
-      'transactionDate',
-      'DESC',
-      fromDate,
-      toDate,
-      bankAccountId,
-      transactionType,
-      referenceNumber
-    )
+    this.saleService.getPaymentModeSummary(fromDate, toDate, customerId, paymentMode, variantId, bankAccountId, minAmount, maxAmount, minTransactions)
       .pipe(
         catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading bank transactions';
+          const errorMessage = error?.error?.message || error?.message || 'Error loading payment mode data';
           this.toastr.error(errorMessage, 'Error');
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({ paymentModeStats: {}, totalAmount: 0, totalTransactions: 0 });
         }),
         finalize(() => this.loadingService.hide())
       )
       .subscribe((data: any) => {
-        this.bankTransactionsData = data.content || data;
-        this.bankTransactionsTotalElements = data.totalElements || 0;
-        this.bankTransactionsTotalPages = data.totalPages || 1;
-        this.cdr.markForCheck();
-      });
-
-    // Load summary
-    this.bankAccountLedgerService.getBankTransactionsSummary(fromDate, toDate, bankAccountId, transactionType, referenceNumber)
-      .pipe(
-        catchError(() => {
-          return of({ totalDeposits: 0, totalWithdrawals: 0, netBalance: 0 });
-        })
-      )
-      .subscribe((summary: any) => {
-        this.bankTransactionsSummary = summary;
+        // Convert payment mode stats object to array for display
+        this.paymentModesSummary = data;
+        this.paymentModesData = Object.entries(data.paymentModeStats || {}).map(([key, value]: [string, any]) => ({
+          paymentMode: key,
+          ...value
+        }));
         this.cdr.markForCheck();
       });
   }
 
-  onBankTransactionsPageChange(page: number) {
-    if (page > 0 && page <= this.bankTransactionsTotalPages) {
-      this.bankTransactionsPage = page;
-      this.loadBankTransactionsData();
-      this.cdr.markForCheck();
-    }
+  onGeneratePaymentModesClick() {
+    this.loadPaymentModesData();
   }
 
-  onBankTransactionsPageSizeChange(size: number) {
-    this.bankTransactionsPageSize = size;
-    this.bankTransactionsPage = 1;
-    this.loadBankTransactionsData();
-    this.cdr.markForCheck();
+  applyPaymentModeFilters() {
+    this.loadPaymentModesData();
   }
 
-  onGenerateBankTransactionsClick() {
-    this.bankTransactionsPage = 1;
-    this.loadBankTransactionsData();
-  }
-
-  applyBankTransactionFilters() {
-    this.bankTransactionsPage = 1;
-    this.loadBankTransactionsData();
-  }
-
-  resetBankTransactionFilters() {
-    this.filterBankFromDate = '';
-    this.filterBankToDate = '';
-    this.filterBankAccountId = '';
-    this.filterBankTransactionType = '';
-    this.filterBankTransactionReference = '';
-    this.bankTransactionsPage = 1;
-    this.loadBankTransactionsData();
+  resetPaymentModeFilters() {
+    this.filterPaymentModeFromDate = '';
+    this.filterPaymentModeToDate = '';
+    this.filterPaymentModeCustomerId = '';
+    this.filterPaymentModePaymentMode = '';
+    this.filterPaymentModeVariantId = '';
+    this.filterPaymentModeBankAccountId = '';
+    this.filterPaymentModeMinAmount = null;
+    this.filterPaymentModeMaxAmount = null;
+    this.filterPaymentModeMinTransactions = null;
+    this.loadPaymentModesData();
   }
 }

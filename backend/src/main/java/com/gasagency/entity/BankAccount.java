@@ -1,10 +1,7 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.DecimalMin;
-import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,28 +42,17 @@ public class BankAccount extends Auditable {
     @Column(length = 50)
     private String accountType;
 
-    @NotNull(message = "Current balance is required.")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Current balance cannot be negative.")
-    @Column(nullable = false)
-    private BigDecimal currentBalance;
-
     @Column(nullable = false)
     private Boolean isActive = true;
 
     public BankAccount() {
     }
 
-    public BankAccount(String code, String bankName, String accountNumber, String accountHolderName,
-            BigDecimal currentBalance) {
+    public BankAccount(String code, String bankName, String accountNumber, String accountHolderName) {
         this.code = Objects.requireNonNull(code, "Bank code cannot be null");
         this.bankName = Objects.requireNonNull(bankName, "Bank name cannot be null");
         this.accountNumber = Objects.requireNonNull(accountNumber, "Account number cannot be null");
         this.accountHolderName = Objects.requireNonNull(accountHolderName, "Account holder name cannot be null");
-        this.currentBalance = Objects.requireNonNull(currentBalance, "Current balance cannot be null");
-
-        if (currentBalance.signum() < 0) {
-            throw new IllegalArgumentException("Current balance cannot be negative");
-        }
     }
 
     public Long getId() {
@@ -133,14 +119,6 @@ public class BankAccount extends Auditable {
         this.accountType = accountType;
     }
 
-    public BigDecimal getCurrentBalance() {
-        return currentBalance;
-    }
-
-    public void setCurrentBalance(BigDecimal currentBalance) {
-        this.currentBalance = currentBalance;
-    }
-
     public Boolean getIsActive() {
         return isActive;
     }
@@ -173,7 +151,6 @@ public class BankAccount extends Auditable {
                 ", bankName='" + bankName + '\'' +
                 ", accountNumber='" + accountNumber + '\'' +
                 ", accountHolderName='" + accountHolderName + '\'' +
-                ", currentBalance=" + currentBalance +
                 ", isActive=" + isActive +
                 ", createdDate=" + createdDate +
                 '}';

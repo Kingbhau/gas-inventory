@@ -1,9 +1,6 @@
 package com.gasagency.dto;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.DecimalMin;
-import java.math.BigDecimal;
 
 public class CreateBankAccountRequestDTO {
     @NotBlank(message = "Bank name is required.")
@@ -19,21 +16,16 @@ public class CreateBankAccountRequestDTO {
 
     private String accountType;
 
-    @NotNull(message = "Current balance is required.")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Current balance cannot be negative.")
-    private BigDecimal currentBalance;
-
     public CreateBankAccountRequestDTO() {
     }
 
     public CreateBankAccountRequestDTO(String bankName, String accountNumber, String accountHolderName,
-            String accountName, String accountType, BigDecimal currentBalance) {
+            String accountName, String accountType) {
         this.bankName = bankName;
         this.accountNumber = accountNumber;
         this.accountHolderName = accountHolderName;
         this.accountName = accountName;
         this.accountType = accountType;
-        this.currentBalance = currentBalance;
     }
 
     public String getBankName() {
@@ -74,13 +66,5 @@ public class CreateBankAccountRequestDTO {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
-    }
-
-    public BigDecimal getCurrentBalance() {
-        return currentBalance;
-    }
-
-    public void setCurrentBalance(BigDecimal currentBalance) {
-        this.currentBalance = currentBalance;
     }
 }

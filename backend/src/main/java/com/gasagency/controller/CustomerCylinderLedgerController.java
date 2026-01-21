@@ -141,6 +141,19 @@ public class CustomerCylinderLedgerController {
                                 ") cannot exceed customer due amount ("
                                 + customerDueAmount.setScale(2, java.math.RoundingMode.HALF_UP) + ")");
             }
+
+            // Validate paymentMode is provided when amountReceived > 0
+            if (request.paymentMode == null || request.paymentMode.trim().isEmpty()) {
+                throw new com.gasagency.exception.InvalidOperationException(
+                        "Payment mode is required when amount is received");
+            }
+
+            // Validate bankAccountId is provided when payment mode is not CASH
+            if (!request.paymentMode.equalsIgnoreCase("CASH") &&
+                    (request.bankAccountId == null || request.bankAccountId <= 0)) {
+                throw new com.gasagency.exception.InvalidOperationException(
+                        "Bank account is required for payment mode: " + request.paymentMode);
+            }
         }
 
         // For empty returns, set refId to 0L (not null) to satisfy DB constraint
@@ -166,11 +179,10 @@ public class CustomerCylinderLedgerController {
         if (request.bankAccountId != null && request.paymentMode != null &&
                 !request.paymentMode.equalsIgnoreCase("CASH")) {
             try {
-                service.recordBankAccountTransaction(
+                service.recordBankAccountDeposit(
                         request.bankAccountId,
                         request.amountReceived != null ? request.amountReceived : java.math.BigDecimal.ZERO,
                         dto.getId(),
-                        "EMPTY-RETURN-" + dto.getId(),
                         "Empty cylinder return refund");
             } catch (Exception e) {
                 throw new RuntimeException("Failed to record bank account deposit: " + e.getMessage());
