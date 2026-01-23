@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPencil, faTrash, faCheck, faBan } from '@fortawesome/free-solid-svg-icons';
+import { faEdit } from '@fortawesome/free-solid-svg-icons';
 import { WarehouseService } from '../../services/warehouse.service';
 import { AuthService } from '../../services/auth.service';
 import { Warehouse } from '../../models/warehouse.model';
@@ -32,10 +32,7 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
   editingWarehouseId: number | null = null;
   
   // Font Awesome icons
-  faPencil = faPencil;
-  faTrash = faTrash;
-  faCheck = faCheck;
-  faBan = faBan;
+  faEdit = faEdit;
   
   private destroy$ = new Subject<void>();
 
@@ -167,6 +164,7 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
           (response: any) => {
             if (response.success) {
               this.toastr.success('Warehouse updated successfully');
+              this.warehouseService.invalidateCache();
               this.closeModal();
               this.loadWarehouses();
             } else {
@@ -200,6 +198,7 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
           (response: any) => {
             if (response.success) {
               this.toastr.success('Warehouse created successfully');
+              this.warehouseService.invalidateCache();
               this.closeModal();
               this.loadWarehouses();
             } else {
@@ -229,52 +228,6 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
       status: warehouse.status
     });
     this.showModal = true;
-  }
-
-  /**
-   * Activate warehouse
-   */
-  activateWarehouse(warehouseId: number): void {
-    if (confirm('Are you sure you want to activate this warehouse?')) {
-      this.warehouseService.activateWarehouse(warehouseId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(
-          (response: any) => {
-            if (response.success) {
-              this.toastr.success('Warehouse activated successfully');
-              this.loadWarehouses();
-            } else {
-              this.toastr.error(response.message || 'Activation failed');
-            }
-          },
-          (error: any) => {
-            this.toastr.error('Error activating warehouse');
-          }
-        );
-    }
-  }
-
-  /**
-   * Deactivate warehouse
-   */
-  deactivateWarehouse(warehouseId: number): void {
-    if (confirm('Are you sure you want to deactivate this warehouse? Transfers will be blocked.')) {
-      this.warehouseService.deactivateWarehouse(warehouseId)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(
-          (response: any) => {
-            if (response.success) {
-              this.toastr.success('Warehouse deactivated successfully');
-              this.loadWarehouses();
-            } else {
-              this.toastr.error(response.message || 'Deactivation failed');
-            }
-          },
-          (error: any) => {
-            this.toastr.error('Error deactivating warehouse');
-          }
-        );
-    }
   }
 
   /**
@@ -314,7 +267,7 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
    * Get status display text
    */
   getStatusText(status: string): string {
-    return status === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE';
+    return status === 'ACTIVE' ? 'Active' : 'Inactive';
   }
 
   /**
@@ -329,6 +282,11 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
    */
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    // Parse and format date in IST format (YYYY-MM-DD)
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${day}/${month}/${year}`;
   }
 }

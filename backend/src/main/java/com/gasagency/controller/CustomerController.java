@@ -57,4 +57,9 @@ public class CustomerController {
         service.deleteCustomer(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<CustomerDTO> reactivateCustomer(@PathVariable Long id) {
+        return ResponseEntity.ok(service.reactivateCustomer(id));
+    }
 }

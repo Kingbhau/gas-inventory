@@ -618,36 +618,9 @@ canvas {
   font-weight: 700;
 }
 
-/* Badge */
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
+/* Badge - using global definitions from styles.css */
+/* For component-specific overrides only if necessary */
 
-.badge-success {
-  background: rgba(22, 163, 74, 0.15);
-  color: #16a34a;
-}
-
-.badge-warning {
-  background: rgba(234, 88, 12, 0.15);
-  color: #ea580c;
-}
-
-.badge-danger {
-  background: rgba(220, 38, 38, 0.15);
-  color: #dc2626;
-}
-
-.badge-info {
-  background: rgba(8, 145, 178, 0.15);
-  color: #0891b2;
-}
 
 /* Link */
 .link {

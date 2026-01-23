@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch, faPencil, faTrash, faPlus, faTimes, faEllipsisV, faExclamation, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrash, faPlus, faTimes, faEllipsisV, faExclamation, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { UserService, User } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
@@ -35,7 +35,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   faSearch = faSearch;
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faPlus = faPlus;
   faTimes = faTimes;
@@ -197,7 +197,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.userForm.reset();
     const userInfo = this.authService.getUserInfo();
     const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
-    this.userForm.patchValue({ active: true, businessId });
+    this.userForm.patchValue({ active: true, businessId, role: '' });
     this.cdr.markForCheck();
   }
 

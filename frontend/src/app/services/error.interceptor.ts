@@ -26,6 +26,11 @@ export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
+      // Skip error toast for login endpoint errors - let login component handle it
+      if (req.url.includes('/auth/login')) {
+        return throwError(() => error);
+      }
+
       // Handle other errors with toastr
       let errorMessage = 'An error occurred. Please try again.';
 

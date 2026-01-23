@@ -90,12 +90,9 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
     this.warehouseService.getActiveWarehouses()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          if (response.success) {
-            this.warehouses = response.data;
-          } else {
-            this.toastr.error('Failed to load warehouses');
-          }
+        (data: any) => {
+          // Filter to ensure only active warehouses are shown (status = 'ACTIVE')
+          this.warehouses = (data || []).filter((w: any) => w.status === 'ACTIVE');
           this.isLoading = false;
         },
         (error: any) => {
@@ -109,7 +106,7 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
    * Load cylinder variants
    */
   private loadVariants(): void {
-    this.variantService.getAllVariants()
+    this.variantService.getActiveVariants()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         (response: any) => {

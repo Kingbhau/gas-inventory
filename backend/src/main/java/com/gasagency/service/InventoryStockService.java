@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryStockService {
 
-
         private static final Logger logger = LoggerFactory.getLogger(InventoryStockService.class);
 
         private final InventoryStockRepository repository;
@@ -62,39 +61,40 @@ public class InventoryStockService {
                 return toDTO(stock);
         }
 
-    /**
-     * Increment the empty quantity for a given variant by the specified qty.
-     * Throws ResourceNotFoundException if stock or variant not found.
-     */
-    @Transactional
-    public void incrementEmptyQty(Long variantId, Long qty) {
-        LoggerUtil.logBusinessEntry(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "qty", qty);
-        if (qty == null) {
-            throw new IllegalArgumentException("Quantity to increment cannot be null");
+        /**
+         * Increment the empty quantity for a given variant by the specified qty.
+         * Uses atomic database update to prevent race conditions.
+         * Throws ResourceNotFoundException if variant not found.
+         */
+        @Transactional
+        public void incrementEmptyQty(Long variantId, Long qty) {
+                LoggerUtil.logBusinessEntry(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "qty", qty);
+                if (qty == null) {
+                        throw new IllegalArgumentException("Quantity to increment cannot be null");
+                }
+                if (qty == 0) {
+                        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId,
+                                        "newEmptyQty", "No increment (qty=0)");
+                        return;
+                }
+                if (qty < 0) {
+                        throw new IllegalArgumentException("Quantity to increment cannot be negative");
+                }
+                // Validate variant exists
+                variantRepository.findById(variantId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Variant not found with id: " + variantId));
+
+                // Use atomic database update instead of read-modify-write
+                int rowsUpdated = repository.incrementEmptyQtyAtomic(variantId, qty);
+                if (rowsUpdated == 0) {
+                        throw new ResourceNotFoundException("Stock not found for variant id: " + variantId);
+                }
+                LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId,
+                                "incrementBy", qty, "updatedRows", rowsUpdated);
+                LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "variantId", variantId,
+                                "incrementType", "emptyQty", "amount", qty);
         }
-        if (qty == 0) {
-            // No increment needed, but not an error. Log and return.
-            LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId,
-                    "newEmptyQty", "No increment (qty=0)");
-            return;
-        }
-        if (qty < 0) {
-            throw new IllegalArgumentException("Quantity to increment cannot be negative");
-        }
-        CylinderVariant variant = variantRepository.findById(variantId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Variant not found with id: " + variantId));
-        InventoryStock stock = repository.findByVariant(variant)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Stock not found for variant id: " + variantId));
-        Long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
-        stock.setEmptyQty(currentEmpty + qty);
-        repository.save(stock);
-        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_EMPTY_QTY", "variantId", variantId, "newEmptyQty",
-                stock.getEmptyQty());
-        LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "stockId", stock.getId(), "variantId", variantId,
-                "emptyQty", stock.getEmptyQty());
-    }
 
         public InventoryStockDTO getStockById(Long id) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "INVENTORY_STOCK", "id", id);
@@ -246,6 +246,11 @@ public class InventoryStockService {
                                         quantity);
                         throw new IllegalArgumentException("Quantity cannot be negative");
                 }
+                if (quantity == 0) {
+                        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_FILLED_QTY", "variantId", variantId,
+                                        "reason", "No increment (qty=0)");
+                        return;
+                }
                 CylinderVariant variant = variantRepository.findById(variantId)
                                 .orElseThrow(() -> {
                                         LoggerUtil.logBusinessError(logger, "INCREMENT_FILLED_QTY", "Variant not found",
@@ -253,25 +258,25 @@ public class InventoryStockService {
                                         return new ResourceNotFoundException(
                                                         "Variant not found with id: " + variantId);
                                 });
-                InventoryStock stock = repository.findByVariantWithLock(variant)
-                                .orElseGet(() -> {
-                                        // Create new inventory stock if it doesn't exist
-                                        LoggerUtil.logDatabaseOperation(logger, "CREATE", "INVENTORY_STOCK",
-                                                        "variantId", variantId, "reason",
-                                                        "Auto-created for transaction");
-                                        InventoryStock newStock = new InventoryStock();
-                                        newStock.setVariant(variant);
-                                        newStock.setFilledQty(0L);
-                                        newStock.setEmptyQty(0L);
-                                        newStock.setLastUpdated(LocalDateTime.now());
-                                        return repository.save(newStock);
-                                });
-                long newQty = stock.getFilledQty() + quantity;
-                stock.setFilledQty(newQty);
-                stock.setLastUpdated(LocalDateTime.now());
-                repository.save(stock);
 
-                LoggerUtil.logBusinessSuccess(logger, "INCREMENT_FILLED_QTY", "variantId", variantId, "newQty", newQty);
+                // Use atomic database update instead of read-modify-write
+                int rowsUpdated = repository.incrementFilledQtyAtomic(variantId, quantity);
+                if (rowsUpdated == 0) {
+                        // Stock doesn't exist, create it first, then increment
+                        InventoryStock newStock = new InventoryStock();
+                        newStock.setVariant(variant);
+                        newStock.setFilledQty(quantity);
+                        newStock.setEmptyQty(0L);
+                        newStock.setLastUpdated(LocalDateTime.now());
+                        repository.save(newStock);
+                        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_FILLED_QTY_CREATE", "variantId", variantId,
+                                        "createdWithQty", quantity);
+                } else {
+                        LoggerUtil.logBusinessSuccess(logger, "INCREMENT_FILLED_QTY", "variantId", variantId,
+                                        "incrementBy", quantity, "updatedRows", rowsUpdated);
+                }
+                LoggerUtil.logAudit("UPDATE", "INVENTORY_STOCK", "variantId", variantId,
+                                "incrementType", "filledQty", "amount", quantity);
         }
 
         @Transactional
@@ -700,6 +705,53 @@ public class InventoryStockService {
                 repository.save(stock);
 
                 LoggerUtil.logBusinessSuccess(logger, "DECREMENT_FILLED_QTY",
+                                "warehouseId", warehouse.getId(),
+                                "variantId", variant.getId(),
+                                "newQty", newQuantity);
+        }
+
+        /**
+         * Decrement filled quantity for a warehouse and variant with validation
+         * (warehouse-aware)
+         * Throws exception if quantity would go negative
+         * Used for ledger updates in specific warehouses
+         */
+        @Transactional
+        public void decrementFilledQtyWithCheck(Warehouse warehouse, CylinderVariant variant, Long quantity) {
+                LoggerUtil.logDatabaseOperation(logger, "DECREMENT_FILLED_WITH_CHECK", "INVENTORY_STOCK",
+                                "warehouseId", warehouse.getId(),
+                                "variantId", variant.getId(),
+                                "qty", quantity);
+
+                if (quantity == null || quantity < 0) {
+                        LoggerUtil.logBusinessError(logger, "DECREMENT_FILLED_QTY_CHECK", "Invalid quantity", "qty",
+                                        quantity);
+                        throw new IllegalArgumentException("Quantity cannot be null or negative");
+                }
+
+                if (quantity == 0) {
+                        return; // No decrement needed
+                }
+
+                InventoryStock stock = getOrCreateStock(warehouse, variant);
+                Long currentFilled = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
+                Long newQuantity = currentFilled - quantity;
+
+                if (newQuantity < 0) {
+                        LoggerUtil.logBusinessError(logger, "DECREMENT_FILLED_QTY_CHECK", "Insufficient quantity",
+                                        "warehouseId", warehouse.getId(),
+                                        "current", currentFilled,
+                                        "decrement", quantity);
+                        throw new IllegalArgumentException(
+                                        "Operation would result in negative filled quantity. Current: "
+                                                        + currentFilled + ", Decrement: " + quantity);
+                }
+
+                stock.setFilledQty(newQuantity);
+                stock.setLastUpdated(LocalDateTime.now());
+                repository.save(stock);
+
+                LoggerUtil.logBusinessSuccess(logger, "DECREMENT_FILLED_QTY_CHECK",
                                 "warehouseId", warehouse.getId(),
                                 "variantId", variant.getId(),
                                 "newQty", newQuantity);

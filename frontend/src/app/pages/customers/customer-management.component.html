@@ -18,6 +18,7 @@
       <input 
         type="text" 
         [(ngModel)]="searchTerm" 
+        (input)="updateSearchTerm(searchTerm)"
         placeholder="Search by name, mobile, or address..."
         class="search-input">
     </div>
@@ -68,15 +69,15 @@
                       <button class="dropdown-item" (click)="viewLedger(customer.id); customer.showMenu = false">
                         <fa-icon [icon]="faBook"></fa-icon> View Ledger
                       </button>
-                      <button class="dropdown-item" (click)="openPaymentFormForCustomer(customer); customer.showMenu = false">
+                      <!-- <button class="dropdown-item" (click)="openPaymentFormForCustomer(customer); customer.showMenu = false">
                         <fa-icon [icon]="faPlus"></fa-icon> Record Payment
-                      </button>
+                      </button> -->
                       <button class="dropdown-item" (click)="editCustomer(customer); customer.showMenu = false">
-                        <fa-icon [icon]="faPencil"></fa-icon> Edit
+                        <fa-icon [icon]="faEdit"></fa-icon> Edit
                       </button>
-                      <button class="dropdown-item danger" (click)="deleteCustomer(customer.id); customer.showMenu = false">
+                      <!-- <button class="dropdown-item danger" (click)="deleteCustomer(customer.id); customer.showMenu = false">
                         <fa-icon [icon]="faTrash"></fa-icon> Delete
-                      </button>
+                      </button> -->
                     </div>
                   </div>
                 </div>
@@ -122,7 +123,7 @@
                   </button>
                 </div>
                 <div class="modal-body details-modal-body">
-                                    <span class="details-status-badge" [ngClass]="{'inactive': !detailsCustomer.active}">
+                                    <span [class.active]="detailsCustomer.active" [class.inactive]="!detailsCustomer.active" class="status-badge">
                                       <fa-icon [icon]="detailsCustomer.active ? faUsers : faTimes"></fa-icon>
                                       {{ detailsCustomer.active ? 'Active' : 'Inactive' }}
                                     </span>
@@ -396,6 +397,7 @@
                 <th class="text-center">Total Amount (₹)</th>
                 <th class="text-center">Amount Received (₹)</th>
                 <th class="text-center">Running Balance (₹)</th>
+                <th class="text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -428,6 +430,24 @@
                 <td class="text-center">₹{{ entry.totalAmount | number: '1.0-2' }}</td>
                 <td class="text-center received">₹{{ entry.amountReceived | number: '1.0-2' }}</td>
                 <td class="text-center received">₹{{ getRowCurrentBalance(i) | number: '1.0-2' }}</td>
+                <td class="text-center">
+                  <button class="btn-action" 
+                          (click)="openUpdateForm(entry)" 
+                          [disabled]="(entry.refType !== 'SALE' && entry.refType !== 'EMPTY_RETURN' && entry.refType !== 'PAYMENT') || !canEditLedgerEntry(entry, filteredLedgerEntries)"
+                          [title]="entry.refType !== 'SALE' && entry.refType !== 'EMPTY_RETURN' && entry.refType !== 'PAYMENT' 
+                                    ? 'Can only update SALE, EMPTY_RETURN, and PAYMENT entries' 
+                                    : !canEditLedgerEntry(entry, filteredLedgerEntries) 
+                                      ? 'Can only edit the latest 15 entries'
+                                      : 'Edit entry'">
+                    <fa-icon [icon]="faEdit"></fa-icon>
+                  </button>
+                  <button *ngIf="entry.updateReason" 
+                          class="btn-action ms-1" 
+                          (click)="openReasonModal(entry)"
+                          title="View update reason">
+                    <fa-icon [icon]="faEye"></fa-icon>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -509,9 +529,7 @@
               {{ account.bankName }} - {{ account.accountNumber }}
             </option>
           </select>
-          <div *ngIf="!paymentForm.bankAccountId && paymentForm.paymentMode && getSelectedPaymentMode(paymentForm.paymentMode)?.isBankAccountRequired" class="error-message" style="margin-top: 0.5rem; color: #d32f2f; font-size: 0.85rem;">
-            Bank account is required for this payment mode
-          </div>
+        
         </div>
         <div class="form-group">
           <label class="form-label">Payment Date <span class="required">*</span></label>
@@ -529,3 +547,278 @@
       </div>
     </div>
   </div>
+  <!-- UPDATE LEDGER ENTRY MODAL -->
+  <div *ngIf="showUpdateForm && selectedLedgerEntry" class="modal-overlay" (click)="$event.target === $event.currentTarget && closeUpdateForm()">
+    <div class="modal-content" style="max-width: 600px;" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Update Ledger Entry</h2>
+        <button class="modal-close" (click)="closeUpdateForm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Original Entry Details -->
+        <div style="background-color: #f5f5f5; padding: 12px; border-radius: 6px; margin-bottom: 1.5rem;">
+          <h4 style="margin-top: 0;">Original Entry Details</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem;">
+            <div><strong>Date:</strong> {{ selectedLedgerEntry.transactionDate | date: 'dd MMM yyyy' }}</div>
+            <div><strong>Type:</strong> {{ selectedLedgerEntry.refType }}</div>
+            <div *ngIf="selectedLedgerEntry.variantName"><strong>Variant:</strong> {{ selectedLedgerEntry.variantName }}</div>
+            <div *ngIf="!selectedLedgerEntry.variantName && selectedLedgerEntry.paymentMode"><strong>Mode:</strong> {{ getPaymentModeLabel(selectedLedgerEntry.paymentMode) }}</div>
+            <div><strong>Filled Out:</strong> {{ selectedLedgerEntry.filledOut }}</div>
+            <div><strong>Empty In:</strong> {{ selectedLedgerEntry.emptyIn }}</div>
+            <div><strong>Total Amount:</strong> ₹{{ selectedLedgerEntry.totalAmount | number: '1.0-2' }}</div>
+            <div><strong>Amount Received:</strong> ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }}</div>
+            <div><strong>Original Due:</strong> ₹{{ (selectedLedgerEntry.totalAmount - selectedLedgerEntry.amountReceived) | number: '1.0-2' }}</div>
+          </div>
+        </div>
+
+        <!-- Update Form -->
+        <div style="border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 1.5rem;">
+          <h4 style="margin-top: 0;">Update Values</h4>
+          
+          <!-- SALE: Can edit Filled Out and Empty In -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE'" class="form-group">
+            <label class="form-label">Filled Out</label>
+            <input 
+              [ngModel]="updateForm.filledOut" 
+              (ngModelChange)="updateForm.filledOut = $event; onFilledOutChange()"
+              type="number" 
+              class="form-control" 
+              placeholder="0" 
+              min="0">
+            <small *ngIf="pricePerUnit > 0" class="text-muted">
+              (₹{{ pricePerUnit | number: '1.0-2' }} per unit)
+            </small>
+          </div>
+
+          <!-- SALE and EMPTY_RETURN: Can edit Empty In -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN'" class="form-group">
+            <label class="form-label">Empty In</label>
+            <input 
+              [ngModel]="updateForm.emptyIn" 
+              (ngModelChange)="updateForm.emptyIn = $event; cdr.markForCheck()"
+              type="number" 
+              class="form-control" 
+              placeholder="0" 
+              min="0">
+          </div>
+
+          <!-- SALE: Can edit Total Amount (auto-calculated if filledOut changes) -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE'" class="form-group">
+            <label class="form-label">Total Amount (₹)</label>
+            <input 
+              [ngModel]="updateForm.totalAmount" 
+              (ngModelChange)="updateForm.totalAmount = $event; cdr.markForCheck()"
+              type="number" 
+              class="form-control" 
+              placeholder="0.00" 
+              step="0.01" 
+              min="0">
+          </div>
+
+          <!-- PAYMENT: Can only edit Amount Received -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'PAYMENT'" class="alert alert-info" style="margin-bottom: 1rem;">
+            Payment transactions can have amount received and bank account edited.
+          </div>
+
+          <!-- Can edit Amount Received for SALE, EMPTY_RETURN, and PAYMENT -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT'" class="form-group">
+            <label class="form-label">Amount Received (₹)</label>
+            <input 
+              [ngModel]="updateForm.amountReceived" 
+              (ngModelChange)="updateForm.amountReceived = $event; cdr.markForCheck()"
+              type="number" 
+              class="form-control" 
+              placeholder="0.00" 
+              step="0.01" 
+              min="0">
+          </div>
+
+          <!-- Payment Mode for SALE, EMPTY_RETURN, and PAYMENT -->
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT'" class="form-group">
+            <label class="form-label">Payment Mode (Optional)</label>
+            <select 
+              [ngModel]="updateForm.paymentMode" 
+              (ngModelChange)="updateForm.paymentMode = $event; cdr.markForCheck()"
+              class="form-control">
+              <option [value]="null">Select Payment Mode</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+            </select>
+          </div>
+
+          <!-- Bank Account for PAYMENT-type and bank-required modes -->
+          <div *ngIf="(selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT') && updateForm.paymentMode && getSelectedPaymentMode(updateForm.paymentMode)?.isBankAccountRequired" class="form-group">
+            <label class="form-label">Bank Account <span class="required">*</span></label>
+            <select 
+              [ngModel]="updateForm.bankAccountId" 
+              (ngModelChange)="updateForm.bankAccountId = $event; cdr.markForCheck()"
+              class="form-control">
+              <option [value]="null" disabled>Select Bank Account</option>
+              <option *ngFor="let account of bankAccounts" [value]="account.id">
+                {{ account.bankName }} - {{ account.accountNumber }}
+              </option>
+            </select>
+            
+          </div>
+
+          <!-- Update Reason Field -->
+          <div class="form-group" style="margin-top: 1.5rem;">
+            <label class="form-label">Update Reason <span class="required">*</span></label>
+            <textarea
+              [(ngModel)]="updateForm.updateReason"
+              id="updateReason"
+              class="form-control"
+              placeholder="E.g., 'Corrected based on customer request' or 'Inventory audit adjustment'..."
+              maxlength="800"
+              rows="3"
+              style="resize: vertical;"></textarea>
+            <div style="font-size: 0.85rem; color: #666; margin-top: 4px; text-align: right;">
+              {{ updateForm.updateReason?.length || 0 }}/800 characters
+            </div>
+          </div>
+
+          <!-- Preview of what will change -->
+          <div style="background-color: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 1rem;">
+            <strong style="color: #1b5e20;">Changes Summary:</strong>
+            <div style="margin-top: 8px; font-size: 0.9rem;">
+              <!-- For SALE: show if total or payment changed -->
+              <div *ngIf="selectedLedgerEntry?.refType === 'SALE'">
+                <div *ngIf="updateForm.filledOut !== selectedLedgerEntry.filledOut">
+                  Filled: {{ selectedLedgerEntry.filledOut }} → {{ updateForm.filledOut }}
+                </div>
+                <div *ngIf="updateForm.emptyIn !== selectedLedgerEntry.emptyIn">
+                  Empty: {{ selectedLedgerEntry.emptyIn }} → {{ updateForm.emptyIn }}
+                </div>
+                <div *ngIf="updateForm.totalAmount !== selectedLedgerEntry.totalAmount">
+                  Total: ₹{{ selectedLedgerEntry.totalAmount | number: '1.0-2' }} → ₹{{ updateForm.totalAmount | number: '1.0-2' }}
+                </div>
+                <div *ngIf="updateForm.amountReceived !== selectedLedgerEntry.amountReceived">
+                  Received: ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }} → ₹{{ updateForm.amountReceived | number: '1.0-2' }}
+                </div>
+              </div>
+
+              <!-- For EMPTY_RETURN: show only empty count change -->
+              <div *ngIf="selectedLedgerEntry?.refType === 'EMPTY_RETURN'">
+                <div *ngIf="updateForm.emptyIn !== selectedLedgerEntry.emptyIn">
+                  Empty Count: {{ selectedLedgerEntry.emptyIn }} → {{ updateForm.emptyIn }}
+                </div>
+                <div *ngIf="updateForm.amountReceived !== selectedLedgerEntry.amountReceived">
+                  Payment: ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }} → ₹{{ updateForm.amountReceived | number: '1.0-2' }}
+                </div>
+              </div>
+
+              <!-- For PAYMENT: show only payment change -->
+              <div *ngIf="selectedLedgerEntry?.refType === 'PAYMENT'">
+                <div *ngIf="updateForm.amountReceived !== selectedLedgerEntry.amountReceived">
+                  Payment: ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }} → ₹{{ updateForm.amountReceived | number: '1.0-2' }}
+                </div>
+              </div>
+
+              <div style="color: #d32f2f; margin-top: 8px;">
+                <strong> All subsequent entries will be recalculated</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeUpdateForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="submitUpdate()" [disabled]="isSubmittingUpdate">
+          {{ isSubmittingUpdate ? 'Updating...' : 'Update & Recalculate' }}
+        </button>
+      </div>
+    </div>
+  </div>
+<!-- Reason Display Modal -->
+<div *ngIf="showReasonModal" class="modal-overlay" (click)="closeReasonModal()">
+  <div class="modal-content" style="max-width: 600px;" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <fa-icon [icon]="faBook"></fa-icon>
+        <h5 class="modal-title" style="margin: 0;">Entry Update History</h5>
+      </div>
+      <button type="button" class="btn-close" (click)="closeReasonModal()"></button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+      <div *ngIf="selectedReasonEntry">
+        
+        <!-- Entry Information Section -->
+         <h6 style="margin: 0 0 14px 0; color: #333; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            <fa-icon [icon]="faExclamation"></fa-icon>
+            Transaction Details
+          </h6>
+        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #999;">
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.95rem;">
+            <div>
+              <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Entry ID</small>
+              <div style="font-size: 1.1rem; font-weight: 600; color: #333;">{{ selectedReasonEntry.id }}</div>
+            </div>
+            <div>
+              <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Type</small>
+              <div style="font-size: 1rem; font-weight: 600;">
+                <span class="type-badge" [ngClass]="'type-' + selectedReasonEntry.refType?.toLowerCase()" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                  {{ selectedReasonEntry.refType }}
+                </span>
+              </div>
+            </div>
+            <div>
+              <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Last Updated</small>
+              <div style="font-weight: 600; color: #333;">{{ selectedReasonEntry.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</div>
+            </div>
+            <div *ngIf="selectedReasonEntry.variantName">
+              <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Product Variant</small>
+              <div style="font-weight: 600; color: #333; background: #fff; padding: 6px 10px; border-radius: 4px; border-left: 3px solid #999;">{{ selectedReasonEntry.variantName }}</div>
+            </div>
+            <div *ngIf="!selectedReasonEntry.variantName && selectedReasonEntry.paymentMode">
+              <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Payment Mode</small>
+              <div style="font-weight: 600; color: #333; background: #fff; padding: 6px 10px; border-radius: 4px; border-left: 3px solid #999;">{{ getPaymentModeLabel(selectedReasonEntry.paymentMode) }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- What Changed Section -->
+        <div style="margin-bottom: 20px;">
+          <h6 style="margin: 0 0 14px 0; color: #333; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            <fa-icon [icon]="faEdit"></fa-icon>
+            Changes Made
+          </h6>
+          <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; border-left: 4px solid #999;">
+            <div style="white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.95rem; line-height: 1.8; color: #333;">
+              <ng-container *ngIf="selectedReasonEntry.updateReason">
+                <!-- Extract and show only the Changes section -->
+                <ng-container *ngIf="selectedReasonEntry.updateReason.includes('Changes:'); else noChangesSection">
+                  {{ selectedReasonEntry.updateReason.substring(0, selectedReasonEntry.updateReason.indexOf('User Note:') > -1 ? selectedReasonEntry.updateReason.indexOf('User Note:') : selectedReasonEntry.updateReason.length).trim() }}
+                </ng-container>
+                <ng-template #noChangesSection>
+                  <div style="color: #999; font-style: italic;">No changes recorded</div>
+                </ng-template>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Note Section (if exists) -->
+        <div *ngIf="selectedReasonEntry.updateReason && selectedReasonEntry.updateReason.includes('User Note:')" style="margin-bottom: 20px;">
+          <h6 style="margin: 0 0 14px 0; color: #333; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+            <fa-icon [icon]="faBook"></fa-icon>
+            Additional Notes
+          </h6>
+          <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; border-left: 4px solid #999;">
+            <div style="white-space: pre-wrap; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 0.95rem; line-height: 1.8; color: #333;">
+              {{ selectedReasonEntry.updateReason.substring(selectedReasonEntry.updateReason.indexOf('User Note:') + 10).trim() }}
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="closeReasonModal()">
+        <fa-icon [icon]="faTimes" style="margin-right: 6px;"></fa-icon>
+        Close
+      </button>
+    </div>
+  </div>
+</div>

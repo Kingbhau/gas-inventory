@@ -88,10 +88,10 @@
               <td class="text-center returned">{{ transaction.emptySent }} units</td>
               <td class="text-center">{{ transaction.amount | number:'1.2-2' }}</td>
               <td class="text-center">
-                <button class="btn btn-sm btn-info" (click)="viewTransactionDetails(transaction)" title="View Details" style="margin-right: 0.5rem;">
+                <button class="btn-action" (click)="viewTransactionDetails(transaction)" title="View Details" style="margin-right: 0.5rem;">
                   <fa-icon [icon]="faEye"></fa-icon>
                 </button>
-                <button class="action-btn" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+                <button class="btn-action" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faEdit"></fa-icon></button>
               </td>
             </tr>
           </tbody>

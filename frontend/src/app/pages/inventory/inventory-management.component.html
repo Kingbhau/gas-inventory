@@ -153,7 +153,7 @@
             <label class="form-label">From Warehouse <span class="required">*</span></label>
             <select formControlName="fromWarehouseId" class="form-control" required>
               <option [ngValue]="null">Select source warehouse</option>
-              <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
+              <option *ngFor="let warehouse of activeWarehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
             </select>
             <div *ngIf="stockTransferForm.get('fromWarehouseId')?.invalid && stockTransferForm.get('fromWarehouseId')?.touched" class="error-message">
               Source warehouse is required
@@ -165,7 +165,7 @@
             <label class="form-label">To Warehouse <span class="required">*</span></label>
             <select formControlName="toWarehouseId" class="form-control" required>
               <option [ngValue]="null">Select destination warehouse</option>
-              <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id" 
+              <option *ngFor="let warehouse of activeWarehouses" [ngValue]="warehouse.id" 
                 [disabled]="warehouse.id === stockTransferForm.get('fromWarehouseId')?.value">
                 {{ warehouse.name }}
               </option>

@@ -252,25 +252,7 @@
   text-align: center;
 }
 
-/* Action Button */
-.btn-action {
-  padding: 0.5rem 1rem;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.btn-action:hover {
-  background-color: #1d4ed8;
-}
+/* Action Button - Using global btn-action styles */
 
 .btn-action:disabled {
   opacity: 0.5;

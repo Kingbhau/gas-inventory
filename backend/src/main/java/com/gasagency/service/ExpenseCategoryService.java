@@ -68,6 +68,9 @@ public class ExpenseCategoryService {
 
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
+        if (dto.getIsActive() != null) {
+            category.setIsActive(dto.getIsActive());
+        }
 
         ExpenseCategory updated = repository.save(category);
         return modelMapper.map(updated, ExpenseCategoryDTO.class);

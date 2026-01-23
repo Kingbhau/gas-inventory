@@ -59,6 +59,18 @@
           <small class="form-hint">Check this if bank account details are required for this payment mode</small>
         </div>
 
+        <!-- Active Status -->
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="isActive"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
         <!-- Modal Footer -->
         <div class="modal-footer">
           <button 
@@ -115,18 +127,17 @@
               <td><code>{{ paymentMode.code }}</code></td>
               <td class="muted">{{ paymentMode.description || '-' }}</td>
               <td class="text-center">
-                <span class="badge" [class.badge-active]="paymentMode.isBankAccountRequired" [class.badge-inactive]="!paymentMode.isBankAccountRequired">
+                <span [class.active]="paymentMode.isBankAccountRequired" [class.inactive]="!paymentMode.isBankAccountRequired" class="status-badge">
                   {{ paymentMode.isBankAccountRequired ? 'Yes' : 'No' }}
                 </span>
               </td>
               <td class="text-center">
-                <button 
-                  (click)="toggleStatus(paymentMode)"
-                  [class.badge-active]="paymentMode.isActive"
-                  [class.badge-inactive]="!paymentMode.isActive"
-                  class="badge">
+                <span 
+                  [class.active]="paymentMode.isActive"
+                  [class.inactive]="!paymentMode.isActive"
+                  class="status-badge">
                   {{ paymentMode.isActive ? 'Active' : 'Inactive' }}
-                </button>
+                </span>
               </td>
               <td class="text-center">
                 <button 
@@ -135,12 +146,12 @@
                   title="Edit">
                   <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
-                <button 
+                <!-- <button 
                   (click)="onDelete(paymentMode.id)"
                   class="btn-action btn-danger"
                   title="Delete">
                   <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
+                </button> -->
               </td>
             </tr>
           </tbody>

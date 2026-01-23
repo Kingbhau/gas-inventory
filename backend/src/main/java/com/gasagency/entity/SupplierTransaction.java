@@ -12,9 +12,12 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "supplier_transaction", indexes = {
+        @Index(name = "idx_st_transaction_date", columnList = "transaction_date"),
+        @Index(name = "idx_st_supplier_date", columnList = "supplier_id, transaction_date"),
+        @Index(name = "idx_st_warehouse_supplier", columnList = "warehouse_id, supplier_id"),
         @Index(name = "idx_suppliertransaction_supplier_id", columnList = "supplier_id"),
         @Index(name = "idx_suppliertransaction_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_suppliertransaction_transaction_date", columnList = "transactionDate"),
+        @Index(name = "idx_suppliertransaction_transaction_date", columnList = "transaction_date"),
         @Index(name = "idx_suppliertransaction_warehouse_id", columnList = "warehouse_id")
 })
 public class SupplierTransaction extends Auditable {

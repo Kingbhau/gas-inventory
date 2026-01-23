@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPencil, faTrash, faPlus, faCheck, faBan } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { BankAccountService } from '../../services/bank-account.service';
 import { BankAccount } from '../../models/bank-account.model';
 
@@ -31,11 +31,9 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
   editingBankAccountId: number | null = null;
 
   // Font Awesome icons
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faPlus = faPlus;
-  faCheck = faCheck;
-  faBan = faBan;
 
   private destroy$ = new Subject<void>();
 
@@ -67,7 +65,8 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
       accountNumber: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(50)]],
       accountHolderName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       accountName: ['', [Validators.maxLength(100)]],
-      accountType: ['']
+      accountType: [''],
+      isActive: ['true']
     });
   }
 
@@ -99,7 +98,7 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
    */
   openCreateModal(): void {
     this.editingBankAccountId = null;
-    this.bankAccountForm.reset();
+    this.bankAccountForm.reset({ isActive: 'true', accountType: '' });
     this.showModal = true;
     this.cdr.markForCheck();
   }
@@ -114,7 +113,8 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
       accountNumber: bankAccount.accountNumber,
       accountHolderName: bankAccount.accountHolderName,
       accountName: bankAccount.accountName || '',
-      accountType: bankAccount.accountType || ''
+      accountType: bankAccount.accountType || '',
+      isActive: (bankAccount.isActive !== false ? 'true' : 'false')
     });
     this.showModal = true;
     this.cdr.markForCheck();
@@ -140,7 +140,10 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmitting = true;
-    const formData = this.bankAccountForm.value;
+    const formData = {
+      ...this.bankAccountForm.value,
+      isActive: this.bankAccountForm.value.isActive === 'true' || this.bankAccountForm.value.isActive === true
+    };
 
     if (this.editingBankAccountId) {
       // Update existing
@@ -204,50 +207,6 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
         (error) => {
           console.error('Error deleting bank account:', error);
           this.toastr.error('Failed to delete bank account');
-          this.cdr.markForCheck();
-        }
-      );
-  }
-
-  /**
-   * Deactivate bank account
-   */
-  deactivateBankAccount(bankAccount: BankAccount): void {
-    if (!bankAccount.id) return;
-
-    this.bankAccountService.deactivateBankAccount(bankAccount.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(
-        () => {
-          this.toastr.success('Bank account deactivated successfully');
-          this.loadBankAccounts();
-          this.cdr.markForCheck();
-        },
-        (error) => {
-          console.error('Error deactivating bank account:', error);
-          this.toastr.error('Failed to deactivate bank account');
-          this.cdr.markForCheck();
-        }
-      );
-  }
-
-  /**
-   * Activate bank account
-   */
-  activateBankAccount(bankAccount: BankAccount): void {
-    if (!bankAccount.id) return;
-
-    this.bankAccountService.activateBankAccount(bankAccount.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(
-        () => {
-          this.toastr.success('Bank account activated successfully');
-          this.loadBankAccounts();
-          this.cdr.markForCheck();
-        },
-        (error) => {
-          console.error('Error activating bank account:', error);
-          this.toastr.error('Failed to activate bank account');
           this.cdr.markForCheck();
         }
       );

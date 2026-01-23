@@ -25,7 +25,7 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   showModal = false;
   editingId: number | null = null;
-
+  
   // Icons
   faPlus = faPlus;
   faEdit = faEdit;
@@ -50,7 +50,8 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
   initForm() {
     this.categoryForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
-      description: ['']
+      description: [''],
+      isActive: ['true']
     });
   }
 
@@ -76,9 +77,9 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
   }
 
   onAddNew() {
-    this.showModal = true;
     this.editingId = null;
-    this.categoryForm.reset();
+    this.categoryForm.reset({ isActive: 'true' });
+    this.showModal = true;
     this.cdr.markForCheck();
   }
 
@@ -87,7 +88,8 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
     this.editingId = category.id || null;
     this.categoryForm.patchValue({
       name: category.name,
-      description: category.description || ''
+      description: category.description || '',
+      isActive: (category.isActive !== false ? 'true' : 'false')
     });
     this.cdr.markForCheck();
   }
@@ -106,7 +108,10 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmitting = true;
-    const formValue = this.categoryForm.value;
+    const formValue = {
+      ...this.categoryForm.value,
+      isActive: this.categoryForm.value.isActive === 'true' || this.categoryForm.value.isActive === true
+    };
 
     if (this.editingId) {
       // Update existing
@@ -159,20 +164,5 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
         }
       });
     }
-  }
-
-  toggleStatus(category: ExpenseCategory) {
-    if (!category.id) return;
-
-    const newStatus = !category.isActive;
-    this.categoryService.toggleCategoryStatus(category.id, newStatus).subscribe({
-      next: () => {
-        category.isActive = newStatus;
-        this.toastr.success(`Category ${newStatus ? 'activated' : 'deactivated'}`);
-      },
-      error: (error) => {
-        this.toastr.error('Failed to update category status');
-      }
-    });
   }
 }

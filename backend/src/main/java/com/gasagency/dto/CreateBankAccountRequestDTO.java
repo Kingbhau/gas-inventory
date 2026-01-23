@@ -16,6 +16,8 @@ public class CreateBankAccountRequestDTO {
 
     private String accountType;
 
+    private Boolean isActive;
+
     public CreateBankAccountRequestDTO() {
     }
 
@@ -26,6 +28,16 @@ public class CreateBankAccountRequestDTO {
         this.accountHolderName = accountHolderName;
         this.accountName = accountName;
         this.accountType = accountType;
+    }
+
+    public CreateBankAccountRequestDTO(String bankName, String accountNumber, String accountHolderName,
+            String accountName, String accountType, Boolean isActive) {
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolderName = accountHolderName;
+        this.accountName = accountName;
+        this.accountType = accountType;
+        this.isActive = isActive;
     }
 
     public String getBankName() {
@@ -66,5 +78,13 @@ public class CreateBankAccountRequestDTO {
 
     public void setAccountType(String accountType) {
         this.accountType = accountType;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

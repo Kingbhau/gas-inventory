@@ -134,9 +134,10 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   loadWarehouses() {
-    this.warehouseService.getActiveWarehouses().subscribe({
+    this.warehouseService.getAllWarehouses().subscribe({
       next: (response: any) => {
-        this.warehouses = (response && response.data) || [];
+        // Handle both wrapped response {data: [...]} and direct array response
+        this.warehouses = Array.isArray(response) ? response : (response?.data || []);
         this.cdr.markForCheck();
       },
       error: (error) => {
@@ -152,6 +153,13 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     this.movementPage = 1;
     this.loadInventory();
     this.loadMovements();
+  }
+
+  /**
+   * Get only active warehouses for transfer modal
+   */
+  get activeWarehouses() {
+    return this.warehouses.filter(w => w.status === 'ACTIVE');
   }
 
   ngOnDestroy() {

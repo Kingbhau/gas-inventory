@@ -10,6 +10,7 @@ import { ExpenseService } from '../../services/expense.service';
 import { Expense } from '../../models/expense.model';
 import { LoadingService } from '../../services/loading.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
@@ -39,15 +40,16 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private loadingService: LoadingService,
     private dataRefreshService: DataRefreshService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dateUtility: DateUtilityService
   ) {
     this.initForm();
   }
 
   ngOnInit() {
     this.loadCategories();
-    // Set today's date as default
-    const today = new Date().toISOString().split('T')[0];
+    // Set today's date as default (in Indian timezone)
+    const today = this.dateUtility.getTodayInIST();
     this.expenseForm.patchValue({
       expenseDate: today
     });
@@ -70,9 +72,10 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           const categoryList = Array.isArray(response) ? response : (response.content || []);
-          this.categories = categoryList;
+          // Filter to show only active categories
+          this.categories = categoryList.filter((cat: any) => cat.isActive !== false);
           // Create a map of category names to IDs
-          categoryList.forEach((cat: any) => {
+          this.categories.forEach((cat: any) => {
             this.categoryMap.set(cat.name, cat.id);
           });
         },
@@ -149,7 +152,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
           this.expenseForm.reset();
           
           // Set default values
-          const today = new Date().toISOString().split('T')[0];
+          const today = this.dateUtility.getTodayInIST();
           this.expenseForm.patchValue({
             category: '',
             expenseDate: today
@@ -182,7 +185,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     // Reset form
     this.expenseForm.reset();
     
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.dateUtility.getTodayInIST();
     this.expenseForm.patchValue({
       category: '',
       expenseDate: today

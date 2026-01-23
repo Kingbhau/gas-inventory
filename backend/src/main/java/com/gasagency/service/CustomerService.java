@@ -416,4 +416,23 @@ public class CustomerService {
             return null;
         }
     }
+
+    @Transactional
+    public CustomerDTO reactivateCustomer(Long id) {
+        logger.info("Reactivating customer with ID: {}", id);
+        Customer customer = repository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Customer not found with ID: {}", id);
+                    return new ResourceNotFoundException("Customer not found with id: " + id);
+                });
+
+        if (customer.getActive()) {
+            logger.warn("Customer with ID: {} is already active", id);
+            throw new InvalidOperationException("Customer is already active");
+        }
+
+        customer.setActive(true);
+        LoggerUtil.logBusinessSuccess(logger, "REACTIVATE_CUSTOMER", "id", id);
+        return toDTO(repository.save(customer));
+    }
 }

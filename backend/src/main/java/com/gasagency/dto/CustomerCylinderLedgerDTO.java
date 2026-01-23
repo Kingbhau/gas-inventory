@@ -12,6 +12,7 @@ public class CustomerCylinderLedgerDTO {
     private String variantName;
     private LocalDate transactionDate;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedDate;
     private String refType;
     private Long refId;
     private Long filledOut;
@@ -28,6 +29,7 @@ public class CustomerCylinderLedgerDTO {
     private Long bankAccountId;
     private String bankAccountName;
     private String transactionReference;
+    private String updateReason; // Optional reason for why the ledger entry was updated
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -121,6 +123,14 @@ public class CustomerCylinderLedgerDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(LocalDateTime updatedDate) {
+        this.updatedDate = updatedDate;
     }
 
     public String getRefType() {
@@ -249,5 +259,13 @@ public class CustomerCylinderLedgerDTO {
 
     public void setTransactionReference(String transactionReference) {
         this.transactionReference = transactionReference;
+    }
+
+    public String getUpdateReason() {
+        return updateReason;
+    }
+
+    public void setUpdateReason(String updateReason) {
+        this.updateReason = updateReason;
     }
 }

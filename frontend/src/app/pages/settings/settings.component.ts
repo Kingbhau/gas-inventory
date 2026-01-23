@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBox, faBuilding, faPencil, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faBuilding, faEdit, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { ToastrService } from 'ngx-toastr';
 import { ToastrModule } from 'ngx-toastr';
@@ -57,7 +57,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Font Awesome Icons
   faBox = faBox;
   faBuilding = faBuilding;
-  faPencil = faPencil;
+  faPencil = faEdit; // Renamed to faEdit for consistency, keeping variable name for compatibility
   faTrash = faTrash;
   faReceipt = faReceipt;
   faWarehouse = faWarehouse;
@@ -189,7 +189,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   openVariantForm() {
     this.editingVariantId = null;
-    this.variantForm.reset({ weightKg: '', active: true });
+    this.variantForm.reset({ weightKg: '', active: 'true' });
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
     this.cdr.markForCheck();
@@ -197,7 +197,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   editVariant(variant: any) {
     this.editingVariantId = variant.id;
-    this.variantForm.patchValue(variant);
+    this.variantForm.patchValue({
+      ...variant,
+      active: (variant.active !== false).toString()
+    });
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
     this.cdr.markForCheck();
@@ -205,7 +208,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   saveVariant() {
     if (this.variantForm.valid) {
-      const formValue = { ...this.variantForm.value };
+      const formValue = { 
+        ...this.variantForm.value,
+        active: this.variantForm.value.active === 'true' || this.variantForm.value.active === true
+      };
       // Ensure weightKg is a number and > 0
       formValue.weightKg = parseFloat(formValue.weightKg);
       if (formValue.weightKg <= 0) {
@@ -218,6 +224,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.variantService.updateVariant(id, formValue).subscribe({
           next: () => {
             this.toastr.success('Variant updated successfully', 'Success');
+            this.variantService.invalidateCache();
             this.loadVariants();
             this.closeVariantForm();
           },
@@ -231,6 +238,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.variantService.createVariant(formValue).subscribe({
           next: () => {
             this.toastr.success('Variant created successfully', 'Success');
+            this.variantService.invalidateCache();
             this.loadVariants();
             this.closeVariantForm();
           },
@@ -250,6 +258,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.variantService.deleteVariant(numId).subscribe({
         next: () => {
           this.toastr.success('Variant deleted successfully', 'Success');
+          this.variantService.invalidateCache();
           this.loadVariants();
         },
         error: (error) => {

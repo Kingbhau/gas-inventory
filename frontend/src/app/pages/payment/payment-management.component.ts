@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPlus, faSearch, faPencil, faTrash, faEye, faTimes, faChevronDown, faSignOut, faUsers, faExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSearch, faEdit, faTrash, faEye, faTimes, faChevronDown, faSignOut, faUsers, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
@@ -11,6 +11,7 @@ import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { AuthService } from '../../services/auth.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
@@ -28,7 +29,7 @@ import { PaymentMode } from '../../models/payment-mode.model';
 export class PaymentManagementComponent implements OnInit {
   faPlus = faPlus;
   faSearch = faSearch;
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faEye = faEye;
   faTimes = faTimes;
@@ -49,7 +50,7 @@ export class PaymentManagementComponent implements OnInit {
   showPaymentForm = false;
   paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: '',
     paymentMode: ''
   };
   paymentError = '';
@@ -66,10 +67,13 @@ export class PaymentManagementComponent implements OnInit {
     private paymentModeService: PaymentModeService,
     private authService: AuthService,
     private dataRefreshService: DataRefreshService,
+    private dateUtility: DateUtilityService,
     private router: Router,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) {
+    this.paymentForm.paymentDate = this.dateUtility.getTodayInIST();
+  }
 
   ngOnInit() {
     this.userName = this.authService.getLoggedInUserName();
@@ -191,7 +195,7 @@ export class PaymentManagementComponent implements OnInit {
     }
     this.paymentForm = {
       amount: null,
-      paymentDate: new Date().toISOString().split('T')[0],
+      paymentDate: this.dateUtility.getTodayInIST(),
       paymentMode: '',
       bankAccountId: null
     };

@@ -7,7 +7,11 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
-@Table(name = "bank_account_ledger")
+@Table(name = "bank_account_ledger", indexes = {
+        @Index(name = "idx_bal_bank_account_date", columnList = "bank_account_id, transaction_date"),
+        @Index(name = "idx_bal_transaction_date", columnList = "transaction_date"),
+        @Index(name = "idx_bal_trans_type_date", columnList = "transaction_type, transaction_date")
+})
 public class BankAccountLedger extends Auditable {
 
     @Id

@@ -91,6 +91,18 @@
           </select>
         </div>
 
+        <!-- Active Status -->
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="isActive"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
         <!-- Modal Footer -->
         <div class="modal-footer">
           <button 
@@ -150,7 +162,7 @@
               <td>{{ account.accountNumber }}</td>
               <td>{{ account.accountHolderName }}</td>
               <td>
-                <span class="badge" [ngClass]="getStatusColor(account.isActive)">
+                <span [class.active]="account.isActive" [class.inactive]="!account.isActive" class="status-badge">
                   {{ getStatusText(account.isActive) }}
                 </span>
               </td>
@@ -160,31 +172,15 @@
                   class="btn-action"
                   (click)="openEditModal(account)"
                   title="Edit">
-                  <fa-icon [icon]="faPencil"></fa-icon>
-                </button>
-                <!-- Deactivate Button -->
-                <button 
-                  *ngIf="account.isActive"
-                  class="btn-action deactivate"
-                  (click)="deactivateBankAccount(account)"
-                  title="Deactivate">
-                  <fa-icon [icon]="faBan"></fa-icon>
-                </button>
-                <!-- Activate Button -->
-                <button 
-                  *ngIf="!account.isActive"
-                  class="btn-action activate"
-                  (click)="activateBankAccount(account)"
-                  title="Activate">
-                  <fa-icon [icon]="faCheck"></fa-icon>
+                  <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
                 <!-- Delete Button -->
-                <button 
+                <!-- <button 
                   class="btn-action delete"
                   (click)="deleteBankAccount(account)"
                   title="Delete">
                   <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
+                </button> -->
               </td>
             </tr>
           </tbody>

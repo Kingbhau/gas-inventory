@@ -1,12 +1,12 @@
 
-import { catchError, of, finalize } from 'rxjs';
+import { catchError, of, finalize, debounceTime, distinctUntilChanged, map, Subject, takeUntil, BehaviorSubject } from 'rxjs';
 import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch, faPencil, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { BankAccountService } from '../../services/bank-account.service';
@@ -20,6 +20,7 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
 import { exportCustomerLedgerToPDF } from './export-ledger-report.util';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { DateUtilityService } from '../../services/date-utility.service';
 
 @Component({
   selector: 'app-customer-management',
@@ -30,6 +31,14 @@ import { PaymentMode } from '../../models/payment-mode.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomerManagementComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private searchTerm$ = new BehaviorSubject<string>('');
+  filteredCustomers$ = this.searchTerm$.pipe(
+    debounceTime(300),
+    distinctUntilChanged(),
+    map(term => this.filterCustomersImpl(term)),
+    takeUntil(this.destroy$)
+  );
 
   /**
    * Custom validator: ensures discountPrice <= salePrice
@@ -82,16 +91,39 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   getTotalPages() {
     return this.totalPages;
   }
+
+  /**
+   * OPTIMIZATION: Implement debounced search using RxJS
+   * Before: Filtering happens on every keystroke (1000ms per keystroke)
+   * After: Debounced to 300ms, prevents excessive change detection
+   */
   get paginatedCustomers() {
-    if (!this.searchTerm || this.searchTerm.trim() === '') {
+    // Return current search result with debouncing already applied
+    return this.filterCustomersImpl(this.searchTerm);
+  }
+
+  /**
+   * Implementation of search filtering logic
+   */
+  private filterCustomersImpl(term: string) {
+    if (!term || term.trim() === '') {
       return this.customers;
     }
-    const term = this.searchTerm.trim().toLowerCase();
+    const searchTerm = term.trim().toLowerCase();
     return this.customers.filter(c =>
-      (c.name && c.name.toLowerCase().includes(term)) ||
-      (c.mobile && c.mobile.toLowerCase().includes(term)) ||
-      (c.address && c.address.toLowerCase().includes(term))
+      (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+      (c.mobile && c.mobile.toLowerCase().includes(searchTerm)) ||
+      (c.address && c.address.toLowerCase().includes(searchTerm))
     );
+  }
+
+  /**
+   * Update search term with debouncing via BehaviorSubject
+   */
+  updateSearchTerm(term: string): void {
+    this.searchTerm = term;
+    this.searchTerm$.next(term);
+    this.cdr.markForCheck();
   }
   customerForm!: FormGroup;
   showForm = false;
@@ -104,7 +136,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   // Font Awesome Icons
   faSearch = faSearch;
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faBook = faBook;
   faPlus = faPlus;
@@ -125,6 +157,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   detailsCustomer: any = null;
   detailsVariantPrices: any[] = [];
 
+  showReasonModal = false;
+  selectedReasonEntry: any = null;
 
   // Rename all pendingUnits to returnPendingUnits for clarity
   // Add property to store filled units
@@ -142,6 +176,21 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   };
   //filledUnits: number = 0;
 
+  // UPDATE LEDGER FORM
+  showUpdateForm = false;
+  isSubmittingUpdate = false;
+  updateError = '';
+  selectedLedgerEntry: any = null;
+  updateForm: any = {
+    filledOut: 0,
+    emptyIn: 0,
+    totalAmount: 0,
+    amountReceived: 0
+  };
+  pricePerUnit = 0; // For SALE entries, original price per unit
+  originalFilledOut = 0; // Track original qty to calc price per unit
+  originalAmountReceived = 0; // Track original payment ratio
+
   constructor(
     private fb: FormBuilder,
     private customerService: CustomerService,
@@ -152,7 +201,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private variantPriceService: CustomerVariantPriceService,
     private loadingService: LoadingService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    public cdr: ChangeDetectorRef,
+    private dateUtility: DateUtilityService
   ) {
     this.initForm();
   }
@@ -161,9 +211,19 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.loadVariantsAndCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
+
+    // Subscribe to debounced search changes
+    this.filteredCustomers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.cdr.markForCheck();
+      });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   loadBankAccounts() {
     this.bankAccountService.getActiveBankAccounts()
@@ -255,6 +315,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showDetailsModal = false;
     this.detailsCustomer = null;
     this.detailsVariantPrices = [];
+  }
+
+  openReasonModal(entry: any) {
+    this.selectedReasonEntry = entry;
+    this.showReasonModal = true;
+  }
+
+  closeReasonModal() {
+    this.showReasonModal = false;
+    this.selectedReasonEntry = null;
   }
 
   loadVariantsAndCustomers() {
@@ -719,6 +789,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             if (index !== -1) {
               this.customers[index] = updatedCustomer;
             }
+            this.customerService.invalidateCache();
             this.toastr.success('Customer updated successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
@@ -741,6 +812,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             // Create variant prices for the new customer
             this.updateVariantPrices(newCustomer.id, variantPrices, true);
 
+            this.customerService.invalidateCache();
             this.toastr.success('Customer added successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
@@ -839,6 +911,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         .subscribe((result) => {
           if (result) {
             this.customers = this.customers.filter(c => c.id !== customer.id);
+            this.customerService.invalidateCache();
             this.toastr.success('Customer deleted successfully.', 'Success');
           }
         });
@@ -1099,6 +1172,55 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
+  // Generate a summary of changes for audit trail
+  generateChangesSummary(): string {
+    if (!this.selectedLedgerEntry) {
+      return '';
+    }
+
+    const changes: string[] = [];
+    const refType = this.selectedLedgerEntry.refType;
+
+    // For SALE: show if filled, empty, or total/payment changed
+    if (refType === 'SALE') {
+      if (this.updateForm.filledOut !== this.selectedLedgerEntry.filledOut) {
+        changes.push(`Filled: ${this.selectedLedgerEntry.filledOut} → ${this.updateForm.filledOut}`);
+      }
+      if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
+        changes.push(`Empty: ${this.selectedLedgerEntry.emptyIn} → ${this.updateForm.emptyIn}`);
+      }
+      if (this.updateForm.totalAmount !== this.selectedLedgerEntry.totalAmount) {
+        changes.push(`Total: ₹${this.selectedLedgerEntry.totalAmount?.toFixed(2)} → ₹${this.updateForm.totalAmount?.toFixed(2)}`);
+      }
+      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Received: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      }
+    }
+
+    // For EMPTY_RETURN: show only empty count and payment change
+    if (refType === 'EMPTY_RETURN') {
+      if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
+        changes.push(`Empty Count: ${this.selectedLedgerEntry.emptyIn} → ${this.updateForm.emptyIn}`);
+      }
+      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      }
+    }
+
+    // For PAYMENT: show only payment change
+    if (refType === 'PAYMENT') {
+      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      }
+    }
+
+    if (changes.length === 0) {
+      return '';
+    }
+
+    return 'Changes:\n' + changes.map(c => '• ' + c).join('\n');
+  }
+
   // Get variant summary filtered by selected variant
   getFilteredVariantSummary(): any[] {
     if (!this.ledgerFilterVariant) {
@@ -1155,9 +1277,14 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   // Payment form methods
   openPaymentForm() {
+    // Validate customer is active
+    if (this.selectedCustomer && !this.selectedCustomer.active) {
+      this.toastr.error('Cannot record payment for inactive customer', 'Error');
+      return;
+    }
     this.paymentForm = {
       amount: null,
-      paymentDate: new Date().toISOString().split('T')[0],
+      paymentDate: this.dateUtility.getTodayInIST(),
       paymentMode: '',
       bankAccountId: null
     };
@@ -1284,6 +1411,17 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       });
   }
 
+  canEditLedgerEntry(entry: any, allEntries: any[]): boolean {
+    if (!allEntries || allEntries.length === 0) {
+      return false;
+    }
+
+    // Allow editing only if entry is within the latest 15 records
+    const maxEditableIndex = Math.max(0, allEntries.length - 15);
+    const entryIndex = allEntries.findIndex(e => e.id === entry.id);
+    return entryIndex >= maxEditableIndex;
+  }
+
   getPaymentModeLabel(mode: string): string {
     const modeLabels: { [key: string]: string } = {
       'CASH': 'Cash',
@@ -1293,5 +1431,192 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       'UPI': 'UPI'
     };
     return modeLabels[mode] || mode;
+  }
+
+  // ==================== UPDATE LEDGER ENTRY METHODS ====================
+
+  openUpdateForm(ledgerEntry: any) {
+    this.selectedLedgerEntry = ledgerEntry;
+    this.updateForm = {
+      filledOut: ledgerEntry.filledOut || 0,
+      emptyIn: ledgerEntry.emptyIn || 0,
+      totalAmount: ledgerEntry.totalAmount || 0,
+      amountReceived: ledgerEntry.amountReceived || 0,
+      updateReason: '',
+      paymentMode: ledgerEntry.paymentMode || null,
+      bankAccountId: ledgerEntry.bankAccountId || null
+    };
+    
+    // Store original values for calculations
+    this.originalFilledOut = ledgerEntry.filledOut || 0;
+    this.originalAmountReceived = ledgerEntry.amountReceived || 0;
+    
+    // For SALE entries, calculate price per unit for auto-calculation
+    if (ledgerEntry.refType === 'SALE' && ledgerEntry.filledOut > 0) {
+      this.pricePerUnit = ledgerEntry.totalAmount / ledgerEntry.filledOut;
+    } else {
+      this.pricePerUnit = 0;
+    }
+    
+    this.updateError = '';
+    this.showUpdateForm = true;
+    this.cdr.markForCheck();
+  }
+
+  // Auto-calculate totalAmount when filledOut changes for SALE entries
+  onFilledOutChange() {
+    if (this.selectedLedgerEntry?.refType === 'SALE' && this.pricePerUnit > 0) {
+      // Recalculate totalAmount based on new filledOut and original price per unit
+      const newTotalAmount = this.updateForm.filledOut * this.pricePerUnit;
+      this.updateForm.totalAmount = Math.round(newTotalAmount * 100) / 100; // Round to 2 decimals
+      
+      // amountReceived stays as-is - user can edit it manually
+      this.cdr.markForCheck();
+    }
+  }
+
+  closeUpdateForm() {
+    this.showUpdateForm = false;
+    this.selectedLedgerEntry = null;
+    this.updateForm = {
+      filledOut: 0,
+      emptyIn: 0,
+      totalAmount: 0,
+      amountReceived: 0,
+      updateReason: ''
+    };
+    this.updateError = '';
+    this.cdr.markForCheck();
+  }
+
+  submitUpdate() {
+    if (!this.selectedLedgerEntry) {
+      this.toastr.error('No entry selected', 'Error');
+      return;
+    }
+
+    // Validate update reason is provided
+    if (!this.updateForm.updateReason || this.updateForm.updateReason.trim() === '') {
+      this.toastr.error('Update reason is required', 'Validation Error');
+      return;
+    }
+
+    // If amount received is greater than 0, payment mode is required
+    if (this.updateForm.amountReceived > 0 && !this.updateForm.paymentMode) {
+      this.toastr.error('Payment mode is required when amount received is greater than 0', 'Validation Error');
+      return;
+    }
+
+    // Validate bank account if payment mode requires it
+    if (this.updateForm.paymentMode) {
+      const selectedMode = this.getSelectedPaymentMode(this.updateForm.paymentMode);
+      if (selectedMode && selectedMode.isBankAccountRequired && !this.updateForm.bankAccountId) {
+        this.toastr.error('Bank account is required for this payment mode', 'Validation Error');
+        return;
+      }
+    }
+
+    // Validate values
+    if (this.updateForm.filledOut < 0 || this.updateForm.emptyIn < 0) {
+      this.updateError = 'Filled/Empty count cannot be negative';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (this.updateForm.totalAmount < 0 || this.updateForm.amountReceived < 0) {
+      this.updateError = 'Total or received amounts cannot be negative';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // NOTE: amountReceived CAN exceed totalAmount - customer can overpay to settle cumulative due
+    // The backend will handle this and cap the cumulative due to 0
+
+    this.isSubmittingUpdate = true;
+    this.updateError = '';
+
+    // Only send fields that were actually changed
+    const updateData: any = {};
+    if (this.updateForm.filledOut !== this.selectedLedgerEntry.filledOut) {
+      updateData.filledOut = this.updateForm.filledOut;
+    }
+    if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
+      updateData.emptyIn = this.updateForm.emptyIn;
+    }
+    if (this.updateForm.totalAmount !== this.selectedLedgerEntry.totalAmount) {
+      updateData.totalAmount = this.updateForm.totalAmount;
+    }
+    if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
+      updateData.amountReceived = this.updateForm.amountReceived;
+    }
+    if (this.updateForm.paymentMode !== this.selectedLedgerEntry.paymentMode) {
+      updateData.paymentMode = this.updateForm.paymentMode;
+    }
+    if (this.updateForm.bankAccountId !== this.selectedLedgerEntry.bankAccountId) {
+      updateData.bankAccountId = this.updateForm.bankAccountId;
+    }
+    
+    // Generate changes summary for the reason
+    const changesSummary = this.generateChangesSummary();
+    
+    // Include updateReason if provided (optional)
+    if (this.updateForm.updateReason && this.updateForm.updateReason.trim()) {
+      // Prepend changes summary to user's reason
+      updateData.updateReason = changesSummary + '\n\nUser Note: ' + this.updateForm.updateReason.trim();
+    } else if (changesSummary) {
+      // If no user reason, just save the changes summary
+      updateData.updateReason = changesSummary;
+    }
+
+    // If no changes, show warning
+    if (Object.keys(updateData).filter(key => key !== 'updateReason').length === 0) {
+      this.updateError = 'No changes detected';
+      this.isSubmittingUpdate = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    console.log('Updating ledger entry:', this.selectedLedgerEntry.id, updateData);
+
+    this.ledgerService.updateLedgerEntry(this.selectedLedgerEntry.id, updateData)
+      .pipe(
+        catchError((error: any) => {
+          const errorMessage = error?.error?.message || error?.message || 'Error updating ledger entry';
+          this.updateError = errorMessage;
+          this.toastr.error(errorMessage, 'Update Failed');
+          console.error('Update error:', error);
+          this.isSubmittingUpdate = false;
+          this.cdr.markForCheck();
+          return of(null);
+        })
+      )
+      .subscribe((response: any) => {
+        if (response) {
+          this.toastr.success('Ledger entry updated successfully. All subsequent entries recalculated.', 'Success');
+          this.closeUpdateForm();
+          // Refresh ledger to show updated values
+          this.loadLedgerForCustomer(this.selectedCustomer.id);
+          // Update customer's due amount
+          this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1000).subscribe({
+            next: (data: any) => {
+              const allEntries = data.content || data;
+              if (allEntries.length > 0) {
+                // Get latest due from the most recent entry
+                const latestEntry = allEntries[allEntries.length - 1];
+                const customer = this.customers.find(c => c.id === this.selectedCustomer.id);
+                if (customer && latestEntry) {
+                  customer.dueAmount = latestEntry.dueAmount || 0;
+                  this.cdr.markForCheck();
+                }
+              }
+            },
+            error: () => {
+              // Silently fail on error
+            }
+          });
+        }
+        this.isSubmittingUpdate = false;
+        this.cdr.markForCheck();
+      });
   }
 }

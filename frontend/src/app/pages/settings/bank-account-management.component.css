@@ -156,26 +156,7 @@
   text-align: center !important;
 }
 
-/* Badge */
-.badge {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge-active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge-inactive {
-  background: #fee2e2;
-  color: #dc2626;
-}
+/* Badge styles use global definitions from styles.css */
 
 /* Empty State */
 .empty-state {
@@ -319,41 +300,7 @@
   background: #f8fafc;
 }
 
-/* Action Icons */
-.btn-action {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s;
-  margin-right: 0.25rem;
-  color: #64748b;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-action:hover {
-  background: #e2e8f0;
-  color: #0f172a;
-}
-
-.btn-action.delete:hover {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.btn-action.activate:hover {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.btn-action.deactivate:hover {
-  background: #fef3c7;
-  color: #92400e;
-}
+/* Action Icons - Using global btn-action styles */
 
 /* Animations */
 @keyframes fadeIn {

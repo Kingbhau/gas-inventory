@@ -46,12 +46,12 @@
               <td class="font-semibold">{{ supplier.name }}</td>
               <td>{{ supplier.contact }}</td>
               <td class="text-center actions-cell">
-                <button class="action-btn" (click)="editSupplier(supplier)" title="Edit">
-                  <fa-icon [icon]="faPencil"></fa-icon>
+                <button class="btn-action" (click)="editSupplier(supplier)" title="Edit">
+                  <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
-                <button class="action-btn danger" (click)="deleteSupplier(supplier.id)" title="Delete">
+                <!-- <button class="btn-action delete" (click)="deleteSupplier(supplier.id)" title="Delete">
                   <fa-icon [icon]="faTrash"></fa-icon>
-                </button>
+                </button> -->
               </td>
             </tr>
           </tbody>

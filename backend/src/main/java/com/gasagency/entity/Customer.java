@@ -13,8 +13,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "customer", uniqueConstraints = { @UniqueConstraint(columnNames = { "mobile" }) }, indexes = {
-        @Index(name = "idx_customer_mobile", columnList = "mobile"),
-        @Index(name = "idx_customer_active", columnList = "active")
+        @Index(name = "idx_customer_active", columnList = "active"),
+        @Index(name = "idx_customer_mobile", columnList = "mobile")
 })
 public class Customer extends Auditable {
     @Id

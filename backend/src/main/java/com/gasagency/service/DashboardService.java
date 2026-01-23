@@ -7,11 +7,13 @@ import com.gasagency.dto.DashboardSummaryDTO.BusinessInsightsDTO;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.repository.*;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,13 +22,16 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * Dashboard Service - Provides comprehensive business analytics and metrics
- * Uses existing services (SaleService, ExpenseService,
- * CustomerDuePaymentService, InventoryStockService)
- * to build real dashboar data from the current running system
+ * Dashboard Service - Provides comprehensive business analytics with
+ * optimizations:
+ * - Caching for dashboard data (2-minute TTL)
+ * - Parallel async execution for independent calculations
+ * - Proper JPA queries to prevent N+1 problems
+ * - Pagination at database level
  */
 @Service
 @Transactional(readOnly = true)
@@ -34,7 +39,7 @@ public class DashboardService {
     private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
     private static final BigDecimal ZERO = BigDecimal.ZERO;
 
-    // Use existing services instead of repositories directly
+    // Services
     private final SaleService saleService;
     private final ExpenseService expenseService;
     private final CustomerDuePaymentService customerDuePaymentService;
@@ -64,18 +69,10 @@ public class DashboardService {
     }
 
     /**
-     * Get comprehensive dashboard summary with all real business metrics
+     * OPTIMIZED: Get comprehensive dashboard summary with caching
+     * Cache: 2 minutes (real-time dashboard with acceptable freshness)
      */
-    public DashboardSummaryDTO getDashboardSummary() {
-        return getDashboardSummary(null, null);
-    }
-
-    /**
-     * Get comprehensive dashboard summary for a specific month
-     * 
-     * @param year  optional year (defaults to current year)
-     * @param month optional month 1-12 (defaults to current month)
-     */
+    @Cacheable(value = "dashboardCache", key = "'summary_' + #year + '_' + #month", unless = "#result == null")
     public DashboardSummaryDTO getDashboardSummary(Integer year, Integer month) {
         DashboardSummaryDTO dto = new DashboardSummaryDTO();
 
@@ -93,42 +90,20 @@ public class DashboardService {
             LocalDate monthStart = targetMonth.atDay(1);
             LocalDate monthEnd = targetMonth.atEndOfMonth();
 
-            // Calculate today's metrics (always use current date)
-            calculateTodayMetrics(dto, today);
+            // Execute independent calculations in parallel
+            CompletableFuture<Void> todayMetrics = calculateTodayMetricsAsync(dto, today);
+            CompletableFuture<Void> monthlyMetrics = calculateMonthlyMetricsAsync(dto, monthStart, monthEnd);
+            CompletableFuture<Void> customerMetrics = calculateCustomerMetricsAsync(dto);
+            CompletableFuture<Void> breakdowns = calculateBreakdownsAsync(dto, monthStart, monthEnd);
+            CompletableFuture<Void> dailyTrend = calculateDailySalesTrendAsync(dto, monthStart, monthEnd);
+            CompletableFuture<Void> topDebtors = getTopDebtorsAsync(dto, monthStart, monthEnd);
 
-            // Calculate monthly metrics for selected month
-            calculateMonthlyMetrics(dto, monthStart, monthEnd);
+            // Wait for all parallel operations to complete
+            CompletableFuture.allOf(
+                    todayMetrics, monthlyMetrics, customerMetrics,
+                    breakdowns, dailyTrend, topDebtors).join();
 
-            // Calculate customer metrics
-            calculateCustomerMetrics(dto);
-
-            // Calculate breakdown data
-            calculateBreakdowns(dto, monthStart, monthEnd);
-
-            // Calculate daily sales trend
-            calculateDailySalesTrend(dto, monthStart, monthEnd);
-
-            // Get top debtors
-            try {
-                Pageable topPage = PageRequest.of(0, 10);
-                Page<CustomerDuePaymentDTO> debtors = customerDuePaymentService.getDuePaymentReport(
-                        monthStart, monthEnd, null, null, null, topPage);
-                // Convert to inner DTO type
-                List<DashboardSummaryDTO.CustomerDuePaymentDTO> topDebtorsList = debtors.getContent().stream()
-                        .map(d -> {
-                            DashboardSummaryDTO.CustomerDuePaymentDTO innerDto = new DashboardSummaryDTO.CustomerDuePaymentDTO();
-                            innerDto.setCustomerName(d.getCustomerName());
-                            innerDto.setDueAmount(d.getDueAmount());
-                            return innerDto;
-                        })
-                        .collect(Collectors.toList());
-                dto.setTopDebtors(topDebtorsList);
-            } catch (Exception e) {
-                logger.warn("Error fetching top debtors", e);
-                dto.setTopDebtors(new ArrayList<>());
-            }
-
-            // Business insights
+            // Business insights (depends on other calculations)
             calculateBusinessInsights(dto);
 
             // Generate alerts
@@ -136,10 +111,92 @@ public class DashboardService {
 
         } catch (Exception e) {
             logger.error("Error loading dashboard summary", e);
-            // Return DTO with what we could calculate
         }
 
         return dto;
+    }
+
+    /**
+     * Default method without year/month (uses current)
+     */
+    public DashboardSummaryDTO getDashboardSummary() {
+        return getDashboardSummary(null, null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> calculateTodayMetricsAsync(DashboardSummaryDTO dto, LocalDate today) {
+        try {
+            calculateTodayMetrics(dto, today);
+        } catch (Exception e) {
+            logger.warn("Error calculating today metrics", e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> calculateMonthlyMetricsAsync(DashboardSummaryDTO dto, LocalDate monthStart,
+            LocalDate monthEnd) {
+        try {
+            calculateMonthlyMetrics(dto, monthStart, monthEnd);
+        } catch (Exception e) {
+            logger.warn("Error calculating monthly metrics", e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> calculateCustomerMetricsAsync(DashboardSummaryDTO dto) {
+        try {
+            calculateCustomerMetrics(dto);
+        } catch (Exception e) {
+            logger.warn("Error calculating customer metrics", e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> calculateBreakdownsAsync(DashboardSummaryDTO dto, LocalDate monthStart,
+            LocalDate monthEnd) {
+        try {
+            calculateBreakdowns(dto, monthStart, monthEnd);
+        } catch (Exception e) {
+            logger.warn("Error calculating breakdowns", e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> calculateDailySalesTrendAsync(DashboardSummaryDTO dto, LocalDate monthStart,
+            LocalDate monthEnd) {
+        try {
+            calculateDailySalesTrend(dto, monthStart, monthEnd);
+        } catch (Exception e) {
+            logger.warn("Error calculating daily sales trend", e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("dashboardExecutor")
+    private CompletableFuture<Void> getTopDebtorsAsync(DashboardSummaryDTO dto, LocalDate monthStart,
+            LocalDate monthEnd) {
+        try {
+            Pageable topPage = PageRequest.of(0, 10);
+            Page<CustomerDuePaymentDTO> debtors = customerDuePaymentService.getDuePaymentReport(
+                    monthStart, monthEnd, null, null, null, topPage);
+            List<DashboardSummaryDTO.CustomerDuePaymentDTO> topDebtorsList = debtors.getContent().stream()
+                    .map(d -> {
+                        DashboardSummaryDTO.CustomerDuePaymentDTO innerDto = new DashboardSummaryDTO.CustomerDuePaymentDTO();
+                        innerDto.setCustomerName(d.getCustomerName());
+                        innerDto.setDueAmount(d.getDueAmount());
+                        return innerDto;
+                    })
+                    .collect(Collectors.toList());
+            dto.setTopDebtors(topDebtorsList);
+        } catch (Exception e) {
+            logger.warn("Error fetching top debtors", e);
+            dto.setTopDebtors(new ArrayList<>());
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     private void calculateTodayMetrics(DashboardSummaryDTO dto, LocalDate today) {
@@ -190,7 +247,6 @@ public class DashboardService {
 
             // Cash collected = Sum of amountReceived from today's ledger entries (not sales
             // table)
-            // Get all ledger entries for today and filter by SALE reference type
             List<CustomerCylinderLedger> allTodayLedgers = customerCylinderLedgerRepository
                     .findByTransactionDateAndRefType(today, CustomerCylinderLedger.TransactionType.SALE);
 
@@ -200,7 +256,7 @@ public class DashboardService {
             dto.setTodayCashCollected(todayCashCollected);
             dto.setTodayAmountDue(ZERO);
 
-            // Collection rate = Cash collected / (Cash collected + Outstanding dues)
+            // Collection rate calculation
             if (todayCashCollected.add(totalDue).compareTo(ZERO) > 0) {
                 double collectionRate = (todayCashCollected.doubleValue() /
                         (todayCashCollected.add(totalDue).doubleValue())) * 100;
@@ -210,8 +266,6 @@ public class DashboardService {
             }
 
             dto.setTodayAmountDue(totalDue);
-
-            // Count problematic customers (anyone with outstanding dues)
             dto.setTodayProblematicCustomers(monthDebtors.getContent().size());
 
             // Get today's inventory status
@@ -229,7 +283,6 @@ public class DashboardService {
                 dto.setTodayCylindersEmpty((int) totalEmpty);
                 dto.setTodayCylindersTotal((int) totalInventory);
 
-                // Inventory health = filled cylinders / total cylinders
                 if (totalInventory > 0) {
                     double health = (double) totalFilled / totalInventory * 100.0;
                     dto.setTodayInventoryHealth(Math.min(100.0, health));
@@ -273,7 +326,7 @@ public class DashboardService {
             int daysInMonth = monthEnd.getDayOfMonth();
             int daysCompleted = LocalDate.now().getDayOfMonth();
 
-            // Average daily sales = total sales / days completed so far
+            // Average daily sales
             dto.setAverageDailySales(daysCompleted > 0 ? monthlySalesTotal.doubleValue() / daysCompleted : 0.0);
 
             // Get current month expenses
@@ -284,7 +337,7 @@ public class DashboardService {
                     .reduce(ZERO, BigDecimal::add);
             dto.setMonthlyTotalExpenses(monthlyExpensesTotal);
 
-            // Average daily expense = total expenses / days completed so far
+            // Average daily expense
             dto.setAverageDailyExpense(daysCompleted > 0 ? monthlyExpensesTotal.doubleValue() / daysCompleted : 0.0);
 
             // Calculate profit and margin

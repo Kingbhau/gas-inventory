@@ -1,6 +1,4 @@
 import { catchError, of, finalize } from 'rxjs';
-
-
 import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,6 +11,7 @@ import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
@@ -49,6 +48,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         private variantService: CylinderVariantService,
         private loadingService: LoadingService,
         private warehouseService: WarehouseService,
+        private dateUtility: DateUtilityService,
         private cdr: ChangeDetectorRef
     ) {
         this.emptyReturnForm = this.fb.group({
@@ -59,7 +59,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             amountReceived: [null],
             paymentMode: [''],
             bankAccountId: [null],
-            transactionDate: [new Date().toISOString().substring(0, 10), Validators.required]
+            transactionDate: [this.dateUtility.getTodayInIST(), Validators.required]
         });
 
         // Add conditional validation for paymentMode
@@ -114,10 +114,12 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (response: PaymentMode[]) => {
                     this.paymentModes = response || [];
+                    this.cdr.markForCheck();
                 },
                 error: (error: any) => {
                     console.error('Error loading payment modes:', error);
                     this.paymentModes = [];
+                    this.cdr.markForCheck();
                 }
             });
     }
@@ -137,7 +139,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     return of([]);
                 })
             )
-            .subscribe((data: any) => this.customers = data as any[]);
+            .subscribe((data: any) => {
+                this.customers = data as any[];
+                this.cdr.markForCheck();
+            });
         const variantSub = this.variantService.getActiveVariants()
             .pipe(
                 finalize(() => this.loadingService.hide()),
@@ -150,6 +155,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             .subscribe((data: any) => {
                 this.variants = data as any[];
                 this.filteredVariants = this.variants;
+                this.cdr.markForCheck();
             });
 
         // Load warehouses
@@ -161,10 +167,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     return of([]);
                 })
             )
-            .subscribe((response: any) => {
-                if (response.success) {
-                    this.warehouses = response.data || [];
-                }
+            .subscribe((data: any) => {
+                this.warehouses = data || [];
+                this.cdr.markForCheck();
             });
     }
 
@@ -192,7 +197,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             amountReceived: null,
             paymentMode: '',
             bankAccountId: null,
-            transactionDate: new Date().toISOString().substring(0, 10)
+            transactionDate: this.dateUtility.getTodayInIST()
         });
 
         this.emptyReturnForm.markAsPristine();
@@ -234,9 +239,11 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             this.filterVariantsByCustomerConfig(customer.id);
             // Clear variant selection when customer changes
             this.emptyReturnForm.get('variantId')?.setValue(null);
+            this.cdr.markForCheck();
         } else {
             this.emptyReturnForm.get('customerId')?.setValue(null);
             this.filteredVariants = this.variants;
+            this.cdr.markForCheck();
         }
     }
 
@@ -253,7 +260,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Filter variants based on customer's configured variants
+     * Filter variants based on customer's configured variants AND active status
      */
     filterVariantsByCustomerConfig(customerId: number | null) {
         if (!customerId) {
@@ -287,10 +294,22 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             return;
         }
         
-        // Filter variants to only show those configured for this customer
-        this.filteredVariants = this.variants.filter(v => 
-            configuredVariantIds.includes(v.id)
-        );
+        // Remove duplicate IDs from configuredVariantIds
+        const uniqueVariantIds = [...new Set(configuredVariantIds)];
+        
+        // Filter variants: must be configured for this customer
+        // If variant has status property, check if ACTIVE, otherwise assume it's active (came from getActiveVariants)
+        const filteredMap = new Map();
+        this.variants.forEach(v => {
+            const isActive = v.status ? v.status === 'ACTIVE' : true; // Assume active if no status property
+            if (isActive && uniqueVariantIds.includes(v.id)) {
+                if (!filteredMap.has(v.id)) {
+                    filteredMap.set(v.id, v);
+                }
+            }
+        });
+        
+        this.filteredVariants = Array.from(filteredMap.values());
     }
 
     submit() {

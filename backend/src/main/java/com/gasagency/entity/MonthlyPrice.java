@@ -9,8 +9,9 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "monthly_price", indexes = {
+        @Index(name = "idx_mp_variant_month", columnList = "variant_id, month_year"),
         @Index(name = "idx_monthlyprice_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_monthlyprice_month_year", columnList = "monthYear")
+        @Index(name = "idx_monthlyprice_month_year", columnList = "month_year")
 })
 public class MonthlyPrice extends Auditable {
     @Id

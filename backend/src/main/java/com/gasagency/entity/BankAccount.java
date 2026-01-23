@@ -8,9 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
-@Table(name = "bank_account", indexes = {
-        @Index(name = "idx_bank_account_active", columnList = "is_active")
-})
+@Table(name = "bank_account")
 public class BankAccount extends Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

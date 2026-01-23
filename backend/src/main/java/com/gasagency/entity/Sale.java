@@ -16,9 +16,14 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "sale", indexes = {
+        // Performance indexes for sales lookups
+        @Index(name = "idx_sale_date", columnList = "sale_date"),
+        @Index(name = "idx_sale_customer_date", columnList = "customer_id, sale_date"),
+        @Index(name = "idx_sale_warehouse_date", columnList = "warehouse_id, sale_date"),
+
+        // Legacy indexes
         @Index(name = "idx_sale_customer_id", columnList = "customer_id"),
         @Index(name = "idx_sale_warehouse_id", columnList = "warehouse_id"),
-        @Index(name = "idx_sale_sale_date", columnList = "saleDate"),
         @Index(name = "idx_sale_reference_number", columnList = "reference_number", unique = true)
 })
 public class Sale extends Auditable {

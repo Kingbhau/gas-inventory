@@ -234,61 +234,9 @@
   background: #cbd5e1;
 }
 
-/* Action Buttons */
-.btn-action {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  color: #2563eb;
-  font-size: 1.1rem;
-  transition: all 0.2s;
-  border-radius: 6px;
-}
+/* Action Buttons - Using global btn-action styles */
 
-.btn-action:hover {
-  background: #f1f5f9;
-  color: #1d4ed8;
-}
-
-.btn-action.btn-danger {
-  color: #dc2626;
-}
-
-.btn-action.btn-danger:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-/* Status Badge */
-.badge {
-  display: inline-block;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.badge-active {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.badge-active:hover {
-  background: #a7f3d0;
-}
-
-.badge-inactive {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.badge-inactive:hover {
-  background: #fecaca;
-}
+/* Badge styles use global definitions from styles.css */
 
 /* Table */
 .table-wrapper {

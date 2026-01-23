@@ -288,7 +288,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     });
     this.warehouseService.getActiveWarehouses().subscribe({
       next: (data: any) => {
-        this.warehousesList = (data && data.data) || [];
+        this.warehousesList = data || [];
       },
       error: () => { this.warehousesList = []; }
     });
@@ -301,8 +301,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
       error: () => { this.bankAccountsList = []; }
     });
     
-    // Load payment modes for filtering
-    this.paymentModeService.getActivePaymentModes().subscribe({
+    // Load all payment modes (active and inactive) for historical filtering
+    this.paymentModeService.getAllPaymentModes(0, 100).subscribe({
       next: (data: any) => {
         this.paymentModesList = Array.isArray(data) ? data : (data.content || []);
       },

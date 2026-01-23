@@ -58,11 +58,11 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
   }
 
   private loadWarehouses(): void {
-    this.warehouseService.getAllWarehouses()
+    this.warehouseService.getActiveWarehouses()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          this.warehouses = response.data || response || [];
+        next: (data: any) => {
+          this.warehouses = data || [];
           this.cdr.markForCheck();
         },
         error: (err: any) => {

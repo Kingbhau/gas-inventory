@@ -9,8 +9,11 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "inventory_stock", indexes = {
+        @Index(name = "idx_is_warehouse_variant", columnList = "warehouse_id, variant_id"),
+        @Index(name = "idx_is_warehouse", columnList = "warehouse_id"),
+        @Index(name = "idx_is_variant", columnList = "variant_id"),
         @Index(name = "idx_stock_warehouse_variant", columnList = "warehouse_id, variant_id"),
-        @Index(name = "idx_stock_last_updated", columnList = "lastUpdated")
+        @Index(name = "idx_stock_last_updated", columnList = "last_updated")
 }, uniqueConstraints = {
         @UniqueConstraint(columnNames = { "warehouse_id", "variant_id" }, name = "uq_warehouse_variant")
 })

@@ -12,10 +12,17 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "customer_cylinder_ledger", indexes = {
+        // Performance indexes for due payment and transaction queries
+        @Index(name = "idx_ccl_customer_trans_date", columnList = "customer_id, transaction_date"),
+        @Index(name = "idx_ccl_warehouse_date", columnList = "warehouse_id, transaction_date"),
+        @Index(name = "idx_ccl_transaction_date", columnList = "transaction_date"),
+        @Index(name = "idx_ccl_ref_type_date", columnList = "ref_type, transaction_date"),
+        @Index(name = "idx_ccl_customer_variant", columnList = "customer_id, variant_id"),
+        
+        // Legacy indexes
         @Index(name = "idx_ledger_customer_id", columnList = "customer_id"),
         @Index(name = "idx_ledger_warehouse_id", columnList = "warehouse_id"),
         @Index(name = "idx_ledger_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_ledger_transaction_date", columnList = "transactionDate"),
         @Index(name = "idx_ledger_customer_warehouse", columnList = "customer_id, warehouse_id"),
         @Index(name = "idx_customer_warehouse_variant", columnList = "customer_id, warehouse_id, variant_id")
 })
@@ -95,6 +102,10 @@ public class CustomerCylinderLedger extends Auditable {
 
     @Column(name = "transaction_reference", nullable = true, length = 50, unique = true)
     private String transactionReference; // Auto-generated for EMPTY_RETURN transactions
+
+    @Column(nullable = true, length = 1500)
+    private String updateReason; // Optional reason for why the ledger entry was updated (includes changes
+                                 // summary + user note)
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "bank_account_id", nullable = true)
@@ -265,5 +276,13 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setSale(Sale sale) {
         this.sale = sale;
+    }
+
+    public String getUpdateReason() {
+        return updateReason;
+    }
+
+    public void setUpdateReason(String updateReason) {
+        this.updateReason = updateReason;
     }
 }

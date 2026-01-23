@@ -166,47 +166,9 @@
   text-align: center !important;
 }
 
-/* Badge */
-.badge {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: #fef3c7;
-  color: #92400e;
-}
+/* Badge styles use global definitions from styles.css */
 
-.badge-active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge-inactive {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-/* Action Buttons */
-.btn-action {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.2s;
-  margin-right: 0.5rem;
-}
-
-.btn-action:hover {
-  background: #e2e8f0;
-}
-
-.btn-action.delete:hover {
-  background: #fee2e2;
-  color: #dc2626;
-}
+/* Action Buttons - Using global btn-action styles */
 
 /* Loading & No Data */
 .loading-container,
@@ -361,8 +323,5 @@
     padding: 0.15rem;
   }
 
-  .badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
+  /* Badge responsive styles are handled in global styles.css */
 }

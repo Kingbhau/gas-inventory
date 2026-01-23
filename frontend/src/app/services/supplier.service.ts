@@ -1,17 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs';
 import { Supplier } from '../models/supplier.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
+import { CacheService, CACHE_KEYS, CACHE_CONFIG } from './cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SupplierService {
   private apiUrl = getApiUrl('/suppliers');
+  private activeSuppliersCache$: Observable<Supplier[]> | null = null;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private cacheService: CacheService) { }
 
   createSupplier(supplier: Supplier, businessId: number): Observable<Supplier> {
     const payload = { ...supplier, businessId };
@@ -32,6 +35,11 @@ export class SupplierService {
       .set('direction', direction);
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout());
+  }
+
+  invalidateCache(): void {
+    this.activeSuppliersCache$ = null;
+    this.cacheService.invalidate(CACHE_KEYS.SUPPLIERS);
   }
 
   updateSupplier(id: number, supplier: Supplier): Observable<Supplier> {

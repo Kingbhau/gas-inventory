@@ -108,6 +108,9 @@ public class BankAccountService {
                 bankAccount.setAccountHolderName(request.getAccountHolderName());
                 bankAccount.setAccountName(request.getAccountName());
                 bankAccount.setAccountType(request.getAccountType());
+                if (request.getIsActive() != null) {
+                        bankAccount.setIsActive(request.getIsActive());
+                }
                 bankAccount.setUpdatedDate(LocalDateTime.now());
 
                 BankAccount updatedBankAccount = bankAccountRepository.save(bankAccount);

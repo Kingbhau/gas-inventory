@@ -100,7 +100,41 @@ public class UserService {
         return userRepository.findByActiveTrue();
     }
 
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id).filter(User::isActive);
+    }
+
+    public Optional<UserDTO> reactivateUser(Long id) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        User user = userOpt.get();
+        if (user.isActive()) {
+            throw new IllegalArgumentException("User is already active");
+        }
+
+        user.setActive(true);
+        User saved = userRepository.save(user);
+        return Optional.of(convertToDTO(saved));
+    }
+
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setName(user.getName());
+        dto.setMobileNo(user.getMobileNo());
+        dto.setRole(user.getRole().toString());
+        dto.setActive(user.isActive());
+        if (user.getBusiness() != null) {
+            dto.setBusinessId(user.getBusiness().getId());
+        }
+        return dto;
     }
 }

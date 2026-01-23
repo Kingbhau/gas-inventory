@@ -43,6 +43,14 @@ public class ExpenseController {
         return ResponseEntity.ok(service.getExpensesByDateRange(fromDate, toDate, pageable));
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId) {
+        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId));
+    }
+
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<Page<ExpenseDTO>> getExpensesByCategory(
             @PathVariable Long categoryId,
@@ -93,13 +101,5 @@ public class ExpenseController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    @GetMapping("/summary")
-    public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false) Long categoryId) {
-        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId));
     }
 }

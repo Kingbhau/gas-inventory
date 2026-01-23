@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -28,7 +28,7 @@ export class LoginComponent {
   forgotMsg = '';
 
 
-  constructor(private authService: AuthService, private router: Router, private toastr: ToastrService) {}
+  constructor(private authService: AuthService, private router: Router, private toastr: ToastrService, private cdr: ChangeDetectorRef) {}
 
   onLogin() {
     this.loading = true;
@@ -39,10 +39,14 @@ export class LoginComponent {
         this.authService.setUserInfo(res);
         this.router.navigate(['/']);
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => {
-        this.toastr.error('Invalid username or password', 'Login Failed');
+      error: (err) => {
+        // Show the actual error message from backend error response
+        const errorMessage = err?.error?.message || err?.error?.error || 'Invalid username or password';
+        this.toastr.error(errorMessage, 'Login Failed');
         this.loading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -69,10 +73,12 @@ export class LoginComponent {
       next: () => {
         this.forgotMsg = 'Reset link sent to your email.';
         this.forgotLoading = false;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.forgotMsg = 'Failed to send reset link.';
         this.forgotLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }

@@ -46,8 +46,8 @@ public class UserController {
 
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllActiveUsers() {
-        List<UserDTO> users = userService.getAllActiveUsers().stream().map(this::toDTO).toList();
+    public ResponseEntity<List<UserDTO>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers().stream().map(this::toDTO).toList();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
@@ -83,5 +83,15 @@ public class UserController {
             dto.setBusinessId(user.getBusiness().getId());
         }
         return dto;
+    }
+
+    @PreAuthorize("hasRole('MANAGER')")
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<UserDTO> reactivateUser(@PathVariable Long id) {
+        var userOpt = userService.reactivateUser(id);
+        if (userOpt.isPresent()) {
+            return new ResponseEntity<>(userOpt.get(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

@@ -1,6 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function getTodayInIST(): string {
+  const now = new Date();
+  // Get date components in local time (which is IST for Indian users)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportSalesReportToPDF({
   salesData,
   fromDate,
@@ -54,7 +71,7 @@ export function exportSalesReportToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range (centered, subtle)
@@ -184,7 +201,7 @@ export function exportSalesReportToPDF({
     fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
   } else {
     const now = new Date();
-    fileDate = now.toISOString().slice(0, 10);
+    fileDate = getTodayInIST();
   }
   doc.save(`sales-report-${fileDate}.pdf`);
 }

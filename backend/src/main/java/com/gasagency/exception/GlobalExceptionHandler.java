@@ -12,6 +12,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.transaction.TransactionSystemException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.gasagency.util.LoggerUtil;
@@ -25,6 +26,19 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
         private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+        @ExceptionHandler(UsernameNotFoundException.class)
+        public ResponseEntity<ErrorResponse> handleUsernameNotFound(
+                        UsernameNotFoundException ex, WebRequest request) {
+                logger.warn("AUTHENTICATION_FAILED | message={}", ex.getMessage());
+                LoggerUtil.logBusinessError(logger, "AUTHENTICATION", ex.getMessage());
+                ErrorResponse error = new ErrorResponse(
+                                HttpStatus.UNAUTHORIZED.value(),
+                                "AUTHENTICATION_FAILED",
+                                ex.getMessage(),
+                                LocalDateTime.now());
+                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        }
 
         @ExceptionHandler(ResourceNotFoundException.class)
         public ResponseEntity<ErrorResponse> handleResourceNotFound(
@@ -241,15 +255,26 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGlobalException(
                         Exception ex, WebRequest request) {
-                logger.error("UNEXPECTED_ERROR | exception={} | message={}",
-                                ex.getClass().getSimpleName(), ex.getMessage(), ex);
+                logger.error("UNEXPECTED_ERROR | exception={} | message={} | cause={}",
+                                ex.getClass().getSimpleName(), ex.getMessage(),
+                                ex.getCause() != null ? ex.getCause().getMessage() : "null", ex);
                 LoggerUtil.logException(logger, "Unexpected error", ex,
                                 "exceptionClass", ex.getClass().getSimpleName());
+
+                // Get the actual error message, including root cause if available
+                String errorMessage = ex.getMessage();
+                if (errorMessage == null || errorMessage.isBlank()) {
+                        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                                errorMessage = ex.getCause().getMessage();
+                        } else {
+                                errorMessage = "An unexpected error occurred. Please contact support.";
+                        }
+                }
 
                 ErrorResponse error = new ErrorResponse(
                                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                                 "INTERNAL_SERVER_ERROR",
-                                "An unexpected error occurred. Please contact support.",
+                                errorMessage,
                                 LocalDateTime.now());
                 return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
         }

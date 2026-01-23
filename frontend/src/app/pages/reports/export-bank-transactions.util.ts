@@ -1,6 +1,14 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportBankTransactionsReportToPDF({
   transactions,
   fromDate,
@@ -47,7 +55,7 @@ export function exportBankTransactionsReportToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range (centered, subtle)
@@ -128,7 +136,7 @@ export function exportBankTransactionsReportToPDF({
 
   // Table Data
   const tableData = filteredTransactions.map(row => [
-    row.transactionDate ? new Date(row.transactionDate).toLocaleDateString('en-IN') : '-',
+    row.transactionDate ? formatDateInIST(new Date(row.transactionDate)) : '-',
     row.bankAccountName?.split(' - ')[0] || row.bankAccountName || '-',
     row.transactionType || '-',
     `Rs. ${Number(row.amount).toLocaleString()}`,
@@ -170,7 +178,7 @@ export function exportBankTransactionsReportToPDF({
   });
 
   // Generate filename
-  const timestamp = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+  const timestamp = formatDateInIST(new Date()).replace(/-/g, '');
   const filename = `Bank_Transactions_${timestamp}.pdf`;
 
   // Save the PDF

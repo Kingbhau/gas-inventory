@@ -10,10 +10,11 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "warehouse_transfer", indexes = {
+        @Index(name = "idx_wt_transfer_date", columnList = "transfer_date"),
+        @Index(name = "idx_wt_warehouses", columnList = "from_warehouse_id, to_warehouse_id, transfer_date"),
         @Index(name = "idx_transfer_from_warehouse", columnList = "from_warehouse_id"),
         @Index(name = "idx_transfer_to_warehouse", columnList = "to_warehouse_id"),
         @Index(name = "idx_transfer_variant", columnList = "variant_id"),
-        @Index(name = "idx_transfer_date", columnList = "transferDate"),
         @Index(name = "idx_transfer_reference_number", columnList = "reference_number", unique = true)
 })
 public class WarehouseTransfer extends Auditable {

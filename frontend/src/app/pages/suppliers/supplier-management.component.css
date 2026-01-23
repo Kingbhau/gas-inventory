@@ -230,37 +230,7 @@
   text-align: center;
 }
 
-/* Action buttons */
-.action-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 16px;
-  cursor: pointer;
-  padding: var(--spacing-md);
-  margin: 0 2px;
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-base);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-}
-
-.action-btn:hover {
-  background-color: var(--bg-tertiary);
-  color: var(--primary);
-}
-
-.action-btn.danger {
-  color: var(--text-secondary);
-}
-
-.action-btn.danger:hover {
-  background-color: var(--danger-light);
-  color: var(--danger-color);
-}
+/* Action buttons - Using global btn-action styles */
 
 /* Empty state */
 .empty-state {
@@ -480,12 +450,7 @@
     font-size: 12px;
   }
 
-  .action-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
-    margin: 0 2px;
-  }
+  /* Action buttons responsive sizing handled in global styles */
 
   .modal-content {
     max-width: 90%;

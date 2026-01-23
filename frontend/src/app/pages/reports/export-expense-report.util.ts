@@ -1,6 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function getTodayInIST(): string {
+  const now = new Date();
+  // Get date components in local time (which is IST for Indian users)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportExpenseReportToPDF({
   expenseData,
   fromDate,
@@ -47,7 +64,7 @@ export function exportExpenseReportToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range (centered, subtle)
@@ -113,7 +130,7 @@ export function exportExpenseReportToPDF({
 
   // Table Data
   const tableData = expenseData.map((expense: any) => [
-    expense.expenseDate ? new Date(expense.expenseDate).toLocaleDateString() : '',
+    expense.expenseDate ? formatDateInIST(new Date(expense.expenseDate)) : '',
     expense.description,
     expense.category || 'Uncategorized',
     `Rs. ${Number(expense.amount).toLocaleString()}`,
@@ -151,7 +168,7 @@ export function exportExpenseReportToPDF({
     fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
   } else {
     const now = new Date();
-    fileDate = now.toISOString().slice(0, 10);
+    fileDate = getTodayInIST();
   }
   doc.save(`expense-report-${fileDate}.pdf`);
 }

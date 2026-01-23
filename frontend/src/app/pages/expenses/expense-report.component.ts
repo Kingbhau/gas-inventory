@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { SharedModule } from '../../shared/shared.module';
 import { ExpenseService } from '../../services/expense.service';
 import { LoadingService } from '../../services/loading.service';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { Expense } from '../../models/expense.model';
 import { exportExpenseReportToPDF } from '../reports/export-expense-report.util';
 import { finalize } from 'rxjs/operators';
@@ -57,7 +58,8 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     private expenseService: ExpenseService,
     private loadingService: LoadingService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dateUtility: DateUtilityService
   ) {}
 
   ngOnInit() {
@@ -212,12 +214,12 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     this.filterMaxAmount = null;
     this.currentPage = 1;
     
-    // Reset dates to default (last 30 days)
+    // Reset dates to default (last 30 days) using IST
     const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = this.dateUtility.addDays(today, -30);
     
-    this.filterToDate = today.toISOString().split('T')[0];
-    this.filterFromDate = thirtyDaysAgo.toISOString().split('T')[0];
+    this.filterToDate = this.dateUtility.getLocalDateString(today);
+    this.filterFromDate = this.dateUtility.getLocalDateString(thirtyDaysAgo);
     
     this.filtersApplied = false;
     this.loadExpenses(this.currentPage, this.pageSize);
@@ -263,5 +265,18 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
       transactionCount: this.transactionCount,
       categoryFilter: this.filterCategory || undefined
     });
+  }
+
+  /**
+   * Get local date string in YYYY-MM-DD format without timezone conversion
+   */
+  /**
+   * Get local date string in YYYY-MM-DD format without timezone conversion
+   */
+  private getLocalDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

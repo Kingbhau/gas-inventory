@@ -233,4 +233,22 @@ public class CylinderVariantService {
         return new CylinderVariantDTO(variant.getId(), variant.getName(),
                 variant.getWeightKg(), variant.getActive(), variant.getBasePrice());
     }
+
+    public CylinderVariantDTO reactivateVariant(Long id) {
+        logger.info("Reactivating cylinder variant with ID: {}", id);
+        CylinderVariant variant = repository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Cylinder variant not found with ID: {}", id);
+                    return new ResourceNotFoundException("Cylinder variant not found with id: " + id);
+                });
+
+        if (variant.getActive()) {
+            logger.warn("Cylinder variant with ID: {} is already active", id);
+            throw new InvalidOperationException("Cylinder variant is already active");
+        }
+
+        variant.setActive(true);
+        LoggerUtil.logBusinessSuccess(logger, "REACTIVATE_VARIANT", "id", id);
+        return toDTO(repository.save(variant));
+    }
 }

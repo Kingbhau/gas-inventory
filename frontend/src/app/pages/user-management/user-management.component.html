@@ -50,7 +50,7 @@
               <td>{{ user.mobileNo }}</td>
               <td>{{ user.role }}</td>
               <td>
-                <span [class.badge-success]="user.active" [class.badge-danger]="!user.active" class="badge">
+                <span [class.active]="user.active" [class.inactive]="!user.active" class="status-badge">
                   {{ user.active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -66,11 +66,11 @@
                         <fa-icon [icon]="faEye"></fa-icon> View Details
                       </button>
                       <button class="dropdown-item" (click)="editUser(user); user.showMenu = false">
-                        <fa-icon [icon]="faPencil"></fa-icon> Edit
+                        <fa-icon [icon]="faEdit"></fa-icon> Edit
                       </button>
-                      <button class="dropdown-item danger" (click)="openDeleteModal(user); user.showMenu = false">
+                      <!-- <button class="dropdown-item danger" (click)="openDeleteModal(user); user.showMenu = false">
                         <fa-icon [icon]="faTrash"></fa-icon> Delete
-                      </button>
+                      </button> -->
                     </div>
                   </div>
                 </div>
@@ -215,7 +215,7 @@
         </button>
       </div>
       <div class="modal-body details-modal-body">
-        <span class="details-status-badge" [ngClass]="{'inactive': !detailsUser.active}">
+        <span [class.active]="detailsUser.active" [class.inactive]="!detailsUser.active" class="status-badge">
           <fa-icon [icon]="detailsUser.active ? faUsers : faTimes"></fa-icon>
           {{ detailsUser.active ? 'Active' : 'Inactive' }}
         </span>

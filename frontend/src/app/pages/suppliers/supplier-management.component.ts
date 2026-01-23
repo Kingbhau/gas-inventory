@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch, faPencil, faTrash, faPlus, faTimes, faExclamation, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrash, faPlus, faTimes, faExclamation, faBuilding } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../services/supplier.service';
 import { AuthService } from '../../services/auth.service';
@@ -46,7 +46,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
 
   // Font Awesome Icons
   faSearch = faSearch;
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faPlus = faPlus;
   faTimes = faTimes;
@@ -164,6 +164,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
             if (index > -1) {
               this.suppliers[index] = updatedSupplier;
             }
+            this.supplierService.invalidateCache();
             this.toastr.success('Supplier updated successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
@@ -192,6 +193,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
         .subscribe(newSupplier => {
           if (newSupplier) {
             this.suppliers.push(newSupplier);
+            this.supplierService.invalidateCache();
             this.toastr.success('Supplier created successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
@@ -207,6 +209,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
       this.supplierService.deleteSupplier(id).subscribe({
         next: () => {
           this.suppliers = this.suppliers.filter(s => s.id !== id);
+          this.supplierService.invalidateCache();
           this.toastr.success('Supplier deleted successfully', 'Success');
         },
         error: (error) => {

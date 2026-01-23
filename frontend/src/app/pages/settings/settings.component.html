@@ -41,13 +41,13 @@
                     <td>{{ variant.weightKg }} kg</td>
                     <td>₹ {{ variant.basePrice | number: '1.2-2' }}</td>
                     <td>
-                      <span class="badge" [class.badge-active]="variant.active">
+                      <span [class.active]="variant.active" [class.inactive]="!variant.active" class="status-badge">
                         {{ variant.active ? 'Active' : 'Inactive' }}
                       </span>
                     </td>
                     <td>
                       <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
-                      <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button>
+                      <!-- <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button> -->
                     </td>
                   </tr>
                 </tbody>
@@ -228,10 +228,14 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label checkbox">
-            <input formControlName="active" type="checkbox">
-            <span>Active</span>
-          </label>
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="active"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
         </div>
 
         <div class="modal-footer">

@@ -87,6 +87,9 @@ public class PaymentModeService {
         // Ensure isBankAccountRequired has a default value if null
         Boolean bankAccountRequired = dto.getIsBankAccountRequired();
         mode.setIsBankAccountRequired(bankAccountRequired != null ? bankAccountRequired : false);
+        if (dto.getIsActive() != null) {
+            mode.setIsActive(dto.getIsActive());
+        }
 
         PaymentMode updated = repository.save(mode);
         return modelMapper.map(updated, PaymentModeDTO.class);

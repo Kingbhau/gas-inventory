@@ -6,7 +6,10 @@ import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
-@Table(name = "expenses")
+@Table(name = "expenses", indexes = {
+        @Index(name = "idx_expense_date", columnList = "expense_date"),
+        @Index(name = "idx_expense_category_date", columnList = "category_id, expense_date")
+})
 public class Expense extends Auditable {
 
     @Id

@@ -52,7 +52,8 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(2)]],
       code: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
-      isBankAccountRequired: [false]
+      isBankAccountRequired: [false],
+      isActive: ['true']
     });
   }
 
@@ -79,9 +80,9 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
   }
 
   onAddNew() {
-    this.showModal = true;
     this.editingId = null;
-    this.paymentModeForm.reset();
+    this.paymentModeForm.reset({ isActive: 'true', isBankAccountRequired: false });
+    this.showModal = true;
     this.cdr.markForCheck();
   }
 
@@ -92,7 +93,8 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
       name: paymentMode.name,
       code: paymentMode.code,
       description: paymentMode.description || '',
-      isBankAccountRequired: paymentMode.isBankAccountRequired || false
+      isBankAccountRequired: paymentMode.isBankAccountRequired || false,
+      isActive: (paymentMode.isActive !== false ? 'true' : 'false')
     });
     this.cdr.markForCheck();
   }
@@ -111,7 +113,10 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmitting = true;
-    const formValue = this.paymentModeForm.value;
+    const formValue = {
+      ...this.paymentModeForm.value,
+      isActive: this.paymentModeForm.value.isActive === 'true' || this.paymentModeForm.value.isActive === true
+    };
 
     if (this.editingId) {
       // Update existing
@@ -166,18 +171,5 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleStatus(paymentMode: PaymentMode) {
-    if (!paymentMode.id) return;
 
-    const newStatus = !paymentMode.isActive;
-    this.paymentModeService.togglePaymentModeStatus(paymentMode.id, newStatus).subscribe({
-      next: () => {
-        paymentMode.isActive = newStatus;
-        this.toastr.success(`Payment mode ${newStatus ? 'activated' : 'deactivated'}`);
-      },
-      error: (error) => {
-        this.toastr.error('Failed to update payment mode status');
-      }
-    });
-  }
 }

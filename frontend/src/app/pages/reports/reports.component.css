@@ -305,25 +305,7 @@
   font-weight: 600;
 }
 
-.badge-danger {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.badge-warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge-success {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge-info {
-  background: #e0f2fe;
-  color: #0369a1;
-}
+/* Badge styles use global definitions from styles.css */
 
 /* Inventory Grid */
 .inventory-grid {

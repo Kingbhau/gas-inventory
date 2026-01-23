@@ -1,6 +1,14 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportCustomerLedgerToPDF({
   customerName,
   customerPhone,
@@ -43,7 +51,7 @@ export function exportCustomerLedgerToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range (centered, subtle)
@@ -130,7 +138,7 @@ export function exportCustomerLedgerToPDF({
     }
 
     return [
-      new Date(entry.transactionDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+      formatDateInIST(new Date(entry.transactionDate)),
       entry.transactionReference || '-',
       variantMode,
       entry.refType || 'N/A',
@@ -207,7 +215,10 @@ export function exportCustomerLedgerToPDF({
     fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
   } else {
     const now = new Date();
-    fileDate = now.toISOString().slice(0, 10);
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    fileDate = `${year}-${month}-${day}`;
   }
   
   const sanitizedName = customerName.replace(/[^a-z0-9]/gi, '_').toLowerCase();

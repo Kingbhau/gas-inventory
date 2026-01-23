@@ -185,7 +185,7 @@ public class SaleService {
                 throw new ConcurrencyConflictException("Failed to create sale after maximum retries.");
         }
 
-        @Transactional(isolation = Isolation.READ_COMMITTED)
+        @Transactional(isolation = Isolation.REPEATABLE_READ)
         private SaleDTO createSaleInternal(CreateSaleRequestDTO request) {
                 String transactionId = UUID.randomUUID().toString();
                 MDC.put("transactionId", transactionId);
@@ -399,7 +399,11 @@ public class SaleService {
 
                 // Create sale FIRST so we have a sale ID for ledger references
                 Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
-                sale.setPaymentMode(request.getModeOfPayment());
+                // Normalize payment mode to uppercase for consistency
+                String normalizedPaymentMode = request.getModeOfPayment() != null
+                                ? request.getModeOfPayment().trim().toUpperCase()
+                                : "CASH";
+                sale.setPaymentMode(normalizedPaymentMode);
 
                 // Generate and set reference number BEFORE saving
                 String referenceNumber = referenceNumberGenerator.generateSaleReference(warehouse);
@@ -505,7 +509,10 @@ public class SaleService {
                                 transactionId, sale.getId(), customer.getName(), totalAmount, txnDuration);
 
                 MDC.remove("transactionId");
-                return toDTO(sale);
+
+                // Convert to DTO with sale items already loaded to avoid
+                // LazyInitializationException
+                return toDTOWithItems(sale, saleItems);
         }
 
         @Transactional(readOnly = true)
@@ -634,8 +641,9 @@ public class SaleService {
                 int totalTransactions = 0;
 
                 for (CustomerCylinderLedger ledger : ledgers) {
+                        // Normalize payment mode to uppercase for consistent aggregation
                         String ledgerPaymentMode = ledger.getPaymentMode() != null && !ledger.getPaymentMode().isEmpty()
-                                        ? ledger.getPaymentMode()
+                                        ? ledger.getPaymentMode().trim().toUpperCase()
                                         : "CASH";
                         double ledgerAmount = ledger.getAmountReceived() != null
                                         ? ledger.getAmountReceived().doubleValue()
@@ -683,6 +691,44 @@ public class SaleService {
 
         private SaleDTO toDTO(Sale sale) {
                 List<SaleItemDTO> items = sale.getSaleItems().stream()
+                                .map(item -> new SaleItemDTO(
+                                                item.getId(),
+                                                item.getVariant().getId(),
+                                                item.getVariant().getName(),
+                                                item.getQtyIssued(),
+                                                item.getQtyEmptyReceived(),
+                                                item.getBasePrice(),
+                                                item.getDiscount(),
+                                                item.getFinalPrice()))
+                                .collect(Collectors.toList());
+
+                String bankAccountName = null;
+                Long bankAccountId = null;
+                if (sale.getBankAccount() != null) {
+                        bankAccountId = sale.getBankAccount().getId();
+                        bankAccountName = sale.getBankAccount().getBankName() + " - " +
+                                        sale.getBankAccount().getAccountNumber();
+                }
+
+                return new SaleDTO(
+                                sale.getId(),
+                                sale.getReferenceNumber(),
+                                sale.getCustomer().getId(),
+                                sale.getCustomer().getName(),
+                                sale.getSaleDate(),
+                                sale.getTotalAmount(),
+                                sale.getPaymentMode() != null ? sale.getPaymentMode() : "Cash",
+                                bankAccountId,
+                                bankAccountName,
+                                items);
+        }
+
+        /**
+         * Convert Sale to DTO with pre-loaded sale items to avoid
+         * LazyInitializationException
+         */
+        private SaleDTO toDTOWithItems(Sale sale, List<SaleItem> saleItems) {
+                List<SaleItemDTO> items = saleItems.stream()
                                 .map(item -> new SaleItemDTO(
                                                 item.getId(),
                                                 item.getVariant().getId(),

@@ -93,7 +93,7 @@
               <td class="font-semibold">{{ warehouse.code }}</td>
               <td><strong>{{ warehouse.name }}</strong></td>
               <td>
-                <span class="badge" [ngClass]="getStatusColor(warehouse.status)">
+                <span class="status-badge" [class.active]="warehouse.status === 'ACTIVE'" [class.inactive]="warehouse.status === 'INACTIVE'">
                   {{ getStatusText(warehouse.status) }}
                 </span>
               </td>
@@ -105,27 +105,7 @@
                   (click)="editWarehouse(warehouse)"
                   title="Edit warehouse"
                 >
-                  <fa-icon [icon]="faPencil"></fa-icon>
-                </button>
-
-                <!-- Activate Button -->
-                <button
-                  *ngIf="warehouse.status === 'INACTIVE'"
-                  class="btn-action"
-                  (click)="activateWarehouse(warehouse.id)"
-                  title="Activate warehouse"
-                >
-                  <fa-icon [icon]="faCheck"></fa-icon>
-                </button>
-
-                <!-- Deactivate Button -->
-                <button
-                  *ngIf="warehouse.status === 'ACTIVE' && !isDefaultWarehouse(warehouse.id)"
-                  class="btn-action delete"
-                  (click)="deactivateWarehouse(warehouse.id)"
-                  title="Deactivate warehouse"
-                >
-                  <fa-icon [icon]="faTrash"></fa-icon>
+                  <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
               </td>
             </tr>

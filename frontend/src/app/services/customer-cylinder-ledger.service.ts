@@ -118,4 +118,13 @@ export class CustomerCylinderLedgerService {
     return this.http.post(`${this.apiUrl}/empty-return`, data, { withCredentials: true })
       .pipe(applyTimeout());
   }
+
+  /**
+   * Update a ledger entry with full chain recalculation
+   * Validates that no due amounts go negative anywhere in the chain
+   */
+  updateLedgerEntry(ledgerId: number, updateData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${ledgerId}`, updateData, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
 }

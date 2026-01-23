@@ -5,7 +5,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPencil, faTrash, faBox, faDownload, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faBox, faDownload, faEye } from '@fortawesome/free-solid-svg-icons';
 import { exportSupplierTransactionsToPDF } from '../reports/export-supplier-transactions.util';
 import { BusinessInfoService } from '../../services/business-info.service';
 import { ToastrService } from 'ngx-toastr';
@@ -15,6 +15,7 @@ import { InventoryStockService } from '../../services/inventory-stock.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
@@ -52,7 +53,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   transactionForm!: FormGroup;
 
   // Font Awesome Icons
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faBox = faBox;
   faDownload = faDownload;
@@ -89,6 +90,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     private inventoryStockService: InventoryStockService,
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
+    private dateUtility: DateUtilityService,
     private cdr: ChangeDetectorRef
   ) {
     this.initForm();
@@ -131,8 +133,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.warehouseService.getActiveWarehouses()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (response: any) => {
-          this.warehouses = (response && response.data) || [];
+        next: (data: any) => {
+          this.warehouses = data || [];
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -162,11 +164,11 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadVariants() {
     this.loadingService.show('Loading variants...');
-    this.variantService.getAllVariants(0, 100)
+    this.variantService.getActiveVariants()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
-          this.variants = data.content || data;
+          this.variants = data;
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -224,8 +226,11 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   openAddForm() {
     this.editingId = null;
-    this.transactionForm.reset();
+    this.transactionForm.reset({ supplierId: '', variantId: '' });
     this.showForm = true;
+    // Refresh variants to get any newly activated ones
+    this.variantService.invalidateCache();
+    this.loadVariants();
     this.cdr.markForCheck();
   }
 
@@ -254,7 +259,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     formData.warehouseId = parseInt(formData.warehouseId);
     formData.supplierId = parseInt(formData.supplierId);
     formData.variantId = parseInt(formData.variantId);
-    formData.transactionDate = formData.transactionDate ? formData.transactionDate : new Date().toISOString().split('T')[0];
+    formData.transactionDate = formData.transactionDate ? formData.transactionDate : this.dateUtility.getTodayInIST();
     formData.filledReceived = parseInt(formData.filledReceived);
     formData.emptySent = parseInt(formData.emptySent);
 

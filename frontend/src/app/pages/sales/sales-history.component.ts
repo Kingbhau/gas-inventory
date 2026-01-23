@@ -64,7 +64,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadSales();
     this.loadCustomers();
-    // Load variants
+    // Load all variants (including inactive) for filtering historical sales
     if (this.variantService && this.variantService.getAllVariants) {
       this.variantService.getAllVariants(0, 100).subscribe({
         next: (data: any) => {
@@ -167,11 +167,11 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
 
   loadCustomers() {
     this.loadingService.show('Loading customers...');
-    this.customerService.getAllCustomers(0, 100)
+    this.customerService.getActiveCustomers()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
-          this.customersList = data.content || data;
+          this.customersList = data;
           this.cdr.markForCheck();
         },
         error: (error) => {

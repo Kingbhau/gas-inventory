@@ -250,4 +250,20 @@ public class CustomerCylinderLedgerController {
     public ResponseEntity<Map<String, Object>> getCustomerSummary(@PathVariable Long customerId) {
         return ResponseEntity.ok(service.getCustomerLedgerSummary(customerId));
     }
+
+    // Update a ledger entry with full chain recalculation
+    // Validates that no due amounts go negative anywhere in the chain
+    @PutMapping("/{ledgerId}")
+    public ResponseEntity<CustomerCylinderLedgerDTO> updateLedgerEntry(
+            @PathVariable Long ledgerId,
+            @RequestBody Map<String, Object> updateData) {
+        return ResponseEntity.ok(service.updateLedgerEntry(ledgerId, updateData));
+    }
+
+    // Admin endpoint to repair/recalculate all balances with correct formula
+    @PostMapping("/admin/repair-balances")
+    public ResponseEntity<Map<String, String>> repairAllBalances() {
+        service.recalculateAllBalances();
+        return ResponseEntity.ok(Map.of("status", "success", "message", "All balances have been recalculated"));
+    }
 }

@@ -3,6 +3,9 @@ package com.gasagency.entity;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.gasagency.config.BusinessInfoDeserializer;
 import java.util.List;
 
 @Entity
@@ -30,6 +33,8 @@ public class User extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id")
     @JsonBackReference("business-users")
+    @JsonProperty("businessId")
+    @JsonDeserialize(using = BusinessInfoDeserializer.class)
     private BusinessInfo business;
 
     @Column(nullable = false)

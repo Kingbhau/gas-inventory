@@ -1,789 +1,320 @@
-2026-01-21 12:10:18.139 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:10:18.144 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
-2026-01-21 12:10:18.189 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:10:18.192 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
-2026-01-21 12:10:18.207 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-21 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:10:18.209 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
-2026-01-21 12:10:18.260 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:10:18.263 | INFO  | [ddcbc1ca-492b-4a72-8696-f0cc797f5a4c] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
-2026-01-21 12:10:32.953 | INFO  | [acc2b038-e9a5-4a69-baef-18c86d87137c] [] [] | http-nio-8080-exec-12 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=19KG
-2026-01-21 12:10:32.981 | INFO  | [acc2b038-e9a5-4a69-baef-18c86d87137c] [] [] | http-nio-8080-exec-12 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=1 | name=19KG
-2026-01-21 12:10:43.820 | INFO  | [85306510-6960-416a-89ec-585b2d777c7f] [] [] | http-nio-8080-exec-14 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=5KG
-2026-01-21 12:10:43.823 | INFO  | [85306510-6960-416a-89ec-585b2d777c7f] [] [] | http-nio-8080-exec-14 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=2 | name=5KG
-2026-01-21 12:11:52.189 | INFO  | [3ecf876f-2b60-4418-ab20-80172dc09c50] [] [] | http-nio-8080-exec-19 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-01-21 12:11:52.229 | INFO  | [3ecf876f-2b60-4418-ab20-80172dc09c50] [] [] | http-nio-8080-exec-19 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-01-21 12:12:02.973 | INFO  | [5a307de7-a04d-4585-8776-cd05f516711e] [] [] | http-nio-8080-exec-22 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1 | itemsCount=2
-2026-01-21 12:12:02.990 | INFO  | [5a307de7-a04d-4585-8776-cd05f516711e] [] [] | http-nio-8080-exec-22 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1
-2026-01-21 12:12:44.803 | INFO  | [ca938192-596f-4668-999e-60776a96be47] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KGs
-2026-01-21 12:12:44.817 | INFO  | [ca938192-596f-4668-999e-60776a96be47] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KGs
-2026-01-21 12:12:52.688 | INFO  | [aacb455d-1080-4b91-bbf8-3ceff2d3538b] [] [] | http-nio-8080-exec-12 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KGs
-2026-01-21 12:12:52.701 | INFO  | [aacb455d-1080-4b91-bbf8-3ceff2d3538b] [] [] | http-nio-8080-exec-12 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KGs
-2026-01-21 12:13:12.801 | INFO  | [8cd21e67-5d6e-4665-ac22-0461ce437e18] [] [] | http-nio-8080-exec-2 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-01-21 12:13:12.820 | INFO  | [8cd21e67-5d6e-4665-ac22-0461ce437e18] [] [] | http-nio-8080-exec-2 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-01-21 12:13:37.940 | INFO  | [6918c614-9b6b-4f8f-a314-f9f0ee9287ee] [] [] | http-nio-8080-exec-8 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=Bharat Gas
-2026-01-21 12:13:37.956 | INFO  | [6918c614-9b6b-4f8f-a314-f9f0ee9287ee] [] [] | http-nio-8080-exec-8 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=1 | name=Bharat Gas
-2026-01-21 12:13:43.227 | INFO  | [51c066ac-4d6e-42c3-bd4d-cb8ca8c17138] [] [] | http-nio-8080-exec-10 | c.gasagency.service.SupplierService | OPERATION_START | operation=UPDATE_SUPPLIER | id=1 | name=Bharat Gass
-2026-01-21 12:13:43.239 | INFO  | [51c066ac-4d6e-42c3-bd4d-cb8ca8c17138] [] [] | http-nio-8080-exec-10 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=UPDATE_SUPPLIER | id=1 | name=Bharat Gass
-2026-01-21 12:13:52.347 | INFO  | [57202fff-32b6-4dea-b92c-8d9484e9c4b7] [] [] | http-nio-8080-exec-9 | c.gasagency.service.SupplierService | OPERATION_START | operation=DELETE_SUPPLIER | id=1
-2026-01-21 12:13:52.349 | INFO  | [57202fff-32b6-4dea-b92c-8d9484e9c4b7] [] [] | http-nio-8080-exec-9 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=DELETE_SUPPLIER | id=1
-2026-01-21 12:14:05.777 | INFO  | [be749868-e329-4269-ba91-f9b7ee96c5da] [] [] | http-nio-8080-exec-13 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=Bharat Gas
-2026-01-21 12:14:05.786 | INFO  | [be749868-e329-4269-ba91-f9b7ee96c5da] [] [] | http-nio-8080-exec-13 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=2 | name=Bharat Gas
-2026-01-21 12:14:39.547 | INFO  | [f41aaad8-cfe3-4993-a4b0-0595f2f4ce13] [] [] | http-nio-8080-exec-20 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=2 | variantId=1
-2026-01-21 12:14:39.589 | INFO  | [f41aaad8-cfe3-4993-a4b0-0595f2f4ce13] [] [] | http-nio-8080-exec-20 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 1 - Reference: PO-SUP001-202601-000001
-2026-01-21 12:14:39.596 | INFO  | [f41aaad8-cfe3-4993-a4b0-0595f2f4ce13] [] [] | http-nio-8080-exec-20 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=1120
-2026-01-21 12:14:39.596 | INFO  | [f41aaad8-cfe3-4993-a4b0-0595f2f4ce13] [] [] | http-nio-8080-exec-20 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=1 | supplierId=2 | filled=120
-2026-01-21 12:15:08.495 | INFO  | [3e7cb50e-7c6a-4448-8422-b0fc206a1482] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=1 | supplierId=2 | variantId=1
-2026-01-21 12:15:08.516 | INFO  | [3e7cb50e-7c6a-4448-8422-b0fc206a1482] [] [] | http-nio-8080-exec-17 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=2000
-2026-01-21 12:15:08.516 | INFO  | [3e7cb50e-7c6a-4448-8422-b0fc206a1482] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=1 | supplierId=2 | filled=1000
-2026-01-21 12:15:50.715 | INFO  | [5b7a194b-077a-4fd3-a370-3f3f1ffdf847] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Tushar 
-2026-01-21 12:15:50.755 | INFO  | [5b7a194b-077a-4fd3-a370-3f3f1ffdf847] [] [] | http-nio-8080-exec-12 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=1
-2026-01-21 12:15:50.797 | INFO  | [5b7a194b-077a-4fd3-a370-3f3f1ffdf847] [] [] | http-nio-8080-exec-12 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=1 | customerId=1 | balance=5
-2026-01-21 12:15:50.810 | INFO  | [5b7a194b-077a-4fd3-a370-3f3f1ffdf847] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=1 | variantId=1 | filledOut=5 | balance=5
-2026-01-21 12:15:50.810 | INFO  | [5b7a194b-077a-4fd3-a370-3f3f1ffdf847] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=1 | name=Tushar  | mobile=9898787898
-2026-01-21 12:15:50.889 | INFO  | [8e161f1e-b22c-4570-ba10-fe03c7036325] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=1
-2026-01-21 12:15:50.916 | INFO  | [8e161f1e-b22c-4570-ba10-fe03c7036325] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1 | variantId=1
-2026-01-21 12:16:08.450 | INFO  | [6414f31c-4286-4357-bf2f-a2479f0bea31] [] [] | http-nio-8080-exec-16 | c.gasagency.service.CustomerService | OPERATION_START | operation=UPDATE_CUSTOMER | id=1 | name=Tushar 
-2026-01-21 12:16:08.467 | INFO  | [6414f31c-4286-4357-bf2f-a2479f0bea31] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=2
-2026-01-21 12:16:08.472 | INFO  | [6414f31c-4286-4357-bf2f-a2479f0bea31] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=2 | customerId=1 | balance=6
-2026-01-21 12:16:08.481 | INFO  | [6414f31c-4286-4357-bf2f-a2479f0bea31] [] [] | http-nio-8080-exec-16 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_NEW_VARIANT | customerId=1 | variantId=2 | filledOut=6
-2026-01-21 12:16:08.481 | INFO  | [6414f31c-4286-4357-bf2f-a2479f0bea31] [] [] | http-nio-8080-exec-16 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER | id=1 | name=Tushar 
-2026-01-21 12:16:08.528 | INFO  | [db25f2d4-2fb4-4b07-a41d-f9d4a2c04b79] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1
-2026-01-21 12:16:08.529 | INFO  | [db25f2d4-2fb4-4b07-a41d-f9d4a2c04b79] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1
-2026-01-21 12:16:08.536 | INFO  | [b3baa90d-7c59-4ab2-ac04-88776ae5ce44] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=2
-2026-01-21 12:16:08.544 | INFO  | [b3baa90d-7c59-4ab2-ac04-88776ae5ce44] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=1 | variantId=2
-2026-01-21 12:16:37.009 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@5c311e8f
-2026-01-21 12:16:37.043 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=2000 | emptyQty=200
-2026-01-21 12:16:37.043 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2600.00, Items: 1
-2026-01-21 12:16:37.084 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale created with id: 1 for customer: Tushar  - Total: 2600.00 - Reference: SO-WH002-202601-000001
-2026-01-21 12:16:37.110 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=1998
-2026-01-21 12:16:37.120 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:16:37.142 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=3 | customerId=1 | balance=7
-2026-01-21 12:16:37.153 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale 1 completed successfully for customer Tushar 
-2026-01-21 12:16:37.153 | INFO  | [930ab01e-9c7f-4de7-9ed1-07d3b9ac38a5] [] [8eb4a128-d144-4db0-80df-1ba762ccfd9e] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=8eb4a128-d144-4db0-80df-1ba762ccfd9e | saleId=1 | customer=Tushar  | amount=2600.00 | duration=144ms
-2026-01-21 12:16:50.198 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@72b8750
-2026-01-21 12:16:50.210 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=1998 | emptyQty=200
-2026-01-21 12:16:50.220 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 3900.00, Items: 1
-2026-01-21 12:16:50.232 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 3
-2026-01-21 12:16:50.232 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 3, Due Amount: 32600.00, Total Amount: 2600.00, Amount Received: 0.00
-2026-01-21 12:16:50.232 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 32600.00, currentSale: 3900.00, totalDue: 36500.00, amountReceived: 1000
-2026-01-21 12:16:50.244 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | Sale created with id: 2 for customer: Tushar  - Total: 3900.00 - Reference: SO-WH002-202601-000002
-2026-01-21 12:16:50.253 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=1995
-2026-01-21 12:16:50.259 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:16:50.274 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=4 | customerId=1 | balance=10
-2026-01-21 12:16:50.293 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | Sale 2 completed successfully for customer Tushar 
-2026-01-21 12:16:50.294 | INFO  | [ae679e73-2835-4acb-b531-66e826485ec9] [] [765cc93f-8994-4ce6-a7bf-31a6aaacd634] | http-nio-8080-exec-15 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=765cc93f-8994-4ce6-a7bf-31a6aaacd634 | saleId=2 | customer=Tushar  | amount=3900.00 | duration=95ms
-2026-01-21 12:17:08.594 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@9bc3165
-2026-01-21 12:17:08.612 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=1995 | emptyQty=200
-2026-01-21 12:17:08.612 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2600.00, Items: 1
-2026-01-21 12:17:08.626 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 4
-2026-01-21 12:17:08.626 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 4, Due Amount: 35500.00, Total Amount: 3900.00, Amount Received: 1000.00
-2026-01-21 12:17:08.626 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 35500.00, currentSale: 2600.00, totalDue: 38100.00, amountReceived: 10000
-2026-01-21 12:17:08.626 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
-2026-01-21 12:17:08.644 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Sale created with id: 3 for customer: Tushar  - Total: 2600.00 - Reference: SO-WH002-202601-000003
-2026-01-21 12:17:08.674 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 3 - Amount: 10000
-2026-01-21 12:17:08.684 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=1993
-2026-01-21 12:17:08.693 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:17:08.717 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=5 | customerId=1 | balance=12
-2026-01-21 12:17:08.746 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | Sale 3 completed successfully for customer Tushar 
-2026-01-21 12:17:08.746 | INFO  | [14c15a0d-b078-4089-b66a-e5b435689ad7] [] [db9951a1-27a4-4d2f-9b7b-b5185d2cbc56] | http-nio-8080-exec-20 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=db9951a1-27a4-4d2f-9b7b-b5185d2cbc56 | saleId=3 | customer=Tushar  | amount=2600.00 | duration=152ms
-2026-01-21 12:17:54.468 | INFO  | [028cb72f-3c65-4a3a-aa31-7c32fc14cda8] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:17:54.496 | INFO  | [028cb72f-3c65-4a3a-aa31-7c32fc14cda8] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 6 - Reference: ER-WH002-202601-000002
-2026-01-21 12:17:54.496 | INFO  | [028cb72f-3c65-4a3a-aa31-7c32fc14cda8] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=6 | customerId=1 | balance=10
-2026-01-21 12:17:54.499 | INFO  | [028cb72f-3c65-4a3a-aa31-7c32fc14cda8] [] [] | http-nio-8080-exec-7 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=202
-2026-01-21 12:18:05.004 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 6
-2026-01-21 12:18:05.004 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 6, Due Amount: 28100.00, Total Amount: 0.00, Amount Received: 0.00
-2026-01-21 12:18:05.004 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:18:05.020 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 7 - Reference: ER-WH002-202601-000003
-2026-01-21 12:18:05.020 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=7 | customerId=1 | balance=7
-2026-01-21 12:18:05.024 | INFO  | [bf35ab2d-d73e-4f53-a7ad-2824816869a9] [] [] | http-nio-8080-exec-16 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=205
-2026-01-21 12:18:15.875 | INFO  | [f7747079-90c0-4ec2-8e66-80fe106257b2] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=2
-2026-01-21 12:18:15.875 | WARN  | [f7747079-90c0-4ec2-8e66-80fe106257b2] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerCylinderLedgerService | OPERATION_FAILED | operation=CREATE_LEDGER_ENTRY | error=Empty return exceeds filled cylinders held (after this sale) | customerId=1 | variantId=2 | previousBalance=6 | filledOut=0 | emptyIn=9
-2026-01-21 12:18:48.021 | INFO  | [d404817f-230d-4a43-8b5f-04ef10113890] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=2
-2026-01-21 12:18:48.028 | WARN  | [d404817f-230d-4a43-8b5f-04ef10113890] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerCylinderLedgerService | OPERATION_FAILED | operation=CREATE_LEDGER_ENTRY | error=Empty return exceeds filled cylinders held (after this sale) | customerId=1 | variantId=2 | previousBalance=6 | filledOut=0 | emptyIn=9
-2026-01-21 12:18:57.761 | INFO  | [7c49975f-d404-4364-9116-b1315475a340] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=2
-2026-01-21 12:18:57.775 | WARN  | [7c49975f-d404-4364-9116-b1315475a340] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerCylinderLedgerService | OPERATION_FAILED | operation=CREATE_LEDGER_ENTRY | error=Empty return exceeds filled cylinders held (after this sale) | customerId=1 | variantId=2 | previousBalance=6 | filledOut=0 | emptyIn=9
-2026-01-21 12:21:05.142 | INFO  | [fb8d8735-62e6-4ed6-bf81-c9b98388d200] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=2
-2026-01-21 12:21:05.147 | WARN  | [fb8d8735-62e6-4ed6-bf81-c9b98388d200] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_FAILED | operation=CREATE_LEDGER_ENTRY | error=Empty return exceeds filled cylinders held (after this sale) | customerId=1 | variantId=2 | previousBalance=6 | filledOut=0 | emptyIn=10
-2026-01-21 12:21:19.682 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 7
-2026-01-21 12:21:19.682 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 7, Due Amount: 27100.00, Total Amount: 0.00, Amount Received: 1000.00
-2026-01-21 12:21:19.682 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=2
-2026-01-21 12:21:19.693 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 8 - Reference: ER-WH002-202601-000004
-2026-01-21 12:21:19.693 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=8 | customerId=1 | balance=3
-2026-01-21 12:21:19.695 | INFO  | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=203
-2026-01-21 12:21:19.726 | ERROR | [27aeedf4-85f2-494d-9361-68ceb4794951] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerCylinderLedgerService | Error recording bank account transaction
-jakarta.validation.ConstraintViolationException: Validation failed for classes [com.gasagency.entity.BankAccountLedger] during persist time for groups [jakarta.validation.groups.Default, ]
-List of constraint violations:[
-	ConstraintViolationImpl{interpolatedMessage='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE', propertyPath=referenceNumber, rootBeanClass=class com.gasagency.entity.BankAccountLedger, messageTemplate='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE'}
-]
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.validate(BeanValidationEventListener.java:151)
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.onPreInsert(BeanValidationEventListener.java:81)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.preInsert(EntityIdentityInsertAction.java:186)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.execute(EntityIdentityInsertAction.java:75)
-	at org.hibernate.engine.spi.ActionQueue.execute(ActionQueue.java:667)
-	at org.hibernate.engine.spi.ActionQueue.addResolvedEntityInsertAction(ActionQueue.java:290)
-	at org.hibernate.engine.spi.ActionQueue.addInsertAction(ActionQueue.java:271)
-	at org.hibernate.engine.spi.ActionQueue.addAction(ActionQueue.java:321)
-	at org.hibernate.event.internal.AbstractSaveEventListener.addInsertAction(AbstractSaveEventListener.java:386)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSaveOrReplicate(AbstractSaveEventListener.java:300)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSave(AbstractSaveEventListener.java:219)
-	at org.hibernate.event.internal.AbstractSaveEventListener.saveWithGeneratedId(AbstractSaveEventListener.java:134)
-	at org.hibernate.event.internal.DefaultPersistEventListener.entityIsTransient(DefaultPersistEventListener.java:175)
-	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:93)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
-	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
-	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
-	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.ExtendedEntityManagerCreator$ExtendedEntityManagerInvocationHandler.invoke(ExtendedEntityManagerCreator.java:360)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.SharedEntityManagerCreator$SharedEntityManagerInvocationHandler.invoke(SharedEntityManagerCreator.java:311)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at org.springframework.data.jpa.repository.support.SimpleJpaRepository.save(SimpleJpaRepository.java:618)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker$RepositoryFragmentMethodInvoker.lambda$new$0(RepositoryMethodInvoker.java:277)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
-	at org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.invoke(RepositoryComposition.java:516)
-	at org.springframework.data.repository.core.support.RepositoryComposition.invoke(RepositoryComposition.java:285)
-	at org.springframework.data.repository.core.support.RepositoryFactorySupport$ImplementationMethodExecutionInterceptor.invoke(RepositoryFactorySupport.java:628)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:168)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123)
-	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:385)
-	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:164)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:249)
-	at jdk.proxy2/jdk.proxy2.$Proxy181.save(Unknown Source)
-	at com.gasagency.service.CustomerCylinderLedgerService.recordBankAccountTransaction(CustomerCylinderLedgerService.java:1018)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:713)
-	at com.gasagency.service.CustomerCylinderLedgerService$$SpringCGLIB$$0.recordBankAccountTransaction(<generated>)
-	at com.gasagency.controller.CustomerCylinderLedgerController.recordEmptyReturn(CustomerCylinderLedgerController.java:182)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:254)
-	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:182)
-	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:917)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:829)
-	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
-	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
-	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
-	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
-	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
-	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:205)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestResponseLoggingFilter.doFilterInternal(RequestResponseLoggingFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestContextFilter.doFilterInternal(RequestContextFilter.java:65)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.MDCFilter.doFilterInternal(MDCFilter.java:52)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
-	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
-	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
-	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at com.gasagency.security.JwtRequestFilter.doFilterInternal(JwtRequestFilter.java:78)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
-	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
-	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
-	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
-	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:109)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
-	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
-	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
-	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
-	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
-	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
-	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:340)
-	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
-	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
-	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
-	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1744)
-	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
-	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-	at java.base/java.lang.Thread.run(Thread.java:1575)
-2026-01-21 12:21:36.253 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 8
-2026-01-21 12:21:36.253 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 8, Due Amount: 26100.00, Total Amount: 0.00, Amount Received: 1000.00
-2026-01-21 12:21:36.253 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=2
-2026-01-21 12:21:36.266 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 9 - Reference: ER-WH002-202601-000005
-2026-01-21 12:21:36.266 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=9 | customerId=1 | balance=0
-2026-01-21 12:21:36.270 | INFO  | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=206
-2026-01-21 12:21:36.291 | ERROR | [1d1bad63-7306-4f36-a466-4f0a219dcbc5] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerCylinderLedgerService | Error recording bank account transaction
-jakarta.validation.ConstraintViolationException: Validation failed for classes [com.gasagency.entity.BankAccountLedger] during persist time for groups [jakarta.validation.groups.Default, ]
-List of constraint violations:[
-	ConstraintViolationImpl{interpolatedMessage='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE', propertyPath=referenceNumber, rootBeanClass=class com.gasagency.entity.BankAccountLedger, messageTemplate='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE'}
-]
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.validate(BeanValidationEventListener.java:151)
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.onPreInsert(BeanValidationEventListener.java:81)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.preInsert(EntityIdentityInsertAction.java:186)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.execute(EntityIdentityInsertAction.java:75)
-	at org.hibernate.engine.spi.ActionQueue.execute(ActionQueue.java:667)
-	at org.hibernate.engine.spi.ActionQueue.addResolvedEntityInsertAction(ActionQueue.java:290)
-	at org.hibernate.engine.spi.ActionQueue.addInsertAction(ActionQueue.java:271)
-	at org.hibernate.engine.spi.ActionQueue.addAction(ActionQueue.java:321)
-	at org.hibernate.event.internal.AbstractSaveEventListener.addInsertAction(AbstractSaveEventListener.java:386)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSaveOrReplicate(AbstractSaveEventListener.java:300)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSave(AbstractSaveEventListener.java:219)
-	at org.hibernate.event.internal.AbstractSaveEventListener.saveWithGeneratedId(AbstractSaveEventListener.java:134)
-	at org.hibernate.event.internal.DefaultPersistEventListener.entityIsTransient(DefaultPersistEventListener.java:175)
-	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:93)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
-	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
-	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
-	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.ExtendedEntityManagerCreator$ExtendedEntityManagerInvocationHandler.invoke(ExtendedEntityManagerCreator.java:360)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.SharedEntityManagerCreator$SharedEntityManagerInvocationHandler.invoke(SharedEntityManagerCreator.java:311)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at org.springframework.data.jpa.repository.support.SimpleJpaRepository.save(SimpleJpaRepository.java:618)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker$RepositoryFragmentMethodInvoker.lambda$new$0(RepositoryMethodInvoker.java:277)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
-	at org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.invoke(RepositoryComposition.java:516)
-	at org.springframework.data.repository.core.support.RepositoryComposition.invoke(RepositoryComposition.java:285)
-	at org.springframework.data.repository.core.support.RepositoryFactorySupport$ImplementationMethodExecutionInterceptor.invoke(RepositoryFactorySupport.java:628)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:168)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123)
-	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:385)
-	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:164)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:249)
-	at jdk.proxy2/jdk.proxy2.$Proxy181.save(Unknown Source)
-	at com.gasagency.service.CustomerCylinderLedgerService.recordBankAccountTransaction(CustomerCylinderLedgerService.java:1018)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:713)
-	at com.gasagency.service.CustomerCylinderLedgerService$$SpringCGLIB$$0.recordBankAccountTransaction(<generated>)
-	at com.gasagency.controller.CustomerCylinderLedgerController.recordEmptyReturn(CustomerCylinderLedgerController.java:182)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:254)
-	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:182)
-	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:917)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:829)
-	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
-	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
-	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
-	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
-	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
-	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:205)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestResponseLoggingFilter.doFilterInternal(RequestResponseLoggingFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestContextFilter.doFilterInternal(RequestContextFilter.java:65)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.MDCFilter.doFilterInternal(MDCFilter.java:52)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
-	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
-	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
-	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at com.gasagency.security.JwtRequestFilter.doFilterInternal(JwtRequestFilter.java:78)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
-	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
-	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
-	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
-	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:109)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
-	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
-	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
-	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
-	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
-	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
-	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:340)
-	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
-	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
-	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
-	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1744)
-	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
-	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-	at java.base/java.lang.Thread.run(Thread.java:1575)
-2026-01-21 12:25:51.305 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:25:51.330 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:25:51.360 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:25:51.364 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:25:51.374 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-21 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:25:51.376 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:25:51.415 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:25:51.415 | INFO  | [2ee2bffd-9158-44de-9523-4c9b0daa35e2] [] [] | http-nio-8080-exec-14 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:26:14.049 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 9
-2026-01-21 12:26:14.050 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 9, Due Amount: 25100.00, Total Amount: 0.00, Amount Received: 1000.00
-2026-01-21 12:26:14.052 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:26:14.122 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 10 - Reference: ER-WH002-202601-000006
-2026-01-21 12:26:14.122 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=10 | customerId=1 | balance=5
-2026-01-21 12:26:14.133 | INFO  | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=207
-2026-01-21 12:26:14.200 | ERROR | [22b049ad-35af-40d7-a489-45a8d6c81460] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerCylinderLedgerService | Error recording bank account transaction
-jakarta.validation.ConstraintViolationException: Validation failed for classes [com.gasagency.entity.BankAccountLedger] during persist time for groups [jakarta.validation.groups.Default, ]
-List of constraint violations:[
-	ConstraintViolationImpl{interpolatedMessage='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE', propertyPath=referenceNumber, rootBeanClass=class com.gasagency.entity.BankAccountLedger, messageTemplate='Reference must match format: (DEP|WIT|ADJ)-CODE-YYYYMM-SEQUENCE'}
-]
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.validate(BeanValidationEventListener.java:151)
-	at org.hibernate.boot.beanvalidation.BeanValidationEventListener.onPreInsert(BeanValidationEventListener.java:81)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.preInsert(EntityIdentityInsertAction.java:186)
-	at org.hibernate.action.internal.EntityIdentityInsertAction.execute(EntityIdentityInsertAction.java:75)
-	at org.hibernate.engine.spi.ActionQueue.execute(ActionQueue.java:667)
-	at org.hibernate.engine.spi.ActionQueue.addResolvedEntityInsertAction(ActionQueue.java:290)
-	at org.hibernate.engine.spi.ActionQueue.addInsertAction(ActionQueue.java:271)
-	at org.hibernate.engine.spi.ActionQueue.addAction(ActionQueue.java:321)
-	at org.hibernate.event.internal.AbstractSaveEventListener.addInsertAction(AbstractSaveEventListener.java:386)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSaveOrReplicate(AbstractSaveEventListener.java:300)
-	at org.hibernate.event.internal.AbstractSaveEventListener.performSave(AbstractSaveEventListener.java:219)
-	at org.hibernate.event.internal.AbstractSaveEventListener.saveWithGeneratedId(AbstractSaveEventListener.java:134)
-	at org.hibernate.event.internal.DefaultPersistEventListener.entityIsTransient(DefaultPersistEventListener.java:175)
-	at org.hibernate.event.internal.DefaultPersistEventListener.persist(DefaultPersistEventListener.java:93)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:77)
-	at org.hibernate.event.internal.DefaultPersistEventListener.onPersist(DefaultPersistEventListener.java:54)
-	at org.hibernate.event.service.internal.EventListenerGroupImpl.fireEventOnEachListener(EventListenerGroupImpl.java:127)
-	at org.hibernate.internal.SessionImpl.firePersist(SessionImpl.java:766)
-	at org.hibernate.internal.SessionImpl.persist(SessionImpl.java:750)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.ExtendedEntityManagerCreator$ExtendedEntityManagerInvocationHandler.invoke(ExtendedEntityManagerCreator.java:360)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.orm.jpa.SharedEntityManagerCreator$SharedEntityManagerInvocationHandler.invoke(SharedEntityManagerCreator.java:311)
-	at jdk.proxy2/jdk.proxy2.$Proxy167.persist(Unknown Source)
-	at org.springframework.data.jpa.repository.support.SimpleJpaRepository.save(SimpleJpaRepository.java:618)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker$RepositoryFragmentMethodInvoker.lambda$new$0(RepositoryMethodInvoker.java:277)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.doInvoke(RepositoryMethodInvoker.java:170)
-	at org.springframework.data.repository.core.support.RepositoryMethodInvoker.invoke(RepositoryMethodInvoker.java:158)
-	at org.springframework.data.repository.core.support.RepositoryComposition$RepositoryFragments.invoke(RepositoryComposition.java:516)
-	at org.springframework.data.repository.core.support.RepositoryComposition.invoke(RepositoryComposition.java:285)
-	at org.springframework.data.repository.core.support.RepositoryFactorySupport$ImplementationMethodExecutionInterceptor.invoke(RepositoryFactorySupport.java:628)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.doInvoke(QueryExecutorMethodInterceptor.java:168)
-	at org.springframework.data.repository.core.support.QueryExecutorMethodInterceptor.invoke(QueryExecutorMethodInterceptor.java:143)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.projection.DefaultMethodInvokingMethodInterceptor.invoke(DefaultMethodInvokingMethodInterceptor.java:70)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123)
-	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:385)
-	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.dao.support.PersistenceExceptionTranslationInterceptor.invoke(PersistenceExceptionTranslationInterceptor.java:137)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.data.jpa.repository.support.CrudMethodMetadataPostProcessor$CrudMethodMetadataPopulatingMethodInterceptor.invoke(CrudMethodMetadataPostProcessor.java:164)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97)
-	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
-	at org.springframework.aop.framework.JdkDynamicAopProxy.invoke(JdkDynamicAopProxy.java:249)
-	at jdk.proxy2/jdk.proxy2.$Proxy181.save(Unknown Source)
-	at com.gasagency.service.CustomerCylinderLedgerService.recordBankAccountDeposit(CustomerCylinderLedgerService.java:1023)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:352)
-	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:713)
-	at com.gasagency.service.CustomerCylinderLedgerService$$SpringCGLIB$$0.recordBankAccountDeposit(<generated>)
-	at com.gasagency.controller.CustomerCylinderLedgerController.recordEmptyReturn(CustomerCylinderLedgerController.java:182)
-	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:254)
-	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:182)
-	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:917)
-	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:829)
-	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
-	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
-	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
-	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
-	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
-	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
-	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:205)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestResponseLoggingFilter.doFilterInternal(RequestResponseLoggingFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.RequestContextFilter.doFilterInternal(RequestContextFilter.java:65)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at com.gasagency.config.MDCFilter.doFilterInternal(MDCFilter.java:52)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231)
-	at org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:479)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:340)
-	at org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:82)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:128)
-	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
-	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131)
-	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at com.gasagency.security.JwtRequestFilter.doFilterInternal(JwtRequestFilter.java:78)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107)
-	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
-	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)
-	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:227)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:240)
-	at org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:323)
-	at org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:224)
-	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
-	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233)
-	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191)
-	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352)
-	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:109)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
-	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
-	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:174)
-	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:149)
-	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
-	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
-	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482)
-	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115)
-	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
-	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
-	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:340)
-	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391)
-	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
-	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896)
-	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1744)
-	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
-	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
-	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
-	at java.base/java.lang.Thread.run(Thread.java:1575)
-2026-01-21 12:27:54.891 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 10
-2026-01-21 12:27:54.891 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 10, Due Amount: 24100.00, Total Amount: 0.00, Amount Received: 1000.00
-2026-01-21 12:27:54.893 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-01-21 12:27:55.037 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 11 - Reference: ER-WH002-202601-000007
-2026-01-21 12:27:55.037 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=11 | customerId=1 | balance=3
-2026-01-21 12:27:55.051 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=209
-2026-01-21 12:27:55.106 | INFO  | [4323f079-3ce1-4acd-b60d-b7b107b9e1b6] [] [] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | Bank account ledger entry recorded - BankAccountId: 1, Amount: 1000, Reference: DEP-HDFC-202601-000002
-2026-01-21 12:32:13.363 | INFO  | [fd0a892a-446d-427b-b9aa-5c3ecb12e0fd] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerCylinderLedgerService | Bank account ledger entry recorded for due payment - Customer: Tushar , Amount: 10000
-2026-01-21 12:32:13.363 | INFO  | [fd0a892a-446d-427b-b9aa-5c3ecb12e0fd] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=1 | amount=10000
-2026-01-21 12:32:25.602 | INFO  | [85ee92c0-426e-4a5e-bbca-a2480c51562b] [] [] | http-nio-8080-exec-13 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=1
-2026-01-21 12:32:25.618 | INFO  | [85ee92c0-426e-4a5e-bbca-a2480c51562b] [] [] | http-nio-8080-exec-13 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:32:38.388 | INFO  | [3b3643ec-c17a-4621-ab72-b4671b638d34] [] [] | http-nio-8080-exec-16 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=1 | amount=100
-2026-01-21 12:32:38.451 | INFO  | [f80bb4f9-9862-4ece-ae85-374f10bbb9b3] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=1
-2026-01-21 12:32:38.462 | INFO  | [f80bb4f9-9862-4ece-ae85-374f10bbb9b3] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:33:37.650 | INFO  | [94514841-6890-4674-a5bd-09b31699ae3c] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-01-21 12:33:37.657 | INFO  | [94514841-6890-4674-a5bd-09b31699ae3c] [] [] | http-nio-8080-exec-25 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:34:20.853 | INFO  | [7774ac89-e504-43aa-a198-721f58e3d7a0] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-01-21 12:34:20.861 | INFO  | [7774ac89-e504-43aa-a198-721f58e3d7a0] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:34:22.651 | INFO  | [7d4366e1-994b-4718-a4d9-4fa209f1576d] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-01-21 12:34:22.660 | INFO  | [7d4366e1-994b-4718-a4d9-4fa209f1576d] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:34:47.609 | INFO  | [0e01cff8-14c1-41e2-8986-ef97e9fb76aa] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=1 | filledQty=1793 | emptyQty=209
-2026-01-21 12:34:47.609 | INFO  | [0e01cff8-14c1-41e2-8986-ef97e9fb76aa] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=1
-2026-01-21 12:34:47.609 | INFO  | [0e01cff8-14c1-41e2-8986-ef97e9fb76aa] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=3 | filledQty=400 | emptyQty=200
-2026-01-21 12:34:47.609 | INFO  | [0e01cff8-14c1-41e2-8986-ef97e9fb76aa] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=3
-2026-01-21 12:34:47.629 | INFO  | [0e01cff8-14c1-41e2-8986-ef97e9fb76aa] [] [] | http-nio-8080-exec-9 | c.g.service.WarehouseTransferService | Warehouse transfer created with id: 1 - Reference: WT-WH002-WH001-202601-000001
-2026-01-21 12:36:12.188 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:36:12.198 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:36:12.228 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:36:12.233 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:36:12.247 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-21 | toDate=2026-01-21 | customerId=null
-2026-01-21 12:36:12.252 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
-2026-01-21 12:36:12.292 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
-2026-01-21 12:36:12.295 | INFO  | [c9fd74d7-b21c-4438-92fd-ce9ba6de5878] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:01:02.547 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@1b451d7c
+2026-01-23 00:01:02.555 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=81 | emptyQty=104
+2026-01-23 00:01:02.558 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
+2026-01-23 00:01:02.565 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 15
+2026-01-23 00:01:02.565 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 15, Due Amount: 11700.00, Total Amount: 4200.00, Amount Received: 1200.00
+2026-01-23 00:01:02.565 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 11700.00, currentSale: 2800.00, totalDue: 14500.00, amountReceived: 1000
+2026-01-23 00:01:02.569 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale created with id: 9 for customer: Tushar - Total: 2800.00 - Reference: SO-WH001-202601-000006
+2026-01-23 00:01:02.575 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=79
+2026-01-23 00:01:02.579 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 00:01:02.586 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=16 | customerId=1 | balance=21
+2026-01-23 00:01:02.595 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale 9 completed successfully for customer Tushar
+2026-01-23 00:01:02.595 | INFO  | [fc84e346-a762-4cea-899f-16650177b0d6] [] [c603442e-981c-4f82-8615-5a8c1154f66b] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=c603442e-981c-4f82-8615-5a8c1154f66b | saleId=9 | customer=Tushar | amount=2800.00 | duration=48ms
+2026-01-23 00:01:20.634 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@222f0455
+2026-01-23 00:01:20.645 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=79 | emptyQty=104
+2026-01-23 00:01:20.648 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
+2026-01-23 00:01:20.657 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 16
+2026-01-23 00:01:20.658 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 16, Due Amount: 13500.00, Total Amount: 2800.00, Amount Received: 1000.00
+2026-01-23 00:01:20.658 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 13500.00, currentSale: 2800.00, totalDue: 16300.00, amountReceived: 1200
+2026-01-23 00:01:20.661 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
+2026-01-23 00:01:20.664 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Sale created with id: 10 for customer: Tushar - Total: 2800.00 - Reference: SO-WH001-202601-000007
+2026-01-23 00:01:20.672 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 10 - Amount: 1200
+2026-01-23 00:01:20.681 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=77
+2026-01-23 00:01:20.686 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 00:01:20.695 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=17 | customerId=1 | balance=23
+2026-01-23 00:01:20.704 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | Sale 10 completed successfully for customer Tushar
+2026-01-23 00:01:20.706 | INFO  | [5e96229b-db87-40f2-b966-fd238c06fa12] [] [4566a88f-1c70-4773-aa14-7bcc60166107] | http-nio-8080-exec-8 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=4566a88f-1c70-4773-aa14-7bcc60166107 | saleId=10 | customer=Tushar | amount=2800.00 | duration=72ms
+2026-01-23 00:01:30.107 | INFO  | [8c714056-4093-4e6a-bd4d-3bd6f3cbf42c] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 00:01:30.118 | INFO  | [8c714056-4093-4e6a-bd4d-3bd6f3cbf42c] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 18 - Reference: ER-WH001-202601-000002
+2026-01-23 00:01:30.118 | INFO  | [8c714056-4093-4e6a-bd4d-3bd6f3cbf42c] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=18 | customerId=1 | balance=20
+2026-01-23 00:01:30.120 | INFO  | [8c714056-4093-4e6a-bd4d-3bd6f3cbf42c] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=1 | variantId=1 | newQty=107
+2026-01-23 00:01:36.914 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:01:36.926 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:01:36.953 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:01:36.956 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:01:36.967 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:01:36.969 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:01:37.015 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:01:37.018 | INFO  | [f555f57f-936d-41ba-afd6-d740f54a4b1e] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:02:39.540 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:02:39.547 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:02:39.571 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:02:39.575 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:02:39.581 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:02:39.583 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:02:39.603 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:02:39.607 | INFO  | [0a168cc5-433b-4ddc-9b7f-1b8527305e84] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:06.338 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:03:06.347 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:06.366 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:03:06.368 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:06.375 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:03:06.381 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:06.406 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:03:06.410 | INFO  | [5e6783c2-102f-4ecc-b74d-183e08bc782e] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:08.225 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:03:08.231 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:08.246 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:03:08.248 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:08.255 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:03:08.257 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:08.274 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:03:08.279 | INFO  | [1f323ef7-c8f1-4db5-be80-cfc603c58ec4] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:03:27.830 | INFO  | [8bec37d5-b22a-4275-81e0-e5b3352954e8] [] [] | http-nio-8080-exec-23 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-01-23 00:03:27.841 | INFO  | [8bec37d5-b22a-4275-81e0-e5b3352954e8] [] [] | http-nio-8080-exec-23 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:05:58.446 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:05:58.478 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:05:58.523 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:05:58.528 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:05:58.539 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:05:58.543 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:05:58.589 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:05:58.594 | INFO  | [7ec8ebf4-dd21-49d7-b35a-fd364d809be4] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:11.434 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:11:11.457 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:11.492 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:11:11.501 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:11.509 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:11:11.515 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:11.571 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:11:11.575 | INFO  | [ca173ce2-3e9e-4141-8e70-434f40694cc6] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:13.008 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:11:13.017 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:13.033 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:11:13.036 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:13.041 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:11:13.045 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:11:13.067 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:11:13.069 | INFO  | [5153baaf-0606-4084-bc84-96c3e3a6a267] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:32.473 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:26:32.506 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:32.553 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:26:32.556 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:32.566 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:26:32.569 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:32.623 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:26:32.632 | INFO  | [e60912fd-bd38-4166-9425-716f37e61f1d] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:58.652 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:26:58.663 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:58.679 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:26:58.682 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:58.688 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 00:26:58.691 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 00:26:58.711 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 00:26:58.714 | INFO  | [a6d3ffeb-a32a-4315-bf7a-3146607d6686] [] [] | http-nio-8080-exec-2 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 13:56:34.124 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 13:56:34.135 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 13:56:34.179 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 13:56:34.185 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 13:56:34.204 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 13:56:34.208 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 13:56:34.277 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 13:56:34.283 | INFO  | [3763e0c9-cd81-452b-8a9c-e18ef2f1506e] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 13:56:57.181 | INFO  | [d856532c-61d1-4ba8-b1f3-df231bd6e1ad] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=19KG Cylinder
+2026-01-23 13:56:57.211 | INFO  | [d856532c-61d1-4ba8-b1f3-df231bd6e1ad] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=1 | name=19KG Cylinder
+2026-01-23 13:57:10.296 | INFO  | [5dd25de2-6f91-4be9-b4bc-e9327ef32644] [] [] | http-nio-8080-exec-7 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=5KG Cylinder
+2026-01-23 13:57:10.301 | INFO  | [5dd25de2-6f91-4be9-b4bc-e9327ef32644] [] [] | http-nio-8080-exec-7 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 13:57:16.032 | INFO  | [b0ef3d8a-1e8e-4890-a1ca-3967af4789db] [] [] | http-nio-8080-exec-14 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 13:57:16.117 | INFO  | [b0ef3d8a-1e8e-4890-a1ca-3967af4789db] [] [] | http-nio-8080-exec-14 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 13:59:47.359 | INFO  | [b35856f2-cca0-4fd3-a2b0-1f0817bd6251] [] [] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1 | itemsCount=2
+2026-01-23 13:59:47.395 | INFO  | [b35856f2-cca0-4fd3-a2b0-1f0817bd6251] [] [] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1
+2026-01-23 14:06:54.067 | INFO  | [9c10f695-91f0-4a54-89d0-aab85dc58d73] [] [] | http-nio-8080-exec-14 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=Bharat Gas
+2026-01-23 14:06:54.121 | INFO  | [9c10f695-91f0-4a54-89d0-aab85dc58d73] [] [] | http-nio-8080-exec-14 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=1 | name=Bharat Gas
+2026-01-23 14:06:59.578 | INFO  | [bc0c935e-3bcc-41a0-975c-17d663a8937c] [] [] | http-nio-8080-exec-16 | c.gasagency.service.SupplierService | OPERATION_START | operation=UPDATE_SUPPLIER | id=1 | name=Bharat Gas2
+2026-01-23 14:06:59.587 | INFO  | [bc0c935e-3bcc-41a0-975c-17d663a8937c] [] [] | http-nio-8080-exec-16 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=UPDATE_SUPPLIER | id=1 | name=Bharat Gas2
+2026-01-23 14:09:21.188 | INFO  | [a7ca8deb-7657-4d2c-a3e3-42fe0f4f67ed] [] [] | http-nio-8080-exec-4 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=1 | supplierId=1 | variantId=1
+2026-01-23 14:09:21.293 | INFO  | [a7ca8deb-7657-4d2c-a3e3-42fe0f4f67ed] [] [] | http-nio-8080-exec-4 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 1 - Reference: PO-SUP001-202601-000001
+2026-01-23 14:09:21.314 | INFO  | [a7ca8deb-7657-4d2c-a3e3-42fe0f4f67ed] [] [] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=500
+2026-01-23 14:09:21.314 | INFO  | [a7ca8deb-7657-4d2c-a3e3-42fe0f4f67ed] [] [] | http-nio-8080-exec-4 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=1 | supplierId=1 | filled=300
+2026-01-23 14:09:56.501 | INFO  | [6914898e-2d1c-46a7-a7ff-55c0b7e9b2c5] [] [] | http-nio-8080-exec-1 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:09:56.576 | INFO  | [6914898e-2d1c-46a7-a7ff-55c0b7e9b2c5] [] [] | http-nio-8080-exec-1 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:12:52.146 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:12:52.161 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:12:52.197 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:12:52.197 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:12:52.218 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:12:52.218 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:12:52.270 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:12:52.273 | INFO  | [31a0d275-d94d-4e29-b737-748b988eaa29] [] [] | http-nio-8080-exec-20 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:17:33.082 | INFO  | [201f3fcd-ed30-4d54-aebd-2f1eede29e39] [] [] | http-nio-8080-exec-50 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:17:33.098 | INFO  | [201f3fcd-ed30-4d54-aebd-2f1eede29e39] [] [] | http-nio-8080-exec-50 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:20:24.305 | INFO  | [fbb2068f-c7fe-414e-840a-c6e7d35bdf0d] [] [] | http-nio-8080-exec-37 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:20:24.374 | INFO  | [fbb2068f-c7fe-414e-840a-c6e7d35bdf0d] [] [] | http-nio-8080-exec-37 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:20:55.426 | INFO  | [60605098-97b7-4e82-90cc-d6a0f23df271] [] [] | http-nio-8080-exec-35 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-01-23 14:20:55.428 | INFO  | [60605098-97b7-4e82-90cc-d6a0f23df271] [] [] | http-nio-8080-exec-35 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:29:15.298 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:29:15.299 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:29:15.357 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:29:15.362 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:29:15.362 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:29:15.362 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:29:15.376 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:29:15.376 | INFO  | [339f230e-6215-4bde-bbd3-1b6d803edf5a] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:31:04.962 | INFO  | [a4d99f5f-7845-43ca-84ca-60f5f6d2ec12] [] [] | http-nio-8080-exec-10 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:31:04.988 | INFO  | [a4d99f5f-7845-43ca-84ca-60f5f6d2ec12] [] [] | http-nio-8080-exec-10 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:33:46.106 | INFO  | [ec4fdba1-8a15-4e3f-a9bb-575ea9be3d23] [] [] | http-nio-8080-exec-4 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-01-23 14:33:46.106 | INFO  | [ec4fdba1-8a15-4e3f-a9bb-575ea9be3d23] [] [] | http-nio-8080-exec-4 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:41:24.069 | INFO  | [17c3e0b0-e51b-4534-b9ae-dbdec2635bb2] [] [] | http-nio-8080-exec-30 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:41:24.098 | INFO  | [17c3e0b0-e51b-4534-b9ae-dbdec2635bb2] [] [] | http-nio-8080-exec-30 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG Cylinder
+2026-01-23 14:43:03.765 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:43:03.766 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:43:03.793 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:43:03.794 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:43:03.799 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 14:43:03.800 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:43:03.815 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 14:43:03.816 | INFO  | [2e6b06bc-3bc3-49a2-bbb5-97b29b5a8e7b] [] [] | http-nio-8080-exec-18 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=0 | returnedRecords=0
+2026-01-23 14:43:38.562 | INFO  | [24e3555f-514d-4918-b47f-2bf112154291] [] [] | http-nio-8080-exec-29 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Tushar 
+2026-01-23 14:43:38.580 | INFO  | [24e3555f-514d-4918-b47f-2bf112154291] [] [] | http-nio-8080-exec-29 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=1
+2026-01-23 14:43:38.609 | INFO  | [24e3555f-514d-4918-b47f-2bf112154291] [] [] | http-nio-8080-exec-29 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=1 | customerId=1 | balance=5
+2026-01-23 14:43:38.615 | INFO  | [24e3555f-514d-4918-b47f-2bf112154291] [] [] | http-nio-8080-exec-29 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=1 | variantId=1 | filledOut=5 | balance=5
+2026-01-23 14:43:38.615 | INFO  | [24e3555f-514d-4918-b47f-2bf112154291] [] [] | http-nio-8080-exec-29 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=1 | name=Tushar  | mobile=9098989898
+2026-01-23 14:43:38.649 | INFO  | [87018bb7-906e-4ead-ad0c-60fe3e6cfffb] [] [] | http-nio-8080-exec-31 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=1
+2026-01-23 14:43:38.665 | INFO  | [87018bb7-906e-4ead-ad0c-60fe3e6cfffb] [] [] | http-nio-8080-exec-31 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1 | variantId=1
+2026-01-23 14:50:23.135 | INFO  | [8d067686-04cf-4ad2-9cbd-1a5eec30818c] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_START | operation=UPDATE_CUSTOMER | id=1 | name=Tushar 
+2026-01-23 14:50:23.152 | INFO  | [8d067686-04cf-4ad2-9cbd-1a5eec30818c] [] [] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=2
+2026-01-23 14:50:23.158 | INFO  | [8d067686-04cf-4ad2-9cbd-1a5eec30818c] [] [] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=2 | customerId=1 | balance=5
+2026-01-23 14:50:23.164 | INFO  | [8d067686-04cf-4ad2-9cbd-1a5eec30818c] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_NEW_VARIANT | customerId=1 | variantId=2 | filledOut=5
+2026-01-23 14:50:23.164 | INFO  | [8d067686-04cf-4ad2-9cbd-1a5eec30818c] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER | id=1 | name=Tushar 
+2026-01-23 14:50:23.199 | INFO  | [e3cbc07b-e7b0-4fe3-b33e-7b3966a96ee4] [] [] | http-nio-8080-exec-42 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1
+2026-01-23 14:50:23.202 | INFO  | [e3cbc07b-e7b0-4fe3-b33e-7b3966a96ee4] [] [] | http-nio-8080-exec-42 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1
+2026-01-23 14:50:23.220 | INFO  | [5e74544a-59fe-4ccb-9d23-1a1b8baabe98] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=2
+2026-01-23 14:50:23.226 | INFO  | [5e74544a-59fe-4ccb-9d23-1a1b8baabe98] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=1 | variantId=2
+2026-01-23 14:50:58.070 | INFO  | [5899b45c-a383-471e-b07a-c50e92a78cd2] [] [bac0849c-cb14-43f2-bb1d-70276c9a2671] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@7c0e17cc
+2026-01-23 14:50:58.070 | ERROR | [5899b45c-a383-471e-b07a-c50e92a78cd2] [] [bac0849c-cb14-43f2-bb1d-70276c9a2671] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Invalid sale request - bankAccountId is required for non-cash payment mode: Cheque
+2026-01-23 14:51:04.987 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@41097018
+2026-01-23 14:51:05.001 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=500 | emptyQty=200
+2026-01-23 14:51:05.012 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
+2026-01-23 14:51:05.016 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 2
+2026-01-23 14:51:05.016 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 2, Due Amount: 20000.00, Total Amount: 0.00, Amount Received: 0.00
+2026-01-23 14:51:05.016 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 20000.00, currentSale: 4200.00, totalDue: 24200.00, amountReceived: 1000
+2026-01-23 14:51:05.020 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
+2026-01-23 14:51:05.032 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Sale created with id: 1 for customer: Tushar  - Total: 4200.00 - Reference: SO-WH001-202601-000001
+2026-01-23 14:51:05.051 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 1 - Amount: 1000
+2026-01-23 14:51:05.070 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=497
+2026-01-23 14:51:05.077 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 14:51:05.090 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=3 | customerId=1 | balance=8
+2026-01-23 14:51:05.100 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | Sale 1 completed successfully for customer Tushar 
+2026-01-23 14:51:05.101 | INFO  | [39a98e0d-7514-4024-8eaa-4c5733f88345] [] [0607b971-5aa1-4d71-b8e7-f2c8f2814ada] | http-nio-8080-exec-10 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=0607b971-5aa1-4d71-b8e7-f2c8f2814ada | saleId=1 | customer=Tushar  | amount=4200.00 | duration=113ms
+2026-01-23 14:51:15.260 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@6079d410
+2026-01-23 14:51:15.266 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=497 | emptyQty=200
+2026-01-23 14:51:15.271 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
+2026-01-23 14:51:15.275 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 3
+2026-01-23 14:51:15.275 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 3, Due Amount: 23200.00, Total Amount: 4200.00, Amount Received: 1000.00
+2026-01-23 14:51:15.275 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 23200.00, currentSale: 4200.00, totalDue: 27400.00, amountReceived: 1000
+2026-01-23 14:51:15.278 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
+2026-01-23 14:51:15.283 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Sale created with id: 2 for customer: Tushar  - Total: 4200.00 - Reference: SO-WH001-202601-000002
+2026-01-23 14:51:15.291 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 2 - Amount: 1000
+2026-01-23 14:51:15.297 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=494
+2026-01-23 14:51:15.300 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 14:51:15.307 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=4 | customerId=1 | balance=11
+2026-01-23 14:51:15.314 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | Sale 2 completed successfully for customer Tushar 
+2026-01-23 14:51:15.314 | INFO  | [1468fe1f-c333-40c4-aec5-ecb6b6bade0e] [] [a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd] | http-nio-8080-exec-27 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=a0b84990-6f72-4ed8-8f8d-2cd6f5106ccd | saleId=2 | customer=Tushar  | amount=4200.00 | duration=54ms
+2026-01-23 14:52:48.846 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@46259d57
+2026-01-23 14:52:48.913 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=494 | emptyQty=200
+2026-01-23 14:52:48.933 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
+2026-01-23 14:52:48.957 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 4
+2026-01-23 14:52:48.957 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 4, Due Amount: 26400.00, Total Amount: 4200.00, Amount Received: 1000.00
+2026-01-23 14:52:48.957 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 26400.00, currentSale: 4200.00, totalDue: 30600.00, amountReceived: 1000
+2026-01-23 14:52:48.968 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
+2026-01-23 14:52:49.024 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale created with id: 3 for customer: Tushar  - Total: 4200.00 - Reference: SO-WH001-202601-000003
+2026-01-23 14:52:49.052 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 3 - Amount: 1000
+2026-01-23 14:52:49.089 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=491
+2026-01-23 14:52:49.122 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 14:52:49.160 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=5 | customerId=1 | balance=14
+2026-01-23 14:52:49.177 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | Sale 3 completed successfully for customer Tushar 
+2026-01-23 14:52:49.177 | INFO  | [9acace15-897b-46be-9d02-4629827992f7] [] [23617748-40cd-4f15-bf30-646732601750] | http-nio-8080-exec-1 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=23617748-40cd-4f15-bf30-646732601750 | saleId=3 | customer=Tushar  | amount=4200.00 | duration=331ms
+2026-01-23 14:54:13.768 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@623ff645
+2026-01-23 14:54:13.844 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=1 | variantId=1 | filledQty=491 | emptyQty=200
+2026-01-23 14:54:13.870 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
+2026-01-23 14:54:13.890 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 5
+2026-01-23 14:54:13.890 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 5, Due Amount: 29600.00, Total Amount: 4200.00, Amount Received: 1000.00
+2026-01-23 14:54:13.890 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 29600.00, currentSale: 4200.00, totalDue: 33800.00, amountReceived: 1000
+2026-01-23 14:54:13.901 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI
+2026-01-23 14:54:13.959 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Sale created with id: 4 for customer: Tushar  - Total: 4200.00 - Reference: SO-WH001-202601-000004
+2026-01-23 14:54:13.986 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 4 - Amount: 1000
+2026-01-23 14:54:14.019 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=488
+2026-01-23 14:54:14.054 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 14:54:14.097 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=6 | customerId=1 | balance=17
+2026-01-23 14:54:14.121 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Sale 4 completed successfully for customer Tushar 
+2026-01-23 14:54:14.122 | INFO  | [a86ad4d0-3c76-47e2-af14-b9d7c7959750] [] [8dc11712-cba3-4aaf-87e1-31e46f3ebc43] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=8dc11712-cba3-4aaf-87e1-31e46f3ebc43 | saleId=4 | customer=Tushar  | amount=4200.00 | duration=353ms
+2026-01-23 14:55:26.940 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 6
+2026-01-23 14:55:26.940 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 6, Due Amount: 32800.00, Total Amount: 4200.00, Amount Received: 1000.00
+2026-01-23 14:55:26.940 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=1 | variantId=1
+2026-01-23 14:55:26.957 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | Return reference generated for empty return: 7 - Reference: ER-WH001-202601-000002
+2026-01-23 14:55:26.957 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=7 | customerId=1 | balance=12
+2026-01-23 14:55:26.957 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=1 | variantId=1 | newQty=205
+2026-01-23 14:55:27.090 | INFO  | [a37e66ca-508e-49b6-9ba8-322358fded2e] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerCylinderLedgerService | Bank account ledger entry recorded - BankAccountId: 2, Amount: 1000, Reference: DEP-ICICI-202601-000005
+2026-01-23 14:56:55.322 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={filledOut=2, totalAmount=2800, updateReason=Changes:
+• Filled: 3 → 2
+• Total: ₹4200.00 → ₹2800.00
+
+User Note: Changes}
+2026-01-23 14:56:55.338 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_VALIDATION_PASSED | affectedEntriesCount=4 | oldValues=filled=3, empty=0, total=4200.00, received=1000.00 | newValues=filled=2, empty=0, total=2800, received=1000.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=1 | variantId=1 | newQty=489
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_INVENTORY | warehouseId=1 | variantId=1 | filledQtyChange=1 | emptyQtyChange=0
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | UPDATE_SALE: saleId=1, oldTotal=4200.00, newTotal=2800
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE_START: entry=3, newBalance=7
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE: id=4, oldBalance=11, newBalance=10, filled=3, empty=0
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_BALANCE | entryId=4 | newBalance=10
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE: id=5, oldBalance=14, newBalance=13, filled=3, empty=0
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_BALANCE | entryId=5 | newBalance=13
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE: id=6, oldBalance=17, newBalance=16, filled=3, empty=0
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_BALANCE | entryId=6 | newBalance=16
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE: id=7, oldBalance=12, newBalance=11, filled=0, empty=5
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_BALANCE | entryId=7 | newBalance=11
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE_START: entry=3, newDue=21800.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE: id=4, oldDue=26400.00, newDue=25000.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_DUE | entryId=4 | newDue=25000.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE: id=5, oldDue=29600.00, newDue=28200.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_DUE | entryId=5 | newDue=28200.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE: id=6, oldDue=32800.00, newDue=31400.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_DUE | entryId=6 | newDue=31400.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE: id=7, oldDue=31800.00, newDue=30400.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_RECALC_DUE | entryId=7 | newDue=30400.00
+2026-01-23 14:56:55.342 | INFO  | [c3fe928d-37bc-40ee-ae1a-32f26b577140] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=UPDATE_LEDGER | ledgerId=3 | affectedEntries=4
+2026-01-23 14:58:00.678 | INFO  | [a7f9254a-4ecf-46a0-9f24-d91b934cb8bd] [] [] | http-nio-8080-exec-28 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=1 | filledQty=289 | emptyQty=205
+2026-01-23 14:58:00.678 | INFO  | [a7f9254a-4ecf-46a0-9f24-d91b934cb8bd] [] [] | http-nio-8080-exec-28 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=1
+2026-01-23 14:58:00.678 | INFO  | [a7f9254a-4ecf-46a0-9f24-d91b934cb8bd] [] [] | http-nio-8080-exec-28 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=3 | filledQty=200 | emptyQty=0
+2026-01-23 14:58:00.678 | INFO  | [a7f9254a-4ecf-46a0-9f24-d91b934cb8bd] [] [] | http-nio-8080-exec-28 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=3
+2026-01-23 14:58:00.693 | INFO  | [a7f9254a-4ecf-46a0-9f24-d91b934cb8bd] [] [] | http-nio-8080-exec-28 | c.g.service.WarehouseTransferService | Warehouse transfer created with id: 1 - Reference: WT-WH001-WH002-202601-000001
+2026-01-23 14:58:24.118 | INFO  | [e6621064-2c98-4d3c-83d1-af7c4bc8822e] [] [] | http-nio-8080-exec-27 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=1
+2026-01-23 14:58:24.134 | INFO  | [e6621064-2c98-4d3c-83d1-af7c4bc8822e] [] [] | http-nio-8080-exec-27 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 14:58:42.619 | INFO  | [d3b87067-3d48-46fe-9c52-c517b92e9007] [] [] | http-nio-8080-exec-35 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=1 | amount=10000
+2026-01-23 14:58:42.644 | INFO  | [8b9c592b-5df2-4d7e-b90a-5fd13a5ba1dd] [] [] | http-nio-8080-exec-38 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=1
+2026-01-23 14:58:42.651 | INFO  | [8b9c592b-5df2-4d7e-b90a-5fd13a5ba1dd] [] [] | http-nio-8080-exec-38 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 14:59:16.935 | INFO  | [ca460e6e-7dc4-4e3d-b26f-bea8ff499e6c] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=8 | updateData={amountReceived=5000, updateReason=Changes:
+• Payment: ₹10000.00 → ₹5000.00
+
+User Note: changes}
+2026-01-23 14:59:16.952 | INFO  | [ca460e6e-7dc4-4e3d-b26f-bea8ff499e6c] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_VALIDATION_PASSED | affectedEntriesCount=0 | oldValues=filled=0, empty=0, total=0.00, received=10000.00 | newValues=filled=0, empty=0, total=0.00, received=5000
+2026-01-23 14:59:16.952 | INFO  | [ca460e6e-7dc4-4e3d-b26f-bea8ff499e6c] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE_START: entry=8, newDue=25400.00
+2026-01-23 14:59:16.952 | INFO  | [ca460e6e-7dc4-4e3d-b26f-bea8ff499e6c] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=UPDATE_LEDGER | ledgerId=8 | affectedEntries=0
+2026-01-23 15:00:08.561 | INFO  | [52674c50-e60b-4a83-9219-e266b1527881] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-01-23 15:00:08.572 | INFO  | [52674c50-e60b-4a83-9219-e266b1527881] [] [] | http-nio-8080-exec-22 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:02:57.032 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:02:57.079 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:02:57.122 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:02:57.129 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:02:57.132 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:02:57.146 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:02:57.202 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:02:57.206 | INFO  | [7a0a7e0b-c9fc-4a09-a6e0-c62d6672b231] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:10:16.955 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:10:17.007 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:10:17.045 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:10:17.054 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:10:17.055 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:10:17.055 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:10:17.122 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:10:17.127 | INFO  | [7d63eadf-30fd-4f36-9635-a202364db544] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:15:58.150 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:15:58.178 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:15:58.218 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:15:58.230 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:15:58.247 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2025-07-23 | toDate=2026-01-23 | customerId=null
+2026-01-23 15:15:58.248 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:15:58.314 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=2026-01-01 | toDate=2026-01-31 | customerId=null
+2026-01-23 15:15:58.314 | INFO  | [01aa09bf-2395-44f4-9c51-85d1e4f3a9a1] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1
+2026-01-23 15:22:29.910 | INFO  | [8505ee6a-6d42-4a36-8930-fbf5deff6097] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=1
+2026-01-23 15:22:29.921 | INFO  | [8505ee6a-6d42-4a36-8930-fbf5deff6097] [] [] | http-nio-8080-exec-15 | c.g.s.CustomerDuePaymentService | OPERATION_SUCCESS | operation=GET_DUE_PAYMENT_REPORT | totalRecords=1 | returnedRecords=1

@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 public class ExpenseService {
 
         private final ExpenseRepository repository;
@@ -32,6 +34,7 @@ public class ExpenseService {
                 this.modelMapper = modelMapper;
         }
 
+        @Transactional(readOnly = true)
         public Page<ExpenseDTO> getAllExpenses(Pageable pageable) {
                 Pageable pageableWithSort = PageRequest.of(
                                 pageable.getPageNumber(),
@@ -41,6 +44,7 @@ public class ExpenseService {
                                 .map(this::convertToDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<ExpenseDTO> getExpensesByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable) {
                 Pageable pageableWithSort = PageRequest.of(
                                 pageable.getPageNumber(),
@@ -50,6 +54,7 @@ public class ExpenseService {
                                 .map(this::convertToDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<ExpenseDTO> getExpensesByCategory(Long categoryId, Pageable pageable) {
                 ExpenseCategory category = categoryRepository.findById(categoryId)
                                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -63,6 +68,7 @@ public class ExpenseService {
                                 .map(this::convertToDTO);
         }
 
+        @Transactional(readOnly = true)
         public ExpenseDTO getExpenseById(Long id) {
                 Expense expense = repository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
@@ -108,6 +114,7 @@ public class ExpenseService {
                 repository.deleteById(id);
         }
 
+        @Transactional(readOnly = true)
         public ExpenseSummaryDTO getExpensesSummary(LocalDate fromDate, LocalDate toDate, Long categoryId) {
                 List<Expense> expenses;
 
@@ -132,7 +139,8 @@ public class ExpenseService {
 
                 int transactionCount = expenses.size();
                 BigDecimal avgExpenseValue = transactionCount > 0
-                                ? totalAmount.divide(BigDecimal.valueOf(transactionCount))
+                                ? totalAmount.divide(BigDecimal.valueOf(transactionCount), 2,
+                                                java.math.RoundingMode.HALF_UP)
                                 : BigDecimal.ZERO;
 
                 // Find top category by total amount
