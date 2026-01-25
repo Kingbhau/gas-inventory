@@ -1,0 +1,51 @@
+<div class="navbar-alerts" style="border: 2px solid red; padding: 10px;">
+  <!-- DEBUG: This should be visible -->
+  <button class="bell-button" (click)="toggleDropdown()" title="Alerts" style="background: yellow; color: black; border: 2px solid black;">
+    <span class="bell-icon">🔔 ALERTS</span>
+    <span *ngIf="(alertCount$ | async) as count" class="badge" [class.show]="count > 0">
+      {{ count }}
+    </span>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div *ngIf="showDropdown" class="dropdown-menu" style="background: yellow; color: black;">
+    <div class="dropdown-header">
+      <strong>ALERTS</strong>
+      <span *ngIf="(alertCount$ | async) as count"> ({{ count }})</span>
+      <button class="close-btn" (click)="closeDropdown()">✕</button>
+    </div>
+
+    <!-- Alert Items -->
+    <div class="dropdown-items">
+      <div 
+        *ngFor="let alert of alerts$ | async; let last = last"
+        class="alert-item"
+        [ngClass]="'alert-' + alert.severity"
+      >
+        <div class="alert-content">
+          <div class="alert-message">{{ alert.message }}</div>
+          <small class="alert-time">{{ formatTime(alert.createdAt) }}</small>
+        </div>
+        <button 
+          class="dismiss-btn"
+          title="Dismiss alert"
+          (click)="dismissAlert(alert.id, $event)"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="(alertCount$ | async) === 0" class="no-alerts">
+        ✓ No active alerts
+      </div>
+    </div>
+
+    <!-- Footer Link -->
+    <div class="dropdown-footer">
+      <a routerLink="/settings" class="settings-link" (click)="closeDropdown()">
+        Settings ⚙️
+      </a>
+    </div>
+  </div>
+</div>

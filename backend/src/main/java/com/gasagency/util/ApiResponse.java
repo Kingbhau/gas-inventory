@@ -84,4 +84,25 @@ public class ApiResponse<T> {
                 ", data=" + data +
                 '}';
     }
+
+    /**
+     * Static factory method for successful responses with data
+     */
+    public static <T> ApiResponse<T> success(T data, String message) {
+        return new ApiResponse<>(true, message, data);
+    }
+
+    /**
+     * Static factory method for successful responses with message only
+     */
+    public static <T> ApiResponse<T> success(String message) {
+        return new ApiResponse<>(true, message, null);
+    }
+
+    /**
+     * Static factory method for error responses
+     */
+    public static <T> ApiResponse<T> error(int code, String message) {
+        return new ApiResponse<>(false, message, null);
+    }
 }

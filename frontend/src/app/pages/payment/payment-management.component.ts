@@ -17,11 +17,12 @@ import { ToastrService } from 'ngx-toastr';
 import { catchError, of } from 'rxjs';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { SharedModule } from '../../shared/shared.module';
 
 @Component({
   selector: 'app-payment-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule],
+  imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule],
   templateUrl: './payment-management.component.html',
   styleUrl: './payment-management.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -48,7 +49,7 @@ export class PaymentManagementComponent implements OnInit {
   paymentPageSize = 10;
 
   showPaymentForm = false;
-  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
+  paymentForm: { amount: string | number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
     paymentDate: '',
     paymentMode: ''
@@ -212,7 +213,7 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   submitPayment() {
-    if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
+    if (!this.paymentForm.amount) {
       this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;
     }
@@ -234,19 +235,30 @@ export class PaymentManagementComponent implements OnInit {
       return;
     }
 
+    // Convert amount string (formatted like "1,00,000.00") to number
+    const amountValue = typeof this.paymentForm.amount === 'string' 
+      ? parseFloat(this.paymentForm.amount.replace(/,/g, ''))
+      : this.paymentForm.amount;
+
+    // Validate amount is a valid number
+    if (isNaN(amountValue) || amountValue <= 0) {
+      this.toastr.error('Please enter a valid payment amount', 'Validation Error');
+      return;
+    }
+
     // Get the current due amount from the selected customer
     const currentDue = this.selectedCustomer?.dueAmount || 0;
 
     // Validate payment amount doesn't exceed due amount
-    if (this.paymentForm.amount > currentDue) {
-      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`, 'Validation Error');
+    if (amountValue > currentDue) {
+      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${amountValue.toFixed(2)}`, 'Validation Error');
       return;
     }
 
     this.isSubmittingPayment = true;
     const paymentData: any = {
       customerId: this.selectedCustomer.id,
-      amount: this.paymentForm.amount,
+      amount: amountValue,
       paymentDate: this.paymentForm.paymentDate,
       paymentMode: this.paymentForm.paymentMode
     };

@@ -21,11 +21,13 @@ import { exportCustomerLedgerToPDF } from './export-ledger-report.util';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { DateUtilityService } from '../../services/date-utility.service';
+import { SharedModule } from '../../shared/shared.module';
+import { DataRefreshService } from '../../services/data-refresh.service';
 
 @Component({
   selector: 'app-customer-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, AutocompleteInputComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, AutocompleteInputComponent, SharedModule],
   templateUrl: './customer-management.component.html',
   styleUrl: './customer-management.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -168,7 +170,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   paymentError = '';
   bankAccounts: BankAccount[] = [];
   paymentModes: PaymentMode[] = [];
-  paymentForm: { amount: number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
+  paymentForm: { amount: string | number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
     amount: null,
     paymentDate: '',
     paymentMode: '',
@@ -202,7 +204,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private toastr: ToastrService,
     public cdr: ChangeDetectorRef,
-    private dateUtility: DateUtilityService
+    private dateUtility: DateUtilityService,
+    private dataRefreshService: DataRefreshService
   ) {
     this.initForm();
   }
@@ -257,6 +260,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return this.paymentModes.find(mode => mode.name === modeName);
   }
 
+  /**
+   * Converts paymentForm.amount to numeric value, handling formatted strings
+   */
+  getPaymentAmountAsNumber(): number {
+    if (!this.paymentForm.amount) return 0;
+    if (typeof this.paymentForm.amount === 'string') {
+      return parseFloat(this.paymentForm.amount.replace(/,/g, '')) || 0;
+    }
+    return this.paymentForm.amount || 0;
+  }
   get defaultVariantFilter() {
     return { id: null, name: 'All' };
   }
@@ -654,22 +667,26 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   editCustomer(customer: any) {
     this.showForm = true;
     this.editingId = customer.id;
-    this.customerForm.patchValue({
-      name: customer.name || '',
-      mobile: customer.mobile || '',
-      address: customer.address || '',
-      gstNo: customer.gstNo || '',
-      dueAmount: customer.dueAmount !== undefined ? customer.dueAmount : 0,
-      active: customer.active !== undefined ? customer.active : true,
-      configuredVariants: customer.configuredVariants || []
-    });
+    
+    // Fetch fresh customer data from backend to ensure we have latest configured variants
+    this.customerService.getCustomer(customer.id).subscribe({
+      next: (freshCustomer: any) => {
+        this.customerForm.patchValue({
+          name: freshCustomer.name || '',
+          mobile: freshCustomer.mobile || '',
+          address: freshCustomer.address || '',
+          gstNo: freshCustomer.gstNo || '',
+          dueAmount: freshCustomer.dueAmount !== undefined ? freshCustomer.dueAmount : 0,
+          active: freshCustomer.active !== undefined ? freshCustomer.active : true,
+          configuredVariants: freshCustomer.configuredVariants || []
+        });
 
-    // Load existing variant prices from backend and initial filled cylinders
-    if (customer.id) {
-      // Load variant prices
-      this.variantPriceService.getPricesByCustomer(customer.id).subscribe({
-        next: (response: any) => {
-          if (response && response.data && response.data.length > 0) {
+        // Load existing variant prices from backend and initial filled cylinders
+        if (freshCustomer.id) {
+          // Load variant prices
+          this.variantPriceService.getPricesByCustomer(freshCustomer.id).subscribe({
+            next: (response: any) => {
+              if (response && response.data && response.data.length > 0) {
             // Convert API response to form array format
             const prices = response.data;
             
@@ -686,22 +703,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             this.existingCustomerPrices = existingPrices;
             
             // Rebuild the array with existing prices
-            this.buildVariantPricingArray(customer.configuredVariants || []);
+            this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
           } else {
             // No existing prices, rebuild with empty
-            this.buildVariantPricingArray(customer.configuredVariants || []);
+            this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
           }
           this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Error loading variant prices:', err);
           // Still rebuild the array even if load fails
-          this.buildVariantPricingArray(customer.configuredVariants || []);
+          this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
         }
       });
 
       // Load initial filled cylinders from customer ledger (INITIAL_STOCK entries)
-      this.ledgerService.getLedgerByCustomer(customer.id).subscribe({
+      this.ledgerService.getLedgerByCustomer(freshCustomer.id).subscribe({
         next: (ledgerEntries: any[]) => {
           // Get INITIAL_STOCK entries to populate filled cylinders
           const initialStockEntries = ledgerEntries.filter(entry => entry.refType === 'INITIAL_STOCK');
@@ -713,7 +730,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           });
           
           // Rebuild to populate with initial values
-          this.buildVariantFilledCylindersArray(customer.configuredVariants || []);
+          this.buildVariantFilledCylindersArray(freshCustomer.configuredVariants || []);
           
           // Re-apply the initial stock filled values and disable the fields
           const filledCylArray = this.customerForm.get('variantFilledCylinders') as FormArray;
@@ -734,10 +751,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         error: (err) => {
           console.error('Error loading ledger entries:', err);
           // Still rebuild the array even if ledger load fails
-          this.buildVariantFilledCylindersArray(customer.configuredVariants || []);
+          this.buildVariantFilledCylindersArray(freshCustomer.configuredVariants || []);
         }
       });
     }
+      },
+      error: (err) => {
+        console.error('Error loading customer for edit:', err);
+        this.toastr.error('Failed to load customer details', 'Error');
+      }
+    });
   }
 
   saveCustomer() {
@@ -790,6 +813,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
               this.customers[index] = updatedCustomer;
             }
             this.customerService.invalidateCache();
+            
+            // Notify other components (like sale-entry) that a customer was updated
+            this.dataRefreshService.notifyCustomerUpdated();
+            
             this.toastr.success('Customer updated successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
@@ -1305,7 +1332,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   submitPayment() {
-    if (!this.paymentForm.amount || this.paymentForm.amount <= 0) {
+    if (!this.paymentForm.amount) {
       this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;
     }
@@ -1329,21 +1356,32 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Convert amount string (formatted like "1,00,000.00") to number
+    const amountValue = typeof this.paymentForm.amount === 'string' 
+      ? parseFloat(this.paymentForm.amount.replace(/,/g, ''))
+      : this.paymentForm.amount;
+
+    // Validate amount is a valid number
+    if (isNaN(amountValue) || amountValue <= 0) {
+      this.toastr.error('Please enter a valid payment amount', 'Validation Error');
+      return;
+    }
+
     // Get the current due amount from the most recent ledger entry
     const currentDue = this.ledgerEntries.length > 0 
       ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0 
       : 0;
 
     // Validate payment amount doesn't exceed due amount
-    if (this.paymentForm.amount > currentDue) {
-      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${this.paymentForm.amount.toFixed(2)}`, 'Validation Error');
+    if (amountValue > currentDue) {
+      this.toastr.error(`Payment amount cannot exceed due amount of ₹${currentDue.toFixed(2)}. Current payment: ₹${amountValue.toFixed(2)}`, 'Validation Error');
       return;
     }
 
     this.isSubmittingPayment = true;
     const paymentData: any = {
       customerId: this.selectedCustomer.id,
-      amount: this.paymentForm.amount,
+      amount: amountValue,
       paymentDate: this.paymentForm.paymentDate,
       paymentMode: this.paymentForm.paymentMode
     };

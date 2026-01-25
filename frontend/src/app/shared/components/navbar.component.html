@@ -5,32 +5,47 @@
       <h1>{{ title }}</h1>
     </div>
 
-    <!-- Mobile Menu Toggle -->
-    <button class="mobile-toggle" (click)="toggleMobileMenu()" [class.active]="isMobileMenuOpen">
-      <fa-icon [icon]="isMobileMenuOpen ? faTimes : faBars"></fa-icon>
+    <!-- Navigation Links -->
+    <div class="navbar-links">
+      <a
+        *ngFor="let link of links"
+        (click)="navigateTo(link.path)"
+        class="nav-link"
+      >
+        <fa-icon *ngIf="link.icon" [icon]="link.icon" class="nav-icon"></fa-icon>
+        {{ link.label }}
+      </a>
+    </div>
+
+    <!-- Alerts Bell Icon -->
+    <button class="bell-button" (click)="toggleAlertDropdown()" title="Alerts">
+      🔔
+      <span class="badge" *ngIf="alertCount > 0">{{ alertCount }}</span>
     </button>
 
-    <!-- Navigation Links -->
-    <div class="navbar-menu" [class.active]="isMobileMenuOpen">
-      <div class="navbar-links">
-        <a
-          *ngFor="let link of links"
-          (click)="navigateTo(link.path)"
-          class="nav-link"
-        >
-          <fa-icon *ngIf="link.icon" [icon]="link.icon" class="nav-icon"></fa-icon>
-          {{ link.label }}
-        </a>
+    <!-- Alert Dropdown -->
+    <div *ngIf="showAlertDropdown" class="alert-dropdown">
+      <div class="dropdown-header">
+        <strong>ALERTS ({{ alertCount }})</strong>
+        <button class="close-btn" (click)="closeAlertDropdown()">✕</button>
       </div>
+      <div class="dropdown-items">
+        <div *ngIf="alertCount === 0" class="no-alerts">✓ No active alerts yet</div>
+        <div *ngFor="let alert of alerts" class="alert-item" [ngClass]="alert.severity">
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-time">{{ alert.createdAt | date:'short' }}</div>
+          <button class="dismiss-btn" (click)="dismissAlert(alert.id)" title="Dismiss">✕</button>
+        </div>
+      </div>
+    </div>
 
-      <!-- User Info & Logout -->
-      <div class="navbar-user">
-        <span class="user-name">{{ userName }}</span>
-        <button (click)="logout()" class="btn-logout" title="Logout">
-          <fa-icon [icon]="faSignOut"></fa-icon>
-          Logout
-        </button>
-      </div>
+    <!-- User Info & Logout -->
+    <div class="navbar-user">
+      <span class="user-name">{{ userName }}</span>
+      <button (click)="logout()" class="btn-logout" title="Logout">
+        <fa-icon [icon]="faSignOut"></fa-icon>
+        Logout
+      </button>
     </div>
   </div>
 </nav>

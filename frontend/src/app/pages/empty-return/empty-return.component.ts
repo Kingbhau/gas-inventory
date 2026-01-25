@@ -16,11 +16,12 @@ import { AutocompleteInputComponent } from '../../shared/components/autocomplete
 import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { SharedModule } from '../../shared/shared.module';
 
 @Component({
     selector: 'app-empty-return',
     standalone: true,
-    imports: [ReactiveFormsModule, CommonModule, AutocompleteInputComponent],
+    imports: [ReactiveFormsModule, CommonModule, AutocompleteInputComponent, SharedModule],
     templateUrl: './empty-return.component.html',
     styleUrls: ['./empty-return.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush

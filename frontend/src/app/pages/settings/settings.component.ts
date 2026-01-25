@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBox, faBuilding, faEdit, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faBuilding, faEdit, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp, faBell } from '@fortawesome/free-solid-svg-icons';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
+import { AlertSettingsService } from '../../services/alert-settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { ToastrModule } from 'ngx-toastr';
 import { BusinessInfoService, BusinessInfo } from '../../services/business-info.service';
@@ -63,6 +64,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   faWarehouse = faWarehouse;
   faDatabase = faDatabase;
   faBank = faBank;
+  faBell = faBell;
   faChevronDown = faChevronDown;
   faChevronUp = faChevronUp;
 
@@ -76,15 +78,21 @@ export class SettingsComponent implements OnInit, OnDestroy {
     { id: 'categories', name: 'Expense Categories', icon: faReceipt },
     { id: 'payment-modes', name: 'Payment Modes', icon: faReceipt },
     { id: 'bank-accounts', name: 'Bank Accounts', icon: faBank },
+    { id: 'alerts', name: 'Alerts', icon: faBell },
     { id: 'business', name: 'Business', icon: faBuilding }
   ];
 
   variantsList: any[] = [];
+  alertSettingsForm!: FormGroup;
+  alertSaving = false;
+  alertSuccessMessage = '';
+  alertErrorMessage = '';
 
 
   constructor(
     private fb: FormBuilder,
     private variantService: CylinderVariantService,
+    private alertSettingsService: AlertSettingsService,
     private toastr: ToastrService,
     private businessInfoService: BusinessInfoService,
     private cdr: ChangeDetectorRef
@@ -96,6 +104,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadVariants();
     this.loadBusinessInfo();
+    this.loadAlertSettings();
   }
 
   ngOnDestroy() {}
@@ -184,6 +193,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
       address: ['', [Validators.maxLength(200)]],
       contactNumber: ['', [Validators.pattern(/^\+?[0-9]{7,15}$/)]],
       email: ['', [Validators.email, Validators.maxLength(100)]]
+    });
+
+    this.alertSettingsForm = this.fb.group({
+      lowStockEnabled: [false],
+      filledThreshold: [null, [Validators.min(0)]],
+      emptyThreshold: [null, [Validators.min(0)]],
+      pendingReturnEnabled: [false],
+      pendingReturnThreshold: [null, [Validators.min(0)]]
     });
   }
 
@@ -297,5 +314,110 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.businessLoading = false;
       }
     });
+  }
+
+  private loadAlertSettings(): void {
+    this.alertErrorMessage = '';
+    this.alertSuccessMessage = '';
+    
+    // Fetch from server
+    this.alertSettingsService.getAlertConfigurations().subscribe(
+      (response: any) => {
+        console.log('Alert settings response:', response);
+        if (response && response.data && Array.isArray(response.data)) {
+          console.log('Alert configs loaded:', response.data);
+          this.mapConfigsToForm(response.data);
+        }
+        this.cdr.markForCheck();
+      },
+      (error: any) => {
+        console.error('Error loading alert settings:', error);
+        this.cdr.markForCheck();
+      }
+    );
+  }
+
+  private mapConfigsToForm(configs: any[]): void {
+    configs.forEach(config => {
+      if (config.alertType === 'LOW_STOCK_WAREHOUSE') {
+        this.alertSettingsForm.patchValue({
+          lowStockEnabled: config.enabled,
+          filledThreshold: config.filledCylinderThreshold || 50,
+          emptyThreshold: config.emptyCylinderThreshold || 50
+        });
+      }
+      if (config.alertType === 'PENDING_RETURN_CYLINDERS') {
+        this.alertSettingsForm.patchValue({
+          pendingReturnEnabled: config.enabled,
+          pendingReturnThreshold: config.pendingReturnThreshold || 10
+        });
+      }
+    });
+    this.alertSettingsForm.markAsPristine();
+  }
+
+  saveAlertSettings(): void {
+    const formValue = this.alertSettingsForm.value;
+
+    // Validate enabled alerts have threshold values
+    if (formValue.lowStockEnabled) {
+      if (!formValue.filledThreshold && formValue.filledThreshold !== 0) {
+        this.toastr.error('Please enter Filled Cylinders Threshold for Low Stock Alert', 'Validation Error');
+        return;
+      }
+      if (!formValue.emptyThreshold && formValue.emptyThreshold !== 0) {
+        this.toastr.error('Please enter Empty Cylinders Threshold for Low Stock Alert', 'Validation Error');
+        return;
+      }
+    }
+
+    if (formValue.pendingReturnEnabled) {
+      if (!formValue.pendingReturnThreshold && formValue.pendingReturnThreshold !== 0) {
+        this.toastr.error('Please enter Cylinders Pending Threshold for Pending Returns Alert', 'Validation Error');
+        return;
+      }
+    }
+
+    this.alertSaving = true;
+
+    const lowStockPayload: any = {
+      enabled: formValue.lowStockEnabled
+    };
+    if (formValue.lowStockEnabled) {
+      lowStockPayload.filledThreshold = formValue.filledThreshold;
+      lowStockPayload.emptyThreshold = formValue.emptyThreshold;
+    }
+
+    this.alertSettingsService.updateAlertConfig('LOW_STOCK_WAREHOUSE', lowStockPayload).subscribe(
+      () => {
+        const pendingReturnPayload: any = {
+          enabled: formValue.pendingReturnEnabled
+        };
+        if (formValue.pendingReturnEnabled) {
+          pendingReturnPayload.pendingReturnThreshold = formValue.pendingReturnThreshold;
+        }
+
+        this.alertSettingsService.updateAlertConfig('PENDING_RETURN_CYLINDERS', pendingReturnPayload).subscribe(
+          () => {
+            this.alertSaving = false;
+            this.alertSettingsForm.markAsPristine();
+            this.toastr.success('Alert settings saved successfully', 'Success');
+            this.cdr.markForCheck();
+          },
+          (error: any) => {
+            this.alertSaving = false;
+            this.toastr.error('Failed to save pending returns alert settings', 'Error');
+            console.error('Error:', error);
+            this.cdr.markForCheck();
+          }
+        );
+      },
+      (error: any) => {
+        this.alertSaving = false;
+        this.toastr.error('Failed to save low stock alert settings', 'Error');
+        console.error('Error:', error);
+        this.cdr.markForCheck();
+      }
+    );
   }
 }

@@ -223,7 +223,14 @@ public class CustomerService {
         customer.setSalePrice(dto.getSalePrice());
         customer.setDiscountPrice(dto.getDiscountPrice());
         customer.setGstNo(dto.getGstNo());
-        customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
+
+        // Log configured variants before saving
+        String configuredVariantsJson = convertVariantListToJson(dto.getConfiguredVariants());
+        LoggerUtil.logBusinessExit(logger, "UPDATE_CUSTOMER", "configuredVariants_before_save",
+                dto.getConfiguredVariants());
+        LoggerUtil.logBusinessExit(logger, "UPDATE_CUSTOMER", "configuredVariants_json", configuredVariantsJson);
+
+        customer.setConfiguredVariants(configuredVariantsJson);
         customer.setActive(dto.getActive());
         customer = repository.save(customer);
 

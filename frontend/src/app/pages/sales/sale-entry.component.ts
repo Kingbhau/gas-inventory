@@ -110,6 +110,54 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // OPTIMIZATION: Load all reference data in parallel instead of sequentially
     this.loadReferenceDataInParallel();
+    
+    // IMPORTANT: Listen for customer updates (when variants are reconfigured in customer management)
+    this.dataRefreshService.customerUpdated$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        console.log('Customer updated detected, reloading customers...');
+        this.customerService.getActiveCustomers()
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (customers) => {
+              this.customers = customers || [];
+              this.filteredCustomers = this.customers;
+              
+              // Get current selections
+              const currentCustomerId = this.saleForm.get('customerId')?.value?.id;
+              const currentVariantId = this.saleForm.get('variantId')?.value?.id;
+              
+              // If a customer is currently selected, re-filter variants
+              if (currentCustomerId) {
+                const updatedCustomer = this.customers.find(c => c.id === currentCustomerId);
+                if (updatedCustomer) {
+                  // Update the selected customer object in the form with fresh data
+                  this.saleForm.patchValue({ customerId: updatedCustomer }, { emitEvent: false });
+                  
+                  // Re-filter variants based on updated customer config
+                  this.filterVariantsByCustomerConfig(currentCustomerId);
+                  
+                  // If the previously selected variant is no longer configured, clear it
+                  if (currentVariantId && this.filteredVariants && this.filteredVariants.length > 0) {
+                    const variantStillAvailable = this.filteredVariants.some(v => v.id === currentVariantId);
+                    if (!variantStillAvailable) {
+                      console.log('Previously selected variant no longer available, clearing selection');
+                      this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
+                    }
+                  } else if (!currentVariantId || !this.filteredVariants || this.filteredVariants.length === 0) {
+                    // Clear variant if no variants are now available
+                    this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
+                  }
+                }
+              }
+              
+              this.cdr.markForCheck();
+            },
+            error: (err) => {
+              console.error('Error reloading customers:', err);
+            }
+          });
+      });
   }
 
   ngOnDestroy() {

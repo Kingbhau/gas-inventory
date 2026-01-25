@@ -11,6 +11,7 @@ export class DataRefreshService {
   private saleCreatedSubject = new Subject<any>();
   private paymentReceivedSubject = new Subject<any>();
   private inventoryUpdatedSubject = new Subject<any>();
+  private customerUpdatedSubject = new Subject<void>();
 
   // Public observables
   dashboardRefresh$ = this.dashboardRefreshSubject.asObservable();
@@ -18,6 +19,7 @@ export class DataRefreshService {
   saleCreated$ = this.saleCreatedSubject.asObservable();
   paymentReceived$ = this.paymentReceivedSubject.asObservable();
   inventoryUpdated$ = this.inventoryUpdatedSubject.asObservable();
+  customerUpdated$ = this.customerUpdatedSubject.asObservable();
 
   constructor() {}
 
@@ -44,5 +46,9 @@ export class DataRefreshService {
   notifyInventoryUpdated(inventory: any) {
     this.inventoryUpdatedSubject.next(inventory);
     this.refreshDashboard();
+  }
+
+  notifyCustomerUpdated() {
+    this.customerUpdatedSubject.next();
   }
 }

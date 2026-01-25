@@ -62,11 +62,37 @@ public class UserController {
     }
 
     @PostMapping("/{id}/change-password")
-    public ResponseEntity<Boolean> changePassword(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         String currentPassword = payload.get("currentPassword");
         String newPassword = payload.get("newPassword");
-        boolean changed = userService.changePassword(id, currentPassword, newPassword);
-        return new ResponseEntity<>(changed, changed ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        try {
+            boolean changed = userService.changePassword(id, currentPassword, newPassword);
+            if (changed) {
+                return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
+                    {
+                        put("success", true);
+                        put("message", "Password changed successfully");
+                    }
+                }, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
+                    {
+                        put("success", false);
+                        put("message", "Current password is incorrect");
+                        put("error", "Invalid current password");
+                    }
+                }, HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
+                {
+                    put("success", false);
+                    put("message", e.getMessage() != null ? e.getMessage() : "Failed to change password");
+                    put("error", e.getClass().getSimpleName());
+                }
+            }, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private UserDTO toDTO(User user) {

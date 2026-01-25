@@ -1192,5 +1192,77 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Bell Button and Alert Dropdown Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bell-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.bell-button:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.bell-button:active {
+  transform: scale(0.95) !important;
+}
+
+/* Ensure fa-icon renders properly */
+fa-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bell-button fa-icon {
+  color: black !important;
+}
+
+.alert-dropdown-professional {
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Alert item hover styling */
+.alert-item-professional:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Alert close button hover */
+.close-btn-professional:hover {
+  color: #2c3e50 !important;
+}
+
+/* Alert dismiss button hover */
+.dismiss-btn-professional:hover {
+  color: #dc3545 !important;
+}
+
+/* Scrollbar styling for professional alert dropdown */
+.alert-dropdown-professional::-webkit-scrollbar {
+  width: 6px;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
+}
+
 
 

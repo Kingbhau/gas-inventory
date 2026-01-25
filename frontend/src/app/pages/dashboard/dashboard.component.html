@@ -17,22 +17,8 @@
     </div>
   </div>
 
-  <!-- Critical Alerts Section -->
-  <div *ngIf="dashboardData?.alerts && (dashboardData?.alerts?.length || 0) > 0" class="alerts-section">
-    <div *ngFor="let alert of dashboardData?.alerts || []" 
-         [ngClass]="'alert-banner ' + getAlertSeverityClass(alert.severity)">
-      <div class="alert-icon">
-        <fa-icon [icon]="getAlertIcon(alert.severity)"></fa-icon>
-      </div>
-      <div class="alert-content">
-        <h4 class="alert-title">{{ alert.title }}</h4>
-        <p class="alert-message">{{ alert.message }}</p>
-      </div>
-      <a *ngIf="alert.actionLink" [routerLink]="alert.actionLink" class="alert-action">
-        {{ alert.actionLabel }} →
-      </a>
-    </div>
-  </div>
+  <!-- Alerts now shown only in navbar bell icon -->
+  <!-- Critical Alerts Section REMOVED - alerts now display in navbar bell icon only -->
 
   <!-- TODAY'S PERFORMANCE SECTION -->
   <div class="section-container" *ngIf="dashboardData">

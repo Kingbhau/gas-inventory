@@ -1,6 +1,7 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AlertService } from '../../services/alert.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -28,7 +29,7 @@ export class LoginComponent {
   forgotMsg = '';
 
 
-  constructor(private authService: AuthService, private router: Router, private toastr: ToastrService, private cdr: ChangeDetectorRef) {}
+  constructor(private authService: AuthService, private alertService: AlertService, private router: Router, private toastr: ToastrService, private cdr: ChangeDetectorRef) {}
 
   onLogin() {
     this.loading = true;
@@ -37,6 +38,8 @@ export class LoginComponent {
       next: (res) => {
         // Only store user info (no token)
         this.authService.setUserInfo(res);
+        // Initialize alerts after successful login
+        this.alertService.initialize();
         this.router.navigate(['/']);
         this.loading = false;
         this.cdr.markForCheck();

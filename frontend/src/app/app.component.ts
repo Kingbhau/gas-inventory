@@ -2,13 +2,15 @@ import { Component, OnInit, OnDestroy, Renderer2, ChangeDetectorRef, NgZone, Cha
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBars, faTimes, faChartBar, faPlus, faHistory, faUsers, faUser, faBox, faTruck,faRupeeSign, faCog, faSearch, faBell, faChevronDown, faExchange, faFileAlt, faSignOut, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faTimes, faChartBar, faPlus, faHistory, faUsers, faUser, faBox, faTruck,faRupeeSign, faCog, faSearch, faBell, faChevronDown, faExchange, faFileAlt, faSignOut, faReceipt, faExclamationTriangle, faClock, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { EmptyReturnComponent } from './pages/empty-return/empty-return.component';
 import { AuthService } from './services/auth.service';
 import { LoadingService, LoadingState } from './services/loading.service';
 import { LoaderComponent } from './shared/components/loader.component';
 import { HttpClient } from '@angular/common/http';
-import { filter } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
+import { AlertService } from './services/alert.service';
+import { Subject } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -19,6 +21,7 @@ import { filter } from 'rxjs/operators';
 })
 export class AppComponent implements OnInit, OnDestroy {
   private globalClickUnlistener: (() => void) | null = null;
+  private destroy$ = new Subject<void>();
   loading$ = this.loadingService.loading$;
 
   constructor(
@@ -28,7 +31,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer: Renderer2,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private alertService: AlertService
   ) {}
 
   get isAuthenticated(): boolean {
@@ -61,6 +65,9 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'Gas Inventory Pro';
   sidebarOpen = true;
   profileDropdownOpen = false;
+  showAlertDropdown = false;
+  alertCount = 0;
+  alerts: any[] = [];
 
   // Font Awesome Icons
   faBars = faBars;
@@ -81,8 +88,17 @@ export class AppComponent implements OnInit, OnDestroy {
   faFileAlt = faFileAlt;
   faSignOut = faSignOut;
   faReceipt = faReceipt;
+  faExclamationTriangle = faExclamationTriangle;
+  faClock = faClock;
+  faCheck = faCheck;
+  faXmark = faXmark;
 
   ngOnInit() {
+    console.log('AppComponent ngOnInit - isAuthenticated:', this.isAuthenticated);
+    
+    // Don't initialize alerts here - only after login
+    this.initializeAlerts();
+
     // Hide sidebar by default on mobile
     if (window.innerWidth <= 1024) {
       this.sidebarOpen = false;
@@ -96,7 +112,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
     // Scroll to top on route change
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
       .subscribe(() => {
         // Use setTimeout to ensure DOM is updated before scrolling
         setTimeout(() => {
@@ -114,13 +133,33 @@ export class AppComponent implements OnInit, OnDestroy {
           }
         }, 0);
       });
-    // Listen for clicks outside the profile dropdown
+    // Listen for clicks outside the profile dropdown and alert dropdown
     this.globalClickUnlistener = this.renderer.listen('document', 'click', (event: Event) => {
+      const target = event.target as HTMLElement;
+      
+      // Close profile dropdown if clicking outside
       if (this.profileDropdownOpen) {
         const dropdown = document.querySelector('.profile-dropdown');
         const btn = document.querySelector('.header-icon-btn[title="Profile Actions"]');
-        if (dropdown && !dropdown.contains(event.target as Node) && btn && !btn.contains(event.target as Node)) {
-          this.closeProfileDropdown();
+        if (dropdown && !dropdown.contains(target) && btn && !btn.contains(target)) {
+          this.profileDropdownOpen = false;
+          this.cdr.markForCheck();
+        }
+      }
+      
+      // Close alert dropdown if clicking outside
+      if (this.showAlertDropdown) {
+        const alertDropdown = document.querySelector('.alert-dropdown');
+        const bellBtn = document.querySelector('.bell-button');
+        
+        // Check if click is inside dropdown or bell button
+        const isInsideDropdown = alertDropdown && alertDropdown.contains(target);
+        const isInsideBell = bellBtn && bellBtn.contains(target);
+        
+        // Close if clicking outside both
+        if (!isInsideDropdown && !isInsideBell) {
+          this.showAlertDropdown = false;
+          this.cdr.markForCheck();
         }
       }
     });
@@ -167,6 +206,8 @@ export class AppComponent implements OnInit, OnDestroy {
       this.globalClickUnlistener();
       this.globalClickUnlistener = null;
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   toggleSidebar() {
@@ -185,6 +226,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   logout() {
+    this.alertService.reset();
     this.authService.logout().subscribe({
       next: () => {
         this.ngZone.run(() => {
@@ -216,5 +258,54 @@ export class AppComponent implements OnInit, OnDestroy {
 
   closeProfileDropdown() {
     this.profileDropdownOpen = false;
+  }
+
+  toggleAlertDropdown() {
+    this.showAlertDropdown = !this.showAlertDropdown;
+  }
+
+  closeAlertDropdown() {
+    this.showAlertDropdown = false;
+  }
+
+  private initializeAlerts(): void {
+    console.log('📢 Initializing alerts subscription in app.component');
+    
+    this.alertService.getAlertCount$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(count => {
+        this.ngZone.run(() => {
+          console.log('📊 Alert count updated:', count);
+          this.alertCount = count;
+          this.cdr.markForCheck();
+        });
+      }, error => {
+        console.error('❌ Error in alert count subscription:', error);
+      });
+
+    this.alertService.getAlerts$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(alerts => {
+        this.ngZone.run(() => {
+          console.log('📋 Alerts updated:', alerts);
+          this.alerts = alerts;
+          this.cdr.markForCheck();
+        });
+      }, error => {
+        console.error('❌ Error in alerts subscription:', error);
+      });
+  }
+
+  dismissAlert(alertId: number, event: Event) {
+    event.stopPropagation();
+    this.alertService.dismissAlert(alertId).subscribe({
+      next: () => {
+        this.alerts = this.alerts.filter(a => a.id !== alertId);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error dismissing alert:', err);
+      }
+    });
   }
 }

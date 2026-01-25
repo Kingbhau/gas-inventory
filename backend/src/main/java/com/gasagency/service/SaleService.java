@@ -53,6 +53,8 @@ public class SaleService {
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
         private final ReferenceNumberGenerator referenceNumberGenerator;
+        private final AlertConfigurationService alertConfigService;
+        private final AlertNotificationService alertNotificationService;
 
         public SaleService(SaleRepository saleRepository,
                         SaleItemRepository saleItemRepository,
@@ -67,7 +69,9 @@ public class SaleService {
                         BankAccountLedgerRepository bankAccountLedgerRepository,
                         AuditLogger auditLogger,
                         PerformanceTracker performanceTracker,
-                        ReferenceNumberGenerator referenceNumberGenerator) {
+                        ReferenceNumberGenerator referenceNumberGenerator,
+                        AlertConfigurationService alertConfigService,
+                        AlertNotificationService alertNotificationService) {
                 this.saleRepository = saleRepository;
                 this.saleItemRepository = saleItemRepository;
                 this.customerRepository = customerRepository;
@@ -82,6 +86,8 @@ public class SaleService {
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
                 this.referenceNumberGenerator = referenceNumberGenerator;
+                this.alertConfigService = alertConfigService;
+                this.alertNotificationService = alertNotificationService;
         }
 
         @Transactional(readOnly = true)
@@ -500,6 +506,9 @@ public class SaleService {
 
                 logger.info("Sale {} completed successfully for customer {}", sale.getId(), customer.getName());
 
+                // Check for low stock alerts in real-time after sale
+                checkAndCreateLowStockAlerts(warehouse);
+
                 // Track performance and audit
                 long txnDuration = System.currentTimeMillis() - txnStartTime;
                 performanceTracker.trackTransaction(transactionId, txnDuration, "COMPLETED");
@@ -524,6 +533,113 @@ public class SaleService {
                                         return new ResourceNotFoundException("Sale not found with id: " + id);
                                 });
                 return toDTO(sale);
+        }
+
+        /**
+         * Check for low stock after sale and create alerts if thresholds exceeded
+         * This runs immediately after sale to provide real-time alerts
+         */
+        private void checkAndCreateLowStockAlerts(Warehouse warehouse) {
+                try {
+                        logger.debug("Starting real-time low stock check for warehouse: {}", warehouse.getName());
+
+                        // Get alert configuration for LOW_STOCK_WAREHOUSE
+                        java.util.Optional<com.gasagency.entity.AlertConfiguration> configOpt = alertConfigService
+                                        .getConfigOptional("LOW_STOCK_WAREHOUSE");
+
+                        if (configOpt.isEmpty()) {
+                                logger.warn("Alert configuration for LOW_STOCK_WAREHOUSE not found");
+                                return;
+                        }
+
+                        com.gasagency.entity.AlertConfiguration config = configOpt.get();
+                        if (!config.getEnabled()) {
+                                logger.debug("LOW_STOCK_WAREHOUSE alerts are disabled");
+                                return;
+                        }
+
+                        int filledThreshold = config.getFilledCylinderThreshold() != null
+                                        ? config.getFilledCylinderThreshold()
+                                        : 50;
+                        int emptyThreshold = config.getEmptyCylinderThreshold() != null
+                                        ? config.getEmptyCylinderThreshold()
+                                        : 50;
+
+                        logger.debug("Alert thresholds - Filled: {}, Empty: {}", filledThreshold, emptyThreshold);
+
+                        // Get current stock for this warehouse
+                        java.util.List<com.gasagency.dto.InventoryStockDTO> warehouseStocks = inventoryStockService
+                                        .getStockDTOsByWarehouse(warehouse);
+
+                        if (warehouseStocks == null || warehouseStocks.isEmpty()) {
+                                logger.warn("No stock found for warehouse: {}", warehouse.getName());
+                                return;
+                        }
+
+                        Long warehouseId = warehouse.getId();
+                        String warehouseName = warehouse.getName();
+
+                        // Check EACH variant individually (per-variant checking, not warehouse totals)
+                        for (com.gasagency.dto.InventoryStockDTO stock : warehouseStocks) {
+                                String variantName = stock.getVariantName() != null ? stock.getVariantName()
+                                                : "Variant " + stock.getVariantId();
+                                long filledQty = stock.getFilledQty() != null ? stock.getFilledQty() : 0;
+                                long emptyQty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0;
+
+                                logger.debug("Checking variant {} - Filled: {} (threshold: {}), Empty: {} (threshold: {})",
+                                                variantName, filledQty, filledThreshold, emptyQty, emptyThreshold);
+
+                                // Check filled cylinders for this variant
+                                if (filledQty < filledThreshold) {
+                                        String alertKey = "LOW_STOCK_FILLED_WH_" + warehouseId + "_VAR_"
+                                                        + stock.getVariantId();
+                                        String message = warehouseName + " - " + variantName + ": Only " + filledQty +
+                                                        " filled cylinders (threshold: " + filledThreshold + ")";
+
+                                        try {
+                                                alertNotificationService.createOrUpdateAlert(
+                                                                "LOW_STOCK_WAREHOUSE",
+                                                                alertKey,
+                                                                warehouseId,
+                                                                null,
+                                                                message,
+                                                                "warning");
+                                                logger.warn("ALERT: Real-time low filled stock alert created - {}",
+                                                                message);
+                                        } catch (Exception e) {
+                                                logger.error("Error creating filled stock alert for warehouse {} variant {}",
+                                                                warehouseId, stock.getVariantId(), e);
+                                        }
+                                }
+
+                                // Check empty cylinders for this variant
+                                if (emptyQty < emptyThreshold) {
+                                        String alertKey = "LOW_STOCK_EMPTY_WH_" + warehouseId + "_VAR_"
+                                                        + stock.getVariantId();
+                                        String message = warehouseName + " - " + variantName + ": Only " + emptyQty +
+                                                        " empty cylinders (threshold: " + emptyThreshold + ")";
+
+                                        try {
+                                                alertNotificationService.createOrUpdateAlert(
+                                                                "LOW_STOCK_WAREHOUSE",
+                                                                alertKey,
+                                                                warehouseId,
+                                                                null,
+                                                                message,
+                                                                "warning");
+                                                logger.warn("ALERT: Real-time low empty stock alert created - {}",
+                                                                message);
+                                        } catch (Exception e) {
+                                                logger.error("Error creating empty stock alert for warehouse {} variant {}",
+                                                                warehouseId, stock.getVariantId(), e);
+                                        }
+                                }
+                        }
+
+                        logger.debug("Low stock check completed for warehouse: {}", warehouseName);
+                } catch (Exception e) {
+                        logger.error("Error checking for low stock alerts after sale", e);
+                }
         }
 
         @Transactional(readOnly = true)

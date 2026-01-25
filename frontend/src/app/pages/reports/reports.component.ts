@@ -35,6 +35,7 @@ import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { ExpenseReportComponent } from '../expenses/expense-report.component';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { AlertSettingsService } from '../../services/alert-settings.service';
 
 
 
@@ -204,6 +205,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
 
   // Return Pending Data
   returnPendingData: any[] = [];
+  pendingReturnThreshold: number | null = null; // null means not configured, fallback to 10 for calculations
 
   // Inventory Data
   inventoryData: any[] = [];
@@ -254,6 +256,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
+    private alertSettingsService: AlertSettingsService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -308,6 +311,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.paymentModesList = []; }
     });
+
+    // Load pending return threshold from alert settings
+    this.loadPendingReturnThreshold();
   }
 
   ngOnDestroy() {}
@@ -332,6 +338,30 @@ export class ReportsComponent implements OnInit, OnDestroy {
     if (this.selectedReport === 'paymentModes') {
       this.loadPaymentModesData();
     }
+  }
+
+  private loadPendingReturnThreshold(): void {
+    this.alertSettingsService.getAlertConfig('PENDING_RETURN_CYLINDERS')
+      .subscribe({
+        next: (response: any) => {
+          console.log('Alert config response:', response);
+          if (response?.data && response.data.pendingReturnThreshold !== undefined && response.data.pendingReturnThreshold !== null) {
+            this.pendingReturnThreshold = response.data.pendingReturnThreshold;
+            console.log('Pending return threshold loaded:', this.pendingReturnThreshold);
+            this.cdr.markForCheck();
+          } else if (response?.data) {
+            console.warn('Pending return threshold not found in config data:', response.data);
+            this.pendingReturnThreshold = null;
+          } else {
+            console.warn('No valid data in alert config response:', response);
+            this.pendingReturnThreshold = null;
+          }
+        },
+        error: (err) => {
+          console.warn('Could not load pending return threshold:', err);
+          this.pendingReturnThreshold = null;
+        }
+      });
   }
 
   loadReturnPendingData() {
@@ -544,11 +574,28 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   get highRiskCount(): number {
-    return this.filteredReturnPendingData.filter(item => (Number(item.returnPending) || 0) > 10).length;
+    if (this.pendingReturnThreshold === null) return 0; // No threshold configured, no high risk
+    return this.filteredReturnPendingData.filter(item => (Number(item.returnPending) || 0) > (this.pendingReturnThreshold ?? 0)).length;
   }
 
   getHighRiskReturnPendingCount(): number {
-    return this.filteredReturnPendingData.filter(item => item.returnPending > 10).length;
+    if (this.pendingReturnThreshold === null) return 0; // No threshold configured, no high risk
+    return this.filteredReturnPendingData.filter(item => item.returnPending > (this.pendingReturnThreshold ?? 0)).length;
+  }
+
+  getReturnPendingStatus(returnPending: number): string {
+    // If no threshold is configured, only show Pending or Clear
+    if (this.pendingReturnThreshold === null) {
+      return returnPending > 0 ? 'Pending' : 'Clear';
+    }
+    
+    if (returnPending > this.pendingReturnThreshold) {
+      return 'High Risk';
+    } else if (returnPending > 0) {
+      return 'Pending';
+    } else {
+      return 'Clear';
+    }
   }
 
   get totalSupplierFilled(): number {

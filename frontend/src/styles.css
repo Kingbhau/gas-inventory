@@ -314,12 +314,6 @@ a:hover {
   box-shadow: var(--shadow-md);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
 .btn-secondary {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
@@ -908,10 +902,6 @@ select {
 .btn-primary {
   background-color: var(--accent-color);
   color: #ffffff;
-}
-
-.btn-primary:hover {
-  background-color: var(--accent-light);
 }
 
 .btn-primary:active {

@@ -185,7 +185,8 @@ public class ReferenceNumberGenerator {
         }
 
         String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
-        String upperBankCode = bankCode.toUpperCase();
+        // Remove spaces and convert to uppercase for reference number
+        String upperBankCode = bankCode.toUpperCase().replaceAll("\\s+", "");
 
         // Get count for this month to generate sequence
         long sequence = bankAccountLedgerRepository.countByCreatedAtMonthYear(

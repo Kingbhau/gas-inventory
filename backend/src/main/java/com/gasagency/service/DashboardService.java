@@ -6,6 +6,7 @@ import com.gasagency.dto.DashboardSummaryDTO.DashboardAlertDTO;
 import com.gasagency.dto.DashboardSummaryDTO.BusinessInsightsDTO;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CustomerCylinderLedger;
+import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.*;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,7 @@ public class DashboardService {
     private final CustomerRepository customerRepository;
     private final WarehouseRepository warehouseRepository;
     private final CustomerCylinderLedgerRepository customerCylinderLedgerRepository;
+    private final AlertNotificationService alertNotificationService;
 
     public DashboardService(
             SaleService saleService,
@@ -57,7 +59,8 @@ public class DashboardService {
             CustomerCylinderLedgerService customerCylinderLedgerService,
             CustomerRepository customerRepository,
             WarehouseRepository warehouseRepository,
-            CustomerCylinderLedgerRepository customerCylinderLedgerRepository) {
+            CustomerCylinderLedgerRepository customerCylinderLedgerRepository,
+            AlertNotificationService alertNotificationService) {
         this.saleService = saleService;
         this.expenseService = expenseService;
         this.customerDuePaymentService = customerDuePaymentService;
@@ -66,6 +69,7 @@ public class DashboardService {
         this.customerRepository = customerRepository;
         this.warehouseRepository = warehouseRepository;
         this.customerCylinderLedgerRepository = customerCylinderLedgerRepository;
+        this.alertNotificationService = alertNotificationService;
     }
 
     /**
@@ -666,33 +670,32 @@ public class DashboardService {
     }
 
     private void generateAlerts(DashboardSummaryDTO dto) {
-        List<DashboardAlertDTO> alerts = new ArrayList<>();
+        try {
+            // Fetch all active alerts from AlertNotificationService
+            // This removes hardcoded alerts and uses flexible configuration
+            List<AlertNotification> activeAlerts = alertNotificationService.getActiveAlerts();
 
-        // High pending amount alert
-        if (dto.getTodayAmountDue().compareTo(BigDecimal.valueOf(100000)) > 0) {
-            alerts.add(createAlert("warning", "High Pending Payments",
-                    "Amount due: ₹" + dto.getTodayAmountDue() + ". Follow up with customers.",
-                    "/collections"));
+            // Convert to DTO for dashboard
+            List<DashboardAlertDTO> alertDTOs = activeAlerts.stream()
+                    .map(alert -> createAlertDTO(alert))
+                    .collect(Collectors.toList());
+
+            dto.setAlerts(alertDTOs);
+            logger.info("Dashboard alerts set: {} active alerts", alertDTOs.size());
+        } catch (Exception e) {
+            logger.warn("Error generating alerts", e);
+            dto.setAlerts(new ArrayList<>());
         }
-
-        // Low profit alert
-        if (dto.getTodayNetProfit().compareTo(ZERO) <= 0) {
-            alerts.add(createAlert("critical", "Low Profit",
-                    "Today's profit margin is low. Review operations.",
-                    "/reports"));
-        }
-
-        dto.setAlerts(alerts);
     }
 
-    private DashboardAlertDTO createAlert(String severity, String title, String message, String link) {
-        DashboardAlertDTO alert = new DashboardAlertDTO();
-        alert.setSeverity(severity);
-        alert.setTitle(title);
-        alert.setMessage(message);
-        alert.setActionLabel("View");
-        alert.setActionLink(link);
-        return alert;
+    private DashboardAlertDTO createAlertDTO(AlertNotification alert) {
+        DashboardAlertDTO dto = new DashboardAlertDTO();
+        dto.setSeverity(alert.getSeverity());
+        dto.setTitle(alert.getAlertType());
+        dto.setMessage(alert.getMessage());
+        dto.setActionLabel("Dismiss");
+        dto.setActionLink("/alerts/" + alert.getId());
+        return dto;
     }
 
     private void calculateDailySalesTrend(DashboardSummaryDTO dto, LocalDate monthStart, LocalDate monthEnd) {

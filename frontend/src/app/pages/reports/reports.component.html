@@ -492,7 +492,7 @@
           <span class="value">{{ customersWithReturnPending }}</span>
         </div>
         <div class="summary-card">
-          <span class="label">High Risk (>10 units)</span>
+          <span class="label">High Risk</span>
           <span class="value">{{ getHighRiskReturnPendingCount() }}</span>
         </div>
       </div>
@@ -514,9 +514,9 @@
                 <td>{{ item.variant }}</td>
                 <td class="text-center">{{ item.returnPending }}</td>
                 <td>
-                  <span *ngIf="item.returnPending > 10" class="badge badge-danger">High Risk</span>
-                  <span *ngIf="item.returnPending > 0 && item.returnPending <= 10" class="badge badge-warning">Pending</span>
-                  <span *ngIf="item.returnPending <= 0" class="badge badge-success">Clear</span>
+                  <span [ngClass]="getReturnPendingStatus(item.returnPending) === 'High Risk' ? 'badge badge-danger' : getReturnPendingStatus(item.returnPending) === 'Pending' ? 'badge badge-warning' : 'badge badge-success'">
+                    {{ getReturnPendingStatus(item.returnPending) }}
+                  </span>
                 </td>
               </tr>
             </tbody>

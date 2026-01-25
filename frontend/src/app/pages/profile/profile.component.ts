@@ -123,18 +123,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
             const currentPassword = this.passwordForm.get('currentPassword')?.value;
             const newPassword = this.passwordForm.get('newPassword')?.value;
             this.userService.changePassword(this.user.id, currentPassword, newPassword).subscribe({
-                next: (success) => {
-                    if (success) {
+                next: (response: any) => {
+                    if (response?.success || response === true) {
                         this.toastr.success('Password changed successfully.', 'Success');
                         this.showPassword = false;
                         this.passwordForm.reset();
                     } else {
-                        this.toastr.error('Current password is incorrect.', 'Error');
+                        const errorMsg = response?.message || 'Current password is incorrect.';
+                        this.toastr.error(errorMsg, 'Error');
                     }
                     this.cdr.markForCheck();
                 },
-                error: () => {
-                    this.toastr.error('Failed to change password.', 'Error');
+                error: (error: any) => {
+                    const errorMessage = error?.error?.message || error?.error?.error || error?.message || 'Failed to change password.';
+                    this.toastr.error(errorMessage, 'Error');
                     this.cdr.markForCheck();
                 }
             });

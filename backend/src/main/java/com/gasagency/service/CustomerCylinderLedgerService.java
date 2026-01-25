@@ -698,6 +698,22 @@ public class CustomerCylinderLedgerService {
                 return 0L;
         }
 
+        /**
+         * Get count of pending return cylinders for a customer
+         * Used for alert detection
+         */
+        public long getPendingReturnCountForCustomer(Long customerId) {
+                Customer customer = customerRepository.findById(customerId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Customer not found with id: " + customerId));
+
+                List<CustomerCylinderLedger> ledgers = repository.findByCustomer(customer);
+                return ledgers.stream()
+                                .filter(l -> l.getEmptyIn() != null && l.getEmptyIn() > 0)
+                                .mapToLong(l -> l.getEmptyIn() != null ? l.getEmptyIn() : 0)
+                                .sum();
+        }
+
         private CustomerCylinderLedgerDTO toDTO(CustomerCylinderLedger ledger) {
                 Long variantId = ledger.getVariant() != null ? ledger.getVariant().getId() : null;
                 String variantName = ledger.getVariant() != null ? ledger.getVariant().getName() : null;
@@ -1055,7 +1071,7 @@ public class CustomerCylinderLedgerService {
                                                         "Bank account not found with id: " + bankAccountId));
 
                         // Generate proper reference number using ReferenceNumberGenerator
-                        String bankCode = bankAccount.getBankName() != null ? bankAccount.getBankName().trim() : "BANK";
+                        String bankCode = bankAccount.getCode() != null ? bankAccount.getCode().trim() : "BANK";
                         String referenceNumber = referenceNumberGenerator.generateBankTransactionReference(
                                         bankCode, "DEP");
 

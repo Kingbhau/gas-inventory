@@ -24,8 +24,84 @@
       </div>
       <!-- Center Section (removed search) -->
       <!-- Right Section -->
-      <div class="header-right">
-        <!-- Notification bell removed -->
+      <div class="header-right" *ngIf="isAuthenticated">
+        <!-- Notifications Bell Icon - Professional Design -->
+        <div style="position: relative; display: flex; align-items: center;">
+          <button class="bell-button" (click)="toggleAlertDropdown()" title="Notifications" 
+            style="background: transparent; border: none; cursor: pointer; padding: 8px 12px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 24px;">
+            🔔
+            <span class="notification-badge" *ngIf="alertCount > 0" 
+              style="position: absolute; top: 4px; right: 4px; background: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; border: 2px solid white;">
+              {{ alertCount > 99 ? '99+' : alertCount }}
+            </span>
+          </button>
+
+          <!-- Alert Dropdown - Professional Design -->
+          <div *ngIf="showAlertDropdown" class="alert-dropdown alert-dropdown-professional" 
+            style="position: absolute; top: calc(100% + 12px); right: 0; background: white; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 360px; z-index: 1000; overflow: hidden;">
+            
+            <!-- Header -->
+            <div style="padding: 14px 16px; border-bottom: 1px solid #e9ecef; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: 600; font-size: 13px; color: #2c3e50; text-transform: uppercase; letter-spacing: 0.5px;">Notifications</span>
+                <span *ngIf="alertCount > 0" style="background: #dc3545; color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; font-weight: 600;">{{ alertCount }}</span>
+              </div>
+              <button (click)="closeAlertDropdown()" 
+                class="close-btn-professional"
+                style="background: none; border: none; cursor: pointer; color: #6c757d; padding: 2px 4px; transition: color 0.2s;">
+                <fa-icon [icon]="faXmark" style="font-size: 16px; width: 16px; height: 16px;"></fa-icon>
+              </button>
+            </div>
+
+            <!-- Content -->
+            <div style="max-height: 400px; overflow-y: auto;">
+              <div *ngIf="alerts && alerts.length > 0; else noAlertsState">
+                <div *ngFor="let alert of alerts; let last = last" 
+                  class="alert-item-professional"
+                  style="padding: 12px 16px; border-bottom: 1px solid #f1f3f5; display: flex; gap: 10px; align-items: flex-start; transition: background-color 0.15s;">
+                  
+                  <!-- Icon -->
+                  <div style="flex-shrink: 0; padding-top: 2px;">
+                    <fa-icon [icon]="faExclamationTriangle" style="color: #dc3545; font-size: 16px; width: 16px; height: 16px;"></fa-icon>
+                  </div>
+                  
+                  <!-- Content -->
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight: 500; color: #2c3e50; font-size: 12px; margin-bottom: 3px;">
+                      {{ alert.alertType }}
+                    </div>
+                    <div style="font-size: 11px; color: #495057; margin-bottom: 4px; line-height: 1.4;">
+                      {{ alert.message }}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px; font-size: 10px; color: #adb5bd;">
+                      <fa-icon [icon]="faClock" style="font-size: 10px; width: 10px; height: 10px;"></fa-icon>
+                      <span>{{ alert.createdAt | date:'short' }}</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Dismiss -->
+                  <button (click)="dismissAlert(alert.id, $event)" 
+                    class="dismiss-btn-professional"
+                    style="background: none; border: none; cursor: pointer; color: #adb5bd; padding: 4px 6px; flex-shrink: 0; transition: all 0.2s;"
+                    title="Dismiss">
+                    <fa-icon [icon]="faXmark" style="font-size: 14px; width: 14px; height: 14px;"></fa-icon>
+                  </button>
+                </div>
+              </div>
+              <ng-template #noAlertsState>
+                <div style="padding: 40px 16px; text-align: center;">
+                  <div style="font-size: 36px; margin-bottom: 8px; color: #dee2e6;">
+                    <fa-icon [icon]="faCheck" style="color: #6fc450; font-size: 36px; width: 36px; height: 36px;"></fa-icon>
+                  </div>
+                  <div style="font-size: 12px; color: #6c757d; font-weight: 500;">All caught up!</div>
+                  <div style="font-size: 11px; color: #adb5bd; margin-top: 4px;">No notifications at this time</div>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Section -->
         <div class="user-section" style="position: relative;">
           <div class="user-avatar">  {{ (userInfo?.name || userName)?.charAt(0) }}</div>
           <div class="user-info">
