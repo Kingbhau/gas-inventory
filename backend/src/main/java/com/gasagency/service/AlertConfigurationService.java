@@ -104,6 +104,8 @@ public class AlertConfigurationService {
 
         logger.info("Saving AlertConfiguration for type: {} with enabled: {}", alertType, config.getEnabled());
         AlertConfiguration saved = repository.save(config);
+        // Flush to ensure data is immediately persisted to database
+        repository.flush();
         logger.info("AlertConfiguration saved with id: {}, pendingReturnThreshold: {}", saved.getId(),
                 saved.getPendingReturnThreshold());
 

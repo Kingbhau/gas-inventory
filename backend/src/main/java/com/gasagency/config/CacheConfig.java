@@ -44,7 +44,8 @@ public class CacheConfig {
                 "reportCache", // Customer due payments, sales reports
                 "customerCache", // Customer details and summaries
                 "inventoryCache", // Warehouse and inventory levels
-                "priceCache" // Monthly prices
+                "priceCache", // Monthly prices
+                "alertConfigCache" // Alert configuration settings
         );
 
         cacheManager.setCaffeine(Caffeine.newBuilder()
@@ -135,6 +136,20 @@ public class CacheConfig {
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(200)
                 .expireAfterWrite(60, TimeUnit.MINUTES)
+                .recordStats());
+        return cacheManager;
+    }
+
+    /**
+     * Alert configuration cache - 30 minute TTL
+     * Alert settings are updated infrequently, but should refresh periodically
+     */
+    @Bean
+    public CaffeineCacheManager alertConfigCacheManager() {
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("alertConfigCache");
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+                .maximumSize(50)
+                .expireAfterWrite(30, TimeUnit.MINUTES)
                 .recordStats());
         return cacheManager;
     }

@@ -507,7 +507,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
    */
   onWarehouseSelected(warehouse: any): void {
     if (warehouse && warehouse.id) {
-      this.saleForm.get('warehouseId')?.setValue(warehouse.id);
+      // Set the entire warehouse object for consistency
+      this.saleForm.get('warehouseId')?.setValue(warehouse, { emitEvent: true });
     } else {
       this.saleForm.get('warehouseId')?.setValue(null);
     }
@@ -515,7 +516,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
 
   onCustomerSelected(customer: any): void {
     if (customer && customer.id) {
-      this.saleForm.get('customerId')?.setValue(customer.id);
+      // Set the entire customer object (not just ID) so valueChanges subscription receives the full object
+      this.saleForm.get('customerId')?.setValue(customer, { emitEvent: true });
       this.saleForm.get('customerId')?.markAsTouched();
       // Filter variants based on customer's configured variants
       this.filterVariantsByCustomerConfig(customer.id);
@@ -535,10 +537,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
 
   onVariantSelected(variant: any): void {
     if (variant && variant.id) {
-      this.saleForm.get('variantId')?.setValue(variant.id);
+      // Set the entire variant object (not just ID) so valueChanges subscription receives the full object
+      this.saleForm.get('variantId')?.setValue(variant, { emitEvent: true });
       this.saleForm.get('variantId')?.markAsTouched();
       // Reload prices when variant changes
-      this.prefillPrice(this.saleForm.get('customerId')?.value, variant.id);
+      const customerObj = this.saleForm.get('customerId')?.value;
+      const customerId = customerObj && customerObj.id ? customerObj.id : null;
+      this.prefillPrice(customerId, variant.id);
     } else {
       this.saleForm.get('variantId')?.setValue(null);
       this.saleForm.get('basePrice')?.setValue(0);
@@ -572,8 +577,10 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       this.toastr.error('Total amount must be greater than zero.', 'Validation Error');
       return;
     }
-    const customerId = this.saleForm.get('customerId')?.value;
-    const variantId = this.saleForm.get('variantId')?.value;
+    const customerObj = this.saleForm.get('customerId')?.value;
+    const variantObj = this.saleForm.get('variantId')?.value;
+    const customerId = customerObj && customerObj.id ? customerObj.id : null;
+    const variantId = variantObj && variantObj.id ? variantObj.id : null;
     const qtyEmptyReceived = parseInt(this.saleForm.get('emptyReceivedQty')?.value);
     // Prevent negative or non-integer empty returns
     if (qtyEmptyReceived < 0 || isNaN(qtyEmptyReceived)) {
@@ -607,7 +614,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   submitSale() {
     this.toastr.clear(); // Clear any previous notifications
     // Validate warehouse is selected
-    if (!this.saleForm.get('warehouseId')?.value) {
+    const warehouseObj = this.saleForm.get('warehouseId')?.value;
+    if (!warehouseObj || !warehouseObj.id) {
       this.toastr.error('Please select a warehouse', 'Validation Error');
       this.saleForm.get('warehouseId')?.markAsTouched();
       return;
@@ -619,9 +627,12 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const customerId = this.saleForm.get('customerId')?.value;
-    const variantId = this.saleForm.get('variantId')?.value;
-    const warehouseId = this.saleForm.get('warehouseId')?.value;
+    const customerObj = this.saleForm.get('customerId')?.value;
+    const variantObj = this.saleForm.get('variantId')?.value;
+    const warehouseIdFromForm = this.saleForm.get('warehouseId')?.value;
+    const customerId = customerObj && customerObj.id ? customerObj.id : null;
+    const variantId = variantObj && variantObj.id ? variantObj.id : null;
+    const warehouseId = warehouseIdFromForm && warehouseIdFromForm.id ? warehouseIdFromForm.id : null;
     const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
     const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
     const bankAccountIdValue = this.saleForm.get('bankAccountId')?.value;

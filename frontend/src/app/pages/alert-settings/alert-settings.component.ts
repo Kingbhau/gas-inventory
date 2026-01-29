@@ -104,7 +104,7 @@ export class AlertSettingsComponent implements OnInit {
       emptyThreshold: formValue.emptyThreshold
     }).subscribe(
       () => {
-        // Update PENDING_RETURN
+        // Update PENDING_RETURN - Must include all fields: enabled, pendingReturnThreshold
         this.alertSettingsService.updateAlertConfig('PENDING_RETURN_CYLINDERS', {
           enabled: formValue.pendingReturnEnabled,
           pendingReturnThreshold: formValue.pendingReturnThreshold

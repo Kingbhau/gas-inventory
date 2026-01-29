@@ -324,6 +324,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
       this.applyFilters(false);
     }
     if (this.selectedReport === 'returnPending') {
+      // Reload threshold each time the tab is accessed to get latest value
+      this.loadPendingReturnThreshold();
       this.loadReturnPendingData();
     }
     if (this.selectedReport === 'inventory') {
