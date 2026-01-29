@@ -346,3 +346,22 @@
 2026-01-29 12:22:07.330 | [0f0f2ce1-4a52-4121-b4b4-7c68067349d3] | 0f0f2ce1-4a52-4121-b4b4-7c68067349d3|method=GET|path=/api/alerts|status=200|duration=10ms|category=FAST
 2026-01-29 12:22:07.400 | [d9136c52-8e02-4d0b-a6ed-a4af0fe6a4ce] | d9136c52-8e02-4d0b-a6ed-a4af0fe6a4ce|method=GET|path=/api/dashboard/comprehensive|status=200|duration=6ms|category=FAST
 2026-01-29 12:22:07.485 | [1def1bec-36ed-4af1-b0a7-cb1af320c0ab] | 1def1bec-36ed-4af1-b0a7-cb1af320c0ab|method=GET|path=/api/alerts/stream|status=200|duration=16ms|category=FAST
+2026-01-29 12:24:22.431 | [094ce28d-5ade-4657-8402-f791813617fb] | 094ce28d-5ade-4657-8402-f791813617fb|method=POST|path=/api/alerts/1/dismiss|status=200|duration=21ms|category=FAST
+2026-01-29 12:24:22.957 | [c04bde09-232a-4691-a9db-16844b0b143f] | c04bde09-232a-4691-a9db-16844b0b143f|method=POST|path=/api/alerts/2/dismiss|status=200|duration=11ms|category=FAST
+2026-01-29 12:24:23.401 | [b6d33a7b-630b-439e-93f0-c184c1408dd1] | b6d33a7b-630b-439e-93f0-c184c1408dd1|method=POST|path=/api/alerts/3/dismiss|status=200|duration=8ms|category=FAST
+2026-01-29 12:24:23.792 | [b8526172-1db9-4cfa-a01a-f20bbcddbea6] | b8526172-1db9-4cfa-a01a-f20bbcddbea6|method=POST|path=/api/alerts/4/dismiss|status=200|duration=8ms|category=FAST
+2026-01-29 12:24:24.152 | [4ea17558-727a-4f7d-83cd-63947ae48d44] | 4ea17558-727a-4f7d-83cd-63947ae48d44|method=POST|path=/api/alerts/5/dismiss|status=200|duration=8ms|category=FAST
+2026-01-29 12:24:24.482 | [9f882985-333f-4813-a7fd-187ebea4d932] | 9f882985-333f-4813-a7fd-187ebea4d932|method=POST|path=/api/alerts/6/dismiss|status=200|duration=7ms|category=FAST
+2026-01-29 12:24:24.803 | [f9376a73-bae1-4252-8be7-df9ca6347f6d] | f9376a73-bae1-4252-8be7-df9ca6347f6d|method=POST|path=/api/alerts/7/dismiss|status=200|duration=5ms|category=FAST
+2026-01-29 12:24:25.115 | [08e26f50-7c21-43a9-9348-bc5afb44a45c] | 08e26f50-7c21-43a9-9348-bc5afb44a45c|method=POST|path=/api/alerts/8/dismiss|status=200|duration=6ms|category=FAST
+2026-01-29 12:24:28.391 | [c64a639d-deea-44c3-a26e-6a6f49be95a2] | c64a639d-deea-44c3-a26e-6a6f49be95a2|method=GET|path=/api/alerts|status=200|duration=9ms|category=FAST
+2026-01-29 12:24:28.415 | [c3671fd8-bf5d-4f92-848a-4153839b87f1] | c3671fd8-bf5d-4f92-848a-4153839b87f1|method=GET|path=/api/dashboard/comprehensive|status=200|duration=4ms|category=FAST
+2026-01-29 12:24:28.442 | [18c1cb3c-24d7-442c-8e5f-9659257da50a] | 18c1cb3c-24d7-442c-8e5f-9659257da50a|method=GET|path=/api/alerts/stream|status=200|duration=3ms|category=FAST
+2026-01-29 12:24:35.214 | [76452196-de2e-4d78-a400-ae3ca626d01f] | 76452196-de2e-4d78-a400-ae3ca626d01f|method=GET|path=/api/variants/active/list|status=200|duration=4ms|category=FAST
+2026-01-29 12:24:35.215 | [57d43ebb-b61a-48f6-805f-9f0ca2dac0fa] | 57d43ebb-b61a-48f6-805f-9f0ca2dac0fa|method=GET|path=/api/payment-modes/active|status=200|duration=4ms|category=FAST
+2026-01-29 12:24:35.219 | [1df8da1f-c7f2-49e2-8c3d-4c508ad394a3] | 1df8da1f-c7f2-49e2-8c3d-4c508ad394a3|method=GET|path=/api/bank-accounts/active/list|status=200|duration=4ms|category=FAST
+2026-01-29 12:24:35.271 | [6b284441-f202-4d4c-9e58-0aa72800852c] | 6b284441-f202-4d4c-9e58-0aa72800852c|method=GET|path=/api/customers/active/list|status=200|duration=61ms|category=FAST
+2026-01-29 12:24:41.073 | [477ee5a1-93da-462a-a78a-bda2252e2f9b] | 477ee5a1-93da-462a-a78a-bda2252e2f9b|method=GET|path=/api/customers/2/variant-prices/1|status=200|duration=10ms|category=FAST
+2026-01-29 12:24:41.374 | [1aa5f918-9f84-4f4b-8d9d-417128173556] | 1aa5f918-9f84-4f4b-8d9d-417128173556|method=GET|path=/api/customers/2/variant-prices/1|status=200|duration=6ms|category=FAST
+2026-01-29 12:25:06.914 | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] | TRANSACTION | txn_id=54450323-6196-4584-bd1d-ae1aaea5dadf | duration=305ms | status=COMPLETED
+2026-01-29 12:25:06.917 | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] | 7074acfe-ecf1-4c76-9d31-1c8bf0400f1b|method=POST|path=/api/sales|status=201|duration=311ms|category=FAST

@@ -357,3 +357,23 @@
 2026-01-29 12:22:07.318 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
 2026-01-29 12:22:07.392 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
 2026-01-29 12:22:07.463 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:22.408 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:22.944 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:23.391 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:23.783 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:24.143 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:24.474 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:24.796 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:25.108 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:28.380 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:28.409 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:28.438 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:35.209 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:35.209 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:35.209 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:35.214 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:41.062 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:24:41.366 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:25:06.604 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-01-29 12:25:06.759 | INFO  | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=8 | customerId=2
+2026-01-29 12:25:06.914 | INFO  | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] | com.gasagency.audit | SALE_CREATED | saleId=4 | customerId=2 | customer=Mahesh Patil | amount=2800.0 | timestamp=2026-01-29 12:25:06
