@@ -42,16 +42,27 @@ export class AlertService {
   }
   
   /**
-   * Initialize alerts - called after successful login
+   * Initialize alerts - called after successful login or on page refresh if still authenticated
+   * This will reinitialize even if previously initialized to handle page refresh scenarios
    */
   public initialize(): void {
-    if (!this.initialized) {
-      try {
-        this.initializeAlerts();
-        this.initialized = true;
-      } catch (error) {
-        console.error('Failed to initialize alert service:', error);
+    try {
+      // Close any existing SSE connection and clear alerts before reinitializing
+      if (this.eventSource) {
+        console.log('🔌 Closing existing SSE connection before reinitializing');
+        this.eventSource.close();
+        this.eventSource = null;
       }
+      // Don't clear alerts here - we want to preserve them if already loaded
+      // Only clear if this is the first initialization
+      if (!this.initialized) {
+        this.alerts$.next([]);
+        this.alertCount$.next(0);
+      }
+      this.initializeAlerts();
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize alert service:', error);
     }
   }
   
@@ -186,13 +197,14 @@ export class AlertService {
   
   /**
    * Add alert to local state and update count
+   * Uses both id and alertKey to prevent duplicates
    */
   private addAlert(alert: Alert): void {
     console.log('Adding alert:', alert);
     const current = this.alerts$.value;
     
-    // Check if alert already exists
-    const exists = current.some(a => a.alertKey === alert.alertKey);
+    // Check if alert already exists by either id or alertKey
+    const exists = current.some(a => a.id === alert.id || a.alertKey === alert.alertKey);
     if (!exists) {
       current.push(alert);
       this.alerts$.next([...current]);

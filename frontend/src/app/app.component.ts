@@ -96,7 +96,11 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit() {
     console.log('AppComponent ngOnInit - isAuthenticated:', this.isAuthenticated);
     
-    // Don't initialize alerts here - only after login
+    // Initialize alerts if user is authenticated (handles page refresh)
+    if (this.isAuthenticated) {
+      this.alertService.initialize();
+    }
+    
     this.initializeAlerts();
 
     // Hide sidebar by default on mobile
