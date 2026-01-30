@@ -13,6 +13,7 @@ import com.gasagency.exception.ConcurrencyConflictException;
 import com.gasagency.util.AuditLogger;
 import com.gasagency.util.PerformanceTracker;
 import com.gasagency.util.ReferenceNumberGenerator;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -519,6 +520,9 @@ public class SaleService {
 
                 MDC.remove("transactionId");
 
+                // Clear dashboard cache since sales affect daily/monthly metrics
+                clearDashboardCache();
+
                 // Convert to DTO with sale items already loaded to avoid
                 // LazyInitializationException
                 return toDTOWithItems(sale, saleItems);
@@ -875,5 +879,10 @@ public class SaleService {
                                 bankAccountId,
                                 bankAccountName,
                                 items);
+        }
+
+        @CacheEvict(value = "dashboardCache", allEntries = true)
+        private void clearDashboardCache() {
+                // This method is called whenever data changes to invalidate dashboard cache
         }
 }

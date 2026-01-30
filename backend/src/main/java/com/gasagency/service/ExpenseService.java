@@ -7,6 +7,7 @@ import com.gasagency.entity.ExpenseCategory;
 import com.gasagency.repository.ExpenseRepository;
 import com.gasagency.repository.ExpenseCategoryRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -87,7 +88,14 @@ public class ExpenseService {
                 expense.setNotes(dto.getNotes());
 
                 Expense saved = repository.save(expense);
+                // Clear dashboard cache since expenses affect daily/monthly metrics
+                clearDashboardCache();
                 return convertToDTO(saved);
+        }
+
+        @CacheEvict(value = "dashboardCache", allEntries = true)
+        private void clearDashboardCache() {
+                // This method is called whenever data changes to invalidate dashboard cache
         }
 
         public ExpenseDTO updateExpense(Long id, ExpenseDTO dto) {
@@ -104,6 +112,8 @@ public class ExpenseService {
                 expense.setNotes(dto.getNotes());
 
                 Expense updated = repository.save(expense);
+                // Clear dashboard cache since expenses affect daily/monthly metrics
+                clearDashboardCache();
                 return convertToDTO(updated);
         }
 
@@ -112,6 +122,8 @@ public class ExpenseService {
                         throw new RuntimeException("Expense not found with id: " + id);
                 }
                 repository.deleteById(id);
+                // Clear dashboard cache since expenses affect daily/monthly metrics
+                clearDashboardCache();
         }
 
         @Transactional(readOnly = true)
