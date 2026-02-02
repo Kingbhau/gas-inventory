@@ -6,6 +6,8 @@ import com.gasagency.dto.DashboardSummaryDTO.DashboardAlertDTO;
 import com.gasagency.dto.DashboardSummaryDTO.BusinessInsightsDTO;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CustomerCylinderLedger;
+import com.gasagency.entity.Sale;
+import com.gasagency.entity.SaleItem;
 import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.*;
 import org.springframework.cache.annotation.Cacheable;
@@ -48,6 +50,7 @@ public class DashboardService {
     private final CustomerCylinderLedgerService customerCylinderLedgerService;
     private final CustomerRepository customerRepository;
     private final WarehouseRepository warehouseRepository;
+    private final SaleRepository saleRepository;
     private final CustomerCylinderLedgerRepository customerCylinderLedgerRepository;
     private final AlertNotificationService alertNotificationService;
 
@@ -59,6 +62,7 @@ public class DashboardService {
             CustomerCylinderLedgerService customerCylinderLedgerService,
             CustomerRepository customerRepository,
             WarehouseRepository warehouseRepository,
+            SaleRepository saleRepository,
             CustomerCylinderLedgerRepository customerCylinderLedgerRepository,
             AlertNotificationService alertNotificationService) {
         this.saleService = saleService;
@@ -68,6 +72,7 @@ public class DashboardService {
         this.customerCylinderLedgerService = customerCylinderLedgerService;
         this.customerRepository = customerRepository;
         this.warehouseRepository = warehouseRepository;
+        this.saleRepository = saleRepository;
         this.customerCylinderLedgerRepository = customerCylinderLedgerRepository;
         this.alertNotificationService = alertNotificationService;
     }
@@ -100,7 +105,7 @@ public class DashboardService {
             CompletableFuture<Void> customerMetrics = calculateCustomerMetricsAsync(dto);
             CompletableFuture<Void> breakdowns = calculateBreakdownsAsync(dto, monthStart, monthEnd);
             CompletableFuture<Void> dailyTrend = calculateDailySalesTrendAsync(dto, monthStart, monthEnd);
-            CompletableFuture<Void> topDebtors = getTopDebtorsAsync(dto, monthStart, monthEnd);
+            CompletableFuture<Void> topDebtors = getTopDebtorsAsync(dto);
 
             // Wait for all parallel operations to complete
             CompletableFuture.allOf(
@@ -181,12 +186,11 @@ public class DashboardService {
     }
 
     @Async("dashboardExecutor")
-    private CompletableFuture<Void> getTopDebtorsAsync(DashboardSummaryDTO dto, LocalDate monthStart,
-            LocalDate monthEnd) {
+    private CompletableFuture<Void> getTopDebtorsAsync(DashboardSummaryDTO dto) {
         try {
             Pageable topPage = PageRequest.of(0, 10);
             Page<CustomerDuePaymentDTO> debtors = customerDuePaymentService.getDuePaymentReport(
-                    monthStart, monthEnd, null, null, null, topPage);
+                    null, null, null, null, null, topPage);
             List<DashboardSummaryDTO.CustomerDuePaymentDTO> topDebtorsList = debtors.getContent().stream()
                     .map(d -> {
                         DashboardSummaryDTO.CustomerDuePaymentDTO innerDto = new DashboardSummaryDTO.CustomerDuePaymentDTO();
@@ -461,12 +465,10 @@ public class DashboardService {
             int totalCustomers = allCustomers.size();
             dto.setTotalActiveCustomers(totalCustomers);
 
-            // Get customers with dues from last 6 months
-            LocalDate sixMonthsAgo = LocalDate.now().minusMonths(6);
-            LocalDate today = LocalDate.now();
+            // Get customers with dues (all-time, not filtered by month)
             Page<CustomerDuePaymentDTO> customersWithDues = customerDuePaymentService
                     .getDuePaymentReport(
-                            sixMonthsAgo, today, null, null, null, PageRequest.of(0, Integer.MAX_VALUE));
+                            null, null, null, null, null, PageRequest.of(0, Integer.MAX_VALUE));
 
             int customersWithDuesCount = customersWithDues.getContent().size();
             int customersWithNoDues = Math.max(0, totalCustomers - customersWithDuesCount);
@@ -482,7 +484,8 @@ public class DashboardService {
             dto.setCustomersWithSlowPayment(slowPaymentCount);
             dto.setCustomersWithOverduePayment(overdueCount);
 
-            // Get pending returns (cylinders awaiting pickup) - top 5 records
+            // Get pending returns (cylinders awaiting pickup) - top 5 records from the
+            // month
             try {
                 List<CustomerCylinderLedgerDTO> allPendingBalances = customerCylinderLedgerService
                         .getAllPendingBalances();
@@ -545,20 +548,29 @@ public class DashboardService {
                 dto.setTopCategoryExpenseMonthly(topCategory);
             }
 
-            // Variant sales breakdown - get from sales summary or leave empty for now
+            // Variant sales breakdown - get from sales for the selected month
             try {
                 List<DashboardSummaryDTO.VariantSalesDTO> variantSales = new ArrayList<>();
-                List<InventoryStockDTO> allInventory = inventoryStockService.getAllStock();
 
-                // Group inventory by variant and sum quantities
+                // Get all sales for the month
+                Page<Sale> monthlySales = saleRepository.findByDateRange(monthStart, monthEnd,
+                        PageRequest.of(0, Integer.MAX_VALUE));
+
+                // Group sale items by variant and sum quantities
                 Map<String, Long> variantTotals = new HashMap<>();
                 long totalQty = 0;
 
-                for (InventoryStockDTO stock : allInventory) {
-                    String variantName = stock.getVariantName() != null ? stock.getVariantName() : "Unknown";
-                    long filledQty = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
-                    variantTotals.merge(variantName, filledQty, Long::sum);
-                    totalQty += filledQty;
+                for (Sale sale : monthlySales.getContent()) {
+                    if (sale.getSaleItems() != null) {
+                        for (SaleItem item : sale.getSaleItems()) {
+                            String variantName = item.getVariant() != null && item.getVariant().getName() != null
+                                    ? item.getVariant().getName()
+                                    : "Unknown";
+                            long qty = item.getQtyIssued() != null ? item.getQtyIssued() : 0L;
+                            variantTotals.merge(variantName, qty, Long::sum);
+                            totalQty += qty;
+                        }
+                    }
                 }
 
                 // Convert to VariantSalesDTO with percentage
@@ -575,7 +587,7 @@ public class DashboardService {
 
                 dto.setVariantSalesBreakdown(variantSales);
             } catch (Exception vse) {
-                logger.warn("Error calculating variant sales breakdown", vse);
+                logger.warn("Error calculating variant sales breakdown for date range", vse);
                 dto.setVariantSalesBreakdown(new ArrayList<>());
             }
 

@@ -882,7 +882,7 @@ public class SaleService {
         }
 
         @CacheEvict(value = "dashboardCache", allEntries = true)
-        private void clearDashboardCache() {
+        public void clearDashboardCache() {
                 // This method is called whenever data changes to invalidate dashboard cache
         }
 }

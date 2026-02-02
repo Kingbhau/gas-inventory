@@ -3,6 +3,7 @@ package com.gasagency.controller;
 import com.gasagency.dto.DashboardSummaryDTO;
 import com.gasagency.service.DashboardService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,13 @@ public class DashboardController {
             }
 
             DashboardSummaryDTO dashboard = dashboardService.getDashboardSummary(year, month);
-            return ResponseEntity.ok(dashboard);
+
+            // Add cache control headers to prevent browser/proxy caching
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate")
+                    .header(HttpHeaders.PRAGMA, "no-cache")
+                    .header(HttpHeaders.EXPIRES, "0")
+                    .body(dashboard);
         } catch (Exception e) {
             logger.error("Error fetching dashboard summary", e);
             return ResponseEntity.status(500).build();

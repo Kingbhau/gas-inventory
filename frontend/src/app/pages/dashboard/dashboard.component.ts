@@ -117,8 +117,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        console.log('Dashboard refresh triggered from data-refresh service');
-        this.loadDashboardData();
+        console.log('[Dashboard] Refresh triggered from data-refresh service');
+        this.refreshDashboardData(false); // false = don't show toast
       });
   }
 
@@ -217,7 +217,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingService.show('Loading dashboard for ' + this.monthNames[this.selectedMonth - 1] + '...');
 
-    this.dashboardService.getDashboardSummary(this.selectedYear, this.selectedMonth)
+    this.dashboardService.getDashboardSummary(this.selectedYear, this.selectedMonth, false)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {
@@ -237,6 +237,47 @@ export class DashboardComponent implements OnInit, OnDestroy {
           console.error('Dashboard error:', error);
         }
       });
+  }
+
+  /**
+   * Force refresh dashboard data, bypassing cache
+   * @param showToast whether to show success toast (true for manual refresh, false for automatic)
+   */
+  refreshDashboardData(showToast: boolean = true) {
+    this.isLoading = true;
+    this.loadingService.show('Refreshing dashboard...');
+
+    this.dashboardService.getDashboardSummary(this.selectedYear, this.selectedMonth, true)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          this.loadingService.hide();
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (data) => {
+          this.dashboardData = data;
+          this.processDashboardData(data);
+          this.cdr.markForCheck();
+          if (showToast) {
+            this.toastr.success('Dashboard refreshed', 'Success');
+          }
+          console.log('[Dashboard] Data refreshed successfully', data);
+        },
+        error: (error) => {
+          const errorMessage = error?.message || 'Error loading dashboard data';
+          this.toastr.error(errorMessage, 'Error');
+          console.error('[Dashboard] Error loading data:', error);
+        }
+      });
+  }
+
+  /**
+   * Manual refresh button handler
+   */
+  onManualRefresh() {
+    this.refreshDashboardData();
   }
 
   private processDashboardData(data: DashboardSummary) {

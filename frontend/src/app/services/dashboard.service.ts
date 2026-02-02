@@ -148,7 +148,7 @@ export class DashboardService {
   private apiUrl = getApiUrl('/dashboard');
   private dashboardCache$: Observable<DashboardSummary> | null = null;
   private lastFetchTime = 0;
-  private cacheExpireTime = 5 * 60 * 1000; // 5 minutes
+  private cacheExpireTime = 1 * 60 * 1000; // 1 minute (reduced from 5 minutes)
   private cachedYear: number | null = null;
   private cachedMonth: number | null = null;
 
@@ -171,6 +171,12 @@ export class DashboardService {
     const shouldRefresh = forceRefresh || !this.dashboardCache$ || isCacheExpired || monthYearChanged;
 
     if (shouldRefresh) {
+      // Clear cache if force refresh or month/year changed
+      if (forceRefresh || monthYearChanged) {
+        console.log('[DashboardService] Clearing cache - forceRefresh:', forceRefresh, 'monthYearChanged:', monthYearChanged);
+        this.dashboardCache$ = null;
+      }
+
       let url = `${this.apiUrl}/comprehensive`;
       if (year || month) {
         const params = new URLSearchParams();
@@ -178,6 +184,8 @@ export class DashboardService {
         if (month) params.append('month', month.toString());
         url += '?' + params.toString();
       }
+
+      console.log('[DashboardService] Fetching dashboard data from:', url, 'forceRefresh:', forceRefresh);
 
       this.dashboardCache$ = this.http
         .get<DashboardSummary>(url)
@@ -190,6 +198,8 @@ export class DashboardService {
       this.lastFetchTime = now;
       this.cachedYear = year || null;
       this.cachedMonth = month || null;
+    } else {
+      console.log('[DashboardService] Using cached dashboard data');
     }
 
     return this.dashboardCache$ as Observable<DashboardSummary>;
@@ -199,6 +209,7 @@ export class DashboardService {
    * Force refresh dashboard data (bypass cache)
    */
   refreshDashboard(): Observable<DashboardSummary> {
+    console.log('[DashboardService] refreshDashboard() called');
     this.clearCache();
     return this.getDashboardSummary(null, null, true);
   }
@@ -207,6 +218,7 @@ export class DashboardService {
    * Clear cache
    */
   clearCache(): void {
+    console.log('[DashboardService] clearCache() called');
     this.dashboardCache$ = null;
     this.lastFetchTime = 0;
     this.cachedYear = null;
