@@ -10,7 +10,6 @@ import com.gasagency.entity.Sale;
 import com.gasagency.entity.SaleItem;
 import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.*;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -78,10 +77,9 @@ public class DashboardService {
     }
 
     /**
-     * OPTIMIZED: Get comprehensive dashboard summary with caching
-     * Cache: 2 minutes (real-time dashboard with acceptable freshness)
+     * OPTIMIZED: Get comprehensive dashboard summary
+     * Note: Cache has been disabled to ensure real-time data
      */
-    @Cacheable(value = "dashboardCache", key = "'summary_' + #year + '_' + #month", unless = "#result == null")
     public DashboardSummaryDTO getDashboardSummary(Integer year, Integer month) {
         DashboardSummaryDTO dto = new DashboardSummaryDTO();
 

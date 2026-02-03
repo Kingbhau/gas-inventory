@@ -14,6 +14,7 @@ import {
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { AuthService } from '../../services/auth.service';
 import { finalize, Subject, debounceTime } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -67,6 +68,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Dashboard Data
   dashboardData: DashboardSummary | null = null;
   isLoading = true;
+  
+  // Role check
+  get isOwner(): boolean {
+    const userInfo = this.authService.getUserInfo();
+    return userInfo?.role === 'OWNER';
+  }
 
   // KPI Cards
   todayKpiCards: KPICard[] = [];
@@ -103,10 +110,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private dataRefreshService: DataRefreshService
+    private dataRefreshService: DataRefreshService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    // Clear cache when dashboard component initializes to ensure fresh data
+    this.dashboardService.clearCache();
+    
     // Load fresh data every time dashboard is opened
     this.loadDashboardData();
     
@@ -227,6 +238,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data) => {
+          console.log('[Dashboard] Dashboard data loaded:', data);
           this.dashboardData = data;
           this.processDashboardData(data);
           this.cdr.markForCheck();
@@ -234,7 +246,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         error: (error) => {
           const errorMessage = error?.message || 'Error loading dashboard data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Dashboard error:', error);
+          console.error('[Dashboard] Error loading dashboard:', error);
+          this.cdr.markForCheck();
         }
       });
   }
@@ -278,6 +291,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   onManualRefresh() {
     this.refreshDashboardData();
+  }
+
+  /**
+   * Refresh dashboard - called from template
+   */
+  refreshDashboard() {
+    this.refreshDashboardData(true);
   }
 
   private processDashboardData(data: DashboardSummary) {
@@ -329,15 +349,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
         value: totalExpenses.toFixed(0),
         subtext: `₹${this.formatCurrency(totalExpenses)}`,
         color: 'orange'
-      },
-      {
+      }
+    ];
+    
+    // Add profit card only for OWNER users
+    if (this.isOwner) {
+      this.todayKpiCards.push({
         icon: faGauge,
         label: 'Today Profit',
         value: netProfit.toFixed(0),
         subtext: `₹${this.formatCurrency(netProfit)} | Margin: ${profitMargin.toFixed(1)}%`,
         color: netProfit > 0 ? 'green' : 'red',
         trend: netProfit > 0 ? 'up' : 'down'
-      },
+      });
+    }
+    
+    // Add remaining cards
+    this.todayKpiCards.push(
       {
         icon: faCreditCard,
         label: 'Collection Rate',
@@ -373,7 +401,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         subtext: 'Today\'s highest sale',
         color: 'blue'
       }
-    ];
+    );
   }
 
   private buildMonthlyKpiCards(data: DashboardSummary) {
@@ -392,22 +420,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
         value: `₹${this.formatCurrency(data.monthlyTotalExpenses)}`,
         subtext: `${((data.monthlyTotalExpenses / data.monthlyTotalSales) * 100).toFixed(1)}% of sales`,
         color: 'orange'
-      },
-      {
+      }
+    ];
+    
+    // Add profit card only for OWNER users
+    if (this.isOwner) {
+      this.monthlyKpiCards.push({
         icon: faGauge,
         label: 'Monthly Profit',
         value: data.monthlyNetProfit.toFixed(0),
         subtext: `₹${this.formatCurrency(data.monthlyNetProfit)} | Projected: ₹${this.formatCurrency(data.monthlyProjectedProfit)}`,
         color: 'green'
-      },
-      {
-        icon: faCalendar,
-        label: 'Projected This Month',
-        value: data.daysInMonth,
-        subtext: `₹${this.formatCurrency(data.monthlyProjectedSales)} sales`,
-        color: 'blue'
-      }
-    ];
+      });
+    }
+    
+    this.monthlyKpiCards.push({
+      icon: faCalendar,
+      label: 'Projected This Month',
+      value: data.daysInMonth,
+      subtext: `₹${this.formatCurrency(data.monthlyProjectedSales)} sales`,
+      color: 'blue'
+    });
   }
 
   private buildCharts(data: DashboardSummary) {
@@ -759,27 +792,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // Event Handlers
-  refreshDashboard() {
-    this.loadingService.show('Refreshing dashboard...');
-    this.dashboardService.refreshDashboard()
-      .pipe(
-        takeUntil(this.destroy$),
-        finalize(() => this.loadingService.hide())
-)
-      .subscribe({
-        next: (data) => {
-          this.dashboardData = data;
-          this.processDashboardData(data);
-          this.toastr.success('Dashboard refreshed successfully', 'Success');
-          this.cdr.markForCheck();
-        },
-        error: (error) => {
-          this.toastr.error('Error refreshing dashboard', 'Error');
-          console.error('Refresh error:', error);
-        }
-      });
-  }
-
   getTrendIcon(trend?: string) {
     switch (trend) {
       case 'up':

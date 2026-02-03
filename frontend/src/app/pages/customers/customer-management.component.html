@@ -293,7 +293,7 @@
 
         <!-- Variant-Specific Filled Cylinders Section -->
         <div class="form-section pricing-section form-full-width" *ngIf="variantFilledCylindersArray.length > 0">
-          <h4 class="section-title">Initial Filled Cylinders per Variant (Required)</h4>
+          <h4 class="section-title">Initial Empty Cylinders per Variant (Required)</h4>
           <div class="pricing-grid">
             <div *ngFor="let filledControl of variantFilledCylindersArray.controls; let i = index" 
                  [formGroup]="$any(filledControl)" class="pricing-card"
@@ -302,7 +302,7 @@
                 <strong>{{ filledControl.get('variantName')?.value }}</strong>
               </div>
               <div class="form-group">
-                <label class="form-label">Filled Cylinders <span class="required">*</span></label>
+                <label class="form-label">Empty Cylinders <span class="required">*</span></label>
                 <input formControlName="filledCylinders" type="number" class="form-control" placeholder="0" min="0"
                        [readonly]="filledControl.get('filledCylinders')?.disabled"
                        [class.readonly]="filledControl.get('filledCylinders')?.disabled">

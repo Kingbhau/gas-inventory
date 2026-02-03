@@ -139,8 +139,8 @@
 
     <!-- Monthly Charts Row -->
     <div class="charts-grid charts-grid-3">
-      <!-- Monthly Sales Trend Chart -->
-      <div class="chart-card chart-card-wide">
+      <!-- Monthly Sales Trend Chart - OWNER ONLY -->
+      <div *ngIf="isOwner" class="chart-card chart-card-wide">
         <div class="chart-header">
           <h3 class="chart-title">Sales & Profit Trend</h3>
           <p class="chart-subtitle">Daily trend throughout the month</p>
@@ -249,8 +249,8 @@
     </div>
   </div>
 
-  <!-- BUSINESS INSIGHTS SECTION -->
-  <div class="section-container" *ngIf="dashboardData">
+  <!-- BUSINESS INSIGHTS SECTION - OWNER ONLY -->
+  <div class="section-container" *ngIf="dashboardData && isOwner">
     <div class="section-header">
       <h2 class="section-title">Business Insights</h2>
       <span class="section-subtitle">Trends, patterns & actionable metrics</span>

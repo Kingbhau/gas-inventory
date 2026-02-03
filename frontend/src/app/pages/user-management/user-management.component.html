@@ -65,7 +65,7 @@
                       <button class="dropdown-item" (click)="openDetailsModal(user); user.showMenu = false">
                         <fa-icon [icon]="faEye"></fa-icon> View Details
                       </button>
-                      <button class="dropdown-item" (click)="editUser(user); user.showMenu = false">
+                      <button *ngIf="canEditUser(user)" class="dropdown-item" (click)="editUser(user); user.showMenu = false">
                         <fa-icon [icon]="faEdit"></fa-icon> Edit
                       </button>
                       <!-- <button class="dropdown-item danger" (click)="openDeleteModal(user); user.showMenu = false">
@@ -188,8 +188,7 @@
           <label class="form-label">Role <span class="required">*</span></label>
           <select formControlName="role" class="form-control">
             <option value="">Select Role</option>
-            <option value="MANAGER">Manager</option>
-            <option value="STAFF">Staff</option>
+            <option *ngFor="let role of availableRoles" [value]="role.value">{{ role.label }}</option>
           </select>
         </div>
 

@@ -5,6 +5,7 @@ import com.gasagency.service.BankDepositService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -21,26 +22,29 @@ public class BankDepositController {
     }
 
     /**
-     * Create a new bank deposit
+     * Create a new bank deposit - OWNER ONLY
      */
     @PostMapping
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<BankDepositDTO> createDeposit(@Valid @RequestBody BankDepositDTO depositDTO) {
         BankDepositDTO created = bankDepositService.createDeposit(depositDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     /**
-     * Get deposit by ID
+     * Get deposit by ID - OWNER and MANAGER can view
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<BankDepositDTO> getDeposit(@PathVariable Long id) {
         return ResponseEntity.ok(bankDepositService.getDepositById(id));
     }
 
     /**
-     * Get all deposits with filters and pagination
+     * Get all deposits with filters and pagination - OWNER and MANAGER can view
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<Page<BankDepositDTO>> getDeposits(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -61,9 +65,10 @@ public class BankDepositController {
     }
 
     /**
-     * Update a bank deposit
+     * Update a bank deposit - OWNER ONLY
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<BankDepositDTO> updateDeposit(
             @PathVariable Long id,
             @Valid @RequestBody BankDepositDTO depositDTO) {
@@ -72,18 +77,20 @@ public class BankDepositController {
     }
 
     /**
-     * Delete a bank deposit
+     * Delete a bank deposit - OWNER ONLY
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<Void> deleteDeposit(@PathVariable Long id) {
         bankDepositService.deleteDeposit(id);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * Get deposit summary
+     * Get deposit summary - OWNER ONLY
      */
     @GetMapping("/summary")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<Map<String, Object>> getDepositSummary(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,

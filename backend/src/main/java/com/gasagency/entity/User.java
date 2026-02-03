@@ -45,7 +45,7 @@ public class User extends Auditable {
     private List<RefreshToken> refreshTokens;
 
     public enum Role {
-        MANAGER, STAFF
+        OWNER, MANAGER, STAFF
     }
 
     // Getters and setters

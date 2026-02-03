@@ -94,10 +94,10 @@
                 <button class="btn-action" (click)="viewDeposit(deposit)" title="View Details">
                   <fa-icon [icon]="faEye"></fa-icon>
                 </button>
-                <button class="btn-action" (click)="editDeposit(deposit)" title="Edit">
+                <button *ngIf="isOwner" class="btn-action" (click)="editDeposit(deposit)" title="Edit">
                   <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
-                <button class="btn-action" (click)="deleteDeposit(deposit)" title="Delete">
+                <button *ngIf="isOwner" class="btn-action" (click)="deleteDeposit(deposit)" title="Delete">
                   <fa-icon [icon]="faTrash"></fa-icon>
                 </button>
               </td>

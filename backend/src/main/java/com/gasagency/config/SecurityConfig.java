@@ -50,9 +50,9 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers("/users/**").hasRole("MANAGER")
-                        .requestMatchers("/manager/**").hasRole("MANAGER")
-                        .requestMatchers("/staff/**").hasAnyRole("MANAGER", "STAFF")
+                        .requestMatchers("/users/**").hasAnyRole("OWNER", "MANAGER")
+                        .requestMatchers("/manager/**").hasAnyRole("OWNER", "MANAGER")
+                        .requestMatchers("/staff/**").hasAnyRole("OWNER", "MANAGER", "STAFF")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

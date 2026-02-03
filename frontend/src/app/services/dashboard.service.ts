@@ -148,7 +148,7 @@ export class DashboardService {
   private apiUrl = getApiUrl('/dashboard');
   private dashboardCache$: Observable<DashboardSummary> | null = null;
   private lastFetchTime = 0;
-  private cacheExpireTime = 1 * 60 * 1000; // 1 minute (reduced from 5 minutes)
+  private cacheExpireTime = 30 * 1000; // 30 seconds (reduced from 1 minute)
   private cachedYear: number | null = null;
   private cachedMonth: number | null = null;
 
@@ -186,6 +186,16 @@ export class DashboardService {
       }
 
       console.log('[DashboardService] Fetching dashboard data from:', url, 'forceRefresh:', forceRefresh);
+
+      // Create a new observable without cache if force refresh
+      if (forceRefresh) {
+        return this.http
+          .get<DashboardSummary>(url)
+          .pipe(
+            timeout(30000), // 30 second timeout
+            catchError(this.handleError)
+          );
+      }
 
       this.dashboardCache$ = this.http
         .get<DashboardSummary>(url)

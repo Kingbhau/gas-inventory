@@ -131,7 +131,7 @@
           <fa-icon [icon]="faTimes"></fa-icon>
         </button>
         <nav class="sidebar-nav">
-          <ng-container *ngIf="isManager; else staffNav">
+          <ng-container *ngIf="isOwner || isManager; else staffNav">
             <div class="nav-section">
               <div class="nav-label">Main</div>
               <ul class="nav-items">
@@ -144,7 +144,7 @@
               <ul class="nav-items">
                 <li><a routerLink="/sales/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Sales Entry</span></a></li>
                 <li><a routerLink="/empty-return" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span><span class="nav-text">Empty Return</span></a></li>
-                <li *ngIf="isManager"><a routerLink="/expenses/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faReceipt"></fa-icon></span><span class="nav-text">Expense Entry</span></a></li>
+                <li><a routerLink="/expenses/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faReceipt"></fa-icon></span><span class="nav-text">Expense Entry</span></a></li>
                 <li><a routerLink="/suppliers/transactions" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Supplier Transactions</span></a></li>
               </ul>
             </div>
@@ -173,8 +173,8 @@
               <div class="nav-label">Finance</div>
               <ul class="nav-items">
                 <li><a routerLink="/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faRupeeSign"></fa-icon></span><span class="nav-text">Payments</span></a></li>
-                <li *ngIf="isManager"><a routerLink="/bank-deposits/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faRupeeSign"></fa-icon></span><span class="nav-text">Bank Deposit</span></a></li>
-                <li *ngIf="isManager"><a routerLink="/bank-deposits/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Deposit History</span></a></li>
+                <li *ngIf="isOwner"><a routerLink="/bank-deposits/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faRupeeSign"></fa-icon></span><span class="nav-text">Bank Deposit</span></a></li>
+                <li *ngIf="isOwner || isManager"><a routerLink="/bank-deposits/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Deposit History</span></a></li>
               </ul>
             </div>
             <div class="nav-section">

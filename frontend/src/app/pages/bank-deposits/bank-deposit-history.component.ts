@@ -12,6 +12,7 @@ import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { LoadingService } from '../../services/loading.service';
+import { AuthService } from '../../services/auth.service';
 import { SharedModule } from '../../shared/shared.module';
 import { BankDeposit, BankAccount } from '../../models/index';
 import { PaymentMode } from '../../models/payment-mode.model';
@@ -69,12 +70,18 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
   
   private destroy$ = new Subject<void>();
 
+  get isOwner(): boolean {
+    const userInfo = this.authService.getUserInfo();
+    return userInfo?.role === 'OWNER';
+  }
+
   constructor(
     private bankDepositService: BankDepositService,
     private bankAccountService: BankAccountService,
     private paymentModeService: PaymentModeService,
     private dateUtility: DateUtilityService,
     private loadingService: LoadingService,
+    private authService: AuthService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private fb: FormBuilder

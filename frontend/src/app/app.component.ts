@@ -58,6 +58,9 @@ export class AppComponent implements OnInit, OnDestroy {
   get isStaff(): boolean {
     return this.userInfo?.role === 'STAFF' || this.userRole === 'STAFF';
   }
+  get isOwner(): boolean {
+    return this.userInfo?.role === 'OWNER' || this.userRole === 'OWNER';
+  }
 
   isLoginPage() {
     return this.router.url === '/login';

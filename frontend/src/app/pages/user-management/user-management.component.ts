@@ -54,6 +54,54 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   deleteUserTarget: any = null;
 
   currentUserId: number | null = null;
+  currentUserRole: string | null = null;
+  availableRoles: { label: string, value: string }[] = [];
+  editingUserRole: string | null = null;
+
+  get isOwner(): boolean {
+    return this.currentUserRole === 'OWNER';
+  }
+
+  canEditUser(user: any): boolean {
+    // Owner can edit any user
+    if (this.isOwner) {
+      return true;
+    }
+    // Manager can only edit Manager and Staff users, not Owner users
+    if (this.currentUserRole === 'MANAGER') {
+      return user.role !== 'OWNER';
+    }
+    // Staff cannot edit any user
+    return false;
+  }
+
+  private updateAvailableRoles(): void {
+    let roles = [];
+    
+    if (this.isOwner) {
+      // Owner can create Owner, Manager, and Staff
+      roles = [
+        { label: 'Owner', value: 'OWNER' },
+        { label: 'Manager', value: 'MANAGER' },
+        { label: 'Staff', value: 'STAFF' }
+      ];
+    } else {
+      // Manager can only create Manager and Staff
+      roles = [
+        { label: 'Manager', value: 'MANAGER' },
+        { label: 'Staff', value: 'STAFF' }
+      ];
+    }
+    
+    // If editing a user, ensure their current role is available even if it's not normally allowed for creation
+    if (this.editingUserRole && !roles.find(r => r.value === this.editingUserRole)) {
+      if (this.editingUserRole === 'OWNER') {
+        roles.unshift({ label: 'Owner', value: 'OWNER' });
+      }
+    }
+    
+    this.availableRoles = roles;
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -69,6 +117,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const userInfo = this.authService.getUserInfo();
+    this.currentUserRole = userInfo?.role || null;
+    this.updateAvailableRoles();
     const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
     this.userForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
@@ -194,9 +244,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   openAddForm() {
     this.showForm = true;
     this.editingId = null;
+    this.editingUserRole = null;
     this.userForm.reset();
     const userInfo = this.authService.getUserInfo();
     const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
+    this.updateAvailableRoles();
     this.userForm.patchValue({ active: true, businessId, role: '' });
     this.cdr.markForCheck();
   }
@@ -204,11 +256,18 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   editUser(user: any) {
     this.showForm = true;
     this.editingId = user.id;
+    this.editingUserRole = user.role;
+    this.updateAvailableRoles();
     this.userForm.patchValue({
       ...user,
-      active: user.active !== undefined ? user.active : true
+      active: user.active !== undefined ? user.active : true,
+      role: user.role || ''
     });
+    // Force change detection and wait a tick to ensure dropdown options are rendered
     this.cdr.markForCheck();
+    setTimeout(() => {
+      this.cdr.markForCheck();
+    }, 0);
   }
 
   openDetailsModal(user: any) {
@@ -323,9 +382,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   closeForm() {
     this.showForm = false;
     this.editingId = null;
+    this.editingUserRole = null;
     this.isSubmitting = false;
+    this.updateAvailableRoles();
     this.userForm.reset();
-    this.userForm.patchValue({ active: true });
+    this.userForm.patchValue({ active: true, role: '' });
     this.cdr.markForCheck();
   }
 }
