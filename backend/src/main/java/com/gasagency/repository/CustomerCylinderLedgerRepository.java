@@ -24,7 +24,8 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
         Page<CustomerCylinderLedger> findByCustomer(Customer customer, Pageable pageable);
 
         /**
-         * OPTIMIZED: Fetch customer ledger entries within a date range at database level
+         * OPTIMIZED: Fetch customer ledger entries within a date range at database
+         * level
          * This prevents loading unnecessary records and reduces memory usage
          */
         @Query("SELECT l FROM CustomerCylinderLedger l " +
@@ -50,6 +51,15 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
 
         List<CustomerCylinderLedger> findByVariant(CylinderVariant variant);
 
+        // Get all ledger entries by sale ID
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.sale.id = :saleId")
+        List<CustomerCylinderLedger> findBySaleId(@Param("saleId") Long saleId);
+
+        // Get ledger entry by sale ID and variant ID
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.sale.id = :saleId AND l.variant.id = :variantId")
+        List<CustomerCylinderLedger> findBySaleAndVariant(@Param("saleId") Long saleId,
+                        @Param("variantId") Long variantId);
+
         // Get all ledger entries for a specific warehouse
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.warehouse.id = :warehouseId ORDER BY l.transactionDate DESC")
         List<CustomerCylinderLedger> findByWarehouseId(@Param("warehouseId") Long warehouseId);
@@ -69,7 +79,28 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         @Param("transactionDate") LocalDate transactionDate,
                         @Param("refType") CustomerCylinderLedger.TransactionType refType);
 
-        // === PESSIMISTIC LOCKING FOR CONCURRENT OPERATIONS ===
+        // Get ledger entries for a specific date and multiple reference types (Day
+        // Book)
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.transactionDate = :transactionDate " +
+                        "AND l.refType IN :refTypes ORDER BY l.transactionDate DESC, l.id DESC")
+        List<CustomerCylinderLedger> findByTransactionDateAndRefTypeIn(
+                        @Param("transactionDate") LocalDate transactionDate,
+                        @Param("refTypes") List<CustomerCylinderLedger.TransactionType> refTypes);
+
+        // Get empty return transactions with optional date range and customer/variant filtering
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE l.refType = 'EMPTY_RETURN' " +
+                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
+                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
+                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
+                        "ORDER BY l.transactionDate DESC")
+        Page<CustomerCylinderLedger> findEmptyReturns(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId,
+                        Pageable pageable);
 
         // Lock for reading latest balance without duplicates
         @Lock(LockModeType.PESSIMISTIC_WRITE)

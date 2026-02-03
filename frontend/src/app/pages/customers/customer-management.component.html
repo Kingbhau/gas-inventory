@@ -56,13 +56,13 @@
                 <span *ngIf="!customer.totalPending || customer.totalPending <= 0" class="text-muted">0</span>
               </td>
               <td class="text-center actions-cell">
-                <div class="dropdown" style="position: relative; display: inline-block;">
+                <div class="dropdown">
                   <button class="action-btn" (click)="toggleCustomerMenu(customer)" title="More Actions">
                     <fa-icon [icon]="faEllipsisV"></fa-icon>
                   </button>
+                  <div *ngIf="customer.showMenu" (click)="customer.showMenu = false" class="dropdown-backdrop"></div>
                   <div *ngIf="customer.showMenu">
-                    <div class="dropdown-backdrop" (click)="customer.showMenu = false"></div>
-                    <div class="dropdown-menu show" [ngClass]="{'bottom-fix': isLastRow(customer)}">
+                    <div class="dropdown-menu show" [ngClass]="{'bottom-fix': isLastRow(customer)}" (click)="$event.stopPropagation()">
                       <button class="dropdown-item" (click)="openDetailsModal(customer); customer.showMenu = false">
                         <fa-icon [icon]="faEye"></fa-icon> View Details
                       </button>

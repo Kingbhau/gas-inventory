@@ -1208,6 +1208,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     const changes: string[] = [];
     const refType = this.selectedLedgerEntry.refType;
 
+    // Parse currency strings to numbers
+    const totalAmountNum = this.parseCurrencyToNumber(this.updateForm.totalAmount);
+    const amountReceivedNum = this.parseCurrencyToNumber(this.updateForm.amountReceived);
+
     // For SALE: show if filled, empty, or total/payment changed
     if (refType === 'SALE') {
       if (this.updateForm.filledOut !== this.selectedLedgerEntry.filledOut) {
@@ -1216,11 +1220,11 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
         changes.push(`Empty: ${this.selectedLedgerEntry.emptyIn} → ${this.updateForm.emptyIn}`);
       }
-      if (this.updateForm.totalAmount !== this.selectedLedgerEntry.totalAmount) {
-        changes.push(`Total: ₹${this.selectedLedgerEntry.totalAmount?.toFixed(2)} → ₹${this.updateForm.totalAmount?.toFixed(2)}`);
+      if (totalAmountNum !== this.selectedLedgerEntry.totalAmount) {
+        changes.push(`Total: ₹${this.selectedLedgerEntry.totalAmount?.toFixed(2)} → ₹${totalAmountNum.toFixed(2)}`);
       }
-      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
-        changes.push(`Received: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Received: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${amountReceivedNum.toFixed(2)}`);
       }
     }
 
@@ -1229,15 +1233,15 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
         changes.push(`Empty Count: ${this.selectedLedgerEntry.emptyIn} → ${this.updateForm.emptyIn}`);
       }
-      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
-        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${amountReceivedNum.toFixed(2)}`);
       }
     }
 
     // For PAYMENT: show only payment change
     if (refType === 'PAYMENT') {
-      if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
-        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${this.updateForm.amountReceived?.toFixed(2)}`);
+      if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
+        changes.push(`Payment: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${amountReceivedNum.toFixed(2)}`);
       }
     }
 
@@ -1527,6 +1531,18 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  // Helper function to convert currency-formatted string to number
+  parseCurrencyToNumber(value: any): number {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      // Remove commas and convert to number
+      return parseFloat(value.replace(/,/g, ''));
+    }
+    return 0;
+  }
+
   submitUpdate() {
     if (!this.selectedLedgerEntry) {
       this.toastr.error('No entry selected', 'Error');
@@ -1539,8 +1555,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Convert currency strings to numbers
+    const amountReceivedNum = this.parseCurrencyToNumber(this.updateForm.amountReceived);
+    const totalAmountNum = this.parseCurrencyToNumber(this.updateForm.totalAmount);
+
     // If amount received is greater than 0, payment mode is required
-    if (this.updateForm.amountReceived > 0 && !this.updateForm.paymentMode) {
+    if (amountReceivedNum > 0 && !this.updateForm.paymentMode) {
       this.toastr.error('Payment mode is required when amount received is greater than 0', 'Validation Error');
       return;
     }
@@ -1561,7 +1581,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.updateForm.totalAmount < 0 || this.updateForm.amountReceived < 0) {
+    if (totalAmountNum < 0 || amountReceivedNum < 0) {
       this.updateError = 'Total or received amounts cannot be negative';
       this.cdr.markForCheck();
       return;
@@ -1581,11 +1601,11 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
       updateData.emptyIn = this.updateForm.emptyIn;
     }
-    if (this.updateForm.totalAmount !== this.selectedLedgerEntry.totalAmount) {
-      updateData.totalAmount = this.updateForm.totalAmount;
+    if (totalAmountNum !== this.selectedLedgerEntry.totalAmount) {
+      updateData.totalAmount = totalAmountNum;
     }
-    if (this.updateForm.amountReceived !== this.selectedLedgerEntry.amountReceived) {
-      updateData.amountReceived = this.updateForm.amountReceived;
+    if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
+      updateData.amountReceived = amountReceivedNum;
     }
     if (this.updateForm.paymentMode !== this.selectedLedgerEntry.paymentMode) {
       updateData.paymentMode = this.updateForm.paymentMode;

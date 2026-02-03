@@ -124,6 +124,22 @@ export interface BankAccount {
   updatedAt?: string;
 }
 
+// Bank Deposit (Track client cash deposits to bank)
+export interface BankDeposit {
+  id?: string;
+  bankAccountId: number;
+  bankName?: string;
+  accountNumber?: string;
+  depositDate: string; // ISO date format (YYYY-MM-DD)
+  depositAmount: number;
+  referenceNumber: string; // Deposit slip number, cheque number, etc.
+  paymentMode: string; // Cash, Cheque, Transfer
+  notes: string; // Additional remarks
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+}
+
 // Pagination
 export interface PaginationRequest {
   page: number;

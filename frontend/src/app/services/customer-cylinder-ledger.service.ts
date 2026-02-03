@@ -120,6 +120,34 @@ export class CustomerCylinderLedgerService {
   }
 
   /**
+   * Get empty returns with filtering
+   */
+  getEmptyReturns(
+    page: number = 0,
+    pageSize: number = 10,
+    sortBy: string = 'transactionDate',
+    direction: string = 'DESC',
+    fromDate?: string,
+    toDate?: string,
+    customerId?: string,
+    variantId?: string
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', pageSize.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (customerId) params = params.set('customerId', customerId);
+    if (variantId) params = params.set('variantId', variantId);
+
+    return this.http.get(`${this.apiUrl}/empty-returns`, { params, withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  /**
    * Update a ledger entry with full chain recalculation
    * Validates that no due amounts go negative anywhere in the chain
    */

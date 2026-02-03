@@ -18,6 +18,14 @@ export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'dashboard', component: DashboardComponent, canActivate: [RoleGuard], data: { roles: ['MANAGER'] } },
   
+  // Day Book Route
+  {
+    path: 'daybook',
+    loadComponent: () => import('./pages/daybook/daybook.component').then(m => m.DayBookComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
+  },
+  
   // Sales Routes
   {
     path: 'sales/entry',
@@ -57,6 +65,21 @@ export const routes: Routes = [
     canActivate: [RoleGuard],
     data: { roles: ['MANAGER'] }
   },
+
+  // Bank Deposits Routes
+  {
+    path: 'bank-deposits/entry',
+    loadComponent: () => import('./pages/bank-deposits/bank-deposit-entry.component').then(m => m.BankDepositEntryComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
+  },
+  {
+    path: 'bank-deposits/history',
+    loadComponent: () => import('./pages/bank-deposits/bank-deposit-history.component').then(m => m.BankDepositHistoryComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
+  },
+  { path: 'bank-deposits', redirectTo: 'bank-deposits/entry', pathMatch: 'full' },
 
   // User Management Route
   {
@@ -120,6 +143,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/empty-return/empty-return.component').then(m => m.EmptyReturnComponent),
     canActivate: [RoleGuard],
     data: { roles: ['MANAGER', 'STAFF'] }
+  },
+  {
+    path: 'empty-return/history',
+    loadComponent: () => import('./pages/empty-return/empty-return-history.component').then(m => m.EmptyReturnHistoryComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['MANAGER'] }
   },
   // Catch-all
   { path: '**', redirectTo: 'dashboard' }

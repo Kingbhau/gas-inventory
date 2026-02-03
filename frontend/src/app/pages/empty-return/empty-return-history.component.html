@@ -1,0 +1,166 @@
+<div class="empty-return-history-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Empty Return History</h1>
+    <p class="page-subtitle">View and manage all empty cylinder returns</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All Customers"
+          (selectedChange)="selectedCustomer = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <br>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Variant"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top: 1rem;">
+      <div class="filter-actions">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Returns Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Empty Return Records</h3>
+      <span class="record-count">{{ filteredEmptyReturns.length }} records</span>
+    </div>
+    <div class="card-body">
+      <div *ngIf="filteredEmptyReturns.length > 0; else noData" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+                <th>Date</th>
+                <th>Reference #</th>
+                <th>Customer</th>
+                <th>Variant & Qty</th>
+                <th>Amount Received</th>
+                <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emptyReturn of paginatedEmptyReturns">
+                <td>{{ emptyReturn.transactionDate | date: 'dd MMM yyyy' }}</td>
+                <td>{{ emptyReturn.transactionReference || '-' }}</td>
+                <td><strong>{{ emptyReturn.customerName }}</strong></td>
+                <td>{{ emptyReturn.variantName }} - {{ emptyReturn.emptyIn || 0 }} units</td>
+                <td class="amount">{{ emptyReturn.amountReceived | indianCurrency }}</td>
+                <td>
+                  <button class="btn-action" (click)="viewDetails(emptyReturn.id)" title="View Details"><fa-icon [icon]="faEye"></fa-icon></button>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Data Message -->
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No empty return records found</p>
+        </div>
+      </ng-template>
+
+      <!-- Pagination -->
+      <div *ngIf="filteredEmptyReturns.length > 0" class="pagination">
+        <button 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div *ngIf="selectedEmptyReturn" class="modal-overlay" (click)="closeDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Empty Return Details #{{ selectedEmptyReturn.id }}</h2>
+        <button class="modal-close" (click)="closeDetails()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedEmptyReturn.transactionReference || '-' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ selectedEmptyReturn.transactionDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Customer:</span>
+            <span class="value">{{ selectedEmptyReturn.customerName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Variant:</span>
+            <span class="value">{{ selectedEmptyReturn.variantName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Empty Cylinders Returned:</span>
+            <span class="value">{{ selectedEmptyReturn.emptyIn }} units</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Amount Received:</span>
+            <span class="value">{{ (selectedEmptyReturn.amountReceived || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Due Amount:</span>
+            <span class="value">{{ (selectedEmptyReturn.dueAmount || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ selectedEmptyReturn.paymentMode || 'N/A' }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedEmptyReturn.paymentMode && selectedEmptyReturn.paymentMode !== 'Cash'">
+            <span class="label">Bank Name:</span>
+            <span class="value">{{ (selectedEmptyReturn.bankAccountName || 'N/A') + ' - ' + (selectedEmptyReturn.bankAccountNumber || 'N/A') }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeDetails()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

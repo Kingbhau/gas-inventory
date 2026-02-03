@@ -7,5 +7,8 @@ export interface Sale {
   customerName: string;
   saleDate: string;
   totalAmount: number;
+  amountReceived: number;
+  paymentMode: string;
+  bankAccountName?: string;
   saleItems: SaleItem[];
 }

@@ -152,8 +152,12 @@
                 <span class="value">{{ item.variantName }}</span>
               </div>
               <div class="invoice-row">
-                <span class="label">Quantity:</span>
+                <span class="label">Filled Cylinders Issued:</span>
                 <span class="value">{{ item.qtyIssued }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Empty Cylinders Returned:</span>
+                <span class="value">{{ item.qtyEmptyReceived || 0 }} units</span>
               </div>
               <div class="invoice-row">
                 <span class="label">Base Price:</span>
@@ -174,10 +178,18 @@
             <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
           </div>
           <div class="invoice-row">
-            <span class="label">Payment Mode:</span>
-            <span class="value">{{ selectedSale.paymentMode }}</span>
+            <span class="label">Amount Received:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.amountReceived || 0) | indianCurrency }}</span>
           </div>
-          <div class="invoice-row" *ngIf="selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
+          <div class="invoice-row">
+            <span class="label">Due Amount:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.dueAmount || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>

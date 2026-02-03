@@ -1,0 +1,498 @@
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChild, TemplateRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faEye, faEdit, faTrash, faClipboard, faDownload } from '@fortawesome/free-solid-svg-icons';
+import { ToastrService } from 'ngx-toastr';
+import { Subject, takeUntil } from 'rxjs';
+
+import { BankDepositService } from '../../services/bank-deposit.service';
+import { BankAccountService } from '../../services/bank-account.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
+import { DateUtilityService } from '../../services/date-utility.service';
+import { LoadingService } from '../../services/loading.service';
+import { SharedModule } from '../../shared/shared.module';
+import { BankDeposit, BankAccount } from '../../models/index';
+import { PaymentMode } from '../../models/payment-mode.model';
+import { exportBankDepositsReportToPDF } from '../reports/export-bank-deposits-report.util';
+
+@Component({
+  selector: 'app-bank-deposit-history',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, SharedModule],
+  templateUrl: './bank-deposit-history.component.html',
+  styleUrl: './bank-deposit-history.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class BankDepositHistoryComponent implements OnInit, OnDestroy {
+  @ViewChild('editModal') editModal!: TemplateRef<any>;
+  
+  faEye = faEye;
+  faEdit = faEdit;
+  faTrash = faTrash;
+  faClipboard = faClipboard;
+  faDownload = faDownload;
+
+  // Modal properties
+  showEditModal = false;
+  editingDeposit: BankDeposit | null = null;
+  editForm!: FormGroup;
+  isEditSubmitting = false;
+  
+  // View details modal properties
+  selectedDeposit: BankDeposit | null = null;
+
+  // Filter properties
+  filterFromDate = '';
+  filterToDate = '';
+  filterBankAccountId: number | null = null;
+  filterPaymentMode = '';
+  filterReferenceNumber = '';
+  filterSearchTerm = '';
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+  totalPages = 1;
+  totalElements = 0;
+  pageSizeOptions = [5, 10, 20, 50];
+
+  // Data
+  bankAccounts: BankAccount[] = [];
+  paymentModes: PaymentMode[] = [];
+  deposits: BankDeposit[] = [];
+  paginatedDeposits: BankDeposit[] = [];
+  
+  // Summary
+  totalAmount = 0;
+  
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private bankDepositService: BankDepositService,
+    private bankAccountService: BankAccountService,
+    private paymentModeService: PaymentModeService,
+    private dateUtility: DateUtilityService,
+    private loadingService: LoadingService,
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+    private fb: FormBuilder
+  ) {
+    this.initEditForm();
+  }
+
+  ngOnInit() {
+    this.loadBankAccounts();
+    this.loadPaymentModes();
+    this.loadDeposits();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  /**
+   * Load all bank accounts
+   */
+  loadBankAccounts() {
+    this.bankAccountService.getActiveBankAccounts()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          this.bankAccounts = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading bank accounts:', error);
+          this.bankAccounts = [];
+        }
+      });
+  }
+
+  /**
+   * Load payment modes
+   */
+  loadPaymentModes() {
+    this.paymentModeService.getActivePaymentModes()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: PaymentMode[]) => {
+          this.paymentModes = response || [];
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading payment modes:', error);
+          this.paymentModes = [];
+        }
+      });
+  }
+
+  /**
+   * Load deposits with pagination and filtering
+   */
+  loadDeposits() {
+    this.loadingService.show('Loading deposits...');
+    
+    this.bankDepositService.getDeposits(
+      this.currentPage - 1,
+      this.pageSize,
+      'depositDate',
+      'DESC',
+      this.filterFromDate || undefined,
+      this.filterToDate || undefined,
+      this.filterBankAccountId || undefined,
+      this.filterPaymentMode || undefined,
+      this.filterReferenceNumber || undefined
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
+          this.deposits = response.content || [];
+          this.totalElements = response.totalElements || 0;
+          this.totalPages = response.totalPages || 1;
+          this.updatePaginatedDeposits();
+          this.loadingService.hide();
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading deposits:', error);
+          this.toastr.error('Failed to load bank deposits');
+          this.deposits = [];
+          this.loadingService.hide();
+        }
+      });
+
+    // Fetch summary for ALL filtered data (separate API call)
+    this.loadDepositSummary();
+  }
+
+  /**
+   * Load deposit summary from backend for all filtered data
+   */
+  private loadDepositSummary() {
+    this.bankDepositService.getDepositSummary(
+      this.filterFromDate,
+      this.filterToDate,
+      this.filterBankAccountId || undefined,
+      this.filterPaymentMode || undefined,
+      this.filterReferenceNumber || undefined
+    )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (summary: any) => {
+          this.totalAmount = summary.totalAmount || 0;
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error loading deposit summary:', error);
+          this.totalAmount = 0;
+        }
+      });
+  }
+
+  /**
+   * Update paginated deposits list
+   */
+  updatePaginatedDeposits() {
+    const start = 0;
+    const end = this.pageSize;
+    this.paginatedDeposits = this.deposits.slice(start, end);
+  }
+
+  /**
+   * Apply filters
+   */
+  applyFilters() {
+    this.currentPage = 1;
+    this.loadDeposits();
+  }
+
+  /**
+   * Reset all filters
+   */
+  resetFilters() {
+    this.filterFromDate = '';
+    this.filterToDate = '';
+    this.filterBankAccountId = null;
+    this.filterPaymentMode = '';
+    this.filterReferenceNumber = '';
+    this.filterSearchTerm = '';
+    this.currentPage = 1;
+    this.loadDeposits();
+  }
+
+  /**
+   * Handle page size change
+   */
+  onPageSizeChange(size: number) {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.loadDeposits();
+  }
+
+  /**
+   * Go to previous page
+   */
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadDeposits();
+    }
+  }
+
+  /**
+   * Go to next page
+   */
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadDeposits();
+    }
+  }
+
+  /**
+   * Get bank account name by ID
+   */
+  getBankAccountName(accountId: number | null): string {
+    if (!accountId) {
+      return 'N/A';
+    }
+    const account = this.bankAccounts.find(ba => ba.id === accountId);
+    return account ? `${account.bankName} - ${account.accountNumber}` : 'N/A';
+  }
+
+  /**
+   * Handle bank account filter change
+   */
+  onBankAccountChange(value: any) {
+    // Ensure the value is a number or null
+    if (value === null || value === '' || value === undefined) {
+      this.filterBankAccountId = null;
+    } else {
+      this.filterBankAccountId = typeof value === 'string' ? parseInt(value, 10) : value;
+    }
+  }
+
+  /**
+   * Get status badge class
+   */
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'PENDING':
+        return 'status-pending';
+      case 'CONFIRMED':
+        return 'status-confirmed';
+      case 'CLEARED':
+        return 'status-cleared';
+      default:
+        return 'status-pending';
+    }
+  }
+
+  /**
+   * Initialize edit form
+   */
+  private initEditForm() {
+    this.editForm = this.fb.group({
+      bankAccountId: [null, Validators.required],
+      depositDate: ['', Validators.required],
+      depositAmount: [null, [Validators.required, Validators.min(1)]],
+      referenceNumber: [''],
+      paymentMode: ['', Validators.required],
+      notes: ['']
+    });
+  }
+
+  /**
+   * Edit deposit - Show modal
+   */
+  editDeposit(deposit: BankDeposit) {
+    if (!deposit.id) {
+      this.toastr.error('Cannot edit deposit without ID');
+      return;
+    }
+    
+    this.editingDeposit = deposit;
+    this.editForm.patchValue({
+      bankAccountId: deposit.bankAccountId,
+      depositDate: this.dateUtility.getLocalDateString(new Date(deposit.depositDate)),
+      depositAmount: deposit.depositAmount,
+      referenceNumber: deposit.referenceNumber,
+      paymentMode: deposit.paymentMode,
+      notes: deposit.notes
+    });
+    
+    this.showEditModal = true;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Close edit modal
+   */
+  closeEditModal() {
+    this.showEditModal = false;
+    this.editingDeposit = null;
+    this.editForm.reset();
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * View deposit details
+   */
+  viewDeposit(deposit: BankDeposit) {
+    this.selectedDeposit = deposit;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Close view details modal
+   */
+  closeViewModal() {
+    this.selectedDeposit = null;
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Save edited deposit
+   */
+  saveEditedDeposit() {
+    if (this.editForm.invalid || !this.editingDeposit?.id) {
+      this.toastr.error('Please fill all required fields correctly');
+      return;
+    }
+
+    if (this.isEditSubmitting) {
+      return;
+    }
+
+    this.isEditSubmitting = true;
+    this.loadingService.show('Updating deposit...');
+
+    const formData = this.editForm.value;
+    const updatedDeposit: BankDeposit = {
+      bankAccountId: formData.bankAccountId,
+      depositDate: formData.depositDate,
+      depositAmount: parseFloat(formData.depositAmount),
+      referenceNumber: formData.referenceNumber,
+      paymentMode: formData.paymentMode,
+      notes: formData.notes || ''
+    };
+
+    this.bankDepositService.updateDeposit(this.editingDeposit.id, updatedDeposit)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.isEditSubmitting = false;
+          this.loadingService.hide();
+          this.toastr.success('Bank deposit updated successfully!');
+          this.closeEditModal();
+          this.loadDeposits();
+        },
+        error: (error: any) => {
+          this.isEditSubmitting = false;
+          this.loadingService.hide();
+          const errorMsg = error?.error?.message || 'Failed to update bank deposit';
+          this.toastr.error(errorMsg);
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  /**
+   * Delete deposit
+   */
+  deleteDeposit(deposit: BankDeposit) {
+    if (!deposit.id) return;
+    
+    if (confirm('Are you sure you want to delete this deposit record?')) {
+      this.loadingService.show('Deleting deposit...');
+      
+      this.bankDepositService.deleteDeposit(deposit.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Deposit deleted successfully');
+            this.loadingService.hide();
+            this.loadDeposits();
+          },
+          error: (error: any) => {
+            this.toastr.error('Failed to delete deposit');
+            this.loadingService.hide();
+          }
+        });
+    }
+  }
+
+  /**
+   * Export to CSV
+   */
+  exportToCsv() {
+    if (this.deposits.length === 0) {
+      this.toastr.info('No data to export');
+      return;
+    }
+
+    const headers = ['Date', 'Bank Account', 'Amount', 'Mode', 'Reference #'];
+    const rows = this.deposits.map(d => [
+      new Date(d.depositDate).toLocaleDateString(),
+      this.getBankAccountName(d.bankAccountId),
+      d.depositAmount,
+      d.paymentMode,
+      d.referenceNumber
+    ]);
+
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bank-deposits-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+
+    this.toastr.success('Export completed');
+  }
+
+  /**
+   * Export to PDF
+   */
+  exportToPdf() {
+    if (this.deposits.length === 0) {
+      this.toastr.info('No data to export');
+      return;
+    }
+
+    try {
+      // Prepare data for PDF export
+      const depositsForPdf = this.deposits.map(d => ({
+        ...d,
+        bankAccountName: this.getBankAccountName(d.bankAccountId)
+      }));
+
+      // Use summary totals from backend (for all filtered data, not just current page)
+      const avgDepositValue = this.totalElements > 0 ? this.totalAmount / this.totalElements : 0;
+
+      exportBankDepositsReportToPDF({
+        deposits: depositsForPdf,
+        fromDate: this.filterFromDate || undefined,
+        toDate: this.filterToDate || undefined,
+        bankAccountName: this.filterBankAccountId 
+          ? this.getBankAccountName(this.filterBankAccountId) 
+          : undefined,
+        paymentMode: this.filterPaymentMode || undefined,
+        referenceNumber: this.filterReferenceNumber || undefined,
+        totalAmount: this.totalAmount,
+        avgDepositValue: avgDepositValue,
+        depositCount: this.totalElements,
+        businessName: 'GAS AGENCY SYSTEM'
+      });
+
+      this.toastr.success('PDF exported successfully');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      this.toastr.error('Failed to export PDF');
+    }
+  }
+}

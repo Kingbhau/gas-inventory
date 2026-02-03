@@ -23,11 +23,30 @@ export class ExpenseService {
       .pipe(applyTimeout());
   }
 
-  // Get all expenses with pagination
-  getAllExpenses(page: number = 0, pageSize: number = 10): Observable<any> {
-    const params = new HttpParams()
+  // Get all expenses with pagination and filters
+  getAllExpenses(page: number = 0, pageSize: number = 10, filters?: {
+    fromDate?: string;
+    toDate?: string;
+    categoryId?: number;
+    paymentMode?: string;
+    bankAccountId?: number;
+    minAmount?: number;
+    maxAmount?: number;
+  }): Observable<any> {
+    let params = new HttpParams()
       .set('page', page.toString())
       .set('size', pageSize.toString());
+    
+    if (filters) {
+      if (filters.fromDate) params = params.set('fromDate', filters.fromDate);
+      if (filters.toDate) params = params.set('toDate', filters.toDate);
+      if (filters.categoryId) params = params.set('categoryId', filters.categoryId.toString());
+      if (filters.paymentMode) params = params.set('paymentMode', filters.paymentMode);
+      if (filters.bankAccountId) params = params.set('bankAccountId', filters.bankAccountId.toString());
+      if (filters.minAmount !== undefined && filters.minAmount !== null) params = params.set('minAmount', filters.minAmount.toString());
+      if (filters.maxAmount !== undefined && filters.maxAmount !== null) params = params.set('maxAmount', filters.maxAmount.toString());
+    }
+    
     return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
       .pipe(applyTimeout());
   }
@@ -72,11 +91,16 @@ export class ExpenseService {
   }
 
   // Get expenses summary (ALL matching records)
-  getExpensesSummary(fromDate?: string, toDate?: string, categoryId?: number): Observable<any> {
+  getExpensesSummary(fromDate?: string, toDate?: string, categoryId?: number, paymentMode?: string, 
+                     bankAccountId?: number, minAmount?: number, maxAmount?: number): Observable<any> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
     if (toDate) params = params.set('toDate', toDate);
     if (categoryId) params = params.set('categoryId', categoryId.toString());
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
+    if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
+    if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
     
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
       .pipe(applyTimeout());

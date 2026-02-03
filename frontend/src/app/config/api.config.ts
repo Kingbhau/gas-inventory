@@ -10,7 +10,8 @@ export const API_CONFIG = {
     variants: '/variants',
     ledger: '/ledger',
     warehouses: '/warehouses',
-    warehouseTransfers: '/warehouse-transfers'
+    warehouseTransfers: '/warehouse-transfers',
+    bankDeposits: '/bank-deposits'
   }
 };
 

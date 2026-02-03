@@ -406,10 +406,10 @@ public class SaleService {
 
                 // Create sale FIRST so we have a sale ID for ledger references
                 Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
-                // Normalize payment mode to uppercase for consistency
+                // Set payment mode as provided (can be null)
                 String normalizedPaymentMode = request.getModeOfPayment() != null
                                 ? request.getModeOfPayment().trim().toUpperCase()
-                                : "CASH";
+                                : null;
                 sale.setPaymentMode(normalizedPaymentMode);
 
                 // Generate and set reference number BEFORE saving
@@ -761,10 +761,10 @@ public class SaleService {
                 int totalTransactions = 0;
 
                 for (CustomerCylinderLedger ledger : ledgers) {
-                        // Normalize payment mode to uppercase for consistent aggregation
+                        // Get payment mode as is (can be null)
                         String ledgerPaymentMode = ledger.getPaymentMode() != null && !ledger.getPaymentMode().isEmpty()
                                         ? ledger.getPaymentMode().trim().toUpperCase()
-                                        : "CASH";
+                                        : null;
                         double ledgerAmount = ledger.getAmountReceived() != null
                                         ? ledger.getAmountReceived().doubleValue()
                                         : 0.0;
@@ -810,16 +810,42 @@ public class SaleService {
         }
 
         private SaleDTO toDTO(Sale sale) {
+                // Fetch all ledger entries for this sale in one query
+                List<CustomerCylinderLedger> saleLedgers = ledgerRepository.findBySaleId(sale.getId());
+
+                // Create a map of ledger entries by variant ID for quick lookup
+                Map<Long, CustomerCylinderLedger> ledgerMap = saleLedgers.stream()
+                                .collect(Collectors.toMap(
+                                                ledger -> ledger.getVariant().getId(),
+                                                ledger -> ledger,
+                                                (existing, replacement) -> existing));
+
+                // Get payment mode from first ledger entry (all items in same sale should have
+                // same payment mode)
+                final String paymentMode = !saleLedgers.isEmpty() ? saleLedgers.get(0).getPaymentMode() : null;
+
                 List<SaleItemDTO> items = sale.getSaleItems().stream()
-                                .map(item -> new SaleItemDTO(
-                                                item.getId(),
-                                                item.getVariant().getId(),
-                                                item.getVariant().getName(),
-                                                item.getQtyIssued(),
-                                                item.getQtyEmptyReceived(),
-                                                item.getBasePrice(),
-                                                item.getDiscount(),
-                                                item.getFinalPrice()))
+                                .map(item -> {
+                                        // Get ledger data from map (already fetched)
+                                        CustomerCylinderLedger ledger = ledgerMap.get(item.getVariant().getId());
+
+                                        BigDecimal amountReceived = ledger != null ? ledger.getAmountReceived() : null;
+                                        BigDecimal dueAmount = ledger != null ? ledger.getDueAmount() : null;
+                                        String itemPaymentMode = ledger != null ? ledger.getPaymentMode() : paymentMode;
+
+                                        return new SaleItemDTO(
+                                                        item.getId(),
+                                                        item.getVariant().getId(),
+                                                        item.getVariant().getName(),
+                                                        item.getQtyIssued(),
+                                                        item.getQtyEmptyReceived(),
+                                                        item.getBasePrice(),
+                                                        item.getDiscount(),
+                                                        item.getFinalPrice(),
+                                                        amountReceived,
+                                                        dueAmount,
+                                                        itemPaymentMode);
+                                })
                                 .collect(Collectors.toList());
 
                 String bankAccountName = null;
@@ -837,7 +863,7 @@ public class SaleService {
                                 sale.getCustomer().getName(),
                                 sale.getSaleDate(),
                                 sale.getTotalAmount(),
-                                sale.getPaymentMode() != null ? sale.getPaymentMode() : "Cash",
+                                paymentMode,
                                 bankAccountId,
                                 bankAccountName,
                                 items);
@@ -848,16 +874,42 @@ public class SaleService {
          * LazyInitializationException
          */
         private SaleDTO toDTOWithItems(Sale sale, List<SaleItem> saleItems) {
+                // Fetch all ledger entries for this sale in one query
+                List<CustomerCylinderLedger> saleLedgers = ledgerRepository.findBySaleId(sale.getId());
+
+                // Create a map of ledger entries by variant ID for quick lookup
+                Map<Long, CustomerCylinderLedger> ledgerMap = saleLedgers.stream()
+                                .collect(Collectors.toMap(
+                                                ledger -> ledger.getVariant().getId(),
+                                                ledger -> ledger,
+                                                (existing, replacement) -> existing));
+
+                // Get payment mode from first ledger entry (all items in same sale should have
+                // same payment mode)
+                final String paymentMode = !saleLedgers.isEmpty() ? saleLedgers.get(0).getPaymentMode() : null;
+
                 List<SaleItemDTO> items = saleItems.stream()
-                                .map(item -> new SaleItemDTO(
-                                                item.getId(),
-                                                item.getVariant().getId(),
-                                                item.getVariant().getName(),
-                                                item.getQtyIssued(),
-                                                item.getQtyEmptyReceived(),
-                                                item.getBasePrice(),
-                                                item.getDiscount(),
-                                                item.getFinalPrice()))
+                                .map(item -> {
+                                        // Get ledger data from map (already fetched)
+                                        CustomerCylinderLedger ledger = ledgerMap.get(item.getVariant().getId());
+
+                                        BigDecimal amountReceived = ledger != null ? ledger.getAmountReceived() : null;
+                                        BigDecimal dueAmount = ledger != null ? ledger.getDueAmount() : null;
+                                        String itemPaymentMode = ledger != null ? ledger.getPaymentMode() : paymentMode;
+
+                                        return new SaleItemDTO(
+                                                        item.getId(),
+                                                        item.getVariant().getId(),
+                                                        item.getVariant().getName(),
+                                                        item.getQtyIssued(),
+                                                        item.getQtyEmptyReceived(),
+                                                        item.getBasePrice(),
+                                                        item.getDiscount(),
+                                                        item.getFinalPrice(),
+                                                        amountReceived,
+                                                        dueAmount,
+                                                        itemPaymentMode);
+                                })
                                 .collect(Collectors.toList());
 
                 String bankAccountName = null;
@@ -875,7 +927,7 @@ public class SaleService {
                                 sale.getCustomer().getName(),
                                 sale.getSaleDate(),
                                 sale.getTotalAmount(),
-                                sale.getPaymentMode() != null ? sale.getPaymentMode() : "Cash",
+                                paymentMode,
                                 bankAccountId,
                                 bankAccountName,
                                 items);

@@ -90,6 +90,39 @@
             rows="3"></textarea>
         </div>
 
+        <!-- Two Column Layout for Payment Mode and Bank Account -->
+        <div class="form-row">
+          <!-- Payment Mode -->
+          <div class="form-group">
+            <label class="form-label">Payment Mode</label>
+            <select 
+              formControlName="paymentMode"
+              class="form-control"
+              [class.is-invalid]="expenseForm.get('paymentMode')?.invalid && expenseForm.get('paymentMode')?.touched">
+              <option value="">Select payment mode...</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+            </select>
+            <div *ngIf="expenseForm.get('paymentMode')?.invalid && expenseForm.get('paymentMode')?.touched" class="error-message">
+              Payment mode is required for this amount
+            </div>
+          </div>
+
+          <!-- Bank Account (shown only if bank account is required for payment mode) -->
+          <div class="form-group" *ngIf="expenseForm.get('paymentMode')?.value && getSelectedPaymentMode(expenseForm.get('paymentMode')?.value)?.isBankAccountRequired === true">
+            <label class="form-label">Bank Account <span class="required">*</span></label>
+            <select 
+              formControlName="bankAccountId"
+              class="form-control"
+              [class.is-invalid]="expenseForm.get('bankAccountId')?.invalid && expenseForm.get('bankAccountId')?.touched">
+              <option [value]="null">Select bank account...</option>
+              <option *ngFor="let bank of bankAccounts" [value]="bank.id">{{ bank.bankName }} - {{ bank.accountNumber }}</option>
+            </select>
+            <div *ngIf="expenseForm.get('bankAccountId')?.invalid && expenseForm.get('bankAccountId')?.touched" class="error-message">
+              Bank account is required for this payment mode
+            </div>
+          </div>
+        </div>
+
         <!-- Form Actions -->
         <div class="form-actions">
           <button 

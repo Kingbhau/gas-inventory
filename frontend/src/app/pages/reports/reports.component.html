@@ -158,119 +158,6 @@
     </div>
   </div>
 
-  <!-- Payment Mode Report Filters -->
-  <div *ngIf="selectedReport === 'paymentModes'" class="filters-card">
-    <div class="filter-row">
-      <div class="filter-group">
-        <label class="filter-label">From Date</label>
-        <input type="date" [(ngModel)]="filterPaymentModeFromDate" class="filter-input">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">To Date</label>
-        <input type="date" [(ngModel)]="filterPaymentModeToDate" class="filter-input" [min]="filterPaymentModeFromDate">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Payment Mode</label>
-        <select [(ngModel)]="filterPaymentModePaymentMode" class="filter-input">
-          <option value="">All Modes</option>
-          <option *ngFor="let mode of paymentModesList" [value]="mode.name">{{ mode.name }}</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <app-autocomplete-input
-          label="Customer"
-          [items]="customersList"
-          [displayKey]="'name'"
-          placeholder="All"
-          (selectedChange)="filterPaymentModeCustomerId = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
-      </div>
-      <div class="filter-group">
-        <app-autocomplete-input
-          label="Cylinder Variant"
-          [items]="variantsList"
-          [displayKey]="'name'"
-          placeholder="All"
-          (selectedChange)="filterPaymentModeVariantId = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
-      </div>
-      <div class="filter-group">
-        <app-autocomplete-input
-          label="Bank Account"
-          [items]="bankAccountsList"
-          [displayKey]="'bankName'"
-          placeholder="All"
-          (selectedChange)="filterPaymentModeBankAccountId = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
-      </div>
-    </div>
-    <div class="filter-row">
-      <div class="filter-group">
-        <label class="filter-label">Min Amount</label>
-        <input type="number" [(ngModel)]="filterPaymentModeMinAmount" class="filter-input" placeholder="0" step="0.01">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Max Amount</label>
-        <input type="number" [(ngModel)]="filterPaymentModeMaxAmount" class="filter-input" placeholder="Unlimited" step="0.01">
-      </div>
-      <div class="filter-group">
-        <label class="filter-label">Min Transactions</label>
-        <input type="number" [(ngModel)]="filterPaymentModeMinTransactions" class="filter-input" placeholder="0" min="0" step="1">
-      </div>
-      <div class="filter-actions">
-        <button (click)="applyPaymentModeFilters()" class="btn btn-primary">Search</button>
-        <button (click)="resetPaymentModeFilters()" class="btn btn-secondary">Reset</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Payment Mode Report Card -->
-  <div *ngIf="selectedReport === 'paymentModes'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Payment Mode Report</h3>
-    </div>
-    <div class="card-body">
-      <!-- Summary Cards -->
-      <div class="report-summary">
-        <div class="summary-card">
-          <span class="label">Total Amount</span>
-          <span class="value">{{ paymentModesSummary.totalAmount | indianCurrency }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Total Transactions</span>
-          <span class="value">{{ paymentModesSummary.totalTransactions }}</span>
-        </div>
-      </div>
-
-      <!-- Data Table -->
-      <div *ngIf="paymentModesData && paymentModesData.length > 0" class="table-wrapper" style="margin-top: 20px;">
-        <div class="mobile-table-scroll">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Payment Mode</th>
-                <th class="text-center">Transactions</th>
-                <th class="text-center">Total Amount</th>
-                <th class="text-center">Percentage</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let row of paymentModesData">
-                <td><strong>{{ row.paymentMode }}</strong></td>
-                <td class="text-center">{{ row.transactionCount }}</td>
-                <td class="text-center">{{ row.totalAmount | indianCurrency }}</td>
-                <td class="text-center">{{ (row.totalAmount / paymentModesSummary.totalAmount * 100 | number: '1.1-1') }}%</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div *ngIf="!paymentModesData || paymentModesData.length === 0" class="empty-state">
-        <p>No payment mode data available. Click Search to load data.</p>
-      </div>
-    </div>
-  </div>
-
   <!-- Invoice Modal -->
   <div *ngIf="selectedSale" class="modal-overlay" (click)="closeInvoice()">
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -299,8 +186,12 @@
                 <span class="value">{{ item.variantName }}</span>
               </div>
               <div class="invoice-row">
-                <span class="label">Quantity:</span>
+                <span class="label">Filled Cylinders Issued:</span>
                 <span class="value">{{ item.qtyIssued }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Empty Cylinders Returned:</span>
+                <span class="value">{{ item.qtyEmptyReceived || 0 }} units</span>
               </div>
               <div class="invoice-row">
                 <span class="label">Base Price:</span>
@@ -321,10 +212,18 @@
             <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
           </div>
           <div class="invoice-row">
-            <span class="label">Payment Mode:</span>
-            <span class="value">{{ selectedSale.paymentMode }}</span>
+            <span class="label">Amount Received:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.amountReceived || 0) | indianCurrency }}</span>
           </div>
-          <div class="invoice-row" *ngIf="selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
+          <div class="invoice-row">
+            <span class="label">Due Amount:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.dueAmount || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>
@@ -462,6 +361,119 @@
           </select>
           <span class="page-size-label">per page</span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Mode Report Filters -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterPaymentModeFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterPaymentModeToDate" class="filter-input" [min]="filterPaymentModeFromDate">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Payment Mode</label>
+        <select [(ngModel)]="filterPaymentModePaymentMode" class="filter-input">
+          <option value="">All Modes</option>
+          <option *ngFor="let mode of paymentModesList" [value]="mode.name">{{ mode.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Cylinder Variant"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Bank Account"
+          [items]="bankAccountsList"
+          [displayKey]="'bankName'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeBankAccountId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinAmount" class="filter-input" placeholder="0" step="0.01">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMaxAmount" class="filter-input" placeholder="Unlimited" step="0.01">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Transactions</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinTransactions" class="filter-input" placeholder="0" min="0" step="1">
+      </div>
+      <div class="filter-actions">
+        <button (click)="applyPaymentModeFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetPaymentModeFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Mode Report Card -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Payment Mode Report</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Cards -->
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Amount</span>
+          <span class="value">{{ paymentModesSummary.totalAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Transactions</span>
+          <span class="value">{{ paymentModesSummary.totalTransactions }}</span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="paymentModesData && paymentModesData.length > 0" class="table-wrapper" style="margin-top: 20px;">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payment Mode</th>
+                <th class="text-center">Transactions</th>
+                <th class="text-center">Total Amount</th>
+                <th class="text-center">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of paymentModesData">
+                <td><strong>{{ row.paymentMode }}</strong></td>
+                <td class="text-center">{{ row.transactionCount }}</td>
+                <td class="text-center">{{ row.totalAmount | indianCurrency }}</td>
+                <td class="text-center">{{ (row.totalAmount / paymentModesSummary.totalAmount * 100 | number: '1.1-1') }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="!paymentModesData || paymentModesData.length === 0" class="empty-state">
+        <p>No payment mode data available. Click Search to load data.</p>
       </div>
     </div>
   </div>

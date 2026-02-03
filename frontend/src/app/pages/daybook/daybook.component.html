@@ -1,0 +1,124 @@
+<div class="daybook-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Day Book</h1>
+    <p class="page-subtitle">View all sales and empty return transactions for the selected day</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Select Date</label>
+        <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="filter-input">
+      </div>
+      <div class="filter-actions">
+        <!-- <button (click)="refreshData()" class="btn btn-primary">Search</button> -->
+        <button (click)="printDayBook()" class="btn btn-secondary" *ngIf="dayBookTransactions.length > 0"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Table with Summary -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Day Book Transactions</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Section -->
+      <div class="report-summary" *ngIf="dayBookSummary && dayBookTransactions.length > 0">
+        <div class="summary-card">
+          <span class="label">Total Filled</span>
+          <span class="value">{{ dayBookSummary.totalFilledCount || 0 }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Returned</span>
+          <span class="value">{{ dayBookSummary.totalEmptyCount || 0 }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Amount</span>
+          <span class="value">₹{{ formatAmount(dayBookSummary.totalAmount) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Amount Received</span>
+          <span class="value">₹{{ formatAmount(dayBookSummary.totalAmountReceived) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Due</span>
+          <span class="value due">₹{{ formatAmount(dayBookSummary.totalDueAmount) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Transactions</span>
+          <span class="value">{{ dayBookSummary.totalTransactions || 0 }}</span>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div *ngIf="dayBookTransactions.length > 0; else noData" class="table-wrapper" id="daybook-table">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Warehouse</th>
+              <th>Variant</th>
+              <th class="text-center">Filled</th>
+              <th class="text-center">Empty</th>
+              <th class="text-center">Total Amt</th>
+              <th class="text-center">Received</th>
+              <th class="text-center">Due Amt</th>
+              <th>Payment Mode</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of paginatedDayBookTransactions">
+              <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td><strong>{{ transaction.customerName }}</strong></td>
+              <td>{{ transaction.warehouseName }}</td>
+              <td>{{ transaction.variantName }}</td>
+              <td class="text-center">{{ transaction.filledCount || 0 }}</td>
+              <td class="text-center">{{ transaction.emptyCount || 0 }}</td>
+              <td class="text-center amount">₹{{ formatAmount(transaction.totalAmount) }}</td>
+              <td class="text-center amount">₹{{ formatAmount(transaction.amountReceived) }}</td>
+              <td class="text-center amount" [class.due-highlight]="transaction.dueAmount && transaction.dueAmount > 0">₹{{ formatAmount(transaction.dueAmount) }}</td>
+              <td>{{ transaction.paymentMode || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="dayBookTotalElements > 0" class="pagination">
+        <button 
+          (click)="onDayBookPageChange(dayBookPage - 1)" 
+          [disabled]="dayBookPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ dayBookPage }} of {{ dayBookTotalPages }}</span>
+        <button 
+          (click)="onDayBookPageChange(dayBookPage + 1)" 
+          [disabled]="dayBookPage === dayBookTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="dayBookPageSize" (ngModelChange)="onDayBookPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+
+      <!-- No Data Message -->
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No transactions found for this day</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

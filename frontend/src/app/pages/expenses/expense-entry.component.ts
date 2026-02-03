@@ -7,11 +7,15 @@ import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 import { SharedModule } from '../../shared/shared.module';
 import { ExpenseService } from '../../services/expense.service';
+import { PaymentModeService } from '../../services/payment-mode.service';
+import { BankAccountService } from '../../services/bank-account.service';
 import { Expense } from '../../models/expense.model';
+import { PaymentMode } from '../../models/payment-mode.model';
+import { BankAccount } from '../../models/bank-account.model';
 import { LoadingService } from '../../services/loading.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
 import { DateUtilityService } from '../../services/date-utility.service';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, Subject, takeUntil } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
 @Component({
@@ -29,7 +33,10 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   successMessage = '';
   categories: any[] = [];
   categoryMap: Map<string, number> = new Map();
+  bankAccounts: BankAccount[] = [];
+  paymentModes: PaymentMode[] = [];
   isSubmitting = false;
+  private destroy$ = new Subject<void>();
 
   // Font Awesome Icons
   faCheckCircle = faCheckCircle;
@@ -37,6 +44,8 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private expenseService: ExpenseService,
+    private paymentModeService: PaymentModeService,
+    private bankAccountService: BankAccountService,
     private toastr: ToastrService,
     private loadingService: LoadingService,
     private dataRefreshService: DataRefreshService,
@@ -47,11 +56,51 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.loadCategories();
+    this.loadCategoriesAndPaymentData();
     // Set today's date as default (in Indian timezone)
     const today = this.dateUtility.getTodayInIST();
     this.expenseForm.patchValue({
       expenseDate: today
+    });
+  }
+
+  private loadCategoriesAndPaymentData() {
+    this.loadingService.show('Loading expense data...');
+    forkJoin([
+      this.expenseService.getCategories(),
+      this.paymentModeService.getActivePaymentModes(),
+      this.bankAccountService.getActiveBankAccounts()
+    ])
+    .pipe(
+      finalize(() => this.loadingService.hide()),
+      takeUntil(this.destroy$)
+    )
+    .subscribe({
+      next: ([categoryResponse, paymentModes, bankAccounts]: any) => {
+        const categoryList = Array.isArray(categoryResponse) ? categoryResponse : (categoryResponse?.content || []);
+        this.categories = categoryList.filter((cat: any) => cat.isActive !== false);
+        this.categories.forEach((cat: any) => {
+          this.categoryMap.set(cat.name, cat.id);
+        });
+        this.paymentModes = paymentModes || [];
+        this.bankAccounts = bankAccounts || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.toastr.error('Failed to load expense data');
+        const fallbackCategories = [
+          { id: 1, name: 'Salary' },
+          { id: 2, name: 'Utilities' },
+          { id: 3, name: 'Maintenance' },
+          { id: 4, name: 'Transportation' },
+          { id: 5, name: 'Office Supplies' },
+          { id: 6, name: 'Other' }
+        ];
+        this.categories = fallbackCategories;
+        fallbackCategories.forEach((cat) => {
+          this.categoryMap.set(cat.name, cat.id);
+        });
+      }
     });
   }
 
@@ -61,44 +110,52 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       amount: ['', [Validators.required, Validators.min(0.01)]],
       category: ['', Validators.required],
       expenseDate: ['', Validators.required],
-      notes: ['']
+      notes: [''],
+      paymentMode: [''],
+      bankAccountId: [null]
     });
-  }
 
-  loadCategories() {
-    this.loadingService.show('Loading categories...');
-    this.expenseService.getCategories()
-      .pipe(finalize(() => this.loadingService.hide()))
-      .subscribe({
-        next: (response: any) => {
-          const categoryList = Array.isArray(response) ? response : (response.content || []);
-          // Filter to show only active categories
-          this.categories = categoryList.filter((cat: any) => cat.isActive !== false);
-          // Create a map of category names to IDs
-          this.categories.forEach((cat: any) => {
-            this.categoryMap.set(cat.name, cat.id);
-          });
-        },
-        error: () => {
-          this.toastr.error('Failed to load categories');
-          // Fallback categories
-          const fallbackCategories = [
-            { id: 1, name: 'Salary' },
-            { id: 2, name: 'Utilities' },
-            { id: 3, name: 'Maintenance' },
-            { id: 4, name: 'Transportation' },
-            { id: 5, name: 'Office Supplies' },
-            { id: 6, name: 'Other' }
-          ];
-          this.categories = fallbackCategories;
-          fallbackCategories.forEach((cat) => {
-            this.categoryMap.set(cat.name, cat.id);
-        });
+    // Add conditional validation for paymentMode when amount changes
+    this.expenseForm.get('amount')?.valueChanges.subscribe(() => {
+      this.updatePaymentModeValidators();
+    });
+
+    // When paymentMode changes, show/hide bank account field
+    this.expenseForm.get('paymentMode')?.valueChanges.subscribe((mode) => {
+      const bankAccountControl = this.expenseForm.get('bankAccountId');
+      const selectedMode = this.getSelectedPaymentMode(mode);
+      
+      if (selectedMode && selectedMode.isBankAccountRequired) {
+        bankAccountControl?.setValidators(Validators.required);
+      } else {
+        bankAccountControl?.clearValidators();
+        bankAccountControl?.reset();
       }
+      bankAccountControl?.updateValueAndValidity();
     });
   }
 
-  ngOnDestroy() {}
+  private updatePaymentModeValidators() {
+    const modeControl = this.expenseForm.get('paymentMode');
+    const amount = this.expenseForm.get('amount')?.value;
+    
+    if (amount && amount > 0) {
+      modeControl?.setValidators(Validators.required);
+    } else {
+      modeControl?.clearValidators();
+    }
+    modeControl?.updateValueAndValidity();
+  }
+
+  getSelectedPaymentMode(modeName: string): PaymentMode | undefined {
+    return this.paymentModes.find(mode => mode.name === modeName);
+  }
+
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   onSubmit() {
     if (this.expenseForm.invalid) {
@@ -154,9 +211,18 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
           // Set default values
           const today = this.dateUtility.getTodayInIST();
           this.expenseForm.patchValue({
+            description: '',
             category: '',
-            expenseDate: today
+            amount: '',
+            expenseDate: today,
+            notes: '',
+            paymentMode: '',
+            bankAccountId: null
           });
+          
+          // Mark form as pristine and untouched
+          this.expenseForm.markAsPristine();
+          this.expenseForm.markAsUntouched();
 
           // Clear success message after 3 seconds
           setTimeout(() => {
@@ -187,8 +253,13 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     
     const today = this.dateUtility.getTodayInIST();
     this.expenseForm.patchValue({
+      description: '',
       category: '',
-      expenseDate: today
+      amount: '',
+      expenseDate: today,
+      notes: '',
+      paymentMode: '',
+      bankAccountId: null
     });
     
     // Mark form as pristine and untouched

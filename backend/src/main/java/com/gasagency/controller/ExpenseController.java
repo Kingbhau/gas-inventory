@@ -28,9 +28,17 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<Page<ExpenseDTO>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.getAllExpenses(pageable));
+        return ResponseEntity.ok(service.getAllExpenses(pageable, fromDate, toDate, categoryId, paymentMode,
+                bankAccountId, minAmount, maxAmount));
     }
 
     @GetMapping("/range")
@@ -47,8 +55,13 @@ public class ExpenseController {
     public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false) Long categoryId) {
-        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId));
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount) {
+        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId, paymentMode, bankAccountId,
+                minAmount, maxAmount));
     }
 
     @GetMapping("/category/{categoryId}")

@@ -7,4 +7,6 @@ export interface SaleItem {
   basePrice: number;
   discount: number;
   finalPrice: number;
+  amountReceived?: number;
+  dueAmount?: number;
 }

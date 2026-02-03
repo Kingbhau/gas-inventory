@@ -56,4 +56,22 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                         @Param("fromDate") LocalDate fromDate,
                         @Param("toDate") LocalDate toDate,
                         @Param("category") ExpenseCategory category);
+
+        @Query("SELECT e FROM Expense e WHERE " +
+                        "(:fromDate IS NULL OR e.expenseDate >= :fromDate) AND " +
+                        "(:toDate IS NULL OR e.expenseDate <= :toDate) AND " +
+                        "(:categoryId IS NULL OR e.category.id = :categoryId) AND " +
+                        "(:paymentMode IS NULL OR e.paymentMode = :paymentMode) AND " +
+                        "(:bankAccountId IS NULL OR e.bankAccount.id = :bankAccountId) AND " +
+                        "(:minAmount IS NULL OR e.amount >= :minAmount) AND " +
+                        "(:maxAmount IS NULL OR e.amount <= :maxAmount)")
+        Page<Expense> findByFilters(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("categoryId") Long categoryId,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("minAmount") BigDecimal minAmount,
+                        @Param("maxAmount") BigDecimal maxAmount,
+                        Pageable pageable);
 }

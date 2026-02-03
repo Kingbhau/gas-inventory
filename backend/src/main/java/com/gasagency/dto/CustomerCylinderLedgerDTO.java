@@ -28,6 +28,7 @@ public class CustomerCylinderLedgerDTO {
     private String paymentMode;
     private Long bankAccountId;
     private String bankAccountName;
+    private String bankAccountNumber;
     private String transactionReference;
     private String updateReason; // Optional reason for why the ledger entry was updated
 
@@ -251,6 +252,14 @@ public class CustomerCylinderLedgerDTO {
 
     public void setBankAccountName(String bankAccountName) {
         this.bankAccountName = bankAccountName;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
     }
 
     public String getTransactionReference() {

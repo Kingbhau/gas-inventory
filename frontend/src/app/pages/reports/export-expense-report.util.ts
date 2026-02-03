@@ -29,7 +29,9 @@ export function exportExpenseReportToPDF({
   minAmount,
   maxAmount,
   transactionCount,
-  categoryFilter
+  categoryFilter,
+  paymentMode,
+  bankAccountName
 }: {
   expenseData: any[],
   fromDate?: string,
@@ -41,7 +43,9 @@ export function exportExpenseReportToPDF({
   minAmount?: number,
   maxAmount?: number,
   transactionCount?: number,
-  categoryFilter?: string
+  categoryFilter?: string,
+  paymentMode?: string,
+  bankAccountName?: string
 }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -110,6 +114,8 @@ export function exportExpenseReportToPDF({
   doc.setFontSize(8.5);
   let filterArr = [];
   if (categoryFilter) filterArr.push(`Category: ${categoryFilter}`);
+  if (paymentMode) filterArr.push(`Payment Mode: ${paymentMode}`);
+  if (bankAccountName) filterArr.push(`Bank: ${bankAccountName}`);
   if (minAmount !== undefined && minAmount !== null) filterArr.push(`Min: Rs. ${minAmount}`);
   if (maxAmount !== undefined && maxAmount !== null) filterArr.push(`Max: Rs. ${maxAmount}`);
   // Two-column filter display
@@ -134,6 +140,8 @@ export function exportExpenseReportToPDF({
     expense.description,
     expense.category || 'Uncategorized',
     `Rs. ${Number(expense.amount).toLocaleString()}`,
+    expense.paymentMode || '-',
+    expense.bankDetails || expense.bankAccountNumber || '-',
     expense.notes || '-'
   ]);
 
@@ -144,12 +152,17 @@ export function exportExpenseReportToPDF({
       'Description',
       'Category',
       'Amount',
+      'Payment Mode',
+      'Bank Details',
       'Notes'
     ]],
     body: tableData,
-    styles: { fontSize: 9, cellPadding: 2.2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
-    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
+    styles: { fontSize: 8.5, cellPadding: 2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
+    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
     alternateRowStyles: { fillColor: [245, 250, 255] },
+    columnStyles: {
+      5: { fontSize: 7.5, cellPadding: 1.5 } // Bank Details column - smaller font
+    },
     margin: { left: 10, right: 10 },
     didDrawPage: (data) => {
       // Professional footer: left "Confidential", right page number

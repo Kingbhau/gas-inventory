@@ -40,10 +40,14 @@ public class ModelMapperConfig {
                 map().setAmount(source.getAmount());
                 map().setExpenseDate(source.getExpenseDate());
                 map().setNotes(source.getNotes());
+                map().setPaymentMode(source.getPaymentMode());
                 map().setCreatedDate(source.getCreatedDate());
                 map().setCreatedBy(source.getCreatedBy());
                 map().setUpdatedDate(source.getUpdatedDate());
                 map().setUpdatedBy(source.getUpdatedBy());
+                // Skip bankAccountId and bankAccountName - these are manually mapped in service
+                skip().setBankAccountId(null);
+                skip().setBankAccountName(null);
             }
         });
 

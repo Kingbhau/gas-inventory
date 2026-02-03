@@ -575,6 +575,17 @@ public class CustomerCylinderLedgerService {
                                 .map(this::toDTO);
         }
 
+        public Page<CustomerCylinderLedgerDTO> getEmptyReturns(LocalDate fromDate, LocalDate toDate, Long customerId,
+                        Long variantId, Pageable pageable) {
+                LoggerUtil.logDatabaseOperation(logger, "SELECT_EMPTY_RETURNS", "LEDGER",
+                                "fromDate", fromDate, "toDate", toDate, "customerId", customerId,
+                                "variantId", variantId, "page", pageable.getPageNumber(), "size",
+                                pageable.getPageSize());
+
+                return repository.findEmptyReturns(fromDate, toDate, customerId, variantId, pageable)
+                                .map(this::toDTO);
+        }
+
         public List<CustomerCylinderLedgerDTO> getLedgerByCustomer(Long customerId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "LEDGER", "customerId", customerId);
 
@@ -741,6 +752,7 @@ public class CustomerCylinderLedgerService {
                 if (ledger.getBankAccount() != null) {
                         dto.setBankAccountId(ledger.getBankAccount().getId());
                         dto.setBankAccountName(ledger.getBankAccount().getBankName());
+                        dto.setBankAccountNumber(ledger.getBankAccount().getAccountNumber());
                 }
                 return dto;
         }

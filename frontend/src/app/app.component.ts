@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, Renderer2, ChangeDetectorRef, NgZone, Cha
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBars, faTimes, faChartBar, faPlus, faHistory, faUsers, faUser, faBox, faTruck,faRupeeSign, faCog, faSearch, faBell, faChevronDown, faExchange, faFileAlt, faSignOut, faReceipt, faExclamationTriangle, faClock, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faTimes, faChartBar, faPlus, faHistory, faUsers, faUser, faBox, faTruck,faRupeeSign, faCog, faSearch, faBell, faChevronDown, faExchange, faFileAlt, faSignOut, faReceipt, faExclamationTriangle, faClock, faCheck, faXmark, faBook } from '@fortawesome/free-solid-svg-icons';
 import { EmptyReturnComponent } from './pages/empty-return/empty-return.component';
 import { AuthService } from './services/auth.service';
 import { LoadingService, LoadingState } from './services/loading.service';
@@ -92,6 +92,7 @@ export class AppComponent implements OnInit, OnDestroy {
   faClock = faClock;
   faCheck = faCheck;
   faXmark = faXmark;
+  faBook = faBook;
 
   ngOnInit() {
     console.log('AppComponent ngOnInit - isAuthenticated:', this.isAuthenticated);

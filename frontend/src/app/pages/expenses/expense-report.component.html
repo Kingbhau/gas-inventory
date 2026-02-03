@@ -18,6 +18,8 @@
           (selectedChange)="onCategorySelect($event)"
         ></app-autocomplete-input>
       </div>
+    </div>
+    <div class="filter-row" style="margin-top: 1rem;">
       <div class="filter-group">
         <label class="filter-label">Min Amount</label>
         <input type="number" [(ngModel)]="filterMinAmount" class="filter-input" placeholder="Min">
@@ -26,6 +28,24 @@
         <label class="filter-label">Max Amount</label>
         <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Payment Mode</label>
+        <select [(ngModel)]="filterPaymentMode" class="filter-input">
+          <option value="">All Payment Modes</option>
+          <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top: 1rem;">
+      <div class="filter-group" *ngIf="filterPaymentMode && getSelectedPaymentMode()?.isBankAccountRequired">
+        <label class="filter-label">Bank Account</label>
+        <select [(ngModel)]="filterBankAccountId" class="filter-input">
+          <option [value]="null">All Bank Accounts</option>
+          <option *ngFor="let bank of bankAccounts" [value]="bank.id">{{ bank.bankName }} - {{ bank.accountNumber }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-row" style="margin-top: 1rem;">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -80,7 +100,8 @@
                 <th>Description</th>
                 <th>Category</th>
                 <th class="text-center">Amount</th>
-                <th>Notes</th>
+                <th>Payment Mode</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -89,7 +110,10 @@
                 <td><strong>{{ expense.description }}</strong></td>
                 <td><span class="category-badge">{{ expense.category }}</span></td>
                 <td class="text-center amount">{{ expense.amount | indianCurrency }}</td>
-                <td class="notes-cell">{{ expense.notes || '-' }}</td>
+                <td>{{ expense.paymentMode || '-' }}</td>
+                <td>
+                  <button class="btn-action" (click)="viewDetails(expense)" title="View Details"><fa-icon [icon]="faEye"></fa-icon></button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -119,6 +143,51 @@
           <span class="page-size-label">per page</span>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Details Modal -->
+<div *ngIf="selectedExpense" class="modal-overlay" (click)="closeDetails()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Expense Details #{{ selectedExpense.id }}</h2>
+      <button class="modal-close" (click)="closeDetails()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="invoice-section">
+        <div class="invoice-row">
+          <span class="label">Date:</span>
+          <span class="value">{{ selectedExpense.expenseDate | date: 'dd MMM yyyy' }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Description:</span>
+          <span class="value">{{ selectedExpense.description }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Category:</span>
+          <span class="value">{{ selectedExpense.category }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Amount:</span>
+          <span class="value">{{ (selectedExpense.amount || 0) | indianCurrency }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Payment Mode:</span>
+          <span class="value">{{ selectedExpense.paymentMode || 'N/A' }}</span>
+        </div>
+        <div class="invoice-row" *ngIf="selectedExpense.paymentMode && selectedExpense.paymentMode !== 'Cash'">
+          <span class="label">Bank Name:</span>
+          <span class="value">{{ (selectedExpense.bankAccountName || 'N/A') + ' - ' + (selectedExpense.bankAccountNumber || 'N/A') }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Notes:</span>
+          <span class="value">{{ selectedExpense.notes || 'N/A' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button (click)="closeDetails()" class="btn btn-secondary">Close</button>
     </div>
   </div>
 </div>

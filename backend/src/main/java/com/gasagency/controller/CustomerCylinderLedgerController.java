@@ -251,6 +251,35 @@ public class CustomerCylinderLedgerController {
         return ResponseEntity.ok(service.getCustomerLedgerSummary(customerId));
     }
 
+    // Get empty returns with filtering
+    @GetMapping("/empty-returns")
+    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getEmptyReturns(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "transactionDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        LocalDate from = null;
+        LocalDate to = null;
+        try {
+            if (fromDate != null && !fromDate.isEmpty()) {
+                from = LocalDate.parse(fromDate);
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                to = LocalDate.parse(toDate);
+            }
+        } catch (Exception e) {
+            // Invalid date format, continue without filtering
+        }
+
+        return ResponseEntity.ok(service.getEmptyReturns(from, to, customerId, variantId, pageable));
+    }
+
     // Update a ledger entry with full chain recalculation
     // Validates that no due amounts go negative anywhere in the chain
     @PutMapping("/{ledgerId}")

@@ -17,7 +17,7 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptors([AuthInterceptor, RefreshInterceptor, RetryInterceptor, ErrorInterceptor])),
     provideAnimations(),
     provideToastr({
-      timeOut: 3000,
+      timeOut: 500,
       positionClass: 'toast-top-right',
       preventDuplicates: true,
       progressBar: true,
