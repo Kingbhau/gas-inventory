@@ -73,11 +73,14 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
   }
 
   private loadVariants(): void {
-    this.variantService.getAllVariants(0, 1000)
+    this.variantService.getAllVariantsWithCache()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          this.variants = response.content || response.data || [];
+          this.variants = Array.isArray(response) ? response : (response?.content || response?.data || []);
+          if (this.selectedWarehouseId) {
+            this.loadInventoryForWarehouse(this.selectedWarehouseId);
+          }
           this.cdr.markForCheck();
         },
         error: (err: any) => {

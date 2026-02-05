@@ -5,6 +5,10 @@ import com.gasagency.service.WarehouseTransferService;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,6 +68,20 @@ public class WarehouseTransferController {
     }
 
     /**
+     * GET /api/warehouse-transfers/paged - Paginated transfers
+     */
+    @GetMapping("/paged")
+    public ResponseEntity<Page<WarehouseTransferDTO>> getAllTransfersPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transferDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(warehouseTransferService.getAllTransfers(pageable));
+    }
+
+    /**
      * GET /api/warehouse-transfers/{id} - Get transfer by ID
      */
     @GetMapping("/{id}")
@@ -107,6 +125,21 @@ public class WarehouseTransferController {
     }
 
     /**
+     * GET /api/warehouse-transfers/warehouse/{warehouseId}/paged - Paginated transfers for a warehouse
+     */
+    @GetMapping("/warehouse/{warehouseId}/paged")
+    public ResponseEntity<Page<WarehouseTransferDTO>> getTransfersForWarehousePaged(
+            @PathVariable Long warehouseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transferDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(warehouseTransferService.getTransfersForWarehouse(warehouseId, pageable));
+    }
+
+    /**
      * GET /api/warehouse-transfers/from/{warehouseId} - Get outgoing transfers
      */
     @GetMapping("/from/{warehouseId}")
@@ -128,6 +161,21 @@ public class WarehouseTransferController {
     }
 
     /**
+     * GET /api/warehouse-transfers/from/{warehouseId}/paged - Paginated outgoing transfers
+     */
+    @GetMapping("/from/{warehouseId}/paged")
+    public ResponseEntity<Page<WarehouseTransferDTO>> getTransfersFromPaged(
+            @PathVariable Long warehouseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transferDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(warehouseTransferService.getTransfersFrom(warehouseId, pageable));
+    }
+
+    /**
      * GET /api/warehouse-transfers/to/{warehouseId} - Get incoming transfers
      */
     @GetMapping("/to/{warehouseId}")
@@ -145,6 +193,21 @@ public class WarehouseTransferController {
         } catch (Exception e) {
             return buildErrorResponse("Error fetching incoming transfers", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * GET /api/warehouse-transfers/to/{warehouseId}/paged - Paginated incoming transfers
+     */
+    @GetMapping("/to/{warehouseId}/paged")
+    public ResponseEntity<Page<WarehouseTransferDTO>> getTransfersToPaged(
+            @PathVariable Long warehouseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transferDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(warehouseTransferService.getTransfersTo(warehouseId, pageable));
     }
 
     /**

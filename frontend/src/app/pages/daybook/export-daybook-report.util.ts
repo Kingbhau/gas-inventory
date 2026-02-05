@@ -103,11 +103,10 @@ export function exportDayBookReportToPDF({
   // Table Data
   const tableData = transactions.map((transaction: any) => [
     transaction.transactionDate,
-    transaction.customerName,
-    transaction.warehouseName,
-    transaction.variantName,
-    transaction.filledCount || 0,
-    transaction.emptyCount || 0,
+    (transaction.transactionType || '').replace(/_/g, ' ') || 'Transaction',
+    transaction.partyName || '-',
+    transaction.referenceNumber || '-',
+    transaction.details || '-',
     `Rs. ${Number(transaction.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     `Rs. ${Number(transaction.amountReceived || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     `Rs. ${Number(transaction.dueAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -118,15 +117,14 @@ export function exportDayBookReportToPDF({
     startY: y + 2,
     head: [[
       'Date',
-      'Customer',
-      'Warehouse',
-      'Variant',
-      'Filled',
-      'Returned',
-      'Total Amount',
+      'Type',
+      'Party',
+      'Reference',
+      'Details',
+      'Amount',
       'Received',
-      'Due Amount',
-      'Payment Mode'
+      'Due',
+      'Mode'
     ]],
     body: tableData,
     styles: { fontSize: 7.5, cellPadding: 1.5, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
@@ -137,12 +135,11 @@ export function exportDayBookReportToPDF({
       1: { halign: 'left' },
       2: { halign: 'left' },
       3: { halign: 'left' },
-      4: { halign: 'center' },
-      5: { halign: 'center' },
+      4: { halign: 'left' },
+      5: { halign: 'right' },
       6: { halign: 'right' },
       7: { halign: 'right' },
-      8: { halign: 'right' },
-      9: { halign: 'left' }
+      8: { halign: 'left' }
     },
     margin: { left: 5, right: 5, top: 10 },
     didDrawPage: (data) => {

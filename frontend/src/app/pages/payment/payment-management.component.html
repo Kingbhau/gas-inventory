@@ -24,7 +24,7 @@
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Customers</h3>
-        <span class="record-count">{{ filteredCustomers.length }} customers</span>
+        <span class="record-count">{{ paymentTotalElements }} customers</span>
       </div>
       <div class="card-body">
         <div *ngIf="filteredCustomers.length > 0; else noCustomers" class="table-wrapper">
@@ -38,7 +38,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let customer of filteredCustomers">
+              <tr *ngFor="let customer of paginatedCustomers">
                 <td><strong>{{ customer.name }}</strong></td>
                 <td>{{ customer.mobile }}</td>
                 <td class="due-amount">₹{{ customer.dueAmount ? (customer.dueAmount | number: '1.2-2') : '0.00' }}</td>
@@ -61,6 +61,30 @@
             <p><fa-icon [icon]="faUsers"></fa-icon> No customers found</p>
           </div>
         </ng-template>
+
+        <!-- Pagination -->
+        <div *ngIf="filteredCustomers.length > 0" class="pagination">
+          <button
+            (click)="previousPage()"
+            [disabled]="paymentPage === 1"
+            class="btn btn-secondary">
+            ← Previous
+          </button>
+          <span class="page-info">Page {{ paymentPage }} of {{ paymentTotalPages }}</span>
+          <button
+            (click)="nextPage()"
+            [disabled]="paymentPage === paymentTotalPages"
+            class="btn btn-secondary">
+            Next →
+          </button>
+          <div class="page-size-control">
+            <span class="page-size-label">Show</span>
+            <select [(ngModel)]="paymentPageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+              <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+            </select>
+            <span class="page-size-label">per page</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

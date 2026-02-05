@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
+import { expand, map, reduce } from 'rxjs';
 import { PaymentMode } from '../models/payment-mode.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -20,6 +21,19 @@ export class PaymentModeService {
       .set('size', pageSize.toString());
     return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
       .pipe(applyTimeout());
+  }
+
+  getAllPaymentModesAll(pageSize: number = 200): Observable<PaymentMode[]> {
+    return this.getAllPaymentModes(0, pageSize).pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages ? this.getAllPaymentModes(nextPage, pageSize) : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: PaymentMode[], chunk: PaymentMode[]) => all.concat(chunk), [])
+    );
   }
 
   // Get active payment modes only

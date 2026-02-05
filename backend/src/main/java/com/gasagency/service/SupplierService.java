@@ -9,6 +9,8 @@ import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.repository.SupplierTransactionRepository;
 import com.gasagency.util.LoggerUtil;
 import com.gasagency.util.CodeGenerator;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ public class SupplierService {
         this.businessInfoRepository = businessInfoRepository;
     }
 
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
     public SupplierDTO createSupplier(SupplierDTO dto, Long businessId) {
         LoggerUtil.logBusinessEntry(logger, "CREATE_SUPPLIER", "name", dto != null ? dto.getName() : "null");
 
@@ -73,6 +76,7 @@ public class SupplierService {
         return toDTO(supplier);
     }
 
+    @Cacheable("suppliersAll")
     public List<SupplierDTO> getAllSuppliers() {
         LoggerUtil.logDatabaseOperation(logger, "SELECT_ALL", "SUPPLIER");
 
@@ -89,6 +93,7 @@ public class SupplierService {
                 .map(this::toDTO);
     }
 
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
     public SupplierDTO updateSupplier(Long id, SupplierDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "UPDATE_SUPPLIER", "id", id, "name", dto != null ? dto.getName() : "null");
 
@@ -109,6 +114,7 @@ public class SupplierService {
     }
 
     @Transactional
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
     public void deleteSupplier(Long id) {
         LoggerUtil.logBusinessEntry(logger, "DELETE_SUPPLIER", "id", id);
 

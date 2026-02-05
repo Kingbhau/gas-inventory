@@ -37,10 +37,11 @@ public class SaleController {
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
-            @RequestParam(required = false) String referenceNumber) {
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         return ResponseEntity
                 .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount,
-                        referenceNumber));
+                        referenceNumber, createdBy));
     }
 
     @GetMapping("/payment-mode-summary")
@@ -80,11 +81,12 @@ public class SaleController {
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
-            @RequestParam(required = false) String referenceNumber) {
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return ResponseEntity
                 .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount,
-                        referenceNumber));
+                        referenceNumber, createdBy));
     }
 
     @GetMapping("/customer/{customerId}")

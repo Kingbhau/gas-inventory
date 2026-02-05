@@ -30,6 +30,12 @@ export function exportCustomerLedgerToPDF({
   fromDate?: string,
   toDate?: string
 }) {
+  const toNumber = (value: any): number => {
+    if (value === null || value === undefined) return 0;
+    const num = typeof value === 'string' ? Number(value) : value;
+    return Number.isFinite(num) ? num : 0;
+  };
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -117,13 +123,17 @@ export function exportCustomerLedgerToPDF({
 
   // Ledger Table
   const tableData = ledgerData.map((entry: any, index: number) => {
-    // Calculate running balance (cumulative)
-    let runningBalance = 0;
-    for (let i = 0; i <= index; i++) {
-      if (ledgerData[i].refType === 'PAYMENT' || ledgerData[i].refType === 'CREDIT') {
-        runningBalance -= ledgerData[i].amountReceived || 0;
-      } else {
-        runningBalance += ledgerData[i].totalAmount || 0;
+    // Use backend-calculated dueAmount for running balance when available
+    let runningBalance = toNumber(entry?.dueAmount);
+    if (runningBalance === 0 && entry?.dueAmount !== 0) {
+      // Fallback to computed running balance if dueAmount is missing
+      runningBalance = 0;
+      for (let i = 0; i <= index; i++) {
+        if (ledgerData[i].refType === 'PAYMENT' || ledgerData[i].refType === 'CREDIT') {
+          runningBalance -= toNumber(ledgerData[i].amountReceived);
+        } else {
+          runningBalance += toNumber(ledgerData[i].totalAmount);
+        }
       }
     }
 
@@ -145,9 +155,9 @@ export function exportCustomerLedgerToPDF({
       entry.filledOut || 0,
       entry.emptyIn || 0,
       entry.balance || 0,
-      `Rs ${Number(entry.totalAmount || 0).toLocaleString()}`,
-      `Rs ${Number(entry.amountReceived || 0).toLocaleString()}`,
-      `Rs ${Number(runningBalance).toLocaleString()}`
+      `Rs ${toNumber(entry.totalAmount).toLocaleString()}`,
+      `Rs ${toNumber(entry.amountReceived).toLocaleString()}`,
+      `Rs ${toNumber(runningBalance).toLocaleString()}`
     ];
   });
 

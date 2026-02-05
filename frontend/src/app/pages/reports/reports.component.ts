@@ -36,6 +36,7 @@ import { LoadingService } from '../../services/loading.service';
 import { ExpenseReportComponent } from '../expenses/expense-report.component';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { AlertSettingsService } from '../../services/alert-settings.service';
+import { UserService, User } from '../../services/user.service';
 
 
 
@@ -154,6 +155,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
   filterSalesReference: string = '';
+  filterSalesCreatedBy: string = '';
   filterReturnPendingVariantId: string = '';
   filterInventoryWarehouseId: string = '';
   filterDuePaymentCustomerId: string = '';
@@ -171,6 +173,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   warehousesList: any[] = [];
   bankAccountsList: any[] = [];
   paymentModesList: any[] = [];
+  users: User[] = [];
   selectedReport = 'sales';
   filterFromDate = '';
   filterToDate = '';
@@ -257,6 +260,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
     private alertSettingsService: AlertSettingsService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -277,15 +281,15 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadInventoryData();
     this.loadSupplierData();
     
-    this.customerService.getAllCustomers(0, 100).subscribe({
+    this.customerService.getAllCustomersAll().subscribe({
       next: (data) => {
-        this.customersList = data.content || data;
+        this.customersList = data || [];
       },
       error: () => { this.customersList = []; }
     });
-    this.variantService.getAllVariants(0, 100).subscribe({
+    this.variantService.getAllVariantsAll().subscribe({
       next: (data) => {
-        this.variantsList = data.content || data;
+        this.variantsList = data || [];
       },
       error: () => { this.variantsList = []; }
     });
@@ -299,17 +303,27 @@ export class ReportsComponent implements OnInit, OnDestroy {
     // Load bank accounts for filtering
     this.bankAccountService.getActiveBankAccounts().subscribe({
       next: (data: any) => {
-        this.bankAccountsList = data.content || data || [];
+        this.bankAccountsList = data || [];
       },
       error: () => { this.bankAccountsList = []; }
     });
     
     // Load all payment modes (active and inactive) for historical filtering
-    this.paymentModeService.getAllPaymentModes(0, 100).subscribe({
+    this.paymentModeService.getAllPaymentModesAll().subscribe({
       next: (data: any) => {
-        this.paymentModesList = Array.isArray(data) ? data : (data.content || []);
+        this.paymentModesList = data || [];
       },
       error: () => { this.paymentModesList = []; }
+    });
+
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.users = users || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.users = [];
+      }
     });
 
     // Load pending return threshold from alert settings
@@ -628,7 +642,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const referenceNumber = this.filterSalesReference ? this.filterSalesReference : undefined;
     
     // Fetch current page data with backend-driven pagination
-    const sub = this.saleService.getAllSales(this.salesPage - 1, this.salesPageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
+    const sub = this.saleService.getAllSales(this.salesPage - 1, this.salesPageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterSalesCreatedBy || undefined)
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -657,7 +671,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         sub.unsubscribe();
       });
     // Fetch summary card values from backend summary endpoint (for ALL data)
-    this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
+    this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterSalesCreatedBy || undefined)
       .pipe(
         catchError((error: any) => {
           this.summaryTotalSalesAmount = 0;
@@ -701,7 +715,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       const businessName = this.agencyName;
       const referenceNumber = this.filterSalesReference ? this.filterSalesReference : undefined;
       const fetchPage = () => {
-        this.saleService.getAllSales(page, pageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
+        this.saleService.getAllSales(page, pageSize, 'id', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterSalesCreatedBy || undefined)
           .pipe(
             catchError((error: any) => {
               const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
@@ -719,7 +733,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
               fetchPage();
             } else {
               // Fetch backend summary for perfect consistency
-              this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
+              this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterSalesCreatedBy || undefined)
                 .pipe(
                   catchError(() => of({ totalSalesAmount: 0, avgSaleValue: 0, topCustomer: 'N/A', transactionCount: 0 }))
                 )
@@ -943,4 +957,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.filterPaymentModeMinTransactions = null;
     this.loadPaymentModesData();
   }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
 }

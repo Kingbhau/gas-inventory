@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
+import { expand, map, reduce } from 'rxjs';
 import { ExpenseCategory } from '../models/expense-category.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -20,6 +21,19 @@ export class ExpenseCategoryService {
       .set('size', pageSize.toString());
     return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
       .pipe(applyTimeout());
+  }
+
+  getAllCategoriesAll(pageSize: number = 200): Observable<ExpenseCategory[]> {
+    return this.getAllCategories(0, pageSize).pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages ? this.getAllCategories(nextPage, pageSize) : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: ExpenseCategory[], chunk: ExpenseCategory[]) => all.concat(chunk), [])
+    );
   }
 
   // Get active categories only

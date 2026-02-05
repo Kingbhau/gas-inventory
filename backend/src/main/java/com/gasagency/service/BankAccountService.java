@@ -13,6 +13,8 @@ import com.gasagency.repository.SaleRepository;
 import com.gasagency.util.ReferenceNumberGenerator;
 import com.gasagency.util.CodeGenerator;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +47,7 @@ public class BankAccountService {
                 this.codeGenerator = codeGenerator;
         }
 
+        @CacheEvict(value = { "bankAccountsActive" }, allEntries = true)
         public BankAccountDTO createBankAccount(CreateBankAccountRequestDTO request) {
                 // Check if account number already exists
                 bankAccountRepository.findByAccountNumber(request.getAccountNumber())
@@ -84,12 +87,14 @@ public class BankAccountService {
                 return new PageImpl<>(dtos, pageable, bankAccounts.getTotalElements());
         }
 
+        @Cacheable("bankAccountsActive")
         public List<BankAccountDTO> getActiveBankAccounts() {
                 return bankAccountRepository.findActiveAccounts().stream()
                                 .map(this::mapToDTO)
                                 .collect(Collectors.toList());
         }
 
+        @CacheEvict(value = { "bankAccountsActive" }, allEntries = true)
         public BankAccountDTO updateBankAccount(Long bankAccountId, CreateBankAccountRequestDTO request) {
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -117,6 +122,7 @@ public class BankAccountService {
                 return mapToDTO(updatedBankAccount);
         }
 
+        @CacheEvict(value = { "bankAccountsActive" }, allEntries = true)
         public void deleteBankAccount(Long bankAccountId) {
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -125,6 +131,7 @@ public class BankAccountService {
                 bankAccountRepository.delete(bankAccount);
         }
 
+        @CacheEvict(value = { "bankAccountsActive" }, allEntries = true)
         public void deactivateBankAccount(Long bankAccountId) {
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -135,6 +142,7 @@ public class BankAccountService {
                 bankAccountRepository.save(bankAccount);
         }
 
+        @CacheEvict(value = { "bankAccountsActive" }, allEntries = true)
         public void activateBankAccount(Long bankAccountId) {
                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
                                 .orElseThrow(() -> new ResourceNotFoundException(

@@ -17,6 +17,7 @@ import { exportExpenseReportToPDF } from '../reports/export-expense-report.util'
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-expense-report',
@@ -41,12 +42,14 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
   filterMaxAmount: number | null = null;
   filterPaymentMode = '';
   filterBankAccountId: string | number | null = null;
+  filterCreatedBy = '';
 
   // Filter data
   categories: string[] = [];
   categoryMap: Map<string, number> = new Map(); // Map category name to ID
   paymentModes: PaymentMode[] = [];
   bankAccounts: BankAccount[] = [];
+  users: User[] = [];
 
   // Pagination
   currentPage = 1;
@@ -74,11 +77,13 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private dateUtility: DateUtilityService
+    private dateUtility: DateUtilityService,
+    private userService: UserService
   ) {}
 
   ngOnInit() {
     this.loadFilterData();
+    this.loadUsers();
     this.loadExpenses();
   }
 
@@ -121,6 +126,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     if (this.filterBankAccountId) filters.bankAccountId = Number(this.filterBankAccountId);
     if (this.filterMinAmount !== null && this.filterMinAmount !== undefined) filters.minAmount = this.filterMinAmount;
     if (this.filterMaxAmount !== null && this.filterMaxAmount !== undefined) filters.maxAmount = this.filterMaxAmount;
+    if (this.filterCreatedBy) filters.createdBy = this.filterCreatedBy;
 
     this.expenseService.getAllExpenses(page - 1, pageSize, filters).pipe(
       finalize(() => {
@@ -130,9 +136,9 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (response) => {
         this.expenses = response.content || response;
+        this.filteredExpenses = this.expenses; // Backend already filtered
         this.totalExpenses = response.totalElements || response.length;
         this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
-        this.filteredExpenses = this.expenses; // Backend already filtered
         this.loadSummary();
         this.cdr.markForCheck();
       },
@@ -151,7 +157,8 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
       this.filterPaymentMode || undefined,
       this.filterBankAccountId ? Number(this.filterBankAccountId) : undefined,
       this.filterMinAmount || undefined,
-      this.filterMaxAmount || undefined
+      this.filterMaxAmount || undefined,
+      this.filterCreatedBy || undefined
     ).subscribe({
       next: (summary: any) => {
         this.totalAmount = summary.totalAmount || 0;
@@ -204,6 +211,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     this.filterMaxAmount = null;
     this.filterPaymentMode = '';
     this.filterBankAccountId = null;
+    this.filterCreatedBy = '';
     this.currentPage = 1;
     
     // Reset dates to default (last 30 days) using IST
@@ -291,6 +299,27 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
 
   getCategoryId(categoryName: string): number | undefined {
     return this.categoryMap.get(categoryName);
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 
   /**

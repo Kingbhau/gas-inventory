@@ -16,6 +16,7 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
   @Input() required: boolean = false;
   @Input() items: T[] = [];
   @Input() displayKey: keyof T | null = null;
+  @Input() labelClass: string = 'form-label';
   @Input() selected: T | null = null;
 
   @Output() selectedChange = new EventEmitter<T | null>();

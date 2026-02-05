@@ -6,6 +6,7 @@ import com.gasagency.repository.WarehouseTransferRepository;
 import com.gasagency.repository.SupplierTransactionRepository;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.repository.BankAccountLedgerRepository;
+import com.gasagency.service.ReferenceSequenceService;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,18 +36,21 @@ public class ReferenceNumberGenerator {
     private final SupplierTransactionRepository supplierTransactionRepository;
     private final CustomerCylinderLedgerRepository customerCylinderLedgerRepository;
     private final BankAccountLedgerRepository bankAccountLedgerRepository;
+    private final ReferenceSequenceService referenceSequenceService;
 
     public ReferenceNumberGenerator(
             SaleRepository saleRepository,
             WarehouseTransferRepository warehouseTransferRepository,
             SupplierTransactionRepository supplierTransactionRepository,
             CustomerCylinderLedgerRepository customerCylinderLedgerRepository,
-            BankAccountLedgerRepository bankAccountLedgerRepository) {
+            BankAccountLedgerRepository bankAccountLedgerRepository,
+            ReferenceSequenceService referenceSequenceService) {
         this.saleRepository = saleRepository;
         this.warehouseTransferRepository = warehouseTransferRepository;
         this.supplierTransactionRepository = supplierTransactionRepository;
         this.customerCylinderLedgerRepository = customerCylinderLedgerRepository;
         this.bankAccountLedgerRepository = bankAccountLedgerRepository;
+        this.referenceSequenceService = referenceSequenceService;
     }
 
     /**
@@ -62,12 +66,10 @@ public class ReferenceNumberGenerator {
         String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
         String warehouseCode = getWarehouseCode(warehouse);
 
-        // Get count for this warehouse and month to generate sequence
-        long sequence = saleRepository.countByWarehouseAndCreatedAtMonthYear(
-                warehouse,
-                LocalDate.parse("01-" + yearMonth, DateTimeFormatter.ofPattern("dd-yyyyMM")));
+        String seqKey = String.format("SALE:%s:%s", warehouse.getId(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
 
-        String formattedSequence = String.format("%06d", sequence + 1);
+        String formattedSequence = String.format("%06d", sequence);
         String reference = String.format("SO-%s-%s-%s", warehouseCode, yearMonth, formattedSequence);
 
         logger.info("Generated Sale reference: {} for warehouse: {}", reference, warehouse.getName());
@@ -95,11 +97,10 @@ public class ReferenceNumberGenerator {
         String fromCode = getWarehouseCode(fromWarehouse);
         String toCode = getWarehouseCode(toWarehouse);
 
-        // Get count for this month to generate sequence
-        long sequence = warehouseTransferRepository.countByCreatedAtMonthYear(
-                LocalDate.parse("01-" + yearMonth, DateTimeFormatter.ofPattern("dd-yyyyMM")));
+        String seqKey = String.format("TRANSFER:%s:%s:%s", fromWarehouse.getId(), toWarehouse.getId(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
 
-        String formattedSequence = String.format("%06d", sequence + 1);
+        String formattedSequence = String.format("%06d", sequence);
         String reference = String.format("WT-%s-%s-%s-%s", fromCode, toCode, yearMonth, formattedSequence);
 
         logger.info("Generated Warehouse Transfer reference: {} from {} to {}",
@@ -123,12 +124,12 @@ public class ReferenceNumberGenerator {
 
         String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
 
-        // Get count for this month to generate sequence
-        long sequence = supplierTransactionRepository.countByCreatedAtMonthYear(
-                LocalDate.parse("01-" + yearMonth, DateTimeFormatter.ofPattern("dd-yyyyMM")));
+        String normalizedSupplierCode = supplierCode.trim();
+        String seqKey = String.format("PURCHASE:%s:%s", normalizedSupplierCode.toUpperCase(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
 
-        String formattedSequence = String.format("%06d", sequence + 1);
-        String reference = String.format("PO-%s-%s-%s", supplierCode, yearMonth, formattedSequence);
+        String formattedSequence = String.format("%06d", sequence);
+        String reference = String.format("PO-%s-%s-%s", normalizedSupplierCode, yearMonth, formattedSequence);
 
         logger.info("Generated Purchase Order reference: {} for supplier: {}", reference, supplierCode);
         return reference;
@@ -147,13 +148,10 @@ public class ReferenceNumberGenerator {
         String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
         String warehouseCode = getWarehouseCode(warehouse);
 
-        // Query to count EMPTY_RETURN entries for this warehouse in this month
-        // Using raw JPQL count for empty returns with warehouse
-        long sequence = customerCylinderLedgerRepository.countEmptyReturnsByWarehouseAndMonth(
-                warehouse,
-                LocalDate.parse("01-" + yearMonth, DateTimeFormatter.ofPattern("dd-yyyyMM")));
+        String seqKey = String.format("EMPTY_RETURN:%s:%s", warehouse.getId(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
 
-        String formattedSequence = String.format("%06d", sequence + 1);
+        String formattedSequence = String.format("%06d", sequence);
         String reference = String.format("ER-%s-%s-%s", warehouseCode, yearMonth, formattedSequence);
 
         logger.info("Generated Empty Return reference: {} for warehouse: {}", reference, warehouse.getName());
@@ -188,11 +186,10 @@ public class ReferenceNumberGenerator {
         // Remove spaces and convert to uppercase for reference number
         String upperBankCode = bankCode.toUpperCase().replaceAll("\\s+", "");
 
-        // Get count for this month to generate sequence
-        long sequence = bankAccountLedgerRepository.countByCreatedAtMonthYear(
-                LocalDate.parse("01-" + yearMonth, DateTimeFormatter.ofPattern("dd-yyyyMM")));
+        String seqKey = String.format("BANK:%s:%s:%s", upperBankCode, transactionType, yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
 
-        String formattedSequence = String.format("%06d", sequence + 1);
+        String formattedSequence = String.format("%06d", sequence);
         String reference = String.format("%s-%s-%s-%s", transactionType, upperBankCode, yearMonth, formattedSequence);
 
         logger.info("Generated Bank transaction reference: {} for bank: {} type: {}",

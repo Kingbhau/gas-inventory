@@ -6,15 +6,15 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPlus, faSearch, faEdit, faTrash, faEye, faTimes, faChevronDown, faSignOut, faUsers, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
-import { CustomerDuePaymentService } from '../../services/customer-due-payment.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { AuthService } from '../../services/auth.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
 import { DateUtilityService } from '../../services/date-utility.service';
+import { LoadingService } from '../../services/loading.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { catchError, of } from 'rxjs';
+import { catchError, finalize, of } from 'rxjs';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { SharedModule } from '../../shared/shared.module';
@@ -47,6 +47,9 @@ export class PaymentManagementComponent implements OnInit {
   selectedCustomer: any = null;
   paymentPage = 1;
   paymentPageSize = 10;
+  paymentTotalPages = 1;
+  paymentTotalElements = 0;
+  pageSizeOptions = [5, 10, 20, 50, 100];
 
   showPaymentForm = false;
   paymentForm: { amount: string | number | null; paymentDate: string; paymentMode: string; bankAccountId?: number | null } = {
@@ -63,12 +66,12 @@ export class PaymentManagementComponent implements OnInit {
   constructor(
     private customerService: CustomerService,
     private ledgerService: CustomerCylinderLedgerService,
-    private duePaymentService: CustomerDuePaymentService,
     private bankAccountService: BankAccountService,
     private paymentModeService: PaymentModeService,
     private authService: AuthService,
     private dataRefreshService: DataRefreshService,
     private dateUtility: DateUtilityService,
+    private loadingService: LoadingService,
     private router: Router,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
@@ -84,7 +87,9 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   loadBankAccounts() {
+    this.loadingService.show('Loading bank accounts...');
     this.bankAccountService.getActiveBankAccounts()
+      .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (response: any) => {
           this.bankAccounts = response || [];
@@ -98,7 +103,9 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   loadPaymentModes() {
+    this.loadingService.show('Loading payment modes...');
     this.paymentModeService.getActivePaymentModes()
+      .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (response: PaymentMode[]) => {
           this.paymentModes = response || [];
@@ -126,49 +133,53 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   loadCustomers() {
-    this.customerService.getActiveCustomers().subscribe(
-      (data: any[]) => {
-        this.customers = data;
-        // Enrich customers with due amounts using CustomerDuePaymentService
-        data.forEach((customer: any) => {
-          this.duePaymentService.getDuePaymentReport(0, 1, 'dueAmount', 'DESC', undefined, undefined, customer.id.toString())
-            .pipe(
-              catchError((err: any) => {
-                console.error('Error loading due amount for customer:', err);
-                return of({ content: [] });
-              })
-            )
-            .subscribe(
-              (response: any) => {
-                if (response.content && response.content.length > 0) {
-                  customer.dueAmount = response.content[0].dueAmount || 0;
-                } else {
-                  customer.dueAmount = 0;
-                }
-                this.cdr.markForCheck();
-              }
-            );
-        });
-        this.filteredCustomers = data;
-        this.cdr.markForCheck();
-      },
-      (error: any) => {
-        this.toastr.error('Failed to load customers', 'Error');
-      }
-    );
+    const search = this.searchTerm?.trim() || undefined;
+    this.loadingService.show('Loading customers...');
+    this.customerService
+      .getActiveCustomersPaged(this.paymentPage - 1, this.paymentPageSize, 'name', 'ASC', search, 0.01)
+      .pipe(finalize(() => this.loadingService.hide()))
+      .subscribe({
+        next: (data: any) => {
+          const content = data.content || data || [];
+          this.customers = content;
+          this.filteredCustomers = content;
+          this.paymentTotalElements = data.totalElements || content.length;
+          this.paymentTotalPages = data.totalPages || 1;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.toastr.error('Failed to load customers', 'Error');
+        }
+      });
   }
 
   filterCustomers() {
-    if (!this.searchTerm.trim()) {
-      this.filteredCustomers = this.customers;
-    } else {
-      const term = this.searchTerm.toLowerCase();
-      this.filteredCustomers = this.customers.filter(c =>
-        c.name.toLowerCase().includes(term) ||
-        c.mobile?.includes(this.searchTerm)
-      );
+    this.paymentPage = 1;
+    this.loadCustomers();
+  }
+
+  get paginatedCustomers() {
+    return this.filteredCustomers;
+  }
+
+  onPageSizeChange(size: number) {
+    this.paymentPageSize = Number(size);
+    this.paymentPage = 1;
+    this.loadCustomers();
+  }
+
+  previousPage() {
+    if (this.paymentPage > 1) {
+      this.paymentPage--;
+      this.loadCustomers();
     }
-    this.cdr.markForCheck();
+  }
+
+  nextPage() {
+    if (this.paymentPage < this.paymentTotalPages) {
+      this.paymentPage++;
+      this.loadCustomers();
+    }
   }
 
   selectCustomer(customer: any) {
@@ -178,15 +189,18 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   loadLedgerForCustomer(customerId: number) {
-    this.ledgerService.getLedgerByCustomer(customerId).subscribe(
-      (data: any[]) => {
-        this.ledgerEntries = data;
-        this.cdr.markForCheck();
-      },
-      (error: any) => {
-        this.toastr.error('Failed to load ledger', 'Error');
-      }
-    );
+    this.loadingService.show('Loading ledger...');
+    this.ledgerService.getLedgerByCustomer(customerId)
+      .pipe(finalize(() => this.loadingService.hide()))
+      .subscribe(
+        (data: any[]) => {
+          this.ledgerEntries = data;
+          this.cdr.markForCheck();
+        },
+        (error: any) => {
+          this.toastr.error('Failed to load ledger', 'Error');
+        }
+      );
   }
 
   openPaymentForm() {
@@ -256,6 +270,7 @@ export class PaymentManagementComponent implements OnInit {
     }
 
     this.isSubmittingPayment = true;
+    this.loadingService.show('Recording payment...');
     const paymentData: any = {
       customerId: this.selectedCustomer.id,
       amount: amountValue,
@@ -270,6 +285,7 @@ export class PaymentManagementComponent implements OnInit {
 
     this.ledgerService.recordPayment(paymentData)
       .pipe(
+        finalize(() => this.loadingService.hide()),
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
           this.toastr.error(errorMessage, 'Error');

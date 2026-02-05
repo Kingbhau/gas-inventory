@@ -4,6 +4,8 @@ import com.gasagency.dto.PaymentModeDTO;
 import com.gasagency.entity.PaymentMode;
 import com.gasagency.repository.PaymentModeRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class PaymentModeService {
                 .map(mode -> modelMapper.map(mode, PaymentModeDTO.class));
     }
 
+    @Cacheable("paymentModesActive")
     public List<PaymentModeDTO> getActivePaymentModes() {
         return repository.findByIsActiveTrue()
                 .stream()
@@ -33,6 +36,7 @@ public class PaymentModeService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable("paymentModeNames")
     public List<String> getActivePaymentModeNames() {
         return repository.findActiveNames();
     }
@@ -43,6 +47,7 @@ public class PaymentModeService {
         return modelMapper.map(mode, PaymentModeDTO.class);
     }
 
+    @CacheEvict(value = { "paymentModesActive", "paymentModeNames" }, allEntries = true)
     public PaymentModeDTO createPaymentMode(PaymentModeDTO dto) {
         // Check if payment mode with same name already exists
         if (repository.findByName(dto.getName()).isPresent()) {
@@ -65,6 +70,7 @@ public class PaymentModeService {
         return modelMapper.map(saved, PaymentModeDTO.class);
     }
 
+    @CacheEvict(value = { "paymentModesActive", "paymentModeNames" }, allEntries = true)
     public PaymentModeDTO updatePaymentMode(Long id, PaymentModeDTO dto) {
         PaymentMode mode = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Payment mode not found with id: " + id));
@@ -95,6 +101,7 @@ public class PaymentModeService {
         return modelMapper.map(updated, PaymentModeDTO.class);
     }
 
+    @CacheEvict(value = { "paymentModesActive", "paymentModeNames" }, allEntries = true)
     public void deletePaymentMode(Long id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Payment mode not found with id: " + id);
@@ -102,6 +109,7 @@ public class PaymentModeService {
         repository.deleteById(id);
     }
 
+    @CacheEvict(value = { "paymentModesActive", "paymentModeNames" }, allEntries = true)
     public PaymentModeDTO togglePaymentModeStatus(Long id, Boolean isActive) {
         PaymentMode mode = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Payment mode not found with id: " + id));

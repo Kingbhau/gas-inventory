@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { shareReplay } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
+import { shareReplay, expand, map, reduce } from 'rxjs';
 import { Supplier } from '../models/supplier.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -35,6 +35,19 @@ export class SupplierService {
       .set('direction', direction);
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout());
+  }
+
+  getAllSuppliersAll(pageSize: number = 200): Observable<Supplier[]> {
+    return this.getAllSuppliers(0, pageSize).pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages ? this.getAllSuppliers(nextPage, pageSize) : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: Supplier[], chunk: Supplier[]) => all.concat(chunk), [])
+    );
   }
 
   invalidateCache(): void {

@@ -54,12 +54,13 @@ public class BankDepositController {
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) String paymentMode,
-            @RequestParam(required = false) String referenceNumber) {
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
 
         Page<BankDepositDTO> deposits = bankDepositService.getDeposits(
                 page, size, sortBy, sortOrder,
                 fromDate, toDate, bankAccountId,
-                paymentMode, referenceNumber);
+                paymentMode, referenceNumber, createdBy);
 
         return ResponseEntity.ok(deposits);
     }
@@ -96,10 +97,11 @@ public class BankDepositController {
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) String paymentMode,
-            @RequestParam(required = false) String referenceNumber) {
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
 
         var summary = bankDepositService.getDepositSummary(fromDate, toDate, bankAccountId, paymentMode,
-                referenceNumber);
+                referenceNumber, createdBy);
 
         Map<String, Object> response = new HashMap<>();
         response.put("totalAmount", summary.getTotalAmount());

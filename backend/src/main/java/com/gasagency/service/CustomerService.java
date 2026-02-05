@@ -178,6 +178,35 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
+    public Page<CustomerDTO> getActiveCustomers(Pageable pageable, String search, BigDecimal minDueAmount) {
+        LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "CUSTOMER", "filter", "active=true",
+                "page", pageable.getPageNumber(), "size", pageable.getPageSize(), "search", search,
+                "minDueAmount", minDueAmount);
+        if (minDueAmount == null) {
+            if (search == null || search.trim().isEmpty()) {
+                return repository.findAllByActive(true, pageable)
+                        .map(this::toDTO);
+            }
+            return repository.searchActive(search.trim(), pageable)
+                    .map(this::toDTO);
+        }
+        Page<CustomerCylinderLedger> page = ledgerRepository.findLatestDuePerCustomerWithSearch(
+                minDueAmount,
+                search != null ? search.trim() : null,
+                pageable);
+        return page.map(ledger -> {
+            Customer customer = ledger.getCustomer();
+            CustomerDTO dto = new CustomerDTO(
+                    customer.getId(),
+                    customer.getName(),
+                    customer.getMobile(),
+                    customer.getAddress(),
+                    customer.getActive());
+            dto.setDueAmount(ledger.getDueAmount() != null ? ledger.getDueAmount() : BigDecimal.ZERO);
+            return dto;
+        });
+    }
+
     @Transactional
     public CustomerDTO updateCustomer(Long id, CustomerDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "UPDATE_CUSTOMER", "id", id, "name", dto != null ? dto.getName() : "null");

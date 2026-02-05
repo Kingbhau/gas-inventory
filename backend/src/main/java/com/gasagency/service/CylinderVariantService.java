@@ -16,6 +16,8 @@ import com.gasagency.repository.CustomerVariantPriceRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.util.LoggerUtil;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,7 @@ public class CylinderVariantService {
         this.customerVariantPriceRepository = customerVariantPriceRepository;
     }
 
+    @CacheEvict(value = { "cylinderVariantsAll", "cylinderVariantsActive", "variantById" }, allEntries = true)
     public CylinderVariantDTO createVariant(CylinderVariantDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "CREATE_VARIANT", "name", dto != null ? dto.getName() : "null");
 
@@ -72,6 +75,7 @@ public class CylinderVariantService {
         return toDTO(variant);
     }
 
+    @Cacheable(value = "variantById", key = "#id")
     public CylinderVariantDTO getVariantById(Long id) {
         LoggerUtil.logDatabaseOperation(logger, "SELECT", "CYLINDER_VARIANT", "id", id);
 
@@ -83,6 +87,7 @@ public class CylinderVariantService {
         return toDTO(variant);
     }
 
+    @Cacheable("cylinderVariantsAll")
     public List<CylinderVariantDTO> getAllVariants() {
         LoggerUtil.logDatabaseOperation(logger, "SELECT_ALL", "CYLINDER_VARIANT");
 
@@ -99,6 +104,7 @@ public class CylinderVariantService {
                 .map(this::toDTO);
     }
 
+    @Cacheable("cylinderVariantsActive")
     public List<CylinderVariantDTO> getActiveVariants() {
         LoggerUtil.logDatabaseOperation(logger, "SELECT", "CYLINDER_VARIANT", "filter", "active=true");
 
@@ -119,6 +125,7 @@ public class CylinderVariantService {
                 .orElseThrow(() -> new ResourceNotFoundException("Variant not found with ID: " + id));
     }
 
+    @CacheEvict(value = { "cylinderVariantsAll", "cylinderVariantsActive", "variantById" }, allEntries = true)
     public CylinderVariantDTO updateVariant(Long id, CylinderVariantDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "UPDATE_VARIANT", "id", id, "name", dto != null ? dto.getName() : "null");
 
@@ -173,6 +180,7 @@ public class CylinderVariantService {
         return toDTO(variant);
     }
 
+    @CacheEvict(value = { "cylinderVariantsAll", "cylinderVariantsActive", "variantById" }, allEntries = true)
     public void deleteVariant(Long id) {
         LoggerUtil.logBusinessEntry(logger, "DELETE_VARIANT", "id", id);
 
@@ -234,6 +242,7 @@ public class CylinderVariantService {
                 variant.getWeightKg(), variant.getActive(), variant.getBasePrice());
     }
 
+    @CacheEvict(value = { "cylinderVariantsAll", "cylinderVariantsActive", "variantById" }, allEntries = true)
     public CylinderVariantDTO reactivateVariant(Long id) {
         logger.info("Reactivating cylinder variant with ID: {}", id);
         CylinderVariant variant = repository.findById(id)

@@ -124,7 +124,7 @@ public class BankDepositService {
     @Transactional(readOnly = true)
     public Page<BankDepositDTO> getDeposits(int page, int size, String sortBy, String sortOrder,
             String fromDate, String toDate, Long bankAccountId, String paymentMode,
-            String referenceNumber) {
+            String referenceNumber, String createdBy) {
 
         logger.info("Fetching bank deposits with filters");
 
@@ -152,6 +152,7 @@ public class BankDepositService {
                 bankAccountId,
                 (paymentMode != null && !paymentMode.isEmpty()) ? paymentMode : null,
                 (referenceNumber != null && !referenceNumber.isEmpty()) ? referenceNumber : null,
+                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null,
                 pageable);
 
         return deposits.map(this::toDTO);
@@ -162,7 +163,7 @@ public class BankDepositService {
      */
     @Transactional(readOnly = true)
     public DepositSummaryDTO getDepositSummary(String fromDate, String toDate, Long bankAccountId,
-            String paymentMode, String referenceNumber) {
+            String paymentMode, String referenceNumber, String createdBy) {
         LocalDate startDate = null;
         LocalDate endDate = null;
 
@@ -179,7 +180,8 @@ public class BankDepositService {
         }
 
         var totalAmount = bankDepositRepository.getTotalDepositAmountWithAllFilters(
-                startDate, endDate, bankAccountId, paymentMode, referenceNumber);
+                startDate, endDate, bankAccountId, paymentMode, referenceNumber,
+                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
 
         return new DepositSummaryDTO(totalAmount);
     }

@@ -2,11 +2,13 @@ package com.gasagency.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class DayBookDTO {
     private Long id;
     private Long customerId;
     private LocalDate transactionDate;
+    private LocalDateTime createdDate;
     private String customerName;
     private String warehouseName;
     private String variantName;
@@ -16,7 +18,11 @@ public class DayBookDTO {
     private BigDecimal amountReceived;
     private BigDecimal dueAmount;
     private String paymentMode;
-    private String transactionType; // "SALE" or "EMPTY_RETURN"
+    private String transactionType; // SALE, EMPTY_RETURN, PAYMENT, TRANSFER, EXPENSE, etc.
+    private String createdBy;
+    private String referenceNumber;
+    private String partyName;
+    private String details;
 
     public DayBookDTO() {
     }
@@ -63,6 +69,14 @@ public class DayBookDTO {
 
     public void setTransactionDate(LocalDate transactionDate) {
         this.transactionDate = transactionDate;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
     }
 
     public String getCustomerName() {
@@ -143,5 +157,37 @@ public class DayBookDTO {
 
     public void setTransactionType(String transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
+    }
+
+    public String getPartyName() {
+        return partyName;
+    }
+
+    public void setPartyName(String partyName) {
+        this.partyName = partyName;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
     }
 }

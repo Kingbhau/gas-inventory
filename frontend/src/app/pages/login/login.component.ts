@@ -5,7 +5,7 @@ import { AlertService } from '../../services/alert.service';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgIf } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faUser, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faLock, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -22,6 +22,10 @@ export class LoginComponent {
   loading = false;
   faUser = faUser;
   faLock = faLock;
+  faEye = faEye;
+  faEyeSlash = faEyeSlash;
+
+  showPassword = false;
 
   showForgot = false;
   forgotEmail = '';
@@ -84,5 +88,9 @@ export class LoginComponent {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 }

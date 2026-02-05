@@ -13,7 +13,9 @@ import { PaymentModeService } from '../../services/payment-mode.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { LoadingService } from '../../services/loading.service';
 import { AuthService } from '../../services/auth.service';
+import { UserService, User } from '../../services/user.service';
 import { SharedModule } from '../../shared/shared.module';
+import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { BankDeposit, BankAccount } from '../../models/index';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { exportBankDepositsReportToPDF } from '../reports/export-bank-deposits-report.util';
@@ -21,7 +23,7 @@ import { exportBankDepositsReportToPDF } from '../reports/export-bank-deposits-r
 @Component({
   selector: 'app-bank-deposit-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, SharedModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './bank-deposit-history.component.html',
   styleUrl: './bank-deposit-history.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -51,6 +53,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
   filterPaymentMode = '';
   filterReferenceNumber = '';
   filterSearchTerm = '';
+  filterCreatedBy = '';
 
   // Pagination
   currentPage = 1;
@@ -64,6 +67,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
   paymentModes: PaymentMode[] = [];
   deposits: BankDeposit[] = [];
   paginatedDeposits: BankDeposit[] = [];
+  users: User[] = [];
   
   // Summary
   totalAmount = 0;
@@ -82,6 +86,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     private dateUtility: DateUtilityService,
     private loadingService: LoadingService,
     private authService: AuthService,
+    private userService: UserService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private fb: FormBuilder
@@ -92,6 +97,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadBankAccounts();
     this.loadPaymentModes();
+    this.loadUsers();
     this.loadDeposits();
   }
 
@@ -151,7 +157,8 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
       this.filterToDate || undefined,
       this.filterBankAccountId || undefined,
       this.filterPaymentMode || undefined,
-      this.filterReferenceNumber || undefined
+      this.filterReferenceNumber || undefined,
+      this.filterCreatedBy || undefined
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -184,7 +191,8 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
       this.filterToDate,
       this.filterBankAccountId || undefined,
       this.filterPaymentMode || undefined,
-      this.filterReferenceNumber || undefined
+      this.filterReferenceNumber || undefined,
+      this.filterCreatedBy || undefined
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -226,6 +234,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     this.filterPaymentMode = '';
     this.filterReferenceNumber = '';
     this.filterSearchTerm = '';
+    this.filterCreatedBy = '';
     this.currentPage = 1;
     this.loadDeposits();
   }
@@ -268,6 +277,28 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     }
     const account = this.bankAccounts.find(ba => ba.id === accountId);
     return account ? `${account.bankName} - ${account.accountNumber}` : 'N/A';
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 
   /**

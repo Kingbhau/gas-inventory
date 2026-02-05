@@ -134,6 +134,23 @@ public class InventoryStockService {
                                 .collect(Collectors.toList());
         }
 
+        @Transactional(readOnly = true)
+        public Long getTotalFilledQty() {
+                Long total = repository.sumFilledQty();
+                return total != null ? total : 0L;
+        }
+
+        @Transactional(readOnly = true)
+        public Long getTotalEmptyQty() {
+                Long total = repository.sumEmptyQty();
+                return total != null ? total : 0L;
+        }
+
+        @Transactional(readOnly = true)
+        public List<Object[]> getTotalsByWarehouse() {
+                return repository.sumByWarehouse();
+        }
+
         public Page<InventoryStockDTO> getAllStock(Pageable pageable) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "INVENTORY_STOCK", "page",
                                 pageable.getPageNumber(), "size", pageable.getPageSize());

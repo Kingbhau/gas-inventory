@@ -10,6 +10,8 @@ import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.repository.WarehouseTransferRepository;
 import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
@@ -152,6 +154,12 @@ public class WarehouseTransferService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public Page<WarehouseTransferDTO> getAllTransfers(Pageable pageable) {
+        return warehouseTransferRepository.findAll(pageable)
+                .map(this::convertToDTO);
+    }
+
     /**
      * Get transfers for a specific warehouse (both incoming and outgoing)
      */
@@ -163,6 +171,13 @@ public class WarehouseTransferService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WarehouseTransferDTO> getTransfersForWarehouse(Long warehouseId, Pageable pageable) {
+        Warehouse warehouse = warehouseService.getWarehouseEntity(warehouseId);
+        return warehouseTransferRepository.findAllTransfersForWarehouse(warehouse, pageable)
+                .map(this::convertToDTO);
     }
 
     /**
@@ -178,6 +193,13 @@ public class WarehouseTransferService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public Page<WarehouseTransferDTO> getTransfersFrom(Long warehouseId, Pageable pageable) {
+        Warehouse warehouse = warehouseService.getWarehouseEntity(warehouseId);
+        return warehouseTransferRepository.findTransfersFromWarehouse(warehouse, pageable)
+                .map(this::convertToDTO);
+    }
+
     /**
      * Get transfers to specific warehouse (incoming)
      */
@@ -189,6 +211,13 @@ public class WarehouseTransferService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<WarehouseTransferDTO> getTransfersTo(Long warehouseId, Pageable pageable) {
+        Warehouse warehouse = warehouseService.getWarehouseEntity(warehouseId);
+        return warehouseTransferRepository.findTransfersToWarehouse(warehouse, pageable)
+                .map(this::convertToDTO);
     }
 
     /**
@@ -268,6 +297,7 @@ public class WarehouseTransferService {
         dto.setEmptyQty(0L);
         dto.setTransferDate(transfer.getTransferDate());
         dto.setCreatedAt(transfer.getCreatedDate());
+        dto.setCreatedBy(transfer.getCreatedBy());
         dto.setNotes(transfer.getNotes());
         dto.setReferenceNumber(transfer.getReferenceNumber());
         dto.setVersion(transfer.getVersion());

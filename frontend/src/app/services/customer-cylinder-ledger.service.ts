@@ -2,7 +2,8 @@ import { CustomerBalance } from '../models/customer-balance.model';
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
+import { expand, map, reduce } from 'rxjs';
 import { CustomerCylinderLedger } from '../models/customer-cylinder-ledger.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -16,8 +17,51 @@ export class CustomerCylinderLedgerService {
           .pipe(applyTimeout());
       }
 
+      getAllMovementsPaged(
+        page: number = 0,
+        size: number = 20,
+        sortBy: string = 'transactionDate',
+        direction: string = 'DESC',
+        variantId?: number | null,
+        refType?: string | null,
+        includeTransfers: boolean = true
+      ): Observable<any> {
+        let params = new HttpParams()
+          .set('page', page.toString())
+          .set('size', size.toString())
+          .set('sortBy', sortBy)
+          .set('direction', direction);
+        if (variantId) params = params.set('variantId', variantId.toString());
+        if (refType) params = params.set('refType', refType);
+        params = params.set('includeTransfers', includeTransfers.toString());
+        return this.http.get<any>(`${this.apiUrl}/movements/paged`, { params, withCredentials: true })
+          .pipe(applyTimeout());
+      }
+
       getMovementsByWarehouse(warehouseId: number): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/movements/warehouse/${warehouseId}`, { withCredentials: true })
+          .pipe(applyTimeout());
+      }
+
+      getMovementsByWarehousePaged(
+        warehouseId: number,
+        page: number = 0,
+        size: number = 20,
+        sortBy: string = 'transactionDate',
+        direction: string = 'DESC',
+        variantId?: number | null,
+        refType?: string | null,
+        includeTransfers: boolean = true
+      ): Observable<any> {
+        let params = new HttpParams()
+          .set('page', page.toString())
+          .set('size', size.toString())
+          .set('sortBy', sortBy)
+          .set('direction', direction);
+        if (variantId) params = params.set('variantId', variantId.toString());
+        if (refType) params = params.set('refType', refType);
+        params = params.set('includeTransfers', includeTransfers.toString());
+        return this.http.get<any>(`${this.apiUrl}/movements/warehouse/${warehouseId}/paged`, { params, withCredentials: true })
           .pipe(applyTimeout());
       }
     constructor(private http: HttpClient) { }
@@ -60,6 +104,21 @@ export class CustomerCylinderLedgerService {
     return this.http.get<any>(`${this.apiUrl}/customer/${customerId}/paginated`, { params, withCredentials: true })
       .pipe(applyTimeout());
   }
+
+  getLedgerByCustomerAll(customerId: number, pageSize: number = 200): Observable<CustomerCylinderLedger[]> {
+    return this.getLedgerByCustomerPaginated(customerId, 0, pageSize, 'id', 'DESC').pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages
+          ? this.getLedgerByCustomerPaginated(customerId, nextPage, pageSize, 'id', 'DESC')
+          : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: CustomerCylinderLedger[], chunk: CustomerCylinderLedger[]) => all.concat(chunk), [])
+    );
+  }
     /**
    * Get balances for a page of customers (all variants per customer)
    */
@@ -68,6 +127,11 @@ export class CustomerCylinderLedgerService {
       .set('page', page.toString())
       .set('size', size.toString());
     return this.http.get<CustomerBalance[]>(`${this.apiUrl}/customer-balances`, { params, withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  getCustomerDueAmounts(customerIds: number[]): Observable<{ [key: number]: number }> {
+    return this.http.post<{ [key: number]: number }>(`${this.apiUrl}/customer-due-amounts`, { customerIds }, { withCredentials: true })
       .pipe(applyTimeout());
   }
 
@@ -130,7 +194,8 @@ export class CustomerCylinderLedgerService {
     fromDate?: string,
     toDate?: string,
     customerId?: string,
-    variantId?: string
+    variantId?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -142,6 +207,7 @@ export class CustomerCylinderLedgerService {
     if (toDate) params = params.set('toDate', toDate);
     if (customerId) params = params.set('customerId', customerId);
     if (variantId) params = params.set('variantId', variantId);
+    if (createdBy) params = params.set('createdBy', createdBy);
 
     return this.http.get(`${this.apiUrl}/empty-returns`, { params, withCredentials: true })
       .pipe(applyTimeout());

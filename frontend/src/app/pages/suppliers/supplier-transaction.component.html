@@ -6,18 +6,18 @@
   </div>
 
   <!-- Filters Section -->
-  <div class="filters-card" style="width: 100%;">
+  <div class="filters-card">
     <!-- Row 1: From Date, To Date, Supplier -->
-    <div class="filter-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+    <div class="filter-row three-col">
+      <div class="filter-group">
         <label class="filter-label">From Date</label>
         <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
       </div>
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+      <div class="filter-group">
         <label class="filter-label">To Date</label>
         <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
       </div>
-      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
+      <div class="filter-group">
         <label class="filter-label">Supplier</label>
         <select [(ngModel)]="selectedSupplier" class="filter-input">
           <option value="">All Suppliers</option>
@@ -26,32 +26,42 @@
       </div>
     </div>
     <!-- Row 2: Warehouse, Variant, Reference -->
-    <div class="filter-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%; margin-top: 1rem;">
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+    <div class="filter-row three-col">
+      <div class="filter-group">
         <label class="filter-label">Warehouse</label>
         <select [(ngModel)]="selectedWarehouse" class="filter-input">
           <option value="">All Warehouses</option>
           <option *ngFor="let warehouse of warehouses" [value]="warehouse.id?.toString()">{{ warehouse.name }}</option>
         </select>
       </div>
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+      <div class="filter-group">
         <label class="filter-label">Variant</label>
         <select [(ngModel)]="filterVariantId" class="filter-input">
           <option value="">All Variants</option>
           <option *ngFor="let variant of variants" [value]="variant.id?.toString()">{{ variant.name }}</option>
         </select>
       </div>
-      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
         <label class="filter-label">Reference #</label>
         <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
       </div>
     </div>
     <!-- Row 3: Buttons -->
-    <div class="filter-row" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+    <div class="filter-actions-row">
       <button (click)="applyFilters()" class="btn btn-primary">Search</button>
       <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
-      <button (click)="exportSupplierTransactionsPDF()" class="btn btn-secondary" style="display: flex; align-items: center;">
-        <fa-icon [icon]="faDownload" style="margin-right: 4px;"></fa-icon> Export PDF
+      <button (click)="exportSupplierTransactionsPDF()" class="btn btn-secondary">
+        <fa-icon [icon]="faDownload"></fa-icon> Export PDF
       </button>
     </div>
   </div>
@@ -265,6 +275,10 @@
           <div class="invoice-row total">
             <span class="label">Amount:</span>
             <span class="value">{{ selectedTransaction.amount | number:'1.2-2' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedTransaction.createdBy) }}</span>
           </div>
         </div>
       </div>

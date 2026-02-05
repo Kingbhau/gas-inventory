@@ -20,7 +20,7 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
 
     @Override
     public Page<Sale> findFilteredSalesCustom(LocalDate from, LocalDate to, Long customerId, Long variantId,
-            Double minAmount, Double maxAmount, String referenceNumber, Pageable pageable) {
+            Double minAmount, Double maxAmount, String referenceNumber, String createdBy, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Sale> cq = cb.createQuery(Sale.class);
         Root<Sale> sale = cq.from(Sale.class);
@@ -54,6 +54,9 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
         }
         if (referenceNumber != null && !referenceNumber.isEmpty()) {
             predicates.add(cb.like(sale.get("referenceNumber"), "%" + referenceNumber + "%"));
+        }
+        if (createdBy != null && !createdBy.isEmpty()) {
+            predicates.add(cb.equal(sale.get("createdBy"), createdBy));
         }
 
         cq.select(sale).distinct(true).where(predicates.toArray(new Predicate[0]));
@@ -92,6 +95,8 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
             countPredicates.add(cb.lessThanOrEqualTo(countRoot.get("totalAmount"), maxAmount));
         if (referenceNumber != null && !referenceNumber.isEmpty())
             countPredicates.add(cb.like(countRoot.get("referenceNumber"), "%" + referenceNumber + "%"));
+        if (createdBy != null && !createdBy.isEmpty())
+            countPredicates.add(cb.equal(countRoot.get("createdBy"), createdBy));
         countQuery.select(cb.countDistinct(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 

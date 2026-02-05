@@ -128,9 +128,12 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         (response: any) => {
-          if (response.success) {
+          if (response?.success && response?.data) {
             this.transfers = response.data;
+            return;
           }
+          const content = response?.content ?? response?.data ?? response ?? [];
+          this.transfers = content;
         },
         (error: any) => {
           this.toastr.error('Error loading transfer history');

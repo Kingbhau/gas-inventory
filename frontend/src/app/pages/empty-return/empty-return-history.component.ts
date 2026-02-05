@@ -12,6 +12,7 @@ import { LoadingService } from '../../services/loading.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-empty-return-history',
@@ -26,6 +27,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
   filterToDate = '';
   selectedCustomer = '';
   filterVariantId: string = '';
+  filterCreatedBy = '';
   variantsList: any[] = [];
   currentPage = 1;
   pageSize = 10;
@@ -47,6 +49,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
   filteredEmptyReturns: any[] = [];
   selectedEmptyReturn: any = null;
   customersList: any[] = [];
+  users: User[] = [];
   originalEmptyReturnsMap: Map<number, any> = new Map();
 
   constructor(
@@ -55,24 +58,24 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private variantService: CylinderVariantService,
     private loadingService: LoadingService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadEmptyReturns();
     this.loadCustomers();
+    this.loadUsers();
     // Load all variants (including inactive) for filtering historical empty returns
-    if (this.variantService && this.variantService.getAllVariants) {
-      this.variantService.getAllVariants(0, 100).subscribe({
-        next: (data: any) => {
-          this.variantsList = data.content || data;
-          this.cdr.markForCheck();
-        },
-        error: (error: any) => {
-          this.variantsList = [];
-        }
-      });
-    }
+    this.variantService.getAllVariantsAll().subscribe({
+      next: (data: any) => {
+        this.variantsList = data || [];
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        this.variantsList = [];
+      }
+    });
   }
 
   ngOnDestroy() {}
@@ -84,7 +87,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     const variantId = this.filterVariantId ? this.filterVariantId : undefined;
     
     this.loadingService.show('Loading empty returns...');
-    this.ledgerService.getEmptyReturns(this.currentPage - 1, this.pageSize, 'transactionDate', 'DESC', fromDate, toDate, customerId, variantId)
+    this.ledgerService.getEmptyReturns(this.currentPage - 1, this.pageSize, 'transactionDate', 'DESC', fromDate, toDate, customerId, variantId, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
@@ -104,7 +107,8 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
               paymentMode: entry.paymentMode,
               dueAmount: entry.dueAmount,
               bankAccountName: entry.bankAccountName,
-              bankAccountNumber: entry.bankAccountNumber
+              bankAccountNumber: entry.bankAccountNumber,
+              createdBy: entry.createdBy
             });
           });
 
@@ -155,6 +159,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     this.filterToDate = '';
     this.selectedCustomer = '';
     this.filterVariantId = '';
+    this.filterCreatedBy = '';
     this.currentPage = 1;
     this.loadEmptyReturns();
   }
@@ -188,5 +193,26 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
 
   printDetails() {
     window.print();
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 }

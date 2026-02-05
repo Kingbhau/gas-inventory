@@ -12,6 +12,7 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-sales-history',
@@ -29,6 +30,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
   filterReference: string = '';
+  filterCreatedBy = '';
   variantsList: any[] = [];
   currentPage = 1;
   pageSize = 10;
@@ -50,6 +52,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   filteredSales: any[] = [];
   selectedSale: any = null;
   customersList: any[] = [];
+  users: User[] = [];
   originalSalesMap: Map<number, any> = new Map();
 
   constructor(
@@ -58,24 +61,24 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private variantService: CylinderVariantService,
     private loadingService: LoadingService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadSales();
     this.loadCustomers();
+    this.loadUsers();
     // Load all variants (including inactive) for filtering historical sales
-    if (this.variantService && this.variantService.getAllVariants) {
-      this.variantService.getAllVariants(0, 100).subscribe({
-        next: (data: any) => {
-          this.variantsList = data.content || data;
-          this.cdr.markForCheck();
-        },
-        error: (error: any) => {
-          this.variantsList = [];
-        }
-      });
-    }
+    this.variantService.getAllVariantsAll().subscribe({
+      next: (data: any) => {
+        this.variantsList = data || [];
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        this.variantsList = [];
+      }
+    });
   }
 
   ngOnDestroy() {}
@@ -90,7 +93,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
     const referenceNumber = this.filterReference ? this.filterReference : undefined;
     this.loadingService.show('Loading sales...');
-    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber)
+    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
@@ -126,7 +129,8 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                   qtyEmptyReceived: item.qtyEmptyReceived,
                   basePrice: item.basePrice,
                   discount: item.discount,
-                  finalPrice: finalPrice
+                  finalPrice: finalPrice,
+                  createdBy: sale.createdBy
                 });
               });
             } else {
@@ -142,7 +146,8 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                 bankAccountId: sale.bankAccountId,
                 bankAccountName: sale.bankAccountName,
                 variantName: 'N/A',
-                filledIssuedQty: 0
+                filledIssuedQty: 0,
+                createdBy: sale.createdBy
               });
             }
           });
@@ -195,6 +200,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.filterMinAmount = null;
     this.filterMaxAmount = null;
     this.filterReference = '';
+    this.filterCreatedBy = '';
     this.currentPage = 1;
     this.loadSales();
   }
@@ -229,5 +235,26 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
 
   printInvoice() {
     window.print();
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 }

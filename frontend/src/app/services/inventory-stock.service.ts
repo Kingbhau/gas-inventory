@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
+import { expand, map, reduce } from 'rxjs';
 import { InventoryStock } from '../models/inventory-stock.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -26,6 +27,19 @@ export class InventoryStockService {
       .set('direction', direction);
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout());
+  }
+
+  getAllStockAll(pageSize: number = 200): Observable<any[]> {
+    return this.getAllStock(0, pageSize, 'id', 'ASC').pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages ? this.getAllStock(nextPage, pageSize, 'id', 'ASC') : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: any[], chunk: any[]) => all.concat(chunk), [])
+    );
   }
 
   getStockByVariant(variantId: number): Observable<InventoryStock> {

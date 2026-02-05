@@ -35,10 +35,11 @@ public class ExpenseController {
             @RequestParam(required = false) String paymentMode,
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(service.getAllExpenses(pageable, fromDate, toDate, categoryId, paymentMode,
-                bankAccountId, minAmount, maxAmount));
+                bankAccountId, minAmount, maxAmount, createdBy));
     }
 
     @GetMapping("/range")
@@ -59,9 +60,10 @@ public class ExpenseController {
             @RequestParam(required = false) String paymentMode,
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String createdBy) {
         return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId, paymentMode, bankAccountId,
-                minAmount, maxAmount));
+                minAmount, maxAmount, createdBy));
     }
 
     @GetMapping("/category/{categoryId}")

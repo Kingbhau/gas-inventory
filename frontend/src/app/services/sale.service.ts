@@ -37,7 +37,8 @@ export class SaleService {
     variantId?: number,
     minAmount?: number,
     maxAmount?: number,
-    referenceNumber?: string
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -51,6 +52,7 @@ export class SaleService {
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
+    if (createdBy) params = params.set('createdBy', createdBy);
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(timeout(30000));
   }
@@ -70,7 +72,8 @@ export class SaleService {
     variantId?: number,
     minAmount?: number,
     maxAmount?: number,
-    referenceNumber?: string
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
@@ -80,6 +83,7 @@ export class SaleService {
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
+    if (createdBy) params = params.set('createdBy', createdBy);
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true });
   }
 

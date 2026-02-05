@@ -244,25 +244,13 @@ public class SupplierTransactionService {
                                 .map(this::toDTO);
         }
 
-        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber) {
+        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber, String createdBy) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "SUPPLIER_TRANSACTION", "page",
                                 pageable.getPageNumber(), "size", pageable.getPageSize(), "referenceNumber",
                                 referenceNumber);
 
-                Page<SupplierTransaction> result = repository.findAll(pageable);
-
-                if (referenceNumber != null && !referenceNumber.isEmpty()) {
-                        String refFilter = referenceNumber.toLowerCase();
-                        List<SupplierTransactionDTO> filteredList = result.getContent().stream()
-                                        .filter(transaction -> transaction.getReference() != null &&
-                                                        transaction.getReference().toLowerCase().contains(refFilter))
-                                        .map(this::toDTO)
-                                        .collect(Collectors.toList());
-                        return new org.springframework.data.domain.PageImpl<>(filteredList, pageable,
-                                        filteredList.size());
-                }
-
-                return result.map(this::toDTO);
+                return repository.findByReferenceAndCreatedBy(referenceNumber, createdBy, pageable)
+                                .map(this::toDTO);
         }
 
         public List<SupplierTransactionDTO> getTransactionsBySupplier(Long supplierId) {
@@ -296,7 +284,7 @@ public class SupplierTransactionService {
         }
 
         private SupplierTransactionDTO toDTO(SupplierTransaction transaction) {
-                return new SupplierTransactionDTO(
+                SupplierTransactionDTO dto = new SupplierTransactionDTO(
                                 transaction.getId(),
                                 transaction.getWarehouse().getId(),
                                 transaction.getWarehouse().getName(),
@@ -309,5 +297,7 @@ public class SupplierTransactionService {
                                 transaction.getEmptySent(),
                                 transaction.getReference(),
                                 transaction.getAmount());
+                dto.setCreatedBy(transaction.getCreatedBy());
+                return dto;
         }
 }

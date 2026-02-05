@@ -56,7 +56,8 @@ export class BankDepositService {
     toDate?: string,
     bankAccountId?: number,
     paymentMode?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -69,6 +70,7 @@ export class BankDepositService {
     if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
     if (paymentMode) params = params.set('paymentMode', paymentMode);
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
+    if (createdBy) params = params.set('createdBy', createdBy);
 
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(timeout(30000));
@@ -82,7 +84,8 @@ export class BankDepositService {
     toDate: string,
     bankAccountId?: number,
     paymentMode?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams();
     
@@ -100,6 +103,9 @@ export class BankDepositService {
     }
     if (referenceNumber && referenceNumber.trim()) {
       params = params.set('referenceNumber', referenceNumber);
+    }
+    if (createdBy && createdBy.trim()) {
+      params = params.set('createdBy', createdBy);
     }
 
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })

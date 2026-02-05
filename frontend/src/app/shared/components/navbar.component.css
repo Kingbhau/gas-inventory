@@ -18,7 +18,21 @@
   gap: 2rem;
 }
 
-.navbar-brand h1 {
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.navbar-logo {
+  height: 36px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+}
+
+.navbar-title {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
@@ -237,7 +251,12 @@
     gap: 1rem;
   }
 
-  .navbar-brand h1 {
+  .navbar-logo {
+    height: 30px;
+    max-width: 120px;
+  }
+
+  .navbar-title {
     font-size: 1.25rem;
   }
 

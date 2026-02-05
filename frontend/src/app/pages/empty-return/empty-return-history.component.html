@@ -19,6 +19,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All Customers"
@@ -29,14 +30,25 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Variant"
+          [labelClass]="'filter-label'"
           [items]="variantsList"
           [displayKey]="'name'"
           placeholder="All"
           (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
         ></app-autocomplete-input>
       </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
     </div>
-    <div class="filter-row" style="margin-top: 1rem;">
+    <div class="filter-row">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -151,6 +163,10 @@
           <div class="invoice-row">
             <span class="label">Payment Mode:</span>
             <span class="value">{{ selectedEmptyReturn.paymentMode || 'N/A' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedEmptyReturn.createdBy) }}</span>
           </div>
           <div class="invoice-row" *ngIf="selectedEmptyReturn.paymentMode && selectedEmptyReturn.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>

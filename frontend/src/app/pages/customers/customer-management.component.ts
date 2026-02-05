@@ -342,7 +342,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   loadVariantsAndCustomers() {
     this.loadingService.show('Loading variants...');
-    const variantSub = this.variantService.getAllVariants(0, 100)
+    const variantSub = this.variantService.getAllVariantsWithCache()
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
@@ -407,43 +407,20 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
               return { ...customer, returnPendingUnits, filledUnits };
             });
             
-            // Now fetch all ledger entries for each customer to calculate current due
-            this.customers.forEach(customer => {
-              this.ledgerService.getLedgerByCustomerPaginated(customer.id, 0, 1000).subscribe({
-                next: (data: any) => {
-                  const allEntries = data.content || data;
-                  if (allEntries.length > 0) {
-                    // Sort chronologically (oldest first)
-                    const chronoEntries = allEntries.sort((a: any, b: any) => {
-                      const dateA = new Date(a.transactionDate).getTime();
-                      const dateB = new Date(b.transactionDate).getTime();
-                      if (dateA === dateB) {
-                        return (a.id || 0) - (b.id || 0);
-                      }
-                      return dateA - dateB;
-                    });
-                    
-                    // Calculate cumulative balance
-                    let cumulativeBalance = 0;
-                    chronoEntries.forEach((entry: any) => {
-                      if (entry.refType === 'PAYMENT') {
-                        cumulativeBalance -= (entry.amountReceived || 0);
-                      } else {
-                        const transactionDue = (entry.totalAmount || 0) - (entry.amountReceived || 0);
-                        cumulativeBalance += transactionDue;
-                      }
-                    });
-                    
-                    // Update customer's due amount
-                    customer.dueAmount = cumulativeBalance;
-                  }
-                  this.cdr.markForCheck();
-                },
-                error: () => {
-                  // Keep original dueAmount on error
-                  this.cdr.markForCheck();
-                }
-              });
+            // Fetch due amounts in a single call to avoid N+1
+            const customerIds = this.customers.map(c => c.id);
+            this.ledgerService.getCustomerDueAmounts(customerIds).subscribe({
+              next: (dueMap: { [key: number]: number }) => {
+                this.customers.forEach(customer => {
+                  const due = dueMap[customer.id];
+                  customer.dueAmount = due !== undefined ? due : 0;
+                });
+                this.cdr.markForCheck();
+              },
+              error: () => {
+                // Keep original dueAmount on error
+                this.cdr.markForCheck();
+              }
             });
             
             this.cdr.markForCheck();
@@ -1411,9 +1388,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           // Refresh ledger
           this.loadLedgerForCustomer(this.selectedCustomer.id);
           // Update customer's due amount from ledger
-          this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1000).subscribe({
-            next: (data: any) => {
-              const allEntries = data.content || data;
+          this.ledgerService.getLedgerByCustomerAll(this.selectedCustomer.id).subscribe({
+            next: (allEntries: any[]) => {
               if (allEntries.length > 0) {
                 // Sort chronologically (oldest first)
                 const chronoEntries = allEntries.sort((a: any, b: any) => {
@@ -1655,9 +1631,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           // Refresh ledger to show updated values
           this.loadLedgerForCustomer(this.selectedCustomer.id);
           // Update customer's due amount
-          this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1000).subscribe({
-            next: (data: any) => {
-              const allEntries = data.content || data;
+          this.ledgerService.getLedgerByCustomerAll(this.selectedCustomer.id).subscribe({
+            next: (allEntries: any[]) => {
               if (allEntries.length > 0) {
                 // Get latest due from the most recent entry
                 const latestEntry = allEntries[allEntries.length - 1];

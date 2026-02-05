@@ -2,27 +2,58 @@
   <div class="login-card">
     <!-- Logo with same design as navbar -->
     <div class="brand">
-      <div class="brand-icon">⛽</div>
-      <div class="brand-content">
-        <div class="brand-name">Gas Pro</div>
-        <div class="brand-tagline">Inventory System</div>
-      </div>
+      <img class="brand-logo" src="assets/logo.png" alt="Cylinex logo" />
     </div>
     <form (ngSubmit)="onLogin()" autocomplete="off">
-      <div class="input-group">
-        <span class="input-icon"><fa-icon [icon]="faUser"></fa-icon></span>
-        <input type="text" [(ngModel)]="username" name="username" placeholder="Username" required />
+      <div class="login-header">
+        <div class="login-title">Sign in</div>
+        <div class="login-subtitle">Your Agency, One Unified Platform</div>
       </div>
-      <div class="input-group">
-        <span class="input-icon"><fa-icon [icon]="faLock"></fa-icon></span>
-        <input type="password" [(ngModel)]="password" name="password" placeholder="Password" required />
+      <div class="form-field">
+        <label class="form-label" for="login-username">Username</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><fa-icon [icon]="faUser"></fa-icon></span>
+          <input
+            id="login-username"
+            class="form-input"
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Enter username"
+            required
+          />
+        </div>
       </div>
-      <button type="submit" [disabled]="loading">
+      <div class="form-field">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon"><fa-icon [icon]="faLock"></fa-icon></span>
+          <input
+            id="login-password"
+            class="form-input"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Enter password"
+            required
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword"
+          >
+            <fa-icon [icon]="showPassword ? faEyeSlash : faEye"></fa-icon>
+          </button>
+        </div>
+      </div>
+      <button class="login-btn" type="submit" [disabled]="loading">
         <span *ngIf="!loading">Login</span>
         <span *ngIf="loading" class="spinner"></span>
       </button>
       <div class="login-links">
-        <a href="#" (click)="openForgotPassword($event)">Forgot password?</a>
+        <a>Forgot password?</a>
       </div>
       <!-- Error div removed as Toastr will handle error messages -->
     </form>

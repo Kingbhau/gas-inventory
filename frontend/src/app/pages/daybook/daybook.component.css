@@ -86,6 +86,10 @@
   align-items: flex-end;
 }
 
+.filters-card .filter-row + .filter-row {
+  margin-top: 1rem;
+}
+
 .filter-row .filter-actions {
   grid-column: 1 / -1;
   margin-top: 0;
@@ -199,6 +203,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  table-layout: fixed;
 }
 
 .data-table thead {
@@ -211,12 +216,40 @@
   text-align: left;
   font-weight: 600;
   color: #0f172a;
+  white-space: nowrap;
 }
 
 .data-table td {
   padding: 1rem;
   border-bottom: 1px solid #e2e8f0;
   color: #0f172a;
+}
+
+.col-date { width: 120px; }
+.col-type { width: 150px; }
+.col-party { width: 180px; }
+.col-ref { width: 140px; }
+.col-details { width: 280px; }
+.col-amount { width: 120px; }
+.col-mode { width: 110px; }
+.col-created { width: 140px; }
+
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.details-cell {
+  white-space: normal;
+  word-break: break-word;
+  color: #475569;
 }
 
 .data-table tbody tr {

@@ -1,5 +1,5 @@
 <div class="form-group autocomplete-wrapper">
-  <label class="form-label">
+  <label [ngClass]="labelClass">
     {{ label }}
     <span *ngIf="required" class="required">*</span>
   </label>

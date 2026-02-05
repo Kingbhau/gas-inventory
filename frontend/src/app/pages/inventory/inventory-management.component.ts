@@ -30,6 +30,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       movementPage = 1;
       filterType = '';
       movementPageSize = 10;
+      totalMovementsCount = 0;
+      isServerPagedMovements = true;
     // Assign a color to each variant name (simple hash for demo)
     getVariantColor(variantName: string): string {
       if (!variantName) return '#888';
@@ -42,6 +44,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     }
   activeTab = 'summary';
   filterVariant = '';
+  filterVariantId: number | null = null;
   selectedWarehouse: any = null;
   warehouses: any[] = [];
 
@@ -167,7 +170,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   loadVariants() {
-    this.variantService.getActiveVariants().subscribe({
+    this.variantService.getAllVariantsAll().subscribe({
       next: (data) => {
         this.variants = data;
         this.cdr.markForCheck();
@@ -180,29 +183,59 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  get activeVariantsList() {
+    return this.variants.filter((v: any) => v?.active !== false);
+  }
+
   loadMovements() {
     this.loadingService.show('Loading stock movements...');
-    
-    // Use warehouse-specific endpoint if a warehouse is selected
-    const movementSource = this.selectedWarehouse?.id 
-      ? this.ledgerService.getMovementsByWarehouse(this.selectedWarehouse.id)
-      : this.ledgerService.getAllMovements();
-    
+
+    this.isServerPagedMovements = true;
+
+    const page = Math.max(0, this.movementPage - 1);
+    const size = this.movementPageSize;
+    const refType = this.mapFilterTypeToRefType(this.filterType);
+    const movementSource = this.selectedWarehouse?.id
+      ? this.ledgerService.getMovementsByWarehousePaged(
+          this.selectedWarehouse.id,
+          page,
+          size,
+          'transactionDate',
+          'DESC',
+          this.filterVariantId,
+          refType
+        )
+      : this.ledgerService.getAllMovementsPaged(
+          page,
+          size,
+          'transactionDate',
+          'DESC',
+          this.filterVariantId,
+          refType
+        );
+
     const sub = movementSource
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading stock movements';
           this.toastr.error(errorMessage, 'Error');
           console.error('Full error:', error);
-          return of([]);
+          return of({ content: [], totalElements: 0 });
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any[]) => {
-        this.movements = (data || [])
+      .subscribe((data: any) => {
+        const content = Array.isArray(data)
+          ? data
+          : (data?.content ?? data?.data ?? []);
+        this.totalMovementsCount = this.isServerPagedMovements
+          ? (data?.totalElements ?? content.length ?? 0)
+          : content.length;
+        this.movements = (content || [])
           .filter((entry: any) => entry.refType !== 'PAYMENT')
           .map((entry: any) => ({
             id: entry.id,
+            variantId: entry.variantId,
             date: entry.transactionDate,
             timestamp: new Date(entry.createdAt).getTime(),
             customer: entry.customerName,
@@ -227,8 +260,6 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
             // If timestamps are identical, use ID as tiebreaker (descending for latest first)
             return (b.id || 0) - (a.id || 0);
           });
-        // Reset to page 1 when data is reloaded
-        this.movementPage = 1;
         this.cdr.markForCheck();
         sub.unsubscribe();
       });
@@ -236,6 +267,9 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number) {
     this.movementPage = page;
+    if (this.isServerPagedMovements) {
+      this.loadMovements();
+    }
     // Scroll to top of table when page changes
     const tableElement = document.querySelector('.table-wrapper');
     if (tableElement) {
@@ -246,16 +280,20 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   onPageSizeChange(size: number) {
     this.movementPageSize = size;
     this.movementPage = 1;
+    if (this.isServerPagedMovements) {
+      this.loadMovements();
+    }
   }
 
   onFilterChange() {
     // Reset to page 1 when filter changes
     this.movementPage = 1;
+    this.loadMovements();
   }
 
   loadInventory() {
     // Load total inventory (all warehouses)
-    const sub = this.inventoryService.getAllStock(0, 100)
+    const sub = this.inventoryService.getAllStockAll()
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading inventory';
@@ -315,8 +353,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   get filteredMovements() {
       let filtered = this.movements;
-      if (this.filterVariant) {
-        filtered = filtered.filter(m => m.variant === this.filterVariant);
+      if (this.filterVariantId) {
+        filtered = filtered.filter(m => m.variantId === this.filterVariantId);
       }
       if (this.filterType) {
         filtered = filtered.filter(m => m.type === this.filterType);
@@ -335,6 +373,9 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   get paginatedMovements() {
+    if (this.isServerPagedMovements) {
+      return this.filteredMovements;
+    }
     const filtered = this.filteredMovements;
     const startIndex = (this.movementPage - 1) * this.movementPageSize;
     const endIndex = startIndex + this.movementPageSize;
@@ -342,7 +383,10 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   get totalMovements() {
-    return this.filteredMovements.length;
+    if (!this.isServerPagedMovements) {
+      return this.filteredMovements.length;
+    }
+    return this.totalMovementsCount;
   }
 
   get totalPages() {
@@ -355,6 +399,20 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   getVariantVariety() {
     return [...new Set(this.movements.map(m => m.variant))];
+  }
+
+  mapFilterTypeToRefType(filterType: string): string | null {
+    if (!filterType) return null;
+    switch (filterType) {
+      case 'Sale':
+        return 'SALE';
+      case 'Return':
+        return 'EMPTY_RETURN';
+      case 'Transfer':
+        return 'TRANSFER';
+      default:
+        return null;
+    }
   }
 
   getMovementColor(type: string): string {

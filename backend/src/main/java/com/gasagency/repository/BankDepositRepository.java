@@ -78,6 +78,9 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
     @Query("SELECT bd FROM BankDeposit bd ORDER BY bd.depositDate DESC")
     List<BankDeposit> findRecentDeposits(Pageable pageable);
 
+    @Query("SELECT bd FROM BankDeposit bd WHERE bd.depositDate = :date ORDER BY bd.depositDate DESC")
+    List<BankDeposit> findByDepositDate(@Param("date") LocalDate date);
+
     /**
      * Check if deposit exists for a reference number
      */
@@ -91,13 +94,15 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
             "AND (CAST(:endDate AS java.time.LocalDate) IS NULL OR bd.depositDate <= :endDate) " +
             "AND (CAST(:accountId AS java.lang.Long) IS NULL OR bd.bankAccount.id = :accountId) " +
             "AND (CAST(:paymentMode AS java.lang.String) IS NULL OR bd.paymentMode = :paymentMode) " +
-            "AND (CAST(:reference AS java.lang.String) IS NULL OR CAST(bd.referenceNumber AS java.lang.String) LIKE CONCAT('%', CAST(:reference AS java.lang.String), '%'))")
+            "AND (CAST(:reference AS java.lang.String) IS NULL OR CAST(bd.referenceNumber AS java.lang.String) LIKE CONCAT('%', CAST(:reference AS java.lang.String), '%')) " +
+            "AND (CAST(:createdBy AS java.lang.String) IS NULL OR bd.createdBy = :createdBy)")
     java.math.BigDecimal getTotalDepositAmountWithAllFilters(
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
             @Param("accountId") Long accountId,
             @Param("paymentMode") String paymentMode,
-            @Param("reference") String reference);
+            @Param("reference") String reference,
+            @Param("createdBy") String createdBy);
 
     /**
      * Find deposits with all filter options (date range, bank account, payment
@@ -108,8 +113,8 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
             "AND (CAST(:endDate AS java.time.LocalDate) IS NULL OR bd.depositDate <= :endDate) " +
             "AND (CAST(:accountId AS java.lang.Long) IS NULL OR bd.bankAccount.id = :accountId) " +
             "AND (CAST(:paymentMode AS java.lang.String) IS NULL OR bd.paymentMode = :paymentMode) " +
-            "AND (CAST(:reference AS java.lang.String) IS NULL OR CAST(bd.referenceNumber AS java.lang.String) LIKE CONCAT('%', CAST(:reference AS java.lang.String), '%')) "
-            +
+            "AND (CAST(:reference AS java.lang.String) IS NULL OR CAST(bd.referenceNumber AS java.lang.String) LIKE CONCAT('%', CAST(:reference AS java.lang.String), '%')) " +
+            "AND (CAST(:createdBy AS java.lang.String) IS NULL OR bd.createdBy = :createdBy) " +
             "ORDER BY bd.depositDate DESC")
     Page<BankDeposit> findByAllFilters(
             @Param("startDate") LocalDate startDate,
@@ -117,5 +122,6 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
             @Param("accountId") Long accountId,
             @Param("paymentMode") String paymentMode,
             @Param("reference") String reference,
+            @Param("createdBy") String createdBy,
             Pageable pageable);
 }

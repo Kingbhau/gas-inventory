@@ -148,8 +148,10 @@ export class AppComponent implements OnInit, OnDestroy {
       // Close profile dropdown if clicking outside
       if (this.profileDropdownOpen) {
         const dropdown = document.querySelector('.profile-dropdown');
-        const btn = document.querySelector('.header-icon-btn[title="Profile Actions"]');
-        if (dropdown && !dropdown.contains(target) && btn && !btn.contains(target)) {
+        const userSection = document.querySelector('.user-section');
+        const clickedInsideDropdown = dropdown && dropdown.contains(target);
+        const clickedInsideUser = userSection && userSection.contains(target);
+        if (!clickedInsideDropdown && !clickedInsideUser) {
           this.profileDropdownOpen = false;
           this.cdr.markForCheck();
         }

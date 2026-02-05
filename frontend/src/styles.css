@@ -442,6 +442,16 @@ select {
   background-position: right var(--spacing-lg) center;
   background-size: 16px 12px;
   padding-right: 40px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Filter field sizing consistency */
+.filters-card .filter-input,
+.filters-card .form-control {
+  font-size: 0.95rem;
+  padding: 0.75rem;
 }
 
 /* Card Styles */

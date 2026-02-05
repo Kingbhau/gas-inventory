@@ -18,11 +18,12 @@ import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-supplier-transaction',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './supplier-transaction.component.html',
   styleUrl: './supplier-transaction.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -49,6 +50,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   filterToDate: string = '';
   filterVariantId: string = '';
   filterReference: string = '';
+  filterCreatedBy = '';
   selectedTransaction: any = null;
   transactionForm!: FormGroup;
 
@@ -65,6 +67,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   warehouses: any[] = [];
   allTransactions: any[] = [];
   filteredTransactions: any[] = [];
+  users: User[] = [];
 
   warehouseCompare = (w1: any, w2: any) => {
     if (!w1 || !w2) return w1 === w2;
@@ -91,6 +94,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     private businessInfoService: BusinessInfoService,
     private loadingService: LoadingService,
     private dateUtility: DateUtilityService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {
     this.initForm();
@@ -108,6 +112,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.loadWarehouses();
     this.loadSuppliers();
     this.loadVariants();
+    this.loadUsers();
     this.loadTransactions();
   }
 
@@ -147,11 +152,11 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadSuppliers() {
     this.loadingService.show('Loading suppliers...');
-    this.supplierService.getAllSuppliers(0, 100)
+    this.supplierService.getAllSuppliersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
-          this.suppliers = data.content || data;
+        next: (data: any) => {
+          this.suppliers = Array.isArray(data) ? data : (data?.content || []);
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -181,15 +186,15 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadTransactions() {
     this.loadingService.show('Loading transactions...');
-    this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize, 'id', 'ASC', this.filterReference)
+    this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize, 'id', 'ASC', this.filterReference, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
           this.allTransactions = (data.content || data).sort((a: any, b: any) => b.id - a.id);
           console.log('Loaded transactions:', this.allTransactions); // Debug
-          this.filteredTransactions = [...this.allTransactions];
-          this.totalTransactions = data.totalElements || this.allTransactions.length;
-          this.totalPages = data.totalPages || 1;
+          this.filteredTransactions = this.applyCreatedByFilter([...this.allTransactions]);
+          this.totalTransactions = this.filterCreatedBy ? this.filteredTransactions.length : (data.totalElements || this.allTransactions.length);
+          this.totalPages = this.filterCreatedBy ? 1 : (data.totalPages || 1);
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -358,10 +363,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       const refFilter = this.filterReference.toLowerCase();
       filtered = filtered.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
     }
-    // Reference filter
-    if (this.filterReference) {
-      const refFilter = this.filterReference.toLowerCase();
-      filtered = filtered.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
+    // Created by filter
+    if (this.filterCreatedBy) {
+      filtered = filtered.filter(t => t.createdBy === this.filterCreatedBy);
     }
     this.filteredTransactions = filtered.sort((a: any, b: any) => b.id - a.id);
     this.cdr.markForCheck();
@@ -374,6 +378,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.filterToDate = '';
     this.filterVariantId = '';
     this.filterReference = '';
+    this.filterCreatedBy = '';
     this.filteredTransactions = [...this.allTransactions].sort((a: any, b: any) => b.id - a.id);
     this.cdr.markForCheck();
   }
@@ -392,5 +397,33 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   closeTransactionDetails() {
     this.selectedTransaction = null;
     this.cdr.markForCheck();
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private applyCreatedByFilter(entries: any[]): any[] {
+    if (!this.filterCreatedBy) {
+      return entries;
+    }
+    return entries.filter(entry => entry.createdBy === this.filterCreatedBy);
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 }

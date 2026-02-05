@@ -13,13 +13,14 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Category"
+          [labelClass]="'filter-label'"
           [items]="categories"
           placeholder="All Categories"
           (selectedChange)="onCategorySelect($event)"
         ></app-autocomplete-input>
       </div>
     </div>
-    <div class="filter-row" style="margin-top: 1rem;">
+    <div class="filter-row">
       <div class="filter-group">
         <label class="filter-label">Min Amount</label>
         <input type="number" [(ngModel)]="filterMinAmount" class="filter-input" placeholder="Min">
@@ -36,7 +37,7 @@
         </select>
       </div>
     </div>
-    <div class="filter-row" style="margin-top: 1rem;">
+    <div class="filter-row">
       <div class="filter-group" *ngIf="filterPaymentMode && getSelectedPaymentMode()?.isBankAccountRequired">
         <label class="filter-label">Bank Account</label>
         <select [(ngModel)]="filterBankAccountId" class="filter-input">
@@ -44,8 +45,18 @@
           <option *ngFor="let bank of bankAccounts" [value]="bank.id">{{ bank.bankName }} - {{ bank.accountNumber }}</option>
         </select>
       </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
     </div>
-    <div class="filter-row" style="margin-top: 1rem;">
+    <div class="filter-row">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -183,6 +194,10 @@
         <div class="invoice-row">
           <span class="label">Notes:</span>
           <span class="value">{{ selectedExpense.notes || 'N/A' }}</span>
+        </div>
+        <div class="invoice-row">
+          <span class="label">Created By:</span>
+          <span class="value">{{ getCreatedByName(selectedExpense.createdBy) }}</span>
         </div>
       </div>
     </div>

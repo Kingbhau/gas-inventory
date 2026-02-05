@@ -59,14 +59,14 @@ export class ExpenseCategoryManagementComponent implements OnInit, OnDestroy {
 
   loadCategories() {
     this.loadingService.show('Loading categories...');
-    this.categoryService.getAllCategories(0, 100)
+    this.categoryService.getAllCategoriesAll()
       .pipe(finalize(() => {
         this.loadingService.hide();
         this.isLoading = false;
       }))
       .subscribe({
         next: (response) => {
-          this.categories = response.content || response;
+          this.categories = response || [];
           this.cdr.markForCheck();
         },
         error: (error) => {

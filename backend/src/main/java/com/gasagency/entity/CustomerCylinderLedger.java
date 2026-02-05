@@ -24,7 +24,9 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
         @Index(name = "idx_ledger_warehouse_id", columnList = "warehouse_id"),
         @Index(name = "idx_ledger_variant_id", columnList = "variant_id"),
         @Index(name = "idx_ledger_customer_warehouse", columnList = "customer_id, warehouse_id"),
-        @Index(name = "idx_customer_warehouse_variant", columnList = "customer_id, warehouse_id, variant_id")
+        @Index(name = "idx_customer_warehouse_variant", columnList = "customer_id, warehouse_id, variant_id"),
+        @Index(name = "idx_ledger_customer_id_id", columnList = "customer_id, id"),
+        @Index(name = "idx_ledger_customer_variant_id", columnList = "customer_id, variant_id, id")
 })
 public class CustomerCylinderLedger extends Auditable {
     @Id

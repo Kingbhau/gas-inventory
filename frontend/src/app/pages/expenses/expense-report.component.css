@@ -72,6 +72,10 @@
   align-items: flex-end;
 }
 
+.filters-card .filter-row + .filter-row {
+  margin-top: 1rem;
+}
+
 .filter-group {
   display: flex;
   flex-direction: column;

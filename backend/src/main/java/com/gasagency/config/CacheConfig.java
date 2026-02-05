@@ -39,13 +39,43 @@ public class CacheConfig {
     @org.springframework.context.annotation.Primary
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager(
-                "referenceData", // Cylinder variants, suppliers, payment modes, etc
-                "dashboardCache", // Dashboard summary and metrics
-                "reportCache", // Customer due payments, sales reports
-                "customerCache", // Customer details and summaries
-                "inventoryCache", // Warehouse and inventory levels
-                "priceCache", // Monthly prices
-                "alertConfigCache" // Alert configuration settings
+                "referenceData",
+                "dashboardCache",
+                "reportCache",
+                "customerCache",
+                "inventoryCache",
+                "priceCache",
+                "alertConfigCache",
+                // Business info
+                "businessInfo",
+                "businessInfoById",
+                // Cylinder variants
+                "cylinderVariantsAll",
+                "cylinderVariantsActive",
+                "variantById",
+                // Users
+                "usersActive",
+                "usersAll",
+                // Warehouses
+                "warehousesAll",
+                "warehousesActive",
+                "warehouseById",
+                "warehouseByName",
+                // Expense categories
+                "expenseCategoriesActive",
+                "expenseCategoryNames",
+                // Bank accounts
+                "bankAccountsActive",
+                // Monthly prices
+                "monthlyPricesAll",
+                "monthlyPricesByVariant",
+                "monthlyPriceForVariantMonth",
+                "monthlyPriceLatestForVariant",
+                // Suppliers
+                "suppliersAll",
+                // Payment modes
+                "paymentModesActive",
+                "paymentModeNames"
         );
 
         cacheManager.setCaffeine(Caffeine.newBuilder()

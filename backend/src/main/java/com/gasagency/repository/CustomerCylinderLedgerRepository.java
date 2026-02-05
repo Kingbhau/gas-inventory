@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import jakarta.persistence.LockModeType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +65,29 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.warehouse.id = :warehouseId ORDER BY l.transactionDate DESC")
         List<CustomerCylinderLedger> findByWarehouseId(@Param("warehouseId") Long warehouseId);
 
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.warehouse.id = :warehouseId ORDER BY l.transactionDate DESC, l.id DESC")
+        Page<CustomerCylinderLedger> findByWarehouseId(@Param("warehouseId") Long warehouseId, Pageable pageable);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE (:variantId IS NULL OR l.variant.id = :variantId) " +
+                        "AND (:refType IS NULL OR l.refType = :refType) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        Page<CustomerCylinderLedger> findMovementsFiltered(
+                        @Param("variantId") Long variantId,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType,
+                        Pageable pageable);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE l.warehouse.id = :warehouseId " +
+                        "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
+                        "AND (:refType IS NULL OR l.refType = :refType) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        Page<CustomerCylinderLedger> findMovementsFilteredByWarehouse(
+                        @Param("warehouseId") Long warehouseId,
+                        @Param("variantId") Long variantId,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType,
+                        Pageable pageable);
+
         // Count EMPTY_RETURN entries for a warehouse in a specific month
         @Query("SELECT COUNT(l) FROM CustomerCylinderLedger l WHERE l.warehouse = :warehouse " +
                         "AND l.refType = 'EMPTY_RETURN' " +
@@ -76,6 +100,12 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.transactionDate = :transactionDate " +
                         "AND l.refType = :refType ORDER BY l.id DESC")
         List<CustomerCylinderLedger> findByTransactionDateAndRefType(
+                        @Param("transactionDate") LocalDate transactionDate,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType);
+
+        @Query("SELECT COALESCE(SUM(l.amountReceived), 0) FROM CustomerCylinderLedger l " +
+                        "WHERE l.transactionDate = :transactionDate AND l.refType = :refType")
+        BigDecimal sumAmountReceivedByTransactionDateAndRefType(
                         @Param("transactionDate") LocalDate transactionDate,
                         @Param("refType") CustomerCylinderLedger.TransactionType refType);
 
@@ -94,20 +124,22 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
                         "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
                         "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
+                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
                         "ORDER BY l.transactionDate DESC")
         Page<CustomerCylinderLedger> findEmptyReturns(
                         @Param("fromDate") LocalDate fromDate,
                         @Param("toDate") LocalDate toDate,
                         @Param("customerId") Long customerId,
                         @Param("variantId") Long variantId,
+                        @Param("createdBy") String createdBy,
                         Pageable pageable);
 
         // Lock for reading latest balance without duplicates
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer.id = :customerId " +
-                        "AND l.variant.id = :variantId ORDER BY l.id DESC LIMIT 1")
-        Optional<CustomerCylinderLedger> findLatestLedgerWithLock(@Param("customerId") Long customerId,
-                        @Param("variantId") Long variantId);
+                        "AND l.variant.id = :variantId ORDER BY l.id DESC")
+        List<CustomerCylinderLedger> findLatestLedgerWithLock(@Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId, Pageable pageable);
 
         // Lock for reference validation (prevent duplicate transactions)
         @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -123,4 +155,60 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "AND l.variant.id = :variantId ORDER BY l.id DESC")
         List<CustomerCylinderLedger> findByCustomerAndVariantWithLock(@Param("customerId") Long customerId,
                         @Param("variantId") Long variantId);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 GROUP BY l2.customer.id) " +
+                        "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0 ORDER BY l.dueAmount DESC")
+        Page<CustomerCylinderLedger> findLatestDuePerCustomer(Pageable pageable);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 GROUP BY l2.customer.id) " +
+                        "AND l.dueAmount IS NOT NULL AND l.dueAmount >= :minDueAmount " +
+                        "AND l.customer.active = true " +
+                        "AND (:search IS NULL OR :search = '' OR " +
+                        "LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "l.customer.mobile LIKE CONCAT('%', :search, '%'))")
+        Page<CustomerCylinderLedger> findLatestDuePerCustomerWithSearch(
+                        @Param("minDueAmount") BigDecimal minDueAmount,
+                        @Param("search") String search,
+                        Pageable pageable);
+
+        @Query("SELECT COALESCE(SUM(l.dueAmount), 0) FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 GROUP BY l2.customer.id) " +
+                        "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0")
+        BigDecimal sumLatestDueAmounts();
+
+        @Query("SELECT COUNT(l) FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 GROUP BY l2.customer.id) " +
+                        "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0")
+        long countLatestDueCustomers();
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "GROUP BY l2.customer.id, l2.variant.id)")
+        List<CustomerCylinderLedger> findLatestPerCustomerVariant();
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer IN :customers GROUP BY l2.customer.id, l2.variant.id)")
+        List<CustomerCylinderLedger> findLatestPerCustomerVariantForCustomers(
+                        @Param("customers") List<Customer> customers);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer IN :customers GROUP BY l2.customer.id, l2.variant.id) " +
+                        "AND l.balance > 0")
+        List<CustomerCylinderLedger> findLatestPositiveBalancesForCustomers(
+                        @Param("customers") List<Customer> customers);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer.id IN :customerIds GROUP BY l2.customer.id)")
+        List<CustomerCylinderLedger> findLatestLedgerForCustomerIds(
+                        @Param("customerIds") List<Long> customerIds);
+
+        @Query("SELECT l.customer.id, COALESCE(SUM(l.totalAmount), 0), COALESCE(SUM(l.amountReceived), 0), " +
+                        "MAX(l.transactionDate), COUNT(l.id) " +
+                        "FROM CustomerCylinderLedger l WHERE l.customer.id IN :customerIds GROUP BY l.customer.id")
+        List<Object[]> getCustomerLedgerAggregates(@Param("customerIds") List<Long> customerIds);
 }

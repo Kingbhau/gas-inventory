@@ -47,7 +47,7 @@
           [items]="variants"
           [displayKey]="'name'"
           placeholder="All Variants"
-          (selectedChange)="filterVariant = $event?.name || ''; onFilterChange()"
+          (selectedChange)="filterVariant = $event?.name || ''; filterVariantId = $event?.id || null; onFilterChange()"
         ></app-autocomplete-input>
         <label for="typeSelect" style="margin-left: 1rem;">Type:</label>
         <select id="typeSelect" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="form-control">
@@ -180,7 +180,7 @@
             <label class="form-label">Cylinder Variant <span class="required">*</span></label>
             <select formControlName="variantId" class="form-control" required>
               <option [ngValue]="null">Select variant</option>
-              <option *ngFor="let variant of variants" [ngValue]="variant.id">{{ variant.name }}</option>
+          <option *ngFor="let variant of activeVariantsList" [ngValue]="variant.id">{{ variant.name }}</option>
             </select>
             <div *ngIf="stockTransferForm.get('variantId')?.invalid && stockTransferForm.get('variantId')?.touched" class="error-message">
               Variant is required

@@ -62,14 +62,14 @@ export class PaymentModeManagementComponent implements OnInit, OnDestroy {
   loadPaymentModes() {
     this.isLoading = true;
     this.loadingService.show('Loading payment modes...');
-    this.paymentModeService.getAllPaymentModes(0, 100)
+    this.paymentModeService.getAllPaymentModesAll()
       .pipe(finalize(() => {
         this.loadingService.hide();
         this.isLoading = false;
       }))
       .subscribe({
         next: (response) => {
-          this.paymentModes = response.content || response;
+          this.paymentModes = response || [];
           this.cdr.markForCheck();
         },
         error: (error) => {

@@ -9,6 +9,8 @@ import com.gasagency.repository.WarehouseRepository;
 import com.gasagency.repository.BusinessInfoRepository;
 import com.gasagency.util.CodeGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class WarehouseService {
      * Get all warehouses (active and inactive)
      */
     @Transactional(readOnly = true)
+    @Cacheable("warehousesAll")
     public List<WarehouseDTO> getAllWarehouses() {
         return warehouseRepository.findAllOrderByName()
                 .stream()
@@ -49,6 +52,7 @@ public class WarehouseService {
      * Get only active warehouses
      */
     @Transactional(readOnly = true)
+    @Cacheable("warehousesActive")
     public List<WarehouseDTO> getActiveWarehouses() {
         return warehouseRepository.findAllActive()
                 .stream()
@@ -60,6 +64,7 @@ public class WarehouseService {
      * Get warehouse by ID with validation
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "warehouseById", key = "#id")
     public WarehouseDTO getWarehouseById(Long id) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Warehouse ID must be positive");
@@ -74,6 +79,7 @@ public class WarehouseService {
      * Get warehouse by name with validation
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "warehouseByName", key = "#name")
     public WarehouseDTO getWarehouseByName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Warehouse name cannot be empty");
@@ -100,6 +106,7 @@ public class WarehouseService {
     /**
      * Create new warehouse with validation
      */
+    @CacheEvict(value = { "warehousesAll", "warehousesActive", "warehouseById", "warehouseByName" }, allEntries = true)
     public WarehouseDTO createWarehouse(String name, Long businessId) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Warehouse name is required");
@@ -134,6 +141,7 @@ public class WarehouseService {
     /**
      * Update warehouse with optimistic locking
      */
+    @CacheEvict(value = { "warehousesAll", "warehousesActive", "warehouseById", "warehouseByName" }, allEntries = true)
     public WarehouseDTO updateWarehouse(Long id, WarehouseDTO updateDTO) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Warehouse ID must be positive");
@@ -170,6 +178,7 @@ public class WarehouseService {
     /**
      * Activate warehouse
      */
+    @CacheEvict(value = { "warehousesAll", "warehousesActive", "warehouseById", "warehouseByName" }, allEntries = true)
     public WarehouseDTO activateWarehouse(Long id) {
         Warehouse warehouse = getWarehouseEntity(id);
         if ("ACTIVE".equalsIgnoreCase(warehouse.getStatus())) {
@@ -187,6 +196,7 @@ public class WarehouseService {
      * Deactivate warehouse with validation
      * Cannot deactivate a warehouse that has active inventory
      */
+    @CacheEvict(value = { "warehousesAll", "warehousesActive", "warehouseById", "warehouseByName" }, allEntries = true)
     public WarehouseDTO deactivateWarehouse(Long id) {
         Warehouse warehouse = getWarehouseEntity(id);
         if ("INACTIVE".equalsIgnoreCase(warehouse.getStatus())) {

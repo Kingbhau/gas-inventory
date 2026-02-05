@@ -122,6 +122,10 @@
   align-items: flex-end;
 }
 
+.filters-card .filter-row + .filter-row {
+  margin-top: 1rem;
+}
+
 .filter-row .filter-actions {
   grid-column: 1 / -1;
   margin-top: 0;

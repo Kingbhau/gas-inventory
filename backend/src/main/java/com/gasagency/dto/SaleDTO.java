@@ -16,6 +16,7 @@ public class SaleDTO {
     private Long bankAccountId;
     private String bankAccountName;
     private List<SaleItemDTO> saleItems;
+    private String createdBy;
 
     public SaleDTO() {
     }
@@ -121,5 +122,13 @@ public class SaleDTO {
 
     public void setBankAccountName(String bankAccountName) {
         this.bankAccountName = bankAccountName;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

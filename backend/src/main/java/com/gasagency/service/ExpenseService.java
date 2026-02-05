@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,8 @@ public class ExpenseService {
 
         @Transactional(readOnly = true)
         public Page<ExpenseDTO> getAllExpenses(Pageable pageable, LocalDate fromDate, LocalDate toDate,
-                        Long categoryId, String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount) {
+                        Long categoryId, String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount,
+                        String createdBy) {
                 Pageable pageableWithSort = PageRequest.of(
                                 pageable.getPageNumber(),
                                 pageable.getPageSize(),
@@ -61,7 +61,9 @@ public class ExpenseService {
                 BigDecimal maxAmountBD = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
                 return repository.findByFilters(fromDate, toDate, categoryId, paymentMode, bankAccountId,
-                                minAmountBD, maxAmountBD, pageableWithSort)
+                                minAmountBD, maxAmountBD,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null,
+                                pageableWithSort)
                                 .map(this::convertToDTO);
         }
 
@@ -73,6 +75,44 @@ public class ExpenseService {
                                 Sort.by(Sort.Order.desc("expenseDate"), Sort.Order.desc("id")));
                 return repository.findByExpenseDateBetween(fromDate, toDate, pageableWithSort)
                                 .map(this::convertToDTO);
+        }
+
+        @Transactional(readOnly = true)
+        public BigDecimal getTotalAmountBetweenDates(LocalDate fromDate, LocalDate toDate) {
+                BigDecimal total = repository.getTotalAmountBetweenDates(fromDate, toDate);
+                return total != null ? total : BigDecimal.ZERO;
+        }
+
+        @Transactional(readOnly = true)
+        public Map<String, BigDecimal> getAmountByCategoryBetween(LocalDate fromDate, LocalDate toDate) {
+                Map<String, BigDecimal> result = new HashMap<>();
+                for (Object[] row : repository.sumAmountByCategoryBetween(fromDate, toDate)) {
+                        if (row == null || row.length < 2) {
+                                continue;
+                        }
+                        String category = row[0] != null ? row[0].toString() : "Other";
+                        BigDecimal amount = row[1] instanceof BigDecimal
+                                        ? (BigDecimal) row[1]
+                                        : BigDecimal.ZERO;
+                        result.put(category, amount);
+                }
+                return result;
+        }
+
+        @Transactional(readOnly = true)
+        public Map<LocalDate, BigDecimal> getAmountByDateBetween(LocalDate fromDate, LocalDate toDate) {
+                Map<LocalDate, BigDecimal> result = new HashMap<>();
+                for (Object[] row : repository.sumAmountByDateBetween(fromDate, toDate)) {
+                        if (row == null || row.length < 2) {
+                                continue;
+                        }
+                        LocalDate date = (LocalDate) row[0];
+                        BigDecimal amount = row[1] instanceof BigDecimal
+                                        ? (BigDecimal) row[1]
+                                        : BigDecimal.ZERO;
+                        result.put(date, amount);
+                }
+                return result;
         }
 
         @Transactional(readOnly = true)
@@ -161,53 +201,46 @@ public class ExpenseService {
 
         @Transactional(readOnly = true)
         public ExpenseSummaryDTO getExpensesSummary(LocalDate fromDate, LocalDate toDate, Long categoryId,
-                        String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount) {
-                List<Expense> expenses = new ArrayList<>();
+                        String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount, String createdBy) {
+                BigDecimal minAmountBD = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
+                BigDecimal maxAmountBD = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-                // Build filter criteria dynamically
-                if (fromDate != null || toDate != null || categoryId != null || paymentMode != null ||
-                                bankAccountId != null || minAmount != null || maxAmount != null) {
+                BigDecimal totalAmount = repository.sumAmountByFilters(fromDate, toDate, categoryId, paymentMode,
+                                bankAccountId, minAmountBD, maxAmountBD,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
+                Long transactionCount = repository.countByFilters(fromDate, toDate, categoryId, paymentMode,
+                                bankAccountId, minAmountBD, maxAmountBD,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
 
-                        // Use the same filter logic as the paginated query, but get all results
-                        BigDecimal minAmountBD = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
-                        BigDecimal maxAmountBD = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
-
-                        // Get a large page size to retrieve all matching records
-                        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE,
-                                        Sort.by(Sort.Order.desc("expenseDate"), Sort.Order.desc("id")));
-                        expenses = repository.findByFilters(fromDate, toDate, categoryId, paymentMode,
-                                        bankAccountId, minAmountBD, maxAmountBD, pageable).getContent();
-                } else {
-                        expenses = repository.findAll();
-                }
-
-                BigDecimal totalAmount = BigDecimal.ZERO;
-                for (Expense expense : expenses) {
-                        totalAmount = totalAmount.add(expense.getAmount());
-                }
-
-                int transactionCount = expenses.size();
-                BigDecimal avgExpenseValue = transactionCount > 0
+                BigDecimal avgExpenseValue = transactionCount != null && transactionCount > 0
                                 ? totalAmount.divide(BigDecimal.valueOf(transactionCount), 2,
                                                 java.math.RoundingMode.HALF_UP)
                                 : BigDecimal.ZERO;
 
-                // Find top category by total amount
                 String topCategory = "N/A";
-                if (!expenses.isEmpty()) {
-                        Map<String, BigDecimal> categorySums = new HashMap<>();
-                        for (Expense expense : expenses) {
-                                String categoryName = expense.getCategory().getName();
-                                categorySums.put(categoryName, categorySums.getOrDefault(categoryName, BigDecimal.ZERO)
-                                                .add(expense.getAmount()));
+                List<Object[]> categorySums = repository.sumAmountByCategoryFilters(fromDate, toDate, categoryId,
+                                paymentMode, bankAccountId, minAmountBD, maxAmountBD,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
+                if (categorySums != null && !categorySums.isEmpty()) {
+                        Object[] top = categorySums.stream()
+                                        .max((a, b) -> {
+                                                BigDecimal av = a[1] instanceof BigDecimal ? (BigDecimal) a[1]
+                                                                : BigDecimal.ZERO;
+                                                BigDecimal bv = b[1] instanceof BigDecimal ? (BigDecimal) b[1]
+                                                                : BigDecimal.ZERO;
+                                                return av.compareTo(bv);
+                                        })
+                                        .orElse(null);
+                        if (top != null && top.length > 0 && top[0] != null) {
+                                topCategory = top[0].toString();
                         }
-                        topCategory = categorySums.entrySet().stream()
-                                        .max(java.util.Map.Entry.comparingByValue())
-                                        .map(java.util.Map.Entry::getKey)
-                                        .orElse("N/A");
                 }
 
-                return new ExpenseSummaryDTO(totalAmount, transactionCount, avgExpenseValue, topCategory);
+                return new ExpenseSummaryDTO(
+                                totalAmount != null ? totalAmount : BigDecimal.ZERO,
+                                transactionCount != null ? transactionCount.intValue() : 0,
+                                avgExpenseValue,
+                                topCategory);
         }
 
         private ExpenseDTO convertToDTO(Expense expense) {

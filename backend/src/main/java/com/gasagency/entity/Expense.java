@@ -8,7 +8,10 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 @Entity
 @Table(name = "expenses", indexes = {
         @Index(name = "idx_expense_date", columnList = "expense_date"),
-        @Index(name = "idx_expense_category_date", columnList = "category_id, expense_date")
+        @Index(name = "idx_expense_category_date", columnList = "category_id, expense_date"),
+        @Index(name = "idx_expense_payment_mode", columnList = "payment_mode"),
+        @Index(name = "idx_expense_bank_account", columnList = "bank_account_id"),
+        @Index(name = "idx_expense_date_payment", columnList = "expense_date, payment_mode")
 })
 public class Expense extends Auditable {
 

@@ -31,6 +31,7 @@ public class CustomerCylinderLedgerDTO {
     private String bankAccountNumber;
     private String transactionReference;
     private String updateReason; // Optional reason for why the ledger entry was updated
+    private String createdBy;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -276,5 +277,13 @@ public class CustomerCylinderLedgerDTO {
 
     public void setUpdateReason(String updateReason) {
         this.updateReason = updateReason;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

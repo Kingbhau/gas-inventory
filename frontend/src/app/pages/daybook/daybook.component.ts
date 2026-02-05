@@ -10,11 +10,13 @@ import { LoadingService } from '../../services/loading.service';
 import { SharedModule } from '../../shared/shared.module';
 import { finalize } from 'rxjs';
 import { exportDayBookReportToPDF } from './export-daybook-report.util';
+import { UserService, User } from '../../services/user.service';
+import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
 @Component({
   selector: 'app-daybook',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule],
+  imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './daybook.component.html',
   styleUrl: './daybook.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -31,6 +33,20 @@ export class DayBookComponent implements OnInit, OnDestroy {
   dayBookSummary: any = null;
   selectedDate: string = '';
   isLoading = false;
+  filterCreatedBy = '';
+  filterTransactionType = '';
+  users: User[] = [];
+  transactionTypeOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'SALE', label: 'Sale' },
+    { value: 'EMPTY_RETURN', label: 'Empty Return' },
+    { value: 'PAYMENT', label: 'Payment' },
+    { value: 'TRANSFER', label: 'Ledger Transfer' },
+    { value: 'WAREHOUSE_TRANSFER', label: 'Warehouse Transfer' },
+    { value: 'SUPPLIER_TRANSACTION', label: 'Supplier Transaction' },
+    { value: 'BANK_DEPOSIT', label: 'Bank Deposit' },
+    { value: 'EXPENSE', label: 'Expense' }
+  ];
 
   // Pagination
   dayBookPage = 1;
@@ -45,6 +61,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     private dayBookService: DayBookService,
     private toastr: ToastrService,
     private loadingService: LoadingService,
+    private userService: UserService,
     private cdr: ChangeDetectorRef
   ) {
     // Set default date to today
@@ -52,6 +69,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.loadUsers();
     this.loadDayBookData();
   }
 
@@ -79,7 +97,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
       this.dayBookPage - 1, 
       this.dayBookPageSize,
       this.daybookSortBy,
-      this.daybookDirection
+      this.daybookDirection,
+      this.filterCreatedBy || undefined,
+      this.filterTransactionType || undefined
     )
       .pipe(
         finalize(() => {
@@ -91,11 +111,15 @@ export class DayBookComponent implements OnInit, OnDestroy {
         next: (response: any) => {
           // Response is a Page object with content, totalElements, totalPages, etc.
           this.paginatedDayBookTransactions = response.content || [];
-          this.dayBookTotalPages = response.totalPages || 1;
           this.dayBookTotalElements = response.totalElements || 0;
+          this.dayBookTotalPages = response.totalPages || 1;
           
           // Also fetch summary
-          this.dayBookService.getTransactionsSummary(this.selectedDate)
+          this.dayBookService.getTransactionsSummary(
+            this.selectedDate,
+            this.filterCreatedBy || undefined,
+            this.filterTransactionType || undefined
+          )
             .subscribe({
               next: (summaryResponse: any) => {
                 this.dayBookSummary = summaryResponse;
@@ -181,5 +205,50 @@ export class DayBookComponent implements OnInit, OnDestroy {
     const num = parseFloat(amount);
     if (isNaN(num)) return '0.00';
     return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  getTypeLabel(type?: string | null): string {
+    if (!type) return 'Transaction';
+    switch (type) {
+      case 'SALE':
+        return 'Sale';
+      case 'EMPTY_RETURN':
+        return 'Empty Return';
+      case 'PAYMENT':
+        return 'Payment';
+      case 'TRANSFER':
+        return 'Ledger Transfer';
+      case 'WAREHOUSE_TRANSFER':
+        return 'Warehouse Transfer';
+      case 'SUPPLIER_TRANSACTION':
+        return 'Supplier Transaction';
+      case 'BANK_DEPOSIT':
+        return 'Bank Deposit';
+      case 'EXPENSE':
+        return 'Expense';
+      default:
+        return type.replace(/_/g, ' ');
+    }
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 }

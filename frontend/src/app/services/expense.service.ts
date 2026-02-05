@@ -32,6 +32,7 @@ export class ExpenseService {
     bankAccountId?: number;
     minAmount?: number;
     maxAmount?: number;
+    createdBy?: string;
   }): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -45,6 +46,7 @@ export class ExpenseService {
       if (filters.bankAccountId) params = params.set('bankAccountId', filters.bankAccountId.toString());
       if (filters.minAmount !== undefined && filters.minAmount !== null) params = params.set('minAmount', filters.minAmount.toString());
       if (filters.maxAmount !== undefined && filters.maxAmount !== null) params = params.set('maxAmount', filters.maxAmount.toString());
+      if (filters.createdBy) params = params.set('createdBy', filters.createdBy);
     }
     
     return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
@@ -87,12 +89,12 @@ export class ExpenseService {
 
   // Get expense categories with IDs
   getCategories(): Observable<any[]> {
-    return this.categoryService.getAllCategories(0, 100);
+    return this.categoryService.getAllCategoriesAll();
   }
 
   // Get expenses summary (ALL matching records)
   getExpensesSummary(fromDate?: string, toDate?: string, categoryId?: number, paymentMode?: string, 
-                     bankAccountId?: number, minAmount?: number, maxAmount?: number): Observable<any> {
+                     bankAccountId?: number, minAmount?: number, maxAmount?: number, createdBy?: string): Observable<any> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
     if (toDate) params = params.set('toDate', toDate);
@@ -101,6 +103,7 @@ export class ExpenseService {
     if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (createdBy) params = params.set('createdBy', createdBy);
     
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
       .pipe(applyTimeout());

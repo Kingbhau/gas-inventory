@@ -38,6 +38,10 @@
   align-items: flex-end;
 }
 
+.filters-card .filter-row + .filter-row {
+  margin-top: var(--spacing-lg);
+}
+
 .filter-group {
   flex: 1;
   min-width: 200px;
@@ -280,6 +284,47 @@
 
 .no-data fa-icon {
   font-size: var(--font-size-2xl);
+}
+
+/* Pagination */
+.pagination {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  background: var(--bg-primary);
+  border-radius: var(--radius-md);
+}
+
+.page-info {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  min-width: 120px;
+  text-align: center;
+}
+
+.page-size-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.page-size-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.page-size-select {
+  padding: 0.35rem 1.2rem 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
 }
 
 /* Buttons */

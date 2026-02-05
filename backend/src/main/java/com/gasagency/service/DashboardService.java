@@ -4,15 +4,9 @@ import com.gasagency.dto.*;
 import com.gasagency.dto.DashboardSummaryDTO.InventoryHealthDTO;
 import com.gasagency.dto.DashboardSummaryDTO.DashboardAlertDTO;
 import com.gasagency.dto.DashboardSummaryDTO.BusinessInsightsDTO;
-import com.gasagency.entity.Customer;
 import com.gasagency.entity.CustomerCylinderLedger;
-import com.gasagency.entity.Sale;
-import com.gasagency.entity.SaleItem;
 import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Async;
@@ -48,8 +42,8 @@ public class DashboardService {
     private final InventoryStockService inventoryStockService;
     private final CustomerCylinderLedgerService customerCylinderLedgerService;
     private final CustomerRepository customerRepository;
-    private final WarehouseRepository warehouseRepository;
     private final SaleRepository saleRepository;
+    private final SaleItemRepository saleItemRepository;
     private final CustomerCylinderLedgerRepository customerCylinderLedgerRepository;
     private final AlertNotificationService alertNotificationService;
 
@@ -60,8 +54,8 @@ public class DashboardService {
             InventoryStockService inventoryStockService,
             CustomerCylinderLedgerService customerCylinderLedgerService,
             CustomerRepository customerRepository,
-            WarehouseRepository warehouseRepository,
             SaleRepository saleRepository,
+            SaleItemRepository saleItemRepository,
             CustomerCylinderLedgerRepository customerCylinderLedgerRepository,
             AlertNotificationService alertNotificationService) {
         this.saleService = saleService;
@@ -70,15 +64,15 @@ public class DashboardService {
         this.inventoryStockService = inventoryStockService;
         this.customerCylinderLedgerService = customerCylinderLedgerService;
         this.customerRepository = customerRepository;
-        this.warehouseRepository = warehouseRepository;
         this.saleRepository = saleRepository;
+        this.saleItemRepository = saleItemRepository;
         this.customerCylinderLedgerRepository = customerCylinderLedgerRepository;
         this.alertNotificationService = alertNotificationService;
     }
 
     /**
      * OPTIMIZED: Get comprehensive dashboard summary
-     * Note: Cache has been disabled to ensure real-time data
+     * No caching to ensure real-time dashboard updates
      */
     public DashboardSummaryDTO getDashboardSummary(Integer year, Integer month) {
         DashboardSummaryDTO dto = new DashboardSummaryDTO();
@@ -186,12 +180,11 @@ public class DashboardService {
     @Async("dashboardExecutor")
     private CompletableFuture<Void> getTopDebtorsAsync(DashboardSummaryDTO dto) {
         try {
-            Pageable topPage = PageRequest.of(0, 10);
-            Page<CustomerDuePaymentDTO> debtors = customerDuePaymentService.getDuePaymentReport(
-                    null, null, null, null, null, topPage);
-            List<DashboardSummaryDTO.CustomerDuePaymentDTO> topDebtorsList = debtors.getContent().stream()
+            List<CustomerDuePaymentDTO> debtors = customerDuePaymentService.getTopDebtors(10);
+            List<DashboardSummaryDTO.CustomerDuePaymentDTO> topDebtorsList = debtors.stream()
                     .map(d -> {
-                        DashboardSummaryDTO.CustomerDuePaymentDTO innerDto = new DashboardSummaryDTO.CustomerDuePaymentDTO();
+                        DashboardSummaryDTO.CustomerDuePaymentDTO innerDto =
+                                new DashboardSummaryDTO.CustomerDuePaymentDTO();
                         innerDto.setCustomerName(d.getCustomerName());
                         innerDto.setDueAmount(d.getDueAmount());
                         return innerDto;
@@ -209,7 +202,7 @@ public class DashboardService {
         try {
             // Get today's sales
             SaleSummaryDTO saleSummary = saleService.getSalesSummary(
-                    today.toString(), today.toString(), null, null, null, null, null);
+                    today.toString(), today.toString(), null, null, null, null, null, null);
 
             BigDecimal todaySales = ZERO;
             int todayTransactions = 0;
@@ -223,12 +216,8 @@ public class DashboardService {
             dto.setTodaySalesCount(todayTransactions);
             dto.setTopCustomerToday(topCustomer);
 
-            // Get today's expenses
-            Page<ExpenseDTO> todayExpenses = expenseService.getExpensesByDateRange(
-                    today, today, PageRequest.of(0, Integer.MAX_VALUE));
-            BigDecimal todayExpensesTotal = todayExpenses.getContent().stream()
-                    .map(ExpenseDTO::getAmount)
-                    .reduce(ZERO, BigDecimal::add);
+            // Get today's expenses (database aggregation)
+            BigDecimal todayExpensesTotal = expenseService.getTotalAmountBetweenDates(today, today);
             dto.setTodayTotalExpenses(todayExpensesTotal);
 
             // Calculate profit and margin
@@ -243,22 +232,13 @@ public class DashboardService {
             }
 
             // Get today's collection data from current month
-            LocalDate monthStart = today.withDayOfMonth(1);
-            Page<CustomerDuePaymentDTO> monthDebtors = customerDuePaymentService.getDuePaymentReport(
-                    monthStart, today, null, null, null, PageRequest.of(0, Integer.MAX_VALUE));
-
-            BigDecimal totalDue = monthDebtors.getContent().stream()
-                    .map(com.gasagency.dto.CustomerDuePaymentDTO::getDueAmount)
-                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal totalDue = customerDuePaymentService.getTotalDueAmount();
 
             // Cash collected = Sum of amountReceived from today's ledger entries (not sales
             // table)
-            List<CustomerCylinderLedger> allTodayLedgers = customerCylinderLedgerRepository
-                    .findByTransactionDateAndRefType(today, CustomerCylinderLedger.TransactionType.SALE);
-
-            BigDecimal todayCashCollected = allTodayLedgers.stream()
-                    .map(ledger -> ledger.getAmountReceived() != null ? ledger.getAmountReceived() : ZERO)
-                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal todayCashCollected = customerCylinderLedgerRepository
+                    .sumAmountReceivedByTransactionDateAndRefType(
+                            today, CustomerCylinderLedger.TransactionType.SALE);
             dto.setTodayCashCollected(todayCashCollected);
             dto.setTodayAmountDue(ZERO);
 
@@ -272,17 +252,12 @@ public class DashboardService {
             }
 
             dto.setTodayAmountDue(totalDue);
-            dto.setTodayProblematicCustomers(monthDebtors.getContent().size());
+            dto.setTodayProblematicCustomers((int) customerDuePaymentService.getCustomersWithDueCount());
 
             // Get today's inventory status
             try {
-                List<InventoryStockDTO> allInventory = inventoryStockService.getAllStock();
-                long totalFilled = allInventory.stream()
-                        .mapToLong(stock -> stock.getFilledQty() != null ? stock.getFilledQty() : 0L)
-                        .sum();
-                long totalEmpty = allInventory.stream()
-                        .mapToLong(stock -> stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L)
-                        .sum();
+                long totalFilled = inventoryStockService.getTotalFilledQty();
+                long totalEmpty = inventoryStockService.getTotalEmptyQty();
                 long totalInventory = totalFilled + totalEmpty;
 
                 dto.setTodayCylindersFilled((int) totalFilled);
@@ -318,7 +293,7 @@ public class DashboardService {
         try {
             // Get current month sales
             SaleSummaryDTO monthlySales = saleService.getSalesSummary(
-                    monthStart.toString(), monthEnd.toString(), null, null, null, null, null);
+                    monthStart.toString(), monthEnd.toString(), null, null, null, null, null, null);
 
             BigDecimal monthlySalesTotal = ZERO;
             int monthlySalesCount = 0;
@@ -336,11 +311,7 @@ public class DashboardService {
             dto.setAverageDailySales(daysCompleted > 0 ? monthlySalesTotal.doubleValue() / daysCompleted : 0.0);
 
             // Get current month expenses
-            Page<ExpenseDTO> monthlyExpenses = expenseService.getExpensesByDateRange(
-                    monthStart, monthEnd, PageRequest.of(0, Integer.MAX_VALUE));
-            BigDecimal monthlyExpensesTotal = monthlyExpenses.getContent().stream()
-                    .map(ExpenseDTO::getAmount)
-                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal monthlyExpensesTotal = expenseService.getTotalAmountBetweenDates(monthStart, monthEnd);
             dto.setMonthlyTotalExpenses(monthlyExpensesTotal);
 
             // Average daily expense
@@ -360,11 +331,7 @@ public class DashboardService {
 
             // Calculate collection rate for month: cash collected / total due
             // Get all outstanding dues at month start
-            Page<CustomerDuePaymentDTO> monthDebtors = customerDuePaymentService.getDuePaymentReport(
-                    monthStart, monthEnd, null, null, null, PageRequest.of(0, Integer.MAX_VALUE));
-            BigDecimal totalMonthlyDue = monthDebtors.getContent().stream()
-                    .map(com.gasagency.dto.CustomerDuePaymentDTO::getDueAmount)
-                    .reduce(ZERO, BigDecimal::add);
+            BigDecimal totalMonthlyDue = customerDuePaymentService.getTotalDueAmount();
 
             // Get cash collected this month (from sales and payments)
             BigDecimal cashCollected = monthlySalesTotal; // Sales are cash collections
@@ -401,7 +368,7 @@ public class DashboardService {
                 LocalDate previousMonthEnd = previousMonthStart.withDayOfMonth(previousMonthStart.lengthOfMonth());
 
                 SaleSummaryDTO previousMonth = saleService.getSalesSummary(
-                        previousMonthStart.toString(), previousMonthEnd.toString(), null, null, null, null, null);
+                        previousMonthStart.toString(), previousMonthEnd.toString(), null, null, null, null, null, null);
 
                 if (previousMonth != null && previousMonth.getTotalSalesAmount() > 0) {
                     double growth = ((monthlySalesTotal.doubleValue() - previousMonth.getTotalSalesAmount())
@@ -459,16 +426,11 @@ public class DashboardService {
     private void calculateCustomerMetrics(DashboardSummaryDTO dto) {
         try {
             // Get all active customers
-            List<Customer> allCustomers = customerRepository.findAll();
-            int totalCustomers = allCustomers.size();
+            int totalCustomers = (int) customerRepository.countByActive(true);
             dto.setTotalActiveCustomers(totalCustomers);
 
             // Get customers with dues (all-time, not filtered by month)
-            Page<CustomerDuePaymentDTO> customersWithDues = customerDuePaymentService
-                    .getDuePaymentReport(
-                            null, null, null, null, null, PageRequest.of(0, Integer.MAX_VALUE));
-
-            int customersWithDuesCount = customersWithDues.getContent().size();
+            int customersWithDuesCount = (int) customerDuePaymentService.getCustomersWithDueCount();
             int customersWithNoDues = Math.max(0, totalCustomers - customersWithDuesCount);
 
             dto.setCustomersWithNoDues(customersWithNoDues);
@@ -526,14 +488,8 @@ public class DashboardService {
     private void calculateBreakdowns(DashboardSummaryDTO dto, LocalDate monthStart, LocalDate monthEnd) {
         try {
             // Expense category breakdown
-            Map<String, BigDecimal> expenseBreakdown = new HashMap<>();
-            Page<ExpenseDTO> monthlyExpenses = expenseService.getExpensesByDateRange(
-                    monthStart, monthEnd, PageRequest.of(0, Integer.MAX_VALUE));
-
-            monthlyExpenses.getContent().forEach(expense -> {
-                String category = expense.getCategory() != null ? expense.getCategory() : "Other";
-                expenseBreakdown.merge(category, expense.getAmount(), BigDecimal::add);
-            });
+            Map<String, BigDecimal> expenseBreakdown = expenseService
+                    .getAmountByCategoryBetween(monthStart, monthEnd);
 
             dto.setExpenseCategoryBreakdown(expenseBreakdown);
 
@@ -550,25 +506,16 @@ public class DashboardService {
             try {
                 List<DashboardSummaryDTO.VariantSalesDTO> variantSales = new ArrayList<>();
 
-                // Get all sales for the month
-                Page<Sale> monthlySales = saleRepository.findByDateRange(monthStart, monthEnd,
-                        PageRequest.of(0, Integer.MAX_VALUE));
-
-                // Group sale items by variant and sum quantities
                 Map<String, Long> variantTotals = new HashMap<>();
                 long totalQty = 0;
-
-                for (Sale sale : monthlySales.getContent()) {
-                    if (sale.getSaleItems() != null) {
-                        for (SaleItem item : sale.getSaleItems()) {
-                            String variantName = item.getVariant() != null && item.getVariant().getName() != null
-                                    ? item.getVariant().getName()
-                                    : "Unknown";
-                            long qty = item.getQtyIssued() != null ? item.getQtyIssued() : 0L;
-                            variantTotals.merge(variantName, qty, Long::sum);
-                            totalQty += qty;
-                        }
+                for (Object[] row : saleItemRepository.sumQtyByVariantBetween(monthStart, monthEnd)) {
+                    if (row == null || row.length < 2) {
+                        continue;
                     }
+                    String variantName = row[0] != null ? row[0].toString() : "Unknown";
+                    long qty = row[1] instanceof Number ? ((Number) row[1]).longValue() : 0L;
+                    variantTotals.merge(variantName, qty, Long::sum);
+                    totalQty += qty;
                 }
 
                 // Convert to VariantSalesDTO with percentage
@@ -592,41 +539,29 @@ public class DashboardService {
             // Inventory by warehouse - get actual inventory data
             try {
                 List<InventoryHealthDTO> inventoryByWarehouse = new ArrayList<>();
-                List<InventoryStockDTO> allInventory = inventoryStockService.getAllStock();
-
-                warehouseRepository.findAll().forEach(warehouse -> {
-                    InventoryHealthDTO health = new InventoryHealthDTO();
-                    health.setWarehouseName(warehouse.getName());
-
-                    // Filter inventory for this warehouse
-                    long warehouseFilled = allInventory.stream()
-                            .filter(stock -> stock.getWarehouseName() != null &&
-                                    stock.getWarehouseName().equals(warehouse.getName()))
-                            .mapToLong(stock -> stock.getFilledQty() != null ? stock.getFilledQty() : 0L)
-                            .sum();
-
-                    long warehouseEmpty = allInventory.stream()
-                            .filter(stock -> stock.getWarehouseName() != null &&
-                                    stock.getWarehouseName().equals(warehouse.getName()))
-                            .mapToLong(stock -> stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L)
-                            .sum();
-
+                for (Object[] row : inventoryStockService.getTotalsByWarehouse()) {
+                    if (row == null || row.length < 4) {
+                        continue;
+                    }
+                    String warehouseName = row[1] != null ? row[1].toString() : "Unknown";
+                    long warehouseFilled = row[2] instanceof Number ? ((Number) row[2]).longValue() : 0L;
+                    long warehouseEmpty = row[3] instanceof Number ? ((Number) row[3]).longValue() : 0L;
                     long warehouseTotal = warehouseFilled + warehouseEmpty;
 
+                    InventoryHealthDTO health = new InventoryHealthDTO();
+                    health.setWarehouseName(warehouseName);
                     health.setFilledCount((int) warehouseFilled);
                     health.setEmptyCount((int) warehouseEmpty);
                     health.setTotalCount((int) warehouseTotal);
 
-                    // Health percentage = filled / total
                     if (warehouseTotal > 0) {
                         double healthPercent = (double) warehouseFilled / warehouseTotal * 100.0;
                         health.setHealthPercentage(Math.min(100.0, healthPercent));
                     } else {
                         health.setHealthPercentage(0.0);
                     }
-
                     inventoryByWarehouse.add(health);
-                });
+                }
 
                 dto.setInventoryByWarehouse(inventoryByWarehouse);
             } catch (Exception ie) {
@@ -713,28 +648,18 @@ public class DashboardService {
             List<DashboardSummaryDTO.DailySalesDataDTO> dailyTrend = new ArrayList<>();
 
             // Get all sales for the month
-            Page<SaleDTO> monthlySales = saleService.getSalesByDateRange(
-                    monthStart, monthEnd, PageRequest.of(0, Integer.MAX_VALUE));
-
-            // Group sales by date and calculate daily totals
             Map<LocalDate, BigDecimal> dailySalesMap = new HashMap<>();
             Map<LocalDate, BigDecimal> dailyExpensesMap = new HashMap<>();
+            for (Object[] row : saleRepository.sumTotalAmountByDateBetween(monthStart, monthEnd)) {
+                if (row == null || row.length < 2) {
+                    continue;
+                }
+                LocalDate saleDate = (LocalDate) row[0];
+                BigDecimal amount = row[1] instanceof BigDecimal ? (BigDecimal) row[1] : ZERO;
+                dailySalesMap.put(saleDate, amount);
+            }
 
-            // Process sales by date
-            monthlySales.getContent().forEach(sale -> {
-                LocalDate saleDate = sale.getSaleDate();
-                BigDecimal amount = sale.getTotalAmount() != null ? sale.getTotalAmount() : ZERO;
-                dailySalesMap.merge(saleDate, amount, BigDecimal::add);
-            });
-
-            // Process expenses by date
-            Page<ExpenseDTO> monthlyExpenses = expenseService.getExpensesByDateRange(
-                    monthStart, monthEnd, PageRequest.of(0, Integer.MAX_VALUE));
-            monthlyExpenses.getContent().forEach(expense -> {
-                LocalDate expenseDate = expense.getExpenseDate();
-                BigDecimal amount = expense.getAmount() != null ? expense.getAmount() : ZERO;
-                dailyExpensesMap.merge(expenseDate, amount, BigDecimal::add);
-            });
+            dailyExpensesMap.putAll(expenseService.getAmountByDateBetween(monthStart, monthEnd));
 
             // Calculate daily profits and build trend data
             for (LocalDate date = monthStart; !date.isAfter(monthEnd); date = date.plusDays(1)) {

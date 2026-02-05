@@ -15,11 +15,7 @@
           <fa-icon [icon]="faBars"></fa-icon>
         </button>
         <div class="brand">
-          <div class="brand-icon">⛽</div>
-          <div class="brand-content">
-            <div class="brand-name">Gas Pro</div>
-            <div class="brand-tagline">Inventory System</div>
-          </div>
+          <img class="brand-logo" src="assets/logo.png" alt="Cylinex logo" />
         </div>
       </div>
       <!-- Center Section (removed search) -->
@@ -27,11 +23,9 @@
       <div class="header-right" *ngIf="isAuthenticated">
         <!-- Notifications Bell Icon - Professional Design -->
         <div style="position: relative; display: flex; align-items: center;">
-          <button class="bell-button" (click)="toggleAlertDropdown()" title="Notifications" 
-            style="background: transparent; border: none; cursor: pointer; padding: 8px 12px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 24px;">
-            🔔
-            <span class="notification-badge" *ngIf="alertCount > 0" 
-              style="position: absolute; top: 4px; right: 4px; background: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; border: 2px solid white;">
+          <button class="bell-button" (click)="toggleAlertDropdown()" title="Notifications">
+            <fa-icon [icon]="faBell"></fa-icon>
+            <span class="notification-badge" *ngIf="alertCount > 0">
               {{ alertCount > 99 ? '99+' : alertCount }}
             </span>
           </button>
@@ -102,15 +96,12 @@
         </div>
 
         <!-- User Section -->
-        <div class="user-section" style="position: relative;">
+        <div class="user-section" style="position: relative;" (click)="toggleProfileDropdown(); $event.stopPropagation();">
           <div class="user-avatar">  {{ (userInfo?.name || userName)?.charAt(0) }}</div>
           <div class="user-info">
             <div class="user-name">{{ userInfo?.name || userName }}</div>
             <div class="user-role">{{ userInfo?.role || userRole }}</div>
           </div>
-          <button class="header-icon-btn" title="Profile Actions" (click)="toggleProfileDropdown(); $event.stopPropagation();">
-            <fa-icon [icon]="faChevronDown"></fa-icon>
-          </button>
           <div class="profile-dropdown" *ngIf="profileDropdownOpen" (click)="$event.stopPropagation()" style="position: absolute; right: 0; top: 100%;">
             <button class="dropdown-item" (click)="logout()">
               <fa-icon [icon]="faSignOut"></fa-icon> Logout

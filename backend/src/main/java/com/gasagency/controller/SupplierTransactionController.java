@@ -46,10 +46,11 @@ public class SupplierTransactionController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction,
-            @RequestParam(required = false) String referenceNumber) {
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllTransactions(pageable, referenceNumber));
+        return ResponseEntity.ok(service.getAllTransactions(pageable, referenceNumber, createdBy));
     }
 
     @GetMapping("/supplier/{supplierId}")

@@ -29,4 +29,10 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, SaleRepositor
         long countByWarehouseAndCreatedAtMonthYear(@Param("warehouse") Warehouse warehouse,
                         @Param("date") LocalDate date);
 
+        @Query("SELECT s.saleDate, COALESCE(SUM(s.totalAmount), 0) FROM Sale s " +
+                        "WHERE s.saleDate BETWEEN :fromDate AND :toDate GROUP BY s.saleDate")
+        List<Object[]> sumTotalAmountByDateBetween(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate);
+
 }

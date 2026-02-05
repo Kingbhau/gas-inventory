@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { WarehouseTransfer } from '../models/warehouse-transfer.model';
 import { getApiUrl } from '../config/api.config';
@@ -28,6 +28,18 @@ export class WarehouseTransferService {
   }
 
   /**
+   * Get paged warehouse transfers (audit trail)
+   */
+  getAllTransfersPaged(page: number = 0, size: number = 20, sortBy: string = 'transferDate', direction: string = 'DESC'): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+    return this.http.get<any>(`${this.apiUrl}/paged`, { params, withCredentials: true });
+  }
+
+  /**
    * Get transfer by ID
    */
   getTransferById(id: number): Observable<any> {
@@ -41,6 +53,15 @@ export class WarehouseTransferService {
     return this.http.get<any>(`${this.apiUrl}/warehouse/${warehouseId}`, { withCredentials: true });
   }
 
+  getTransfersForWarehousePaged(warehouseId: number, page: number = 0, size: number = 20, sortBy: string = 'transferDate', direction: string = 'DESC'): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+    return this.http.get<any>(`${this.apiUrl}/warehouse/${warehouseId}/paged`, { params, withCredentials: true });
+  }
+
   /**
    * Get outgoing transfers from warehouse
    */
@@ -48,11 +69,29 @@ export class WarehouseTransferService {
     return this.http.get<any>(`${this.apiUrl}/from/${warehouseId}`, { withCredentials: true });
   }
 
+  getTransfersFromPaged(warehouseId: number, page: number = 0, size: number = 20, sortBy: string = 'transferDate', direction: string = 'DESC'): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+    return this.http.get<any>(`${this.apiUrl}/from/${warehouseId}/paged`, { params, withCredentials: true });
+  }
+
   /**
    * Get incoming transfers to warehouse
    */
   getTransfersTo(warehouseId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/to/${warehouseId}`, { withCredentials: true });
+  }
+
+  getTransfersToPaged(warehouseId: number, page: number = 0, size: number = 20, sortBy: string = 'transferDate', direction: string = 'DESC'): Observable<any> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+    return this.http.get<any>(`${this.apiUrl}/to/${warehouseId}/paged`, { params, withCredentials: true });
   }
 
   /**

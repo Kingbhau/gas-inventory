@@ -12,6 +12,22 @@
         <label class="filter-label">Select Date</label>
         <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="filter-input">
       </div>
+      <div class="filter-group">
+        <label class="filter-label">Type</label>
+        <select [(ngModel)]="filterTransactionType" (ngModelChange)="loadDayBookData()" class="filter-input">
+          <option *ngFor="let option of transactionTypeOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''; loadDayBookData()"
+        ></app-autocomplete-input>
+      </div>
       <div class="filter-actions">
         <!-- <button (click)="refreshData()" class="btn btn-primary">Search</button> -->
         <button (click)="printDayBook()" class="btn btn-secondary" *ngIf="dayBookTransactions.length > 0"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
@@ -59,30 +75,30 @@
           <table class="data-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Warehouse</th>
-              <th>Variant</th>
-              <th class="text-center">Filled</th>
-              <th class="text-center">Empty</th>
-              <th class="text-center">Total Amt</th>
-              <th class="text-center">Received</th>
-              <th class="text-center">Due Amt</th>
-              <th>Payment Mode</th>
+              <th class="col-date">Date</th>
+              <th class="col-type">Type</th>
+              <th class="col-party">Party</th>
+              <th class="col-ref">Reference</th>
+              <th class="col-details">Details</th>
+              <th class="col-amount text-center">Amount</th>
+              <th class="col-amount text-center">Received</th>
+              <th class="col-amount text-center">Due</th>
+              <th class="col-mode">Mode</th>
+              <th class="col-created">Created By</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let transaction of paginatedDayBookTransactions">
-              <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
-              <td><strong>{{ transaction.customerName }}</strong></td>
-              <td>{{ transaction.warehouseName }}</td>
-              <td>{{ transaction.variantName }}</td>
-              <td class="text-center">{{ transaction.filledCount || 0 }}</td>
-              <td class="text-center">{{ transaction.emptyCount || 0 }}</td>
-              <td class="text-center amount">₹{{ formatAmount(transaction.totalAmount) }}</td>
-              <td class="text-center amount">₹{{ formatAmount(transaction.amountReceived) }}</td>
-              <td class="text-center amount" [class.due-highlight]="transaction.dueAmount && transaction.dueAmount > 0">₹{{ formatAmount(transaction.dueAmount) }}</td>
-              <td>{{ transaction.paymentMode || '-' }}</td>
+              <td class="col-date">{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td class="col-type"><span class="type-badge">{{ getTypeLabel(transaction.transactionType) }}</span></td>
+              <td class="col-party"><strong>{{ transaction.partyName || '-' }}</strong></td>
+              <td class="col-ref">{{ transaction.referenceNumber || '-' }}</td>
+              <td class="col-details details-cell">{{ transaction.details || '-' }}</td>
+              <td class="col-amount text-center amount">₹{{ formatAmount(transaction.totalAmount) }}</td>
+              <td class="col-amount text-center amount">₹{{ formatAmount(transaction.amountReceived) }}</td>
+              <td class="col-amount text-center amount" [class.due-highlight]="transaction.dueAmount && transaction.dueAmount > 0">₹{{ formatAmount(transaction.dueAmount) }}</td>
+              <td class="col-mode">{{ transaction.paymentMode || '-' }}</td>
+              <td class="col-created">{{ getCreatedByName(transaction.createdBy) }}</td>
             </tr>
           </tbody>
         </table>

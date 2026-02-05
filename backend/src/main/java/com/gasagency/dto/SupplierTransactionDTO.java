@@ -16,6 +16,7 @@ public class SupplierTransactionDTO {
     private Long emptySent;
     private String reference;
     private BigDecimal amount;
+    private String createdBy;
 
     public SupplierTransactionDTO() {
     }
@@ -131,5 +132,13 @@ public class SupplierTransactionDTO {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

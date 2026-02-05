@@ -31,9 +31,11 @@ public class DayBookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) String transactionType) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        return ResponseEntity.ok(dayBookService.getCurrentDayTransactions(pageable));
+        return ResponseEntity.ok(dayBookService.getCurrentDayTransactions(pageable, createdBy, transactionType));
     }
 
     /**
@@ -47,7 +49,9 @@ public class DayBookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) String transactionType) {
 
         LocalDate transactionDate;
 
@@ -63,7 +67,7 @@ public class DayBookController {
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        return ResponseEntity.ok(dayBookService.getTransactionsByDate(transactionDate, pageable));
+        return ResponseEntity.ok(dayBookService.getTransactionsByDate(transactionDate, pageable, createdBy, transactionType));
     }
 
     /**
@@ -71,7 +75,9 @@ public class DayBookController {
      */
     @GetMapping("/summary")
     public ResponseEntity<DayBookSummaryDTO> getSummaryByDate(
-            @RequestParam(required = false) String date) {
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) String transactionType) {
 
         LocalDate transactionDate;
 
@@ -86,6 +92,6 @@ public class DayBookController {
             }
         }
 
-        return ResponseEntity.ok(dayBookService.getTransactionsByDateSummary(transactionDate));
+        return ResponseEntity.ok(dayBookService.getTransactionsByDateSummary(transactionDate, createdBy, transactionType));
     }
 }

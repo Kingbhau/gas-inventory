@@ -101,7 +101,7 @@ public class SaleService {
         }
 
         public SaleSummaryDTO getSalesSummary(String fromDate, String toDate, Long customerId,
-                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber) {
+                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber, String createdBy) {
                 LocalDate from = null;
                 LocalDate to = null;
                 try {
@@ -116,11 +116,12 @@ public class SaleService {
                 }
                 // Fetch all filtered sales (no paging)
                 List<Sale> sales = saleRepository.findFilteredSalesCustom(from, to, customerId, variantId,
-                                minAmount, maxAmount, referenceNumber, Pageable.unpaged()).getContent();
+                                minAmount, maxAmount, referenceNumber, createdBy, Pageable.unpaged()).getContent();
                 double totalSalesAmount = 0;
                 int transactionCount = 0;
                 Map<String, Double> customerTotals = new java.util.HashMap<>();
                 for (Sale sale : sales) {
+                        boolean saleMatched = false;
                         if (sale.getSaleItems() != null) {
                                 for (SaleItem item : sale.getSaleItems()) {
                                         // Apply item-level filters
@@ -139,16 +140,19 @@ public class SaleService {
                                         }
                                         if (!match)
                                                 continue;
+                                        saleMatched = true;
                                         double itemAmount = item.getFinalPrice() != null
                                                         ? item.getFinalPrice().doubleValue()
                                                         : 0.0;
                                         totalSalesAmount += itemAmount;
-                                        transactionCount++;
                                         String customerName = sale.getCustomer() != null ? sale.getCustomer().getName()
                                                         : "Unknown";
                                         customerTotals.put(customerName,
                                                         customerTotals.getOrDefault(customerName, 0.0) + itemAmount);
                                 }
+                        }
+                        if (saleMatched) {
+                                transactionCount++;
                         }
                 }
                 double avgSaleValue = transactionCount > 0 ? totalSalesAmount / transactionCount : 0;
@@ -648,7 +652,7 @@ public class SaleService {
 
         @Transactional(readOnly = true)
         public Page<SaleDTO> getAllSales(Pageable pageable, String fromDate, String toDate, Long customerId,
-                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber) {
+                        Long variantId, Double minAmount, Double maxAmount, String referenceNumber, String createdBy) {
                 logger.debug("Fetching all sales with filters: page={}, size={}, customerId={}, variantId={}, minAmount={}, maxAmount={}, referenceNumber={}",
                                 pageable.getPageNumber(), pageable.getPageSize(), customerId, variantId, minAmount,
                                 maxAmount, referenceNumber);
@@ -667,7 +671,7 @@ public class SaleService {
                 // Use custom repository method for filtering
                 return saleRepository
                                 .findFilteredSalesCustom(from, to, customerId, variantId, minAmount, maxAmount,
-                                                referenceNumber,
+                                                referenceNumber, createdBy,
                                                 pageable)
                                 .map(this::toDTO);
         }
@@ -761,10 +765,13 @@ public class SaleService {
                 int totalTransactions = 0;
 
                 for (CustomerCylinderLedger ledger : ledgers) {
-                        // Get payment mode as is (can be null)
+                        // Skip entries without payment mode (prevents null map keys)
                         String ledgerPaymentMode = ledger.getPaymentMode() != null && !ledger.getPaymentMode().isEmpty()
                                         ? ledger.getPaymentMode().trim().toUpperCase()
                                         : null;
+                        if (ledgerPaymentMode == null) {
+                                continue;
+                        }
                         double ledgerAmount = ledger.getAmountReceived() != null
                                         ? ledger.getAmountReceived().doubleValue()
                                         : 0.0;
@@ -856,7 +863,7 @@ public class SaleService {
                                         sale.getBankAccount().getAccountNumber();
                 }
 
-                return new SaleDTO(
+                SaleDTO dto = new SaleDTO(
                                 sale.getId(),
                                 sale.getReferenceNumber(),
                                 sale.getCustomer().getId(),
@@ -867,6 +874,8 @@ public class SaleService {
                                 bankAccountId,
                                 bankAccountName,
                                 items);
+                dto.setCreatedBy(sale.getCreatedBy());
+                return dto;
         }
 
         /**
@@ -920,7 +929,7 @@ public class SaleService {
                                         sale.getBankAccount().getAccountNumber();
                 }
 
-                return new SaleDTO(
+                SaleDTO dto = new SaleDTO(
                                 sale.getId(),
                                 sale.getReferenceNumber(),
                                 sale.getCustomer().getId(),
@@ -931,6 +940,8 @@ public class SaleService {
                                 bankAccountId,
                                 bankAccountName,
                                 items);
+                dto.setCreatedBy(sale.getCreatedBy());
+                return dto;
         }
 
         @CacheEvict(value = "dashboardCache", allEntries = true)

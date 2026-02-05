@@ -58,4 +58,14 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
         @Query(value = "UPDATE inventory_stock SET filled_qty = filled_qty + :qty, version = version + 1, last_updated = CURRENT_TIMESTAMP WHERE warehouse_id = :warehouseId AND variant_id = :variantId", nativeQuery = true)
         int incrementFilledQtyByWarehouseAtomic(@Param("warehouseId") Long warehouseId,
                         @Param("variantId") Long variantId, @Param("qty") Long qty);
+
+        @Query("SELECT COALESCE(SUM(i.filledQty), 0) FROM InventoryStock i")
+        Long sumFilledQty();
+
+        @Query("SELECT COALESCE(SUM(i.emptyQty), 0) FROM InventoryStock i")
+        Long sumEmptyQty();
+
+        @Query("SELECT i.warehouse.id, i.warehouse.name, COALESCE(SUM(i.filledQty), 0), COALESCE(SUM(i.emptyQty), 0) " +
+                        "FROM InventoryStock i GROUP BY i.warehouse.id, i.warehouse.name")
+        List<Object[]> sumByWarehouse();
 }

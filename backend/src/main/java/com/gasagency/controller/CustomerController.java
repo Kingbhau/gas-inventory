@@ -47,6 +47,26 @@ public class CustomerController {
         return ResponseEntity.ok(service.getActiveCustomers());
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<Page<CustomerDTO>> getActiveCustomersPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) java.math.BigDecimal minDueAmount) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        if (minDueAmount != null) {
+            if ("name".equalsIgnoreCase(sortBy)) {
+                sortBy = "customer.name";
+            } else if ("id".equalsIgnoreCase(sortBy)) {
+                sortBy = "customer.id";
+            }
+        }
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        return ResponseEntity.ok(service.getActiveCustomers(pageable, search, minDueAmount));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<CustomerDTO> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerDTO dto) {
         return ResponseEntity.ok(service.updateCustomer(id, dto));

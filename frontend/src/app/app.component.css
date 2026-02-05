@@ -82,6 +82,13 @@
   opacity: 0.8;
 }
 
+.brand-logo {
+  height: 36px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
 .brand-icon {
   font-size: 32px;
   display: flex;
@@ -1205,15 +1212,28 @@
 }
 
 .bell-button {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .bell-button:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: #eef2ff;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
 }
 
 .bell-button:active {
-  transform: scale(0.95) !important;
+  transform: translateY(0);
 }
 
 /* Ensure fa-icon renders properly */
@@ -1224,7 +1244,10 @@ fa-icon {
 }
 
 .bell-button fa-icon {
-  color: black !important;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #1e293b;
 }
 
 .alert-dropdown-professional {

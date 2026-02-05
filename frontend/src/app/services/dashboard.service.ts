@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, shareReplay, timeout } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 import { getApiUrl } from '../config/api.config';
 
 export interface DashboardSummary {
@@ -146,81 +146,36 @@ export interface DashboardAlert {
 })
 export class DashboardService {
   private apiUrl = getApiUrl('/dashboard');
-  private dashboardCache$: Observable<DashboardSummary> | null = null;
-  private lastFetchTime = 0;
-  private cacheExpireTime = 30 * 1000; // 30 seconds (reduced from 1 minute)
-  private cachedYear: number | null = null;
-  private cachedMonth: number | null = null;
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Get comprehensive dashboard data with optional month selection and caching
+   * Get comprehensive dashboard data with optional month selection
    * @param year optional year (defaults to current year)
    * @param month optional month 1-12 (defaults to current month)
-   * @param forceRefresh bypass cache
+   * @param forceRefresh no-op (kept for compatibility)
    */
   getDashboardSummary(year?: number | null, month?: number | null, forceRefresh: boolean = false): Observable<DashboardSummary> {
-    const now = Date.now();
-    const isCacheExpired = (now - this.lastFetchTime) > this.cacheExpireTime;
-    
-    // Check if month/year changed
-    const monthYearChanged = this.cachedYear !== year || this.cachedMonth !== month;
-
-    // Refresh if: force refresh, no cache, cache expired, or month/year changed
-    const shouldRefresh = forceRefresh || !this.dashboardCache$ || isCacheExpired || monthYearChanged;
-
-    if (shouldRefresh) {
-      // Clear cache if force refresh or month/year changed
-      if (forceRefresh || monthYearChanged) {
-        console.log('[DashboardService] Clearing cache - forceRefresh:', forceRefresh, 'monthYearChanged:', monthYearChanged);
-        this.dashboardCache$ = null;
-      }
-
-      let url = `${this.apiUrl}/comprehensive`;
-      if (year || month) {
-        const params = new URLSearchParams();
-        if (year) params.append('year', year.toString());
-        if (month) params.append('month', month.toString());
-        url += '?' + params.toString();
-      }
-
-      console.log('[DashboardService] Fetching dashboard data from:', url, 'forceRefresh:', forceRefresh);
-
-      // Create a new observable without cache if force refresh
-      if (forceRefresh) {
-        return this.http
-          .get<DashboardSummary>(url)
-          .pipe(
-            timeout(30000), // 30 second timeout
-            catchError(this.handleError)
-          );
-      }
-
-      this.dashboardCache$ = this.http
-        .get<DashboardSummary>(url)
-        .pipe(
-          timeout(30000), // 30 second timeout
-          shareReplay(1), // Cache the result for subsequent subscribers
-          catchError(this.handleError)
-        );
-
-      this.lastFetchTime = now;
-      this.cachedYear = year || null;
-      this.cachedMonth = month || null;
-    } else {
-      console.log('[DashboardService] Using cached dashboard data');
+    let url = `${this.apiUrl}/comprehensive`;
+    if (year || month) {
+      const params = new URLSearchParams();
+      if (year) params.append('year', year.toString());
+      if (month) params.append('month', month.toString());
+      url += '?' + params.toString();
     }
 
-    return this.dashboardCache$ as Observable<DashboardSummary>;
+    return this.http
+      .get<DashboardSummary>(url)
+      .pipe(
+        timeout(30000),
+        catchError(this.handleError)
+      );
   }
 
   /**
    * Force refresh dashboard data (bypass cache)
    */
   refreshDashboard(): Observable<DashboardSummary> {
-    console.log('[DashboardService] refreshDashboard() called');
-    this.clearCache();
     return this.getDashboardSummary(null, null, true);
   }
 
@@ -228,11 +183,7 @@ export class DashboardService {
    * Clear cache
    */
   clearCache(): void {
-    console.log('[DashboardService] clearCache() called');
-    this.dashboardCache$ = null;
-    this.lastFetchTime = 0;
-    this.cachedYear = null;
-    this.cachedMonth = null;
+    // No-op: dashboard caching is disabled
   }
 
   /**

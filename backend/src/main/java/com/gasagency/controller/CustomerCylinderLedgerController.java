@@ -2,6 +2,7 @@
 package com.gasagency.controller;
 
 import com.gasagency.dto.CustomerCylinderLedgerDTO;
+import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.service.CustomerCylinderLedgerService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,8 @@ import com.gasagency.dto.CustomerBalanceDTO;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ledger")
@@ -192,6 +195,20 @@ public class CustomerCylinderLedgerController {
         return ResponseEntity.ok(dto);
     }
 
+    @PostMapping("/customer-due-amounts")
+    public ResponseEntity<Map<Long, java.math.BigDecimal>> getCustomerDueAmounts(
+            @RequestBody Map<String, List<Number>> payload) {
+        List<Number> rawIds = payload != null ? payload.get("customerIds") : null;
+        List<Long> customerIds = null;
+        if (rawIds != null) {
+            customerIds = rawIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(Number::longValue)
+                    .collect(Collectors.toList());
+        }
+        return ResponseEntity.ok(service.getLatestDueAmountsForCustomers(customerIds));
+    }
+
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<CustomerCylinderLedgerDTO>> getLedgerByCustomer(@PathVariable Long customerId) {
         return ResponseEntity.ok(service.getLedgerByCustomer(customerId));
@@ -216,10 +233,56 @@ public class CustomerCylinderLedgerController {
         return ResponseEntity.ok(service.getAllMovements());
     }
 
+    // Paginated movements (optionally include transfers)
+    @GetMapping("/movements/paged")
+    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getAllMovementsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transactionDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) String refType,
+            @RequestParam(defaultValue = "true") boolean includeTransfers) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(includeTransfers
+                ? service.getAllMovementsMerged(pageable, variantId, normalizeRefType(refType))
+                : service.getAllMovements(pageable, variantId, normalizeRefType(refType)));
+    }
+
     // Endpoint: Get stock movements for a specific warehouse
     @GetMapping("/movements/warehouse/{warehouseId}")
     public ResponseEntity<List<CustomerCylinderLedgerDTO>> getMovementsByWarehouse(@PathVariable Long warehouseId) {
         return ResponseEntity.ok(service.getMovementsByWarehouse(warehouseId));
+    }
+
+    // Paginated warehouse movements (optionally include transfers)
+    @GetMapping("/movements/warehouse/{warehouseId}/paged")
+    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getMovementsByWarehousePaged(
+            @PathVariable Long warehouseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "transactionDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) String refType,
+            @RequestParam(defaultValue = "true") boolean includeTransfers) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
+        return ResponseEntity.ok(includeTransfers
+                ? service.getMovementsByWarehouseMerged(warehouseId, pageable, variantId, normalizeRefType(refType))
+                : service.getMovementsByWarehouse(warehouseId, pageable, variantId, normalizeRefType(refType)));
+    }
+
+    private CustomerCylinderLedger.TransactionType normalizeRefType(String refType) {
+        if (refType == null || refType.trim().isEmpty()) {
+            return null;
+        }
+        String normalized = refType.trim().toUpperCase();
+        if ("RETURN".equals(normalized)) {
+            return CustomerCylinderLedger.TransactionType.EMPTY_RETURN;
+        }
+        return CustomerCylinderLedger.TransactionType.valueOf(normalized);
     }
 
     @GetMapping("/customer/{customerId}/variant/{variantId}")
@@ -258,6 +321,7 @@ public class CustomerCylinderLedgerController {
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) String createdBy,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
@@ -277,7 +341,7 @@ public class CustomerCylinderLedgerController {
             // Invalid date format, continue without filtering
         }
 
-        return ResponseEntity.ok(service.getEmptyReturns(from, to, customerId, variantId, pageable));
+        return ResponseEntity.ok(service.getEmptyReturns(from, to, customerId, variantId, createdBy, pageable));
     }
 
     // Update a ledger entry with full chain recalculation

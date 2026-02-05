@@ -14,12 +14,14 @@ export class DayBookService {
   /**
    * Get all transactions for the current day with pagination
    */
-  getCurrentDayTransactions(page: number = 0, pageSize: number = 10, sortBy: string = 'transactionDate', direction: string = 'DESC'): Observable<any> {
+  getCurrentDayTransactions(page: number = 0, pageSize: number = 10, sortBy: string = 'transactionDate', direction: string = 'DESC', createdBy?: string, transactionType?: string): Observable<any> {
     let params = new HttpParams();
     params = params.set('page', page.toString());
     params = params.set('size', pageSize.toString());
     params = params.set('sortBy', sortBy);
     params = params.set('direction', direction);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    if (transactionType) params = params.set('transactionType', transactionType);
     return this.http.get<any>(`${this.apiUrl}`, { params });
   }
 
@@ -27,22 +29,26 @@ export class DayBookService {
    * Get all transactions for a specific date with pagination
    * @param date - Date in format YYYY-MM-DD
    */
-  getTransactionsByDate(date: string, page: number = 0, pageSize: number = 10, sortBy: string = 'transactionDate', direction: string = 'DESC'): Observable<any> {
+  getTransactionsByDate(date: string, page: number = 0, pageSize: number = 10, sortBy: string = 'transactionDate', direction: string = 'DESC', createdBy?: string, transactionType?: string): Observable<any> {
     let params = new HttpParams();
     params = params.set('date', date);
     params = params.set('page', page.toString());
     params = params.set('size', pageSize.toString());
     params = params.set('sortBy', sortBy);
     params = params.set('direction', direction);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    if (transactionType) params = params.set('transactionType', transactionType);
     return this.http.get<any>(`${this.apiUrl}/by-date`, { params });
   }
 
   /**
    * Get summary for a specific date (all transactions, no pagination)
    */
-  getTransactionsSummary(date: string): Observable<any> {
+  getTransactionsSummary(date: string, createdBy?: string, transactionType?: string): Observable<any> {
     let params = new HttpParams();
     params = params.set('date', date);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    if (transactionType) params = params.set('transactionType', transactionType);
     return this.http.get<any>(`${this.apiUrl}/summary`, { params });
   }
 }

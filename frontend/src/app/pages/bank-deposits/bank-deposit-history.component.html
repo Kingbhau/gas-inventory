@@ -2,7 +2,7 @@
   <!-- Page Header -->
   <div class="page-header">
     <h1 class="page-title">Bank Deposits History</h1>
-    <p class="page-subtitle">Track all client deposits made to bank accounts</p>
+    <p class="page-subtitle">Track all deposits made to bank accounts</p>
   </div>
 
   <!-- Filters Section -->
@@ -35,11 +35,21 @@
         </select>
       </div>
       <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
         <label class="filter-label">Reference #</label>
         <input type="text" [(ngModel)]="filterSearchTerm" class="filter-input" placeholder="Search reference...">
       </div>
     </div>
-    <div class="filter-row" style="margin-top: 1rem;">
+    <div class="filter-row">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -244,6 +254,10 @@
           <div class="detail-row">
             <span class="label">Payment Mode:</span>
             <span class="value">{{ selectedDeposit.paymentMode }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedDeposit.createdBy) }}</span>
           </div>
           <div class="detail-row" *ngIf="selectedDeposit.notes">
             <span class="label">Notes:</span>

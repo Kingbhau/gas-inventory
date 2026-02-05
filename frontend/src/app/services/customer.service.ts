@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, EMPTY } from 'rxjs';
 import { timeout, shareReplay } from 'rxjs';
+import { expand, map, reduce } from 'rxjs';
 import { Customer } from '../models/customer.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
@@ -44,6 +45,19 @@ export class CustomerService {
       .pipe(applyTimeout());
   }
 
+  getAllCustomersAll(pageSize: number = 200): Observable<Customer[]> {
+    return this.getAllCustomers(0, pageSize).pipe(
+      expand((response: any) => {
+        const currentPage = response?.number ?? 0;
+        const totalPages = response?.totalPages ?? 0;
+        const nextPage = currentPage + 1;
+        return nextPage < totalPages ? this.getAllCustomers(nextPage, pageSize) : EMPTY;
+      }),
+      map((response: any) => response?.content ?? response ?? []),
+      reduce((all: Customer[], chunk: Customer[]) => all.concat(chunk), [])
+    );
+  }
+
   getActiveCustomers(): Observable<Customer[]> {
     // Return cached value if available
     const cached = this.cacheService.get<Customer[]>(CACHE_KEYS.CUSTOMERS);
@@ -62,6 +76,29 @@ export class CustomerService {
         );
     }
     return this.activeCustomersCache$;
+  }
+
+  getActiveCustomersPaged(
+    page: number = 0,
+    size: number = 20,
+    sortBy: string = 'id',
+    direction: string = 'ASC',
+    search?: string,
+    minDueAmount?: number
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
+    if (typeof minDueAmount === 'number' && !isNaN(minDueAmount)) {
+      params = params.set('minDueAmount', minDueAmount.toString());
+    }
+    return this.http.get<any>(`${this.apiUrl}/active`, { params, withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   /**

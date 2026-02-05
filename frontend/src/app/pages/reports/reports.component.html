@@ -32,6 +32,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All"
@@ -41,6 +42,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Variant"
+          [labelClass]="'filter-label'"
           [items]="variantsList"
           [displayKey]="'name'"
           placeholder="All"
@@ -58,6 +60,16 @@
       <div class="filter-group">
         <label class="filter-label">Reference #</label>
         <input type="text" [(ngModel)]="filterSalesReference" class="filter-input" placeholder="Reference number">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterSalesCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
       </div>
       <div class="filter-actions">
         <button (click)="onGenerateClick()" class="btn btn-primary">Search</button>
@@ -223,6 +235,10 @@
             <span class="label">Payment Mode:</span>
             <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
           </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.createdBy) }}</span>
+          </div>
           <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
@@ -247,6 +263,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All"
@@ -386,6 +403,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All"
@@ -395,6 +413,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Cylinder Variant"
+          [labelClass]="'filter-label'"
           [items]="variantsList"
           [displayKey]="'name'"
           placeholder="All"
@@ -404,6 +423,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Bank Account"
+          [labelClass]="'filter-label'"
           [items]="bankAccountsList"
           [displayKey]="'bankName'"
           placeholder="All"

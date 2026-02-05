@@ -8,6 +8,12 @@ import { CommonModule } from '@angular/common';
   template: `
     <div *ngIf="isLoading" class="loader-overlay" [class.fullscreen]="fullscreen">
       <div class="loader-container">
+        <img
+          *ngIf="fullscreen"
+          class="loader-logo"
+          src="assets/logo.png"
+          alt="Cylinex logo"
+        />
         <div class="spinner"></div>
         <p *ngIf="message" class="loader-message">{{ message }}</p>
       </div>
@@ -47,6 +53,14 @@ import { CommonModule } from '@angular/common';
       gap: 1rem;
     }
 
+    .loader-logo {
+      height: 54px;
+      width: auto;
+      max-width: 220px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.15));
+    }
+
     .spinner {
       width: 50px;
       height: 50px;
@@ -70,6 +84,11 @@ import { CommonModule } from '@angular/common';
     }
 
     @media (max-width: 768px) {
+      .loader-logo {
+        height: 42px;
+        max-width: 180px;
+      }
+
       .spinner {
         width: 40px;
         height: 40px;

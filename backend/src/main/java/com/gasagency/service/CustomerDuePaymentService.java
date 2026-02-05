@@ -8,6 +8,7 @@ import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.util.LoggerUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,49 @@ public class CustomerDuePaymentService {
                 "fromDate", fromDate, "toDate", toDate, "customerId", customerId);
 
         try {
+            // Fast path: no filters, use latest due per customer (database query)
+            if (fromDate == null && toDate == null && customerId == null
+                    && minAmount == null && maxAmount == null) {
+                Page<CustomerCylinderLedger> page = ledgerRepository.findLatestDuePerCustomer(pageable);
+                List<CustomerCylinderLedger> latestLedgers = page.getContent();
+                if (latestLedgers.isEmpty()) {
+                    return new PageImpl<>(Collections.emptyList(), pageable, page.getTotalElements());
+                }
+
+                List<Long> customerIds = latestLedgers.stream()
+                        .map(ledger -> ledger.getCustomer().getId())
+                        .collect(Collectors.toList());
+
+                Map<Long, Object[]> aggregateMap = ledgerRepository.getCustomerLedgerAggregates(customerIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                row -> (Long) row[0],
+                                row -> row
+                        ));
+
+                List<CustomerDuePaymentDTO> data = latestLedgers.stream()
+                        .map(ledger -> {
+                            Object[] agg = aggregateMap.get(ledger.getCustomer().getId());
+                            BigDecimal totalSalesAmount = agg != null ? (BigDecimal) agg[1] : BigDecimal.ZERO;
+                            BigDecimal amountReceived = agg != null ? (BigDecimal) agg[2] : BigDecimal.ZERO;
+                            LocalDate lastTransactionDate = agg != null ? (LocalDate) agg[3] : ledger.getTransactionDate();
+                            Long transactionCount = agg != null ? (Long) agg[4] : 0L;
+
+                            return new CustomerDuePaymentDTO(
+                                    ledger.getCustomer().getId(),
+                                    ledger.getCustomer().getName(),
+                                    ledger.getCustomer().getMobile(),
+                                    ledger.getCustomer().getAddress(),
+                                    totalSalesAmount,
+                                    amountReceived,
+                                    ledger.getDueAmount() != null ? ledger.getDueAmount() : BigDecimal.ZERO,
+                                    lastTransactionDate,
+                                    transactionCount);
+                        })
+                        .collect(Collectors.toList());
+                return new PageImpl<>(data, pageable, page.getTotalElements());
+            }
+
             // Get customers with due amounts in a single optimized query
             List<Customer> customersToCheck;
             if (customerId != null) {
@@ -88,6 +132,41 @@ public class CustomerDuePaymentService {
                     "error", e.getMessage());
             throw new RuntimeException("Error fetching due payment report: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * OPTIMIZED: Fetch top debtors using latest ledger entries per customer
+     * Avoids loading all customers/ledgers into memory.
+     */
+    @Transactional(readOnly = true)
+    public List<CustomerDuePaymentDTO> getTopDebtors(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 100));
+        Page<CustomerCylinderLedger> page = ledgerRepository.findLatestDuePerCustomer(
+                PageRequest.of(0, safeLimit));
+
+        return page.getContent().stream()
+                .map(ledger -> new CustomerDuePaymentDTO(
+                        ledger.getCustomer().getId(),
+                        ledger.getCustomer().getName(),
+                        ledger.getCustomer().getMobile(),
+                        ledger.getCustomer().getAddress(),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO,
+                        ledger.getDueAmount() != null ? ledger.getDueAmount() : BigDecimal.ZERO,
+                        ledger.getTransactionDate(),
+                        0L))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalDueAmount() {
+        BigDecimal total = ledgerRepository.sumLatestDueAmounts();
+        return total != null ? total : BigDecimal.ZERO;
+    }
+
+    @Transactional(readOnly = true)
+    public long getCustomersWithDueCount() {
+        return ledgerRepository.countLatestDueCustomers();
     }
 
     @Transactional(readOnly = true)

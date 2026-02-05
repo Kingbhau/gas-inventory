@@ -140,20 +140,29 @@ export function exportSalesReportToPDF({
   doc.line(12, y, pageWidth - 12, y);
   y += 2;
 
-  // Table Data
-  const tableData = salesData.flatMap(sale =>
-    (sale.saleItems || []).map((item: any) => [
-      sale.saleDate,
-      sale.referenceNumber || '-',
-      sale.customerName,
-      item.variantName,
-      item.qtyIssued,
-      `Rs. ${Number(item.basePrice).toLocaleString()}`,
-      `Rs. ${Number(item.discount).toLocaleString()}`,
-      `Rs. ${Number(item.finalPrice).toLocaleString()}`,
-      sale.paymentMode || 'N/A'
-    ])
-  );
+  // Table Data (match screen order: latest first by date, then ID)
+  const flattenedItems = salesData
+    .flatMap(sale => (sale.saleItems || []).map((item: any) => ({ sale, item })))
+    .sort((a, b) => {
+      const dateA = new Date(a.sale.saleDate).getTime();
+      const dateB = new Date(b.sale.saleDate).getTime();
+      if (dateB !== dateA) {
+        return dateB - dateA;
+      }
+      return (b.sale.id || 0) - (a.sale.id || 0);
+    });
+
+  const tableData = flattenedItems.map(({ sale, item }) => [
+    sale.saleDate,
+    sale.referenceNumber || '-',
+    sale.customerName,
+    item.variantName,
+    item.qtyIssued,
+    `Rs. ${Number(item.basePrice).toLocaleString()}`,
+    `Rs. ${Number(item.discount).toLocaleString()}`,
+    `Rs. ${Number(item.finalPrice).toLocaleString()}`,
+    sale.paymentMode || 'N/A'
+  ]);
 
   autoTable(doc, {
     startY: y + 2,
