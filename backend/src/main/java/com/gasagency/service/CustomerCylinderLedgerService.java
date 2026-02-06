@@ -396,6 +396,14 @@ public class CustomerCylinderLedgerService {
         public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
                         LocalDate transactionDate, String refType, Long refId,
                         Long filledOut, Long emptyIn) {
+                return createLedgerEntry(customerId, warehouseId, variantId, transactionDate, refType, refId,
+                                filledOut, emptyIn, false, null);
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
+                        LocalDate transactionDate, String refType, Long refId,
+                        Long filledOut, Long emptyIn, boolean ignoreEmptyForBalance, String note) {
                 LoggerUtil.logBusinessEntry(logger, "CREATE_LEDGER_ENTRY", "customerId", customerId, "warehouseId",
                                 warehouseId, "variantId", variantId);
 
@@ -456,7 +464,7 @@ public class CustomerCylinderLedgerService {
                 // Get latest balance with lock to ensure consistency
                 Long previousBalance = getPreviousBalanceWithLock(customerId, variantId);
                 // Prevent returning more empties than the customer currently holds
-                if (emptyIn > previousBalance + filledOut) {
+                if (!ignoreEmptyForBalance && emptyIn > previousBalance + filledOut) {
                         LoggerUtil.logBusinessError(logger, "CREATE_LEDGER_ENTRY",
                                         "Empty return exceeds filled cylinders held (after this sale)", "customerId",
                                         customerId,
@@ -465,7 +473,9 @@ public class CustomerCylinderLedgerService {
                         throw new IllegalArgumentException(
                                         "Cannot return more empty cylinders than the customer will hold for this variant after this sale.");
                 }
-                Long balance = previousBalance + filledOut - emptyIn;
+                Long balance = ignoreEmptyForBalance
+                                ? previousBalance + filledOut
+                                : previousBalance + filledOut - emptyIn;
 
                 // For transaction types that require a reference, enforce refId not null
                 if ((type == CustomerCylinderLedger.TransactionType.SALE) && refId == null) {
@@ -477,6 +487,9 @@ public class CustomerCylinderLedgerService {
                                 customer, warehouse, variant, transactionDate,
                                 type,
                                 refId, filledOut, emptyIn, balance);
+                if (note != null && !note.trim().isEmpty()) {
+                        ledger.setNote(note.trim());
+                }
                 ledger = repository.save(ledger);
 
                 // Populate transaction reference based on transaction type (Industry Standard -
@@ -550,8 +563,18 @@ public class CustomerCylinderLedgerService {
                         LocalDate transactionDate, String refType, Long refId,
                         Long filledOut, Long emptyIn, BigDecimal totalAmount, BigDecimal amountReceived) {
 
+                return createLedgerEntry(customerId, warehouseId, variantId, transactionDate, refType, refId,
+                                filledOut, emptyIn, totalAmount, amountReceived, false, null);
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
+                        LocalDate transactionDate, String refType, Long refId,
+                        Long filledOut, Long emptyIn, BigDecimal totalAmount, BigDecimal amountReceived,
+                        boolean ignoreEmptyForBalance, String note) {
+
                 CustomerCylinderLedgerDTO dto = createLedgerEntry(customerId, warehouseId, variantId,
-                                transactionDate, refType, refId, filledOut, emptyIn);
+                                transactionDate, refType, refId, filledOut, emptyIn, ignoreEmptyForBalance, note);
 
                 // Update the created entry with amount details
                 if (totalAmount != null || amountReceived != null) {
@@ -698,6 +721,34 @@ public class CustomerCylinderLedgerService {
                                                         "Bank account not found with id: " + bankAccountId));
 
                         ledger.setBankAccount(bankAccount);
+                        ledger = repository.save(ledger);
+                        return toDTO(ledger);
+                }
+
+                return dto;
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO createLedgerEntry(Long customerId, Long warehouseId, Long variantId,
+                        LocalDate transactionDate, String refType, Long refId,
+                        Long filledOut, Long emptyIn, BigDecimal totalAmount, BigDecimal amountReceived,
+                        String modeOfPayment, Long bankAccountId, boolean ignoreEmptyForBalance, String note) {
+
+                CustomerCylinderLedgerDTO dto = createLedgerEntry(customerId, warehouseId, variantId,
+                                transactionDate, refType, refId, filledOut, emptyIn, totalAmount, amountReceived,
+                                ignoreEmptyForBalance, note);
+
+                if (modeOfPayment != null && !modeOfPayment.trim().isEmpty()) {
+                        CustomerCylinderLedger ledger = repository.findById(dto.getId())
+                                        .orElseThrow(() -> new RuntimeException("Ledger entry not found"));
+                        ledger.setPaymentMode(modeOfPayment);
+                        if (bankAccountId != null && bankAccountId > 0) {
+                                BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
+                                                .orElse(null);
+                                if (bankAccount != null) {
+                                        ledger.setBankAccount(bankAccount);
+                                }
+                        }
                         ledger = repository.save(ledger);
                         return toDTO(ledger);
                 }
@@ -927,7 +978,9 @@ public class CustomerCylinderLedgerService {
                 dto.setPaymentMode(ledger.getPaymentMode());
                 dto.setTransactionReference(ledger.getTransactionReference());
                 dto.setUpdateReason(ledger.getUpdateReason());
+                dto.setNote(ledger.getNote());
                 dto.setCreatedBy(ledger.getCreatedBy());
+                dto.setUpdatedBy(ledger.getUpdatedBy());
                 if (ledger.getBankAccount() != null) {
                         dto.setBankAccountId(ledger.getBankAccount().getId());
                         dto.setBankAccountName(ledger.getBankAccount().getBankName());

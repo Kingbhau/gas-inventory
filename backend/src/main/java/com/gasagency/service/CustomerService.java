@@ -356,6 +356,10 @@ public class CustomerService {
         dto.setDiscountPrice(customer.getDiscountPrice());
         dto.setSecurityDeposit(customer.getSecurityDeposit());
         dto.setGstNo(customer.getGstNo());
+        dto.setCreatedBy(customer.getCreatedBy());
+        dto.setCreatedDate(customer.getCreatedDate());
+        dto.setUpdatedBy(customer.getUpdatedBy());
+        dto.setUpdatedDate(customer.getUpdatedDate());
         dto.setConfiguredVariants(convertJsonToVariantList(customer.getConfiguredVariants()));
 
         // Get last sale date

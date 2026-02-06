@@ -234,6 +234,18 @@
           <div class="details-label">Role</div>
           <div class="details-value">{{ detailsUser.role }}</div>
         </div>
+        <div class="details-section">
+          <div class="details-label">Created By</div>
+          <div class="details-value">{{ getCreatedByName(detailsUser.createdBy) }}</div>
+        </div>
+        <div class="details-section">
+          <div class="details-label">Last Modified By</div>
+          <div class="details-value">{{ getCreatedByName(detailsUser.updatedBy) }}</div>
+        </div>
+        <div class="details-section">
+          <div class="details-label">Last Modified Date</div>
+          <div class="details-value">{{ detailsUser.updatedDate ? (detailsUser.updatedDate | date: 'dd MMM yyyy, hh:mm a') : 'N/A' }}</div>
+        </div>
       </div>
       <div class="modal-footer details-modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>

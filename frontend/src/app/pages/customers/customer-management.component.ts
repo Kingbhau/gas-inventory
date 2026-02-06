@@ -8,6 +8,7 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faEdit, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
+import { UserService, User } from '../../services/user.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
@@ -158,6 +159,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   showDetailsModal = false;
   detailsCustomer: any = null;
   detailsVariantPrices: any[] = [];
+  users: User[] = [];
 
   showReasonModal = false;
   selectedReasonEntry: any = null;
@@ -205,7 +207,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     public cdr: ChangeDetectorRef,
     private dateUtility: DateUtilityService,
-    private dataRefreshService: DataRefreshService
+    private dataRefreshService: DataRefreshService,
+    private userService: UserService
   ) {
     this.initForm();
   }
@@ -214,6 +217,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.loadVariantsAndCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
+    this.loadUsers();
 
     // Subscribe to debounced search changes
     this.filteredCustomers$
@@ -328,6 +332,26 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showDetailsModal = false;
     this.detailsCustomer = null;
     this.detailsVariantPrices = [];
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.users = users || [];
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.users = [];
+      }
+    });
   }
 
   openReasonModal(entry: any) {
@@ -1354,9 +1378,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
 
     // Get the current due amount from the most recent ledger entry
-    const currentDue = this.ledgerEntries.length > 0 
-      ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount || 0 
-      : 0;
+    const tableDue = this.selectedCustomer?.dueAmount;
+    const ledgerDue = this.ledgerEntries.length > 0
+      ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount
+      : null;
+    const currentDue = typeof tableDue === 'number'
+      ? tableDue
+      : (ledgerDue ?? 0);
 
     // Validate payment amount doesn't exceed due amount
     if (amountValue > currentDue) {
@@ -1635,6 +1663,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.closeUpdateForm();
           // Refresh ledger to show updated values
           this.loadLedgerForCustomer(this.selectedCustomer.id);
+          // Refresh customer list balances in table
+          this.loadCustomersWithBalances();
           // Update customer's due amount
           this.ledgerService.getLedgerByCustomerAll(this.selectedCustomer.id).subscribe({
             next: (allEntries: any[]) => {

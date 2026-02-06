@@ -255,7 +255,6 @@ public class SaleService {
                         logger.warn("Cannot create sale for inactive customer with id: {}", customer.getId());
                         throw new InvalidOperationException("Cannot create sale for inactive customer");
                 }
-
                 // Validate and get warehouse
                 logger.debug("Looking up warehouse with id: {}", request.getWarehouseId());
                 Warehouse warehouse = warehouseService.getWarehouseEntity(request.getWarehouseId());
@@ -274,12 +273,15 @@ public class SaleService {
                         if (itemRequest.getQtyEmptyReceived() != null && itemRequest.getQtyEmptyReceived() > 0) {
                                 Long customerBalance = ledgerService.getPreviousBalance(request.getCustomerId(),
                                                 itemRequest.getVariantId());
-                                if (itemRequest.getQtyEmptyReceived() > customerBalance) {
-                                        logger.error("Attempt to return more empty cylinders than held in sale. Customer: {}, Variant: {}, Held: {}, Attempted Return: {}",
+                                long allowedEmpty = (customerBalance != null ? customerBalance : 0L)
+                                                + itemRequest.getQtyIssued();
+                                if (itemRequest.getQtyEmptyReceived() > allowedEmpty) {
+                                        logger.error("Attempt to return more empty cylinders than allowed in sale. Customer: {}, Variant: {}, Held: {}, Issued: {}, Attempted Return: {}",
                                                         request.getCustomerId(), itemRequest.getVariantId(),
-                                                        customerBalance, itemRequest.getQtyEmptyReceived());
+                                                        customerBalance, itemRequest.getQtyIssued(),
+                                                        itemRequest.getQtyEmptyReceived());
                                         throw new InvalidOperationException(
-                                                        "Cannot return more empty cylinders than the customer currently holds for this variant in sale.");
+                                                        "Cannot return more empty cylinders than the customer will hold after this sale.");
                                 }
                         }
                 }
@@ -875,6 +877,9 @@ public class SaleService {
                                 bankAccountName,
                                 items);
                 dto.setCreatedBy(sale.getCreatedBy());
+                dto.setCreatedDate(sale.getCreatedDate());
+                dto.setUpdatedBy(sale.getUpdatedBy());
+                dto.setUpdatedDate(sale.getUpdatedDate());
                 return dto;
         }
 
@@ -941,6 +946,9 @@ public class SaleService {
                                 bankAccountName,
                                 items);
                 dto.setCreatedBy(sale.getCreatedBy());
+                dto.setCreatedDate(sale.getCreatedDate());
+                dto.setUpdatedBy(sale.getUpdatedBy());
+                dto.setUpdatedDate(sale.getUpdatedDate());
                 return dto;
         }
 

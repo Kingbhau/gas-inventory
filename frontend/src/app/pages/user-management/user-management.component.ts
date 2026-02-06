@@ -132,6 +132,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.updatePagination();
   }
 
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();

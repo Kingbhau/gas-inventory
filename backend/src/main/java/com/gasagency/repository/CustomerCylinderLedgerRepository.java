@@ -24,6 +24,7 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
 
         Page<CustomerCylinderLedger> findByCustomer(Customer customer, Pageable pageable);
 
+
         /**
          * OPTIMIZED: Fetch customer ledger entries within a date range at database
          * level

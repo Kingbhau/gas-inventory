@@ -17,6 +17,7 @@ import java.util.List;
         @Index(name = "idx_customer_mobile", columnList = "mobile")
 })
 public class Customer extends Auditable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -2,6 +2,7 @@ package com.gasagency.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SaleDTO {
@@ -17,6 +18,9 @@ public class SaleDTO {
     private String bankAccountName;
     private List<SaleItemDTO> saleItems;
     private String createdBy;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+    private String updatedBy;
 
     public SaleDTO() {
     }
@@ -131,4 +135,29 @@ public class SaleDTO {
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
     }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(LocalDateTime updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
 }

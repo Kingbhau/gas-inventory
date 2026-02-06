@@ -11,4 +11,8 @@ export interface Sale {
   paymentMode: string;
   bankAccountName?: string;
   saleItems: SaleItem[];
+  createdBy?: string;
+  createdDate?: string | Date;
+  updatedBy?: string;
+  updatedDate?: string | Date;
 }

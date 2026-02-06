@@ -109,6 +109,9 @@ public class CustomerCylinderLedger extends Auditable {
     private String updateReason; // Optional reason for why the ledger entry was updated (includes changes
                                  // summary + user note)
 
+    @Column(nullable = true, length = 500)
+    private String note; // Internal note for special cases (e.g., transfer first sale)
+
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "bank_account_id", nullable = true)
     @JsonBackReference("bankAccount-ledgers")
@@ -286,5 +289,13 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setUpdateReason(String updateReason) {
         this.updateReason = updateReason;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

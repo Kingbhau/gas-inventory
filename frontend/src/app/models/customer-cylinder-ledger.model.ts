@@ -11,4 +11,9 @@ export interface CustomerCylinderLedger {
   emptyIn: number;
   balance: number;
   transactionReference?: string;
+  createdAt?: string;
+  updatedDate?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  note?: string;
 }

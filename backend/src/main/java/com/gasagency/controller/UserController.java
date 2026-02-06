@@ -118,6 +118,10 @@ public class UserController {
         dto.setMobileNo(user.getMobileNo());
         dto.setRole(user.getRole() != null ? user.getRole().name() : null);
         dto.setActive(user.isActive());
+        dto.setCreatedBy(user.getCreatedBy());
+        dto.setCreatedDate(user.getCreatedDate());
+        dto.setUpdatedBy(user.getUpdatedBy());
+        dto.setUpdatedDate(user.getUpdatedDate());
         if (user.getBusiness() != null) {
             dto.setBusinessId(user.getBusiness().getId());
         }

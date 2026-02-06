@@ -582,6 +582,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const customerId = customerObj && customerObj.id ? customerObj.id : null;
     const variantId = variantObj && variantObj.id ? variantObj.id : null;
     const qtyEmptyReceived = parseInt(this.saleForm.get('emptyReceivedQty')?.value);
+    const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
     // Prevent negative or non-integer empty returns
     if (qtyEmptyReceived < 0 || isNaN(qtyEmptyReceived)) {
       this.toastr.error('Empty cylinders returned must be zero or positive.', 'Validation Error');
@@ -597,8 +598,9 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           })
         )
         .subscribe(balance => {
-          if (balance !== null && qtyEmptyReceived > balance) {
-            this.toastr.error('Cannot return more empty cylinders than the customer currently holds for this variant.', 'Validation Error');
+          const allowedEmpty = (balance ?? 0) + (isNaN(qtyIssued) ? 0 : qtyIssued);
+          if (balance !== null && qtyEmptyReceived > allowedEmpty) {
+            this.toastr.error('Cannot return more empty cylinders than the customer will hold after this sale.', 'Validation Error');
             sub.unsubscribe();
             return;
           } else {

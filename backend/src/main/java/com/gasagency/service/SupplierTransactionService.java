@@ -298,6 +298,9 @@ public class SupplierTransactionService {
                                 transaction.getReference(),
                                 transaction.getAmount());
                 dto.setCreatedBy(transaction.getCreatedBy());
+                dto.setCreatedDate(transaction.getCreatedDate());
+                dto.setUpdatedBy(transaction.getUpdatedBy());
+                dto.setUpdatedDate(transaction.getUpdatedDate());
                 return dto;
         }
 }

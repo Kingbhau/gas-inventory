@@ -138,6 +138,7 @@ export interface BankDeposit {
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;
+  updatedBy?: string;
 }
 
 // Pagination

@@ -15,4 +15,8 @@ export interface Customer {
   returnPendingUnits?: number;
   filledUnits?: number;
   configuredVariants?: number[];
+  createdBy?: string;
+  createdDate?: string | Date;
+  updatedBy?: string;
+  updatedDate?: string | Date;
 }

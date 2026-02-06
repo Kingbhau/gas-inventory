@@ -203,6 +203,22 @@
   position: relative;
   overflow: visible !important;
 }
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9ca3af;
+}
+
+.status-dot.active {
+  background: #16a34a;
+}
+
+.status-dot.inactive {
+  background: #ef4444;
+}
 .modal-content.details-modal {
   position: relative;
 }
@@ -1292,6 +1308,13 @@ textarea.form-control {
 .ledger-table td.balance-owing.alert {
   border: none;
   text-align: center;
+}
+
+.ledger-note {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.2;
 }
 
 /* Highlight INITIAL_STOCK rows */

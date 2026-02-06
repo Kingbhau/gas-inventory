@@ -16,6 +16,7 @@ public class BankDepositDTO {
     private String createdBy;
     private String createdAt;
     private String updatedAt;
+    private String updatedBy;
 
     public BankDepositDTO() {
     }
@@ -129,6 +130,14 @@ public class BankDepositDTO {
 
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
     }
 
     @Override

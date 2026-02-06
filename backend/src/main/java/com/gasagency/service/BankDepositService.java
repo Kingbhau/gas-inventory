@@ -210,6 +210,9 @@ public class BankDepositService {
         if (deposit.getCreatedBy() != null) {
             dto.setCreatedBy(deposit.getCreatedBy());
         }
+        if (deposit.getUpdatedBy() != null) {
+            dto.setUpdatedBy(deposit.getUpdatedBy());
+        }
 
         return dto;
     }

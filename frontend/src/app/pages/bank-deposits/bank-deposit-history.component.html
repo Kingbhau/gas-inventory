@@ -259,6 +259,14 @@
             <span class="label">Created By:</span>
             <span class="value">{{ getCreatedByName(selectedDeposit.createdBy) }}</span>
           </div>
+          <div class="detail-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedDeposit.updatedBy) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedDeposit.updatedAt | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
           <div class="detail-row" *ngIf="selectedDeposit.notes">
             <span class="label">Notes:</span>
             <span class="value">{{ selectedDeposit.notes }}</span>

@@ -40,6 +40,7 @@
               <th>Mobile</th>
               <th class="text-center">Due Amount (₹)</th>
               <th class="text-center">Return Pending</th>
+              <th class="text-center">Status</th>
               <th class="text-center" style="width: 120px;">Actions</th>
             </tr>
           </thead>
@@ -54,6 +55,9 @@
               <td class="text-center">
                 <span *ngIf="customer.totalPending > 0" class="badge badge-danger">{{ customer.totalPending }}</span>
                 <span *ngIf="!customer.totalPending || customer.totalPending <= 0" class="text-muted">0</span>
+              </td>
+              <td class="text-center">
+                <span class="status-dot" [class.active]="customer.active" [class.inactive]="!customer.active"></span>
               </td>
               <td class="text-center actions-cell">
                 <div class="dropdown">
@@ -160,6 +164,18 @@
                   <div class="details-section">
                     <div class="details-label">Return Pending</div>
                     <div class="details-value">{{ detailsCustomer.totalPending }}</div>
+                  </div>
+                  <div class="details-section">
+                    <div class="details-label">Created By</div>
+                    <div class="details-value">{{ getCreatedByName(detailsCustomer.createdBy) }}</div>
+                  </div>
+                  <div class="details-section">
+                    <div class="details-label">Last Modified By</div>
+                    <div class="details-value">{{ getCreatedByName(detailsCustomer.updatedBy) }}</div>
+                  </div>
+                  <div class="details-section">
+                    <div class="details-label">Last Modified Date</div>
+                    <div class="details-value">{{ detailsCustomer.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</div>
                   </div>
 
                   <!-- Variant Prices Section -->
@@ -439,6 +455,9 @@
                   </span>
                   <span *ngIf="!entry.transactionReference && entry.refType !== 'PAYMENT' && entry.refType !== 'INITIAL_STOCK'" class="text-muted">-</span>
                   <span *ngIf="!entry.transactionReference && (entry.refType === 'PAYMENT' || entry.refType === 'INITIAL_STOCK')" class="text-muted">-</span>
+                  <div *ngIf="entry.note" class="ledger-note">
+                    {{ entry.note }}
+                  </div>
                 </td>
                 <td class="text-center">{{ entry.filledOut }}</td>
                 <td class="text-center">{{ entry.emptyIn }}</td>
@@ -585,6 +604,10 @@
             <div *ngIf="!selectedLedgerEntry.variantName && selectedLedgerEntry.paymentMode"><strong>Mode:</strong> {{ getPaymentModeLabel(selectedLedgerEntry.paymentMode) }}</div>
             <div><strong>Filled Out:</strong> {{ selectedLedgerEntry.filledOut }}</div>
             <div><strong>Empty In:</strong> {{ selectedLedgerEntry.emptyIn }}</div>
+            <div *ngIf="selectedLedgerEntry.note"><strong>Note:</strong> {{ selectedLedgerEntry.note }}</div>
+            <div><strong>Created By:</strong> {{ getCreatedByName(selectedLedgerEntry.createdBy) }}</div>
+            <div><strong>Last Modified By:</strong> {{ getCreatedByName(selectedLedgerEntry.updatedBy) }}</div>
+            <div><strong>Last Modified Date:</strong> {{ selectedLedgerEntry.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</div>
             <div><strong>Total Amount:</strong> ₹{{ selectedLedgerEntry.totalAmount | number: '1.0-2' }}</div>
             <div><strong>Amount Received:</strong> ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }}</div>
             <div><strong>Original Due:</strong> ₹{{ (selectedLedgerEntry.totalAmount - selectedLedgerEntry.amountReceived) | number: '1.0-2' }}</div>

@@ -163,6 +163,8 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           this.toastr.success('Inventory setup saved successfully');
+          this.selectedWarehouseId = null;
+          this.inventoryRows = [];
           this.isSaving = false;
           this.cdr.markForCheck();
         },

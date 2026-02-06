@@ -239,6 +239,14 @@
             <span class="label">Created By:</span>
             <span class="value">{{ getCreatedByName(selectedSale.createdBy) }}</span>
           </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedSale.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
           <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>

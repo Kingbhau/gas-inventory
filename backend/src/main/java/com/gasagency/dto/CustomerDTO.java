@@ -2,6 +2,7 @@ package com.gasagency.dto;
 
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -37,6 +38,14 @@ public class CustomerDTO {
     private List<Long> configuredVariants; // Array of variant IDs configured for this customer
 
     private LocalDate lastSaleDate;
+
+    private LocalDateTime createdDate;
+
+    private LocalDateTime updatedDate;
+
+    private String createdBy;
+
+    private String updatedBy;
 
     private Long totalPending;
 
@@ -150,6 +159,38 @@ public class CustomerDTO {
 
     public void setLastSaleDate(LocalDate lastSaleDate) {
         this.lastSaleDate = lastSaleDate;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(LocalDateTime updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
     }
 
     public Long getTotalPending() {

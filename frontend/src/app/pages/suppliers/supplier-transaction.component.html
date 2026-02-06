@@ -280,6 +280,14 @@
             <span class="label">Created By:</span>
             <span class="value">{{ getCreatedByName(selectedTransaction.createdBy) }}</span>
           </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedTransaction.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedTransaction.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
         </div>
       </div>
       <div class="modal-footer">

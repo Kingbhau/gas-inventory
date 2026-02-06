@@ -11,6 +11,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { finalize } from 'rxjs';
 import { exportDayBookReportToPDF } from './export-daybook-report.util';
 import { UserService, User } from '../../services/user.service';
+import { AuthService } from '../../services/auth.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
 @Component({
@@ -36,12 +37,12 @@ export class DayBookComponent implements OnInit, OnDestroy {
   filterCreatedBy = '';
   filterTransactionType = '';
   users: User[] = [];
+  currentUserRole: string | null = null;
   transactionTypeOptions = [
     { value: '', label: 'All Types' },
     { value: 'SALE', label: 'Sale' },
     { value: 'EMPTY_RETURN', label: 'Empty Return' },
     { value: 'PAYMENT', label: 'Payment' },
-    { value: 'TRANSFER', label: 'Ledger Transfer' },
     { value: 'WAREHOUSE_TRANSFER', label: 'Warehouse Transfer' },
     { value: 'SUPPLIER_TRANSACTION', label: 'Supplier Transaction' },
     { value: 'BANK_DEPOSIT', label: 'Bank Deposit' },
@@ -62,6 +63,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private loadingService: LoadingService,
     private userService: UserService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
     // Set default date to today
@@ -69,6 +71,11 @@ export class DayBookComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    const userInfo = this.authService.getUserInfo();
+    this.currentUserRole = userInfo?.role || null;
+    if (this.isManager) {
+      this.transactionTypeOptions = this.transactionTypeOptions.filter(option => option.value !== 'BANK_DEPOSIT');
+    }
     this.loadUsers();
     this.loadDayBookData();
   }
@@ -91,6 +98,10 @@ export class DayBookComponent implements OnInit, OnDestroy {
   loadDayBookData() {
     this.isLoading = true;
     this.loadingService.show('Loading Day Book...');
+
+    if (this.isManager && this.filterTransactionType === 'BANK_DEPOSIT') {
+      this.filterTransactionType = '';
+    }
     
     this.dayBookService.getTransactionsByDate(
       this.selectedDate, 
@@ -110,9 +121,16 @@ export class DayBookComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           // Response is a Page object with content, totalElements, totalPages, etc.
-          this.paginatedDayBookTransactions = response.content || [];
-          this.dayBookTotalElements = response.totalElements || 0;
-          this.dayBookTotalPages = response.totalPages || 1;
+          if (this.isManager) {
+            const filteredPage = this.filterOutBankDeposits(response.content || []);
+            this.paginatedDayBookTransactions = filteredPage;
+            this.dayBookTotalElements = filteredPage.length;
+            this.dayBookTotalPages = Math.max(1, Math.ceil(this.dayBookTotalElements / this.dayBookPageSize));
+          } else {
+            this.paginatedDayBookTransactions = response.content || [];
+            this.dayBookTotalElements = response.totalElements || 0;
+            this.dayBookTotalPages = response.totalPages || 1;
+          }
           
           // Also fetch summary
           this.dayBookService.getTransactionsSummary(
@@ -122,12 +140,22 @@ export class DayBookComponent implements OnInit, OnDestroy {
           )
             .subscribe({
               next: (summaryResponse: any) => {
-                this.dayBookSummary = summaryResponse;
-                this.dayBookTransactions = summaryResponse.transactions || [];
+                if (this.isManager) {
+                  const filteredTransactions = this.filterOutBankDeposits(summaryResponse?.transactions || []);
+                  this.dayBookTransactions = filteredTransactions;
+                  this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
+                  this.applyPaginationFromTransactions(filteredTransactions);
+                } else {
+                  this.dayBookSummary = summaryResponse;
+                  this.dayBookTransactions = summaryResponse.transactions || [];
+                }
                 this.cdr.markForCheck();
               },
               error: (error: any) => {
                 console.error('Error loading day book summary:', error);
+                if (this.isManager) {
+                  this.dayBookSummary = this.buildSummaryFromTransactions(this.paginatedDayBookTransactions);
+                }
               }
             });
           
@@ -237,6 +265,52 @@ export class DayBookComponent implements OnInit, OnDestroy {
     }
     const user = this.users.find(u => u.username === createdBy);
     return user?.name || createdBy;
+  }
+
+  get isManager(): boolean {
+    return this.currentUserRole === 'MANAGER';
+  }
+
+  private filterOutBankDeposits(transactions: any[]): any[] {
+    return (transactions || []).filter(tx => tx?.transactionType !== 'BANK_DEPOSIT');
+  }
+
+  private applyPaginationFromTransactions(transactions: any[]): void {
+    const total = transactions.length;
+    this.dayBookTotalElements = total;
+    this.dayBookTotalPages = Math.max(1, Math.ceil(total / this.dayBookPageSize));
+    if (this.dayBookPage > this.dayBookTotalPages) {
+      this.dayBookPage = this.dayBookTotalPages;
+    }
+    const start = (this.dayBookPage - 1) * this.dayBookPageSize;
+    this.paginatedDayBookTransactions = transactions.slice(start, start + this.dayBookPageSize);
+  }
+
+  private buildSummaryFromTransactions(transactions: any[]): any {
+    const totalFilledCount = transactions.reduce((sum, tx) => sum + (Number(tx?.filledCount) || 0), 0);
+    const totalEmptyCount = transactions.reduce((sum, tx) => sum + (Number(tx?.emptyCount) || 0), 0);
+    const totalAmount = transactions.reduce((sum, tx) => sum + (Number(tx?.totalAmount) || 0), 0);
+    const totalAmountReceived = transactions.reduce((sum, tx) => sum + (Number(tx?.amountReceived) || 0), 0);
+
+    const latestPerCustomer = new Map<number, any>();
+    transactions.forEach(tx => {
+      const customerId = tx?.customerId;
+      if (customerId != null && !latestPerCustomer.has(customerId)) {
+        latestPerCustomer.set(customerId, tx);
+      }
+    });
+    const totalDueAmount = Array.from(latestPerCustomer.values())
+      .reduce((sum, tx) => sum + (Number(tx?.dueAmount) || 0), 0);
+
+    return {
+      transactions,
+      totalFilledCount,
+      totalEmptyCount,
+      totalAmount,
+      totalAmountReceived,
+      totalDueAmount,
+      totalTransactions: transactions.length
+    };
   }
 
   private loadUsers() {

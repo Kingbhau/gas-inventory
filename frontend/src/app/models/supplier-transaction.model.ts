@@ -12,4 +12,8 @@ export interface SupplierTransaction {
   reference?: string;
   referenceNumber?: string;
   amount: string | number; // Can be string or number from BigDecimal
+  createdBy?: string;
+  createdDate?: string;
+  updatedBy?: string;
+  updatedDate?: string;
 }

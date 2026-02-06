@@ -51,11 +51,11 @@
           <span class="label">Total Returned</span>
           <span class="value">{{ dayBookSummary.totalEmptyCount || 0 }}</span>
         </div>
-        <div class="summary-card">
+        <div class="summary-card" style="display: none;">
           <span class="label">Total Amount</span>
           <span class="value">₹{{ formatAmount(dayBookSummary.totalAmount) }}</span>
         </div>
-        <div class="summary-card">
+        <div class="summary-card" style="display: none;">
           <span class="label">Amount Received</span>
           <span class="value">₹{{ formatAmount(dayBookSummary.totalAmountReceived) }}</span>
         </div>

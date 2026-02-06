@@ -168,6 +168,14 @@
             <span class="label">Created By:</span>
             <span class="value">{{ getCreatedByName(selectedEmptyReturn.createdBy) }}</span>
           </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedEmptyReturn.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedEmptyReturn.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
           <div class="invoice-row" *ngIf="selectedEmptyReturn.paymentMode && selectedEmptyReturn.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ (selectedEmptyReturn.bankAccountName || 'N/A') + ' - ' + (selectedEmptyReturn.bankAccountNumber || 'N/A') }}</span>
