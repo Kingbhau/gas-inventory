@@ -134,7 +134,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
 
   loadCustomers() {
     this.loadingService.show('Loading customers...');
-    this.customerService.getActiveCustomers()
+    this.customerService.getAllCustomersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {

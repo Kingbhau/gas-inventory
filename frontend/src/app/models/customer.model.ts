@@ -6,6 +6,7 @@ export interface Customer {
   active: boolean;
   salePrice?: number;
   discountPrice?: number;
+  securityDeposit?: number;
   gstNo?: string;
   filledCylinder?: number;
   dueAmount?: number;

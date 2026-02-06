@@ -123,10 +123,12 @@
                   </button>
                 </div>
                 <div class="modal-body details-modal-body">
-                                    <span [class.active]="detailsCustomer.active" [class.inactive]="!detailsCustomer.active" class="status-badge">
-                                      <fa-icon [icon]="detailsCustomer.active ? faUsers : faTimes"></fa-icon>
-                                      {{ detailsCustomer.active ? 'Active' : 'Inactive' }}
-                                    </span>
+                  <div class="details-status-row">
+                    <span [class.active]="detailsCustomer.active" [class.inactive]="!detailsCustomer.active" class="status-badge">
+                      <fa-icon [icon]="detailsCustomer.active ? faUsers : faTimes"></fa-icon>
+                      {{ detailsCustomer.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
                   <div class="details-section">
                     <div class="details-label">Name</div>
                     <div class="details-value">{{ detailsCustomer.name }}</div>
@@ -150,6 +152,10 @@
                   <div class="details-section">
                     <div class="details-label">Due Amount</div>
                     <div class="details-value">₹{{ detailsCustomer.dueAmount | number: '1.0-2' }}</div>
+                  </div>
+                  <div class="details-section">
+                    <div class="details-label">Security Deposit</div>
+                    <div class="details-value">₹{{ detailsCustomer.securityDeposit | number: '1.0-2' }}</div>
                   </div>
                   <div class="details-section">
                     <div class="details-label">Return Pending</div>
@@ -253,14 +259,17 @@
             </div>
           </div>
         </div>
-
-        <div class="form-group form-full-width">
-          <label class="form-label">Address</label>
-          <textarea formControlName="address" class="form-control" rows="3" placeholder="Customer address and location details"></textarea>
-        </div>
-
-        <!-- Active Status and Variant Configuration on same row -->
+        <!-- Security Deposit and Active Status on same row -->
         <div class="form-row-wrapper">
+          <div class="form-group form-group-half">
+            <label class="form-label">Security Deposit (₹)</label>
+            <div class="input-with-prefix">
+              <input formControlName="securityDeposit" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
+            </div>
+            <div *ngIf="customerForm.get('securityDeposit')?.invalid && customerForm.get('securityDeposit')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Must be a non-negative amount
+            </div>
+          </div>
           <div class="form-group form-group-half">
             <label class="form-label">Active Status <span class="required">*</span></label>
             <select formControlName="active" class="form-control">
@@ -268,7 +277,14 @@
               <option [ngValue]="false">Inactive</option>
             </select>
           </div>
+        </div>
 
+        <!-- Address and Variant Configuration on same row -->
+        <div class="form-row-wrapper">
+          <div class="form-group form-group-half">
+            <label class="form-label">Address <span class="required">*</span></label>
+            <textarea formControlName="address" class="form-control" rows="3" placeholder="Customer address and location details"></textarea>
+          </div>
           <div class="form-group form-group-half">
             <label class="form-label">Select Variants <span class="required">*</span></label>
             <div class="variant-selection-compact">

@@ -81,6 +81,7 @@ public class CustomerService {
         Customer customer = new Customer(dto.getName(), mobile, dto.getAddress());
         customer.setSalePrice(dto.getSalePrice());
         customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setSecurityDeposit(dto.getSecurityDeposit());
         customer.setGstNo(dto.getGstNo());
         customer.setConfiguredVariants(convertVariantListToJson(dto.getConfiguredVariants()));
         customer = repository.save(customer);
@@ -251,6 +252,7 @@ public class CustomerService {
         customer.setAddress(dto.getAddress());
         customer.setSalePrice(dto.getSalePrice());
         customer.setDiscountPrice(dto.getDiscountPrice());
+        customer.setSecurityDeposit(dto.getSecurityDeposit());
         customer.setGstNo(dto.getGstNo());
 
         // Log configured variants before saving
@@ -352,6 +354,7 @@ public class CustomerService {
         // Set pricing fields
         dto.setSalePrice(customer.getSalePrice());
         dto.setDiscountPrice(customer.getDiscountPrice());
+        dto.setSecurityDeposit(customer.getSecurityDeposit());
         dto.setGstNo(customer.getGstNo());
         dto.setConfiguredVariants(convertJsonToVariantList(customer.getConfiguredVariants()));
 

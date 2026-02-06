@@ -27,6 +27,9 @@ public class CustomerDTO {
     @DecimalMin(value = "0.0", message = "Discount price must be non-negative")
     private BigDecimal discountPrice;
 
+    @DecimalMin(value = "0.0", message = "Security deposit must be non-negative")
+    private BigDecimal securityDeposit;
+
     @Size(max = 50, message = "GST number must be at most 50 characters")
     @Pattern(regexp = "^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$", message = "GST number must be in valid Indian GST format")
     private String gstNo;
@@ -171,6 +174,14 @@ public class CustomerDTO {
 
     public void setDiscountPrice(BigDecimal discountPrice) {
         this.discountPrice = discountPrice;
+    }
+
+    public BigDecimal getSecurityDeposit() {
+        return securityDeposit;
+    }
+
+    public void setSecurityDeposit(BigDecimal securityDeposit) {
+        this.securityDeposit = securityDeposit;
     }
 
     public List<Long> getConfiguredVariants() {

@@ -215,6 +215,11 @@
   background: #fff;
   padding: 0;
 }
+
+.details-status-row {
+  display: flex;
+  justify-content: flex-start;
+}
 .details-modal-header {
   display: flex;
   align-items: center;
@@ -683,6 +688,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
 .form-group-half {

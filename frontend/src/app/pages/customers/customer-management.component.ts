@@ -503,7 +503,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       mobile: ['', [Validators.required, Validators.pattern('^[6-9][0-9]{9}$')]],
       address: ['', [Validators.required, Validators.maxLength(255)]],
-      gstNo: ['', [Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$')]],      dueAmount: [0, [Validators.required, Validators.min(0)]],      active: [true, Validators.required],
+      gstNo: ['', [Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$')]],
+      securityDeposit: [0, [Validators.min(0)]],
+      dueAmount: [0, [Validators.required, Validators.min(0)]],
+      active: [true, Validators.required],
       configuredVariants: [[], Validators.required],
       variantFilledCylinders: this.fb.array([]),
       variantPrices: this.fb.array([])
@@ -653,6 +656,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           mobile: freshCustomer.mobile || '',
           address: freshCustomer.address || '',
           gstNo: freshCustomer.gstNo || '',
+          securityDeposit: freshCustomer.securityDeposit !== undefined ? freshCustomer.securityDeposit : 0,
           dueAmount: freshCustomer.dueAmount !== undefined ? freshCustomer.dueAmount : 0,
           active: freshCustomer.active !== undefined ? freshCustomer.active : true,
           configuredVariants: freshCustomer.configuredVariants || []
@@ -763,6 +767,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       mobile: formValue.mobile,
       address: formValue.address,
       gstNo: formValue.gstNo || null,
+      securityDeposit: formValue.securityDeposit || 0,
       dueAmount: formValue.dueAmount || 0,
       active: formValue.active,
       configuredVariants: formValue.configuredVariants,
