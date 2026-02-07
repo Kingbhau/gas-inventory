@@ -581,10 +581,11 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const variantObj = this.saleForm.get('variantId')?.value;
     const customerId = customerObj && customerObj.id ? customerObj.id : null;
     const variantId = variantObj && variantObj.id ? variantObj.id : null;
-    const qtyEmptyReceived = parseInt(this.saleForm.get('emptyReceivedQty')?.value);
     const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
+    const qtyEmptyReceivedRaw = this.saleForm.get('emptyReceivedQty')?.value;
+    const qtyEmptyReceived = isNaN(parseInt(qtyEmptyReceivedRaw)) ? 0 : parseInt(qtyEmptyReceivedRaw);
     // Prevent negative or non-integer empty returns
-    if (qtyEmptyReceived < 0 || isNaN(qtyEmptyReceived)) {
+    if (qtyEmptyReceived < 0) {
       this.toastr.error('Empty cylinders returned must be zero or positive.', 'Validation Error');
       return;
     }
@@ -636,6 +637,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const variantId = variantObj && variantObj.id ? variantObj.id : null;
     const warehouseId = warehouseIdFromForm && warehouseIdFromForm.id ? warehouseIdFromForm.id : null;
     const qtyIssued = parseInt(this.saleForm.get('filledIssuedQty')?.value);
+    const qtyEmptyReceivedRaw = this.saleForm.get('emptyReceivedQty')?.value;
+    const qtyEmptyReceived = isNaN(parseInt(qtyEmptyReceivedRaw)) ? 0 : parseInt(qtyEmptyReceivedRaw);
     const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
     const bankAccountIdValue = this.saleForm.get('bankAccountId')?.value;
     
@@ -651,7 +654,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         {
           variantId: variantId,
           qtyIssued: qtyIssued,
-          qtyEmptyReceived: parseInt(this.saleForm.get('emptyReceivedQty')?.value),
+          qtyEmptyReceived: qtyEmptyReceived,
           discount: totalDiscount
         }
       ]

@@ -49,7 +49,6 @@
           placeholder="All Variants"
           (selectedChange)="filterVariant = $event?.name || ''; filterVariantId = $event?.id || null; onFilterChange()"
         ></app-autocomplete-input>
-        <label for="typeSelect" style="margin-left: 1rem;">Type:</label>
         <select id="typeSelect" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="form-control">
           <option value="">All Types</option>
           <option value="Sale">Sale</option>

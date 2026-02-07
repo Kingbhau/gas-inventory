@@ -191,6 +191,7 @@
         </nav>
       </div>
     </aside>
+    <div class="sidebar-overlay" [class.active]="sidebarOpen" (click)="toggleSidebar()"></div>
     <main class="main-content">
       <div class="content-wrapper">
         <router-outlet></router-outlet>

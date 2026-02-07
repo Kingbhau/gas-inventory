@@ -1,468 +1,304 @@
-2026-02-06 13:46:54.970 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 13:46:54.970 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 13:46:54.970 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 13:48:17.391 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 13:48:17.391 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 13:48:17.391 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 13:49:25.478 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 13:49:25.478 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 13:49:25.478 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 13:50:05.361 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 13:50:05.361 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 13:50:05.361 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 13:54:18.517 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 13:54:18.517 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 13:54:18.517 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 13:55:54.806 | INFO  | [10b82ef0-e43e-4b82-af98-fd5120956499] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 13:55:55.174 | INFO  | [c530e95b-6a96-4c64-82cf-21ecacc645bc] [] [] | http-nio-8080-exec-13 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 13:58:56.572 | INFO  | [f6c081d2-9502-4950-a958-96483e95c8a7] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 13:59:54.872 | WARN  | [] [] [] | http-nio-8080-exec-40 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 14:01:22.617 | INFO  | [9bbff3e7-3da3-4eb7-af82-d21122b2749e] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 14:02:05.699 | INFO  | [3f7c3860-df8f-4776-a0c2-8ee96d356a20] [] [] | http-nio-8080-exec-6 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Mahesh Patil
-2026-02-06 14:02:05.761 | INFO  | [3f7c3860-df8f-4776-a0c2-8ee96d356a20] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=5302 | warehouseId=null | variantId=5
-2026-02-06 14:02:05.868 | INFO  | [3f7c3860-df8f-4776-a0c2-8ee96d356a20] [] [] | http-nio-8080-exec-6 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=188619 | customerId=5302 | balance=0
-2026-02-06 14:02:05.915 | INFO  | [3f7c3860-df8f-4776-a0c2-8ee96d356a20] [] [] | http-nio-8080-exec-6 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=5302 | variantId=5 | filledOut=0 | balance=0
-2026-02-06 14:02:05.915 | INFO  | [3f7c3860-df8f-4776-a0c2-8ee96d356a20] [] [] | http-nio-8080-exec-6 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=5302 | name=Mahesh Patil | mobile=8988767878
-2026-02-06 14:02:06.039 | INFO  | [f75860ff-55e3-49db-930a-4d7679703486] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=5302 | variantId=5
-2026-02-06 14:02:06.099 | INFO  | [f75860ff-55e3-49db-930a-4d7679703486] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=10602 | customerId=5302 | variantId=5
-2026-02-06 14:03:17.445 | INFO  | [5c06f3a2-7c64-4003-9478-d094bf9bda46] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 14:03:22.692 | WARN  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 14:05:32.768 | INFO  | [4ad4a80f-bf8b-4780-8b39-2c6160ceba9b] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 14:28:56.666 | INFO  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE timeout
-2026-02-06 14:28:56.688 | INFO  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE completed
-2026-02-06 14:33:17.667 | INFO  | [] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin SSE timeout
-2026-02-06 14:33:17.674 | INFO  | [] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin SSE completed
-2026-02-06 14:35:33.662 | INFO  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin SSE timeout
-2026-02-06 14:35:33.672 | INFO  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin SSE completed
-2026-02-06 17:20:22.698 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 17:20:22.698 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 17:20:22.698 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 17:21:46.738 | INFO  | [31657d10-5241-464a-accf-afdcef3b5a7c] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:21:47.169 | INFO  | [7d577ee2-a9b3-4b9d-b6f3-2d9a0ccc1a92] [] [] | http-nio-8080-exec-15 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 17:21:59.758 | INFO  | [e2216de8-ae33-40ea-8906-558fea373948] [] [] | http-nio-8080-exec-27 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=19KG
-2026-02-06 17:21:59.839 | INFO  | [e2216de8-ae33-40ea-8906-558fea373948] [] [] | http-nio-8080-exec-27 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=1 | name=19KG
-2026-02-06 17:22:10.030 | INFO  | [43012a3c-933b-4144-8fe6-50d344b2c0c6] [] [] | http-nio-8080-exec-31 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=5KG
-2026-02-06 17:22:10.045 | INFO  | [43012a3c-933b-4144-8fe6-50d344b2c0c6] [] [] | http-nio-8080-exec-31 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=2 | name=5KG
-2026-02-06 17:23:17.965 | INFO  | [011b9e98-8fe5-4df5-9716-3746f9795c70] [] [] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-02-06 17:23:18.044 | INFO  | [011b9e98-8fe5-4df5-9716-3746f9795c70] [] [] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-02-06 17:23:28.676 | INFO  | [c4e264a5-492b-44b5-9dc6-d2d570373ef7] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1 | itemsCount=2
-2026-02-06 17:23:28.713 | INFO  | [c4e264a5-492b-44b5-9dc6-d2d570373ef7] [] [] | http-nio-8080-exec-9 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1
-2026-02-06 17:24:08.993 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Starting updateAlertConfig for alertType: LOW_STOCK_WAREHOUSE
-2026-02-06 17:24:08.997 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Creating new AlertConfiguration for type: LOW_STOCK_WAREHOUSE
-2026-02-06 17:24:09.008 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE enabled by admin
-2026-02-06 17:24:09.008 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE filled threshold updated to 90
-2026-02-06 17:24:09.008 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE empty threshold updated to 90
-2026-02-06 17:24:09.008 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Saving AlertConfiguration for type: LOW_STOCK_WAREHOUSE with enabled: true
-2026-02-06 17:24:09.027 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | AlertConfiguration saved with id: 1, pendingReturnThreshold: null
-2026-02-06 17:24:09.027 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.s.AlertConfigurationService | Triggering immediate alert detection after config update
-2026-02-06 17:24:09.029 | INFO  | [bb7b56eb-67fc-45d9-8761-fffe335635c6] [] [] | http-nio-8080-exec-22 | c.g.service.AlertDetectionService | Manual alert detection triggered
-2026-02-06 17:24:09.124 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Starting updateAlertConfig for alertType: PENDING_RETURN_CYLINDERS
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Creating new AlertConfiguration for type: PENDING_RETURN_CYLINDERS
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Alert PENDING_RETURN_CYLINDERS enabled by admin
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Alert PENDING_RETURN_CYLINDERS pending return threshold updated to 5
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Saving AlertConfiguration for type: PENDING_RETURN_CYLINDERS with enabled: true
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | AlertConfiguration saved with id: 2, pendingReturnThreshold: 5
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.s.AlertConfigurationService | Triggering immediate alert detection after config update
-2026-02-06 17:24:09.128 | INFO  | [3b6c2e09-f952-49d0-856a-12c2c2244762] [] [] | http-nio-8080-exec-26 | c.g.service.AlertDetectionService | Manual alert detection triggered
-2026-02-06 17:26:57.464 | INFO  | [d5c70c56-a4b4-4e2d-b48d-29d79f228390] [] [] | http-nio-8080-exec-25 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:27:59.585 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 17:27:59.585 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 17:27:59.585 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 17:28:55.222 | INFO  | [415cfaa6-8065-4944-8ce3-e44cad527c35] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:29:32.729 | INFO  | [4f433148-98b3-4849-8eb4-1ebf8ef80622] [] [] | http-nio-8080-exec-10 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=BPCL
-2026-02-06 17:29:33.013 | INFO  | [4f433148-98b3-4849-8eb4-1ebf8ef80622] [] [] | http-nio-8080-exec-10 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=1 | name=BPCL
-2026-02-06 17:29:42.405 | INFO  | [0ccf530b-ec78-490c-b497-331a425e5344] [] [] | http-nio-8080-exec-16 | c.gasagency.service.SupplierService | OPERATION_START | operation=UPDATE_SUPPLIER | id=1 | name=BPCLs
-2026-02-06 17:29:42.454 | INFO  | [0ccf530b-ec78-490c-b497-331a425e5344] [] [] | http-nio-8080-exec-16 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=UPDATE_SUPPLIER | id=1 | name=BPCLs
-2026-02-06 17:29:46.679 | INFO  | [6bdbf3fe-d19c-49e1-b3d7-966d30cfdedb] [] [] | http-nio-8080-exec-15 | c.gasagency.service.SupplierService | OPERATION_START | operation=UPDATE_SUPPLIER | id=1 | name=BPCL
-2026-02-06 17:29:46.691 | INFO  | [6bdbf3fe-d19c-49e1-b3d7-966d30cfdedb] [] [] | http-nio-8080-exec-15 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=UPDATE_SUPPLIER | id=1 | name=BPCL
-2026-02-06 17:30:52.664 | INFO  | [8dfc09da-bb0d-4543-a087-0fc8f5d65003] [] [] | http-nio-8080-exec-39 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=1 | variantId=1
-2026-02-06 17:30:52.753 | INFO  | [8dfc09da-bb0d-4543-a087-0fc8f5d65003] [] [] | http-nio-8080-exec-39 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 1 - Reference: PO-SUP001-202602-000001
-2026-02-06 17:30:52.779 | INFO  | [8dfc09da-bb0d-4543-a087-0fc8f5d65003] [] [] | http-nio-8080-exec-39 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=200
-2026-02-06 17:30:52.786 | INFO  | [8dfc09da-bb0d-4543-a087-0fc8f5d65003] [] [] | http-nio-8080-exec-39 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=1 | supplierId=1 | filled=100
-2026-02-06 17:31:47.260 | INFO  | [86be58d5-48d6-4dbf-b091-09246cffcae9] [] [] | http-nio-8080-exec-7 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 17:33:48.367 | INFO  | [f6fc3a57-f02d-4514-bcc7-42a3b696f7d2] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:33:55.268 | WARN  | [] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 17:33:56.274 | INFO  | [71448bc1-eeb2-4086-a8b0-ef1407475ca7] [] [] | http-nio-8080-exec-25 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:34:30.615 | INFO  | [c49eb592-d1dc-4cfa-b0ec-7d165e9f2be7] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Tushar Rokade
-2026-02-06 17:34:30.645 | INFO  | [c49eb592-d1dc-4cfa-b0ec-7d165e9f2be7] [] [] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=1
-2026-02-06 17:34:30.705 | INFO  | [c49eb592-d1dc-4cfa-b0ec-7d165e9f2be7] [] [] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=1 | customerId=1 | balance=3
-2026-02-06 17:34:30.717 | INFO  | [c49eb592-d1dc-4cfa-b0ec-7d165e9f2be7] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=1 | variantId=1 | filledOut=3 | balance=3
-2026-02-06 17:34:30.717 | INFO  | [c49eb592-d1dc-4cfa-b0ec-7d165e9f2be7] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=1 | name=Tushar Rokade | mobile=9865456734
-2026-02-06 17:34:30.838 | INFO  | [64daf919-e08d-4feb-b802-4453c18219cc] [] [] | http-nio-8080-exec-47 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=1
-2026-02-06 17:34:30.897 | INFO  | [64daf919-e08d-4feb-b802-4453c18219cc] [] [] | http-nio-8080-exec-47 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1 | variantId=1
-2026-02-06 17:34:48.414 | WARN  | [] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 17:35:09.232 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Raj Patil
-2026-02-06 17:35:09.239 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=null | variantId=1
-2026-02-06 17:35:09.256 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=2 | customerId=2 | balance=2
-2026-02-06 17:35:09.264 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=2 | variantId=1 | filledOut=2 | balance=2
-2026-02-06 17:35:09.264 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=null | variantId=2
-2026-02-06 17:35:09.281 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=3 | customerId=2 | balance=2
-2026-02-06 17:35:09.291 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=2 | variantId=2 | filledOut=2 | balance=2
-2026-02-06 17:35:09.291 | INFO  | [eccda042-ff10-4850-be51-fb96e898f80a] [] [] | http-nio-8080-exec-5 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=2 | name=Raj Patil | mobile=9898564567
-2026-02-06 17:35:09.386 | INFO  | [ddb299a3-af4c-47d6-bfbf-ff61b17d9495] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=2 | variantId=1
-2026-02-06 17:35:09.402 | INFO  | [567b4639-ee32-40da-bac8-713e2ec37d7a] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=2 | variantId=2
-2026-02-06 17:35:09.406 | INFO  | [ddb299a3-af4c-47d6-bfbf-ff61b17d9495] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=2 | variantId=1
-2026-02-06 17:35:09.425 | INFO  | [567b4639-ee32-40da-bac8-713e2ec37d7a] [] [] | http-nio-8080-exec-10 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=3 | customerId=2 | variantId=2
-2026-02-06 17:36:00.948 | INFO  | [9b6a7cc5-3746-4946-83bf-421875e0dea0] [] [] | http-nio-8080-exec-31 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG
-2026-02-06 17:36:01.079 | INFO  | [9b6a7cc5-3746-4946-83bf-421875e0dea0] [] [] | http-nio-8080-exec-31 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CASCADE_UPDATE_PRICE | customerId=2 | variantId=2 | oldPrice=800.00 | newPrice=800
-2026-02-06 17:36:01.164 | INFO  | [9b6a7cc5-3746-4946-83bf-421875e0dea0] [] [] | http-nio-8080-exec-31 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG
-2026-02-06 17:36:54.177 | INFO  | [e4eb37e8-018b-4565-85e8-cfeb27dcdba4] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:36:54.297 | INFO  | [33d21bf0-3e5a-4189-8985-df75c2dd2271] [] [] | http-nio-8080-exec-45 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 17:37:03.952 | INFO  | [455d2cac-443f-4415-bcce-1797778038f9] [] [] | http-nio-8080-exec-34 | c.g.service.CylinderVariantService | OPERATION_START | operation=UPDATE_VARIANT | id=2 | name=5KG
-2026-02-06 17:37:04.040 | INFO  | [455d2cac-443f-4415-bcce-1797778038f9] [] [] | http-nio-8080-exec-34 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CASCADE_UPDATE_PRICE | customerId=2 | variantId=2 | oldPrice=800.00 | newPrice=800
-2026-02-06 17:37:04.078 | INFO  | [455d2cac-443f-4415-bcce-1797778038f9] [] [] | http-nio-8080-exec-34 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=UPDATE_VARIANT | id=2 | name=5KG
-2026-02-06 17:38:45.985 | INFO  | [6766a87d-2751-43d5-a6e7-5be42e64b104] [] [] | http-nio-8080-exec-28 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Prashant Badgujar
-2026-02-06 17:38:45.991 | INFO  | [6766a87d-2751-43d5-a6e7-5be42e64b104] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=3 | warehouseId=null | variantId=1
-2026-02-06 17:38:46.001 | INFO  | [6766a87d-2751-43d5-a6e7-5be42e64b104] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=4 | customerId=3 | balance=0
-2026-02-06 17:38:46.009 | INFO  | [6766a87d-2751-43d5-a6e7-5be42e64b104] [] [] | http-nio-8080-exec-28 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=3 | variantId=1 | filledOut=0 | balance=0
-2026-02-06 17:38:46.009 | INFO  | [6766a87d-2751-43d5-a6e7-5be42e64b104] [] [] | http-nio-8080-exec-28 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=3 | name=Prashant Badgujar | mobile=8767676545
-2026-02-06 17:38:46.058 | INFO  | [b570a789-7ceb-419c-b96f-3d4c43d8fdbc] [] [] | http-nio-8080-exec-44 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=3 | variantId=1
-2026-02-06 17:38:46.069 | INFO  | [b570a789-7ceb-419c-b96f-3d4c43d8fdbc] [] [] | http-nio-8080-exec-44 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=4 | customerId=3 | variantId=1
-2026-02-06 17:40:09.841 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@bd9959f
-2026-02-06 17:40:09.856 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=200 | emptyQty=100
-2026-02-06 17:40:09.871 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 17:40:09.903 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale created with id: 1 for customer: Raj Patil - Total: 2800.00 - Reference: SO-WH002-202602-000001
-2026-02-06 17:40:09.934 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=198
-2026-02-06 17:40:09.953 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=102
-2026-02-06 17:40:09.966 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
-2026-02-06 17:40:10.013 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=5 | customerId=2 | balance=2
-2026-02-06 17:40:10.033 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale 1 completed successfully for customer Raj Patil
-2026-02-06 17:40:10.045 | INFO  | [1692fa79-8bb1-4cfe-a50e-c389fd05836d] [] [f4aee893-67e8-44e6-becd-2a3dda16ab99] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=f4aee893-67e8-44e6-becd-2a3dda16ab99 | saleId=1 | customer=Raj Patil | amount=2800.00 | duration=204ms
-2026-02-06 17:48:42.500 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 17:48:42.500 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 17:48:42.500 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 17:49:31.361 | INFO  | [505a1bbb-5153-4e6e-a1ed-19935b1e619a] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:50:59.776 | INFO  | [4b4308b0-c714-4be7-96a1-817e87423936] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:51:07.799 | INFO  | [6acd4298-9ebd-407b-913d-0a51193d9c86] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:51:25.919 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@61fb2b75
-2026-02-06 17:51:26.017 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=198 | emptyQty=102
-2026-02-06 17:51:26.029 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
-2026-02-06 17:51:26.045 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 3, total entries found: 1
-2026-02-06 17:51:26.045 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 3 - Entry ID: 4, Due Amount: 0.00, Total Amount: 0.00, Amount Received: 0.00
-2026-02-06 17:51:26.045 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | Payment validation - customerId: 3, previousDue: 0.00, currentSale: 4200.00, totalDue: 4200.00, amountReceived: 1000
-2026-02-06 17:51:26.318 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | Sale created with id: 2 for customer: Prashant Badgujar - Total: 4200.00 - Reference: SO-WH002-202602-000002
-2026-02-06 17:51:26.417 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=195
-2026-02-06 17:51:26.453 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=105
-2026-02-06 17:51:26.469 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=3 | warehouseId=2 | variantId=1
-2026-02-06 17:51:26.564 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=6 | customerId=3 | balance=0
-2026-02-06 17:51:26.820 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | Sale 2 completed successfully for customer Prashant Badgujar
-2026-02-06 17:51:26.849 | INFO  | [254aa369-2715-4a8a-9d6d-902909eecdd7] [] [51ce9554-04c5-41af-8e6f-89b2e3c7d353] | http-nio-8080-exec-26 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=51ce9554-04c5-41af-8e6f-89b2e3c7d353 | saleId=2 | customer=Prashant Badgujar | amount=4200.00 | duration=930ms
-2026-02-06 17:51:31.400 | WARN  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 17:51:59.787 | WARN  | [] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 17:52:04.168 | INFO  | [d84e6219-5951-4828-914e-016995b75c3a] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 17:52:04.624 | INFO  | [9dc4059e-60c5-4266-9496-2cd477b2c11f] [] [] | http-nio-8080-exec-9 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 17:52:07.816 | WARN  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 17:53:42.932 | INFO  | [e3d919ae-0c1b-4ab3-aabd-88198546d0c7] [] [4f71525a-cffa-4496-9164-0ee85a1b812b] | http-nio-8080-exec-30 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@2c45509d
-2026-02-06 17:53:42.932 | ERROR | [e3d919ae-0c1b-4ab3-aabd-88198546d0c7] [] [4f71525a-cffa-4496-9164-0ee85a1b812b] | http-nio-8080-exec-30 | com.gasagency.service.SaleService | Invalid sale request - bankAccountId is required for non-cash payment mode: Cheque
-2026-02-06 17:53:48.700 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@60cc72c3
-2026-02-06 17:53:48.726 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=195 | emptyQty=105
-2026-02-06 17:53:48.732 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 17:53:48.748 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 3, total entries found: 2
-2026-02-06 17:53:48.748 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 3 - Entry ID: 6, Due Amount: 3200.00, Total Amount: 4200.00, Amount Received: 1000.00
-2026-02-06 17:53:48.748 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Payment validation - customerId: 3, previousDue: 3200.00, currentSale: 2800.00, totalDue: 6000.00, amountReceived: 1000
-2026-02-06 17:53:48.765 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Bank account linked to sale: ICICI Bank
-2026-02-06 17:53:48.781 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Sale created with id: 3 for customer: Prashant Badgujar - Total: 2800.00 - Reference: SO-WH002-202602-000003
-2026-02-06 17:53:48.847 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 3 - Amount: 1000
-2026-02-06 17:53:48.875 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=193
-2026-02-06 17:53:48.888 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=3 | warehouseId=2 | variantId=1
-2026-02-06 17:53:48.924 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=7 | customerId=3 | balance=2
-2026-02-06 17:53:48.952 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | Sale 3 completed successfully for customer Prashant Badgujar
-2026-02-06 17:53:48.968 | INFO  | [3353105a-b46e-42b6-9108-10e5ab5ff8b4] [] [06772e3c-a139-43d9-94f5-438c9b0105c9] | http-nio-8080-exec-49 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=06772e3c-a139-43d9-94f5-438c9b0105c9 | saleId=3 | customer=Prashant Badgujar | amount=2800.00 | duration=268ms
-2026-02-06 17:55:43.396 | INFO  | [d6a70773-a60d-46b7-8a51-9406d1ced07c] [] [] | http-nio-8080-exec-34 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 17:56:13.060 | INFO  | [ddd94d3b-df48-469e-a0ba-423b38c16efd] [] [] | http-nio-8080-exec-11 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:17:50.173 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 18:17:50.189 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 18:17:50.189 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 18:18:21.833 | INFO  | [bd81cd01-642b-4344-aaba-e2efbbe3e82f] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:18:22.433 | INFO  | [3b8be092-c836-44ca-8c29-b946115661f3] [] [] | http-nio-8080-exec-3 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:18:35.617 | INFO  | [9c09a8bc-3441-4e07-9843-6b642824da21] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=19KG
-2026-02-06 18:18:35.694 | INFO  | [9c09a8bc-3441-4e07-9843-6b642824da21] [] [] | http-nio-8080-exec-9 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=1 | name=19KG
-2026-02-06 18:18:44.922 | INFO  | [b8918feb-e994-4205-8f95-399469093b69] [] [] | http-nio-8080-exec-11 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=5KG
-2026-02-06 18:18:44.935 | INFO  | [b8918feb-e994-4205-8f95-399469093b69] [] [] | http-nio-8080-exec-11 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=2 | name=5KG
-2026-02-06 18:19:41.276 | INFO  | [c3d68e39-2832-4627-89dc-10a5f0bf5846] [] [] | http-nio-8080-exec-31 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-02-06 18:19:41.368 | INFO  | [c3d68e39-2832-4627-89dc-10a5f0bf5846] [] [] | http-nio-8080-exec-31 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-02-06 18:19:49.762 | INFO  | [3cab9933-f1c4-4d6d-ad5a-5367b0fddeb0] [] [] | http-nio-8080-exec-34 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1 | itemsCount=2
-2026-02-06 18:19:49.807 | INFO  | [3cab9933-f1c4-4d6d-ad5a-5367b0fddeb0] [] [] | http-nio-8080-exec-34 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1
-2026-02-06 18:20:58.801 | INFO  | [21b4ace2-b9a8-46ef-ba5c-4211d6042c43] [] [] | http-nio-8080-exec-3 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Tushar Rokade
-2026-02-06 18:20:58.860 | INFO  | [21b4ace2-b9a8-46ef-ba5c-4211d6042c43] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=1
-2026-02-06 18:20:58.959 | INFO  | [21b4ace2-b9a8-46ef-ba5c-4211d6042c43] [] [] | http-nio-8080-exec-3 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=1 | customerId=1 | balance=3
-2026-02-06 18:20:59.018 | INFO  | [21b4ace2-b9a8-46ef-ba5c-4211d6042c43] [] [] | http-nio-8080-exec-3 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=1 | variantId=1 | filledOut=3 | balance=3
-2026-02-06 18:20:59.018 | INFO  | [21b4ace2-b9a8-46ef-ba5c-4211d6042c43] [] [] | http-nio-8080-exec-3 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=1 | name=Tushar Rokade | mobile=9876456532
-2026-02-06 18:20:59.195 | INFO  | [89fdae10-c825-42aa-a918-fdb6896bffa3] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=1
-2026-02-06 18:20:59.288 | INFO  | [89fdae10-c825-42aa-a918-fdb6896bffa3] [] [] | http-nio-8080-exec-8 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1 | variantId=1
-2026-02-06 18:21:28.533 | INFO  | [5e0f519e-d528-411e-beef-367ad3a45d55] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Raj Patil
-2026-02-06 18:21:28.547 | INFO  | [5e0f519e-d528-411e-beef-367ad3a45d55] [] [] | http-nio-8080-exec-12 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=null | variantId=1
-2026-02-06 18:21:28.581 | INFO  | [5e0f519e-d528-411e-beef-367ad3a45d55] [] [] | http-nio-8080-exec-12 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=2 | customerId=2 | balance=0
-2026-02-06 18:21:28.604 | INFO  | [5e0f519e-d528-411e-beef-367ad3a45d55] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=2 | variantId=1 | filledOut=0 | balance=0
-2026-02-06 18:21:28.604 | INFO  | [5e0f519e-d528-411e-beef-367ad3a45d55] [] [] | http-nio-8080-exec-12 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=2 | name=Raj Patil | mobile=8767654567
-2026-02-06 18:21:28.663 | INFO  | [ac86b68e-4b6d-47c8-8ba0-6a4c2fa8a4dc] [] [] | http-nio-8080-exec-13 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=2 | variantId=1
-2026-02-06 18:21:28.691 | INFO  | [ac86b68e-4b6d-47c8-8ba0-6a4c2fa8a4dc] [] [] | http-nio-8080-exec-13 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=2 | variantId=1
-2026-02-06 18:22:14.642 | INFO  | [d6efe240-c03a-4141-8c18-51bbdfdb333f] [] [] | http-nio-8080-exec-40 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
-2026-02-06 18:22:14.660 | WARN  | [d6efe240-c03a-4141-8c18-51bbdfdb333f] [] [] | http-nio-8080-exec-40 | c.g.s.CustomerCylinderLedgerService | OPERATION_FAILED | operation=CREATE_LEDGER_ENTRY | error=Empty return exceeds filled cylinders held (after this sale) | customerId=2 | variantId=1 | previousBalance=0 | filledOut=0 | emptyIn=3
-2026-02-06 18:23:12.656 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@70b0a31f
-2026-02-06 18:23:12.692 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=100 | emptyQty=100
-2026-02-06 18:23:12.705 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 18:23:12.811 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale created with id: 1 for customer: Raj Patil - Total: 2800.00 - Reference: SO-WH002-202602-000001
-2026-02-06 18:23:12.960 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=98
-2026-02-06 18:23:12.984 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=102
-2026-02-06 18:23:12.999 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
-2026-02-06 18:23:13.062 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=3 | customerId=2 | balance=0
-2026-02-06 18:23:13.078 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale 1 completed successfully for customer Raj Patil
-2026-02-06 18:23:13.094 | WARN  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Alert configuration for LOW_STOCK_WAREHOUSE not found
-2026-02-06 18:23:13.094 | INFO  | [f1510ce6-b15e-40a1-bc24-65dfdf440245] [] [d2f5f076-87d4-4e9e-a316-321b3c8f47c7] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=d2f5f076-87d4-4e9e-a316-321b3c8f47c7 | saleId=1 | customer=Raj Patil | amount=2800.00 | duration=438ms
-2026-02-06 18:24:33.516 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@72280de7
-2026-02-06 18:24:33.599 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=98 | emptyQty=102
-2026-02-06 18:24:33.621 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 18:24:33.638 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 1
-2026-02-06 18:24:33.638 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 1, Due Amount: 10000.00, Total Amount: 10000.00, Amount Received: 0.00
-2026-02-06 18:24:33.638 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 10000.00, currentSale: 2800.00, totalDue: 12800.00, amountReceived: 1000
-2026-02-06 18:24:33.673 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Sale created with id: 2 for customer: Tushar Rokade - Total: 2800.00 - Reference: SO-WH002-202602-000002
-2026-02-06 18:24:33.732 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=96
-2026-02-06 18:24:33.752 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=105
-2026-02-06 18:24:33.752 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-02-06 18:24:33.793 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=4 | customerId=1 | balance=2
-2026-02-06 18:24:33.809 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Sale 2 completed successfully for customer Tushar Rokade
-2026-02-06 18:24:33.832 | WARN  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | Alert configuration for LOW_STOCK_WAREHOUSE not found
-2026-02-06 18:24:33.832 | INFO  | [9366c9d3-a6c3-4a8f-a4b4-28c45f67379b] [] [0bd1e709-ed61-496f-b0d6-9cb725d11914] | http-nio-8080-exec-32 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=0bd1e709-ed61-496f-b0d6-9cb725d11914 | saleId=2 | customer=Tushar Rokade | amount=2800.00 | duration=316ms
-2026-02-06 18:26:30.253 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@46662d52
-2026-02-06 18:26:30.285 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=96 | emptyQty=105
-2026-02-06 18:26:30.302 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
-2026-02-06 18:26:30.325 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | Sale created with id: 3 for customer: Tushar Rokade - Total: 4200.00 - Reference: SO-WH002-202602-000003
-2026-02-06 18:26:30.352 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=93
-2026-02-06 18:26:30.369 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=110
-2026-02-06 18:26:30.374 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-02-06 18:26:30.407 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=5 | customerId=1 | balance=0
-2026-02-06 18:26:30.434 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | Sale 3 completed successfully for customer Tushar Rokade
-2026-02-06 18:26:30.439 | WARN  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | Alert configuration for LOW_STOCK_WAREHOUSE not found
-2026-02-06 18:26:30.439 | INFO  | [a34d0b90-62fb-424f-82ef-d0c0821fc3bb] [] [e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba] | http-nio-8080-exec-11 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=e0bcaca2-2641-43c7-9c4d-ea965ec6c0ba | saleId=3 | customer=Tushar Rokade | amount=4200.00 | duration=186ms
-2026-02-06 18:27:20.379 | INFO  | [251e8453-8a2d-473a-a6e4-4ec7a1258d94] [] [] | http-nio-8080-exec-30 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:21.885 | INFO  | [b37c9593-4cbc-45bc-8b17-684c9dc2b528] [] [] | http-nio-8080-exec-31 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:23.221 | INFO  | [3ebbedb9-b304-4893-bd97-0ab9fb36e27f] [] [] | http-nio-8080-exec-34 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:24.371 | INFO  | [d4122812-c995-44e4-9c89-90589fd1e354] [] [] | http-nio-8080-exec-36 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:25.520 | INFO  | [dbce2107-8636-4c65-91b0-c8f683ef3bb9] [] [] | http-nio-8080-exec-35 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:26.788 | INFO  | [afbf1561-6aa8-4d7b-a0b4-04e2bd40f234] [] [] | http-nio-8080-exec-37 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:27.994 | INFO  | [96f66826-f671-41f8-aafe-ef82eff10eb8] [] [] | http-nio-8080-exec-38 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={emptyIn=3, updateReason=Changes:
-• Empty: 2 → 3
-
-User Note: changes}
-2026-02-06 18:27:47.671 | INFO  | [c4c19d1a-0b68-4b26-b14e-1c390176ad13] [] [] | http-nio-8080-exec-42 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={amountReceived=5000, paymentMode=Cash, updateReason=Changes:
-• Received: ₹0.00 → ₹5000.00
-
-User Note: changes}
-2026-02-06 18:27:49.096 | INFO  | [359ce4d9-9717-4dd7-80fb-e60ba35e477b] [] [] | http-nio-8080-exec-44 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={amountReceived=5000, paymentMode=Cash, updateReason=Changes:
-• Received: ₹0.00 → ₹5000.00
-
-User Note: changes}
-2026-02-06 18:28:25.404 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={amountReceived=1000, paymentMode=Cash, updateReason=Changes:
-• Received: ₹0.00 → ₹1000.00
-
-User Note: changes}
-2026-02-06 18:28:25.420 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_VALIDATION_PASSED | affectedEntriesCount=0 | oldValues=filled=2, empty=2, total=2800.00, received=0.00 | newValues=filled=2, empty=2, total=2800.00, received=1000
-2026-02-06 18:28:25.435 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | UPDATE_SALE: saleId=1, oldTotal=2800.00, newTotal=2800.00
-2026-02-06 18:28:25.435 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE_START: entry=3, newBalance=0
-2026-02-06 18:28:25.435 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE_START: entry=3, newDue=1800.00
-2026-02-06 18:28:25.435 | INFO  | [b36799d8-57bb-4309-a7dd-d5672073b452] [] [] | http-nio-8080-exec-41 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=UPDATE_LEDGER | ledgerId=3 | affectedEntries=0
-2026-02-06 18:28:43.699 | INFO  | [a92aabb9-8547-4dda-b4e2-7f178524a7b2] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:29:10.752 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={amountReceived=800, updateReason=Changes:
-• Received: ₹1000.00 → ₹800.00
-
-User Note: changes}
-2026-02-06 18:29:10.770 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_VALIDATION_PASSED | affectedEntriesCount=0 | oldValues=filled=2, empty=2, total=2800.00, received=1000.00 | newValues=filled=2, empty=2, total=2800.00, received=800
-2026-02-06 18:29:10.770 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | UPDATE_SALE: saleId=1, oldTotal=2800.00, newTotal=2800.00
-2026-02-06 18:29:10.770 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE_START: entry=3, newBalance=0
-2026-02-06 18:29:10.770 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE_START: entry=3, newDue=2000.00
-2026-02-06 18:29:10.770 | INFO  | [7f0998e6-b0c5-4784-989e-1aa631d81b3a] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=UPDATE_LEDGER | ledgerId=3 | affectedEntries=0
-2026-02-06 18:29:20.995 | INFO  | [5cee0092-c6d9-48a7-96e6-55ba6be16d3b] [] [] | http-nio-8080-exec-17 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:29:21.915 | WARN  | [] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:29:43.701 | WARN  | [] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:30:58.667 | INFO  | [588a7d53-d193-4fe6-aa62-bfed39d7bf1f] [] [] | http-nio-8080-exec-31 | c.g.service.BankDepositService | Creating new bank deposit for account: 1
-2026-02-06 18:30:58.708 | INFO  | [588a7d53-d193-4fe6-aa62-bfed39d7bf1f] [] [] | http-nio-8080-exec-31 | c.g.service.BankDepositService | Bank deposit created successfully with ID: 1
-2026-02-06 18:31:11.462 | INFO  | [5357654e-85f8-451e-97ca-2775c7b5b98d] [] [] | http-nio-8080-exec-38 | c.g.service.BankDepositService | Fetching bank deposits with filters
-2026-02-06 18:31:12.525 | INFO  | [21270293-38ff-42cd-8226-8f4da2a7b17d] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:31:22.212 | INFO  | [7bb8b571-6974-4d9a-a6b3-74022a85bd62] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:31:29.466 | INFO  | [09ae63ba-056b-46c3-afd4-12e39954d078] [] [] | http-nio-8080-exec-2 | c.g.service.BankDepositService | Fetching bank deposits with filters
-2026-02-06 18:32:06.946 | INFO  | [12f47229-0663-4a8c-9273-02e2b2da1f36] [] [] | http-nio-8080-exec-10 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:32:12.545 | WARN  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:32:32.161 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER | ledgerId=3 | updateData={amountReceived=1000, updateReason=Changes:
-• Received: ₹800.00 → ₹1000.00
-
-User Note: changes}
-2026-02-06 18:32:32.177 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=UPDATE_LEDGER_VALIDATION_PASSED | affectedEntriesCount=0 | oldValues=filled=2, empty=2, total=2800.00, received=800.00 | newValues=filled=2, empty=2, total=2800.00, received=1000
-2026-02-06 18:32:32.180 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | UPDATE_SALE: saleId=1, oldTotal=2800.00, newTotal=2800.00
-2026-02-06 18:32:32.180 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | RECALC_BALANCE_START: entry=3, newBalance=0
-2026-02-06 18:32:32.180 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | RECALC_DUE_START: entry=3, newDue=1800.00
-2026-02-06 18:32:32.180 | INFO  | [73f6f8f6-287a-4d84-b6f8-62fbedf848e6] [] [] | http-nio-8080-exec-28 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=UPDATE_LEDGER | ledgerId=3 | affectedEntries=0
-2026-02-06 18:32:41.727 | INFO  | [425244f1-4482-4862-89df-f9d4a97109f1] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:32:46.419 | INFO  | [001d466f-c1b0-4c12-b767-9995543f8913] [] [] | http-nio-8080-exec-40 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:33:31.285 | INFO  | [4b166b89-4939-44ef-8de3-61461e4cff8d] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:33:31.359 | INFO  | [9b3d4427-67fe-40ef-9a66-77f186738e1a] [] [] | http-nio-8080-exec-18 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:33:41.742 | WARN  | [] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:35:00.411 | INFO  | [089921ec-b4bc-40f2-95a7-a3ad024deb94] [] [] | http-nio-8080-exec-43 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-02-06 18:35:02.653 | INFO  | [4bd1352e-dcf5-477d-b8b0-c90129ad8a99] [] [] | http-nio-8080-exec-46 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-02-06 18:35:43.425 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@3f9ba49
-2026-02-06 18:35:43.450 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=93 | emptyQty=110
-2026-02-06 18:35:43.473 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 18:35:43.498 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | Sale created with id: 4 for customer: Tushar Rokade - Total: 2800.00 - Reference: SO-WH002-202602-000004
-2026-02-06 18:35:43.531 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=91
-2026-02-06 18:35:43.541 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-02-06 18:35:43.574 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=6 | customerId=1 | balance=2
-2026-02-06 18:35:43.596 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | Sale 4 completed successfully for customer Tushar Rokade
-2026-02-06 18:35:43.604 | WARN  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | Alert configuration for LOW_STOCK_WAREHOUSE not found
-2026-02-06 18:35:43.606 | INFO  | [ec47aa1a-bd96-4a12-aad0-497b54f11708] [] [7c629f81-245e-4702-a837-df2304e5e8e3] | http-nio-8080-exec-7 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=7c629f81-245e-4702-a837-df2304e5e8e3 | saleId=4 | customer=Tushar Rokade | amount=2800.00 | duration=179ms
-2026-02-06 18:35:50.583 | INFO  | [70bd0bc4-f51a-44f7-94f2-07f92005ba20] [] [] | http-nio-8080-exec-29 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
-2026-02-06 18:36:32.459 | INFO  | [51201b07-6ee8-4306-96c9-57219bef9d5b] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_START | operation=UPDATE_CUSTOMER | id=1 | name=Tushar Rokade
-2026-02-06 18:36:32.475 | INFO  | [51201b07-6ee8-4306-96c9-57219bef9d5b] [] [] | http-nio-8080-exec-49 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER | id=1 | name=Tushar Rokade
-2026-02-06 18:36:32.532 | INFO  | [7a7a4d40-39df-4c08-b7cf-be88fa7be3b9] [] [] | http-nio-8080-exec-45 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1
-2026-02-06 18:36:32.540 | INFO  | [7a7a4d40-39df-4c08-b7cf-be88fa7be3b9] [] [] | http-nio-8080-exec-45 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1
-2026-02-06 18:39:36.193 | INFO  | [9a13cb6e-3cfc-47d6-9a4a-c88477e4dbbf] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:39:57.556 | INFO  | [6d9ca62d-c61b-4879-8513-9f53f752fcc1] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:40:07.603 | INFO  | [55d40ac7-591d-4d46-9d30-5028d0513b1e] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:40:31.365 | WARN  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:40:36.223 | WARN  | [] [] [] | http-nio-8080-exec-17 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:40:57.583 | WARN  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:41:55.866 | INFO  | [7b825f94-a238-4b78-8b7a-0e765d852525] [] [] | http-nio-8080-exec-21 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:42:07.052 | INFO  | [9497e84b-0400-49e8-80ed-f8cc25134c92] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:42:34.001 | INFO  | [8f1e4b8e-e3fe-4996-a1d6-06d26c5393ce] [] [] | http-nio-8080-exec-35 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:42:55.878 | WARN  | [] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:43:06.333 | INFO  | [daf7ddb1-bcfd-4d91-b92a-68dcf4fb4d75] [] [] | http-nio-8080-exec-7 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=2 | amount=1800
-2026-02-06 18:43:07.061 | WARN  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:43:20.098 | INFO  | [dff83070-b9b1-4a2d-89c5-caedf92e8bc2] [] [] | http-nio-8080-exec-23 | c.gasagency.service.CustomerService | OPERATION_START | operation=UPDATE_CUSTOMER | id=2 | name=Raj Patil
-2026-02-06 18:43:20.111 | INFO  | [dff83070-b9b1-4a2d-89c5-caedf92e8bc2] [] [] | http-nio-8080-exec-23 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER | id=2 | name=Raj Patil
-2026-02-06 18:43:20.166 | INFO  | [a2e7b5d8-f686-48e5-9a28-cce39c3f8ae5] [] [] | http-nio-8080-exec-26 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=2
-2026-02-06 18:43:20.168 | INFO  | [a2e7b5d8-f686-48e5-9a28-cce39c3f8ae5] [] [] | http-nio-8080-exec-26 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=2
-2026-02-06 18:43:23.847 | INFO  | [f18f9a26-bd1f-424c-a87a-75d703629f8f] [] [] | http-nio-8080-exec-22 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:43:34.012 | WARN  | [] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:44:42.802 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@2ce36033
-2026-02-06 18:44:42.826 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=91 | emptyQty=110
-2026-02-06 18:44:42.835 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 18:44:42.859 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale created with id: 5 for customer: Raj Patil - Total: 2800.00 - Reference: SO-WH002-202602-000005
-2026-02-06 18:44:42.891 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=89
-2026-02-06 18:44:42.896 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
-2026-02-06 18:44:42.916 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=8 | customerId=2 | balance=2
-2026-02-06 18:44:42.937 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale 5 completed successfully for customer Raj Patil
-2026-02-06 18:44:42.947 | WARN  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Alert configuration for LOW_STOCK_WAREHOUSE not found
-2026-02-06 18:44:42.947 | INFO  | [8f9de32c-3f28-4287-8c08-6953e2be9dd3] [] [d0d6e9d6-28b0-4d28-89f4-2cffe6676536] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=d0d6e9d6-28b0-4d28-89f4-2cffe6676536 | saleId=5 | customer=Raj Patil | amount=2800.00 | duration=145ms
-2026-02-06 18:46:57.893 | INFO  | [78f40669-1265-41b9-beca-248366d00b90] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:47:05.861 | INFO  | [dfcdce38-5127-43e6-9c96-09478e3df5d3] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User mrunal subscribing to alerts
-2026-02-06 18:47:38.391 | INFO  | [a9489d31-6cf4-4ed5-9633-4dfb0be6361f] [] [] | http-nio-8080-exec-39 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=2 | amount=2800
-2026-02-06 18:47:57.908 | WARN  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User mrunal SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:50:20.185 | INFO  | [2d1b7365-2a33-495f-8ba3-2e5cdfa7137c] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:50:20.273 | INFO  | [96e25f60-4253-4fbd-ab8e-9d1279d971e2] [] [] | http-nio-8080-exec-45 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:50:45.311 | INFO  | [40bdd23f-f280-46fd-811c-2bae5af335a9] [] [] | http-nio-8080-exec-10 | c.gasagency.service.CustomerService | OPERATION_START | operation=UPDATE_CUSTOMER | id=2 | name=Raj Patil
-2026-02-06 18:50:45.324 | INFO  | [40bdd23f-f280-46fd-811c-2bae5af335a9] [] [] | http-nio-8080-exec-10 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER | id=2 | name=Raj Patil
-2026-02-06 18:50:45.358 | INFO  | [996c7f12-9802-4522-8c76-5cc9cf515cb9] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=2
-2026-02-06 18:50:45.358 | INFO  | [996c7f12-9802-4522-8c76-5cc9cf515cb9] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=UPDATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=2
-2026-02-06 18:50:57.239 | INFO  | [38abd713-9c78-405f-a465-6706acd51d37] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:51:20.198 | WARN  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 18:51:28.044 | INFO  | [741821c2-68d2-4b82-9dbd-9ed88d0114fa] [] [] | http-nio-8080-exec-46 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:51:28.112 | INFO  | [30d052ca-563c-4e39-982c-4db17977eef8] [] [] | http-nio-8080-exec-41 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:54:03.598 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 18:54:03.598 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 18:54:03.598 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 18:54:53.277 | INFO  | [0f2c4485-8b0f-4b63-8d47-72bf49172e40] [] [] | http-nio-8080-exec-10 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:54:53.604 | INFO  | [b57676fa-e8c7-4cbb-ae6e-d953a0783a04] [] [] | http-nio-8080-exec-7 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 18:55:06.684 | INFO  | [80a93e60-df94-4fc1-9481-ccdfffdee1e8] [] [] | http-nio-8080-exec-19 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=19KG
-2026-02-06 18:55:06.757 | INFO  | [80a93e60-df94-4fc1-9481-ccdfffdee1e8] [] [] | http-nio-8080-exec-19 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=1 | name=19KG
-2026-02-06 18:55:18.984 | INFO  | [f97fcb47-0ae3-41ce-a63e-c57c8f41838e] [] [] | http-nio-8080-exec-27 | c.g.service.CylinderVariantService | OPERATION_START | operation=CREATE_VARIANT | name=5KG
-2026-02-06 18:55:19.004 | INFO  | [f97fcb47-0ae3-41ce-a63e-c57c8f41838e] [] [] | http-nio-8080-exec-27 | c.g.service.CylinderVariantService | OPERATION_SUCCESS | operation=CREATE_VARIANT | id=2 | name=5KG
-2026-02-06 18:57:31.198 | INFO  | [9a5fb09b-3b30-46c8-98a3-7301c074340f] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-02-06 18:57:31.252 | INFO  | [9a5fb09b-3b30-46c8-98a3-7301c074340f] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-02-06 18:59:04.852 | INFO  | [c2879278-594e-4726-8ca1-99545d53c7db] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:59:14.045 | INFO  | [eadcec06-d82d-4bab-9018-da7b6f86ecc2] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 18:59:28.369 | INFO  | [e5d4284b-e851-4e5e-ade3-be51961465d7] [] [] | http-nio-8080-exec-27 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1 | itemsCount=2
-2026-02-06 18:59:28.401 | INFO  | [e5d4284b-e851-4e5e-ade3-be51961465d7] [] [] | http-nio-8080-exec-27 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=1
-2026-02-06 18:59:43.830 | INFO  | [fe0fc38c-8105-4a00-aa76-95920f2f5ca1] [] [] | http-nio-8080-exec-39 | c.g.service.InventoryStockService | OPERATION_START | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2 | itemsCount=2
-2026-02-06 18:59:43.849 | INFO  | [fe0fc38c-8105-4a00-aa76-95920f2f5ca1] [] [] | http-nio-8080-exec-39 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=SETUP_WAREHOUSE_INVENTORY | warehouseId=2
-2026-02-06 18:59:53.340 | WARN  | [] [] [] | http-nio-8080-exec-43 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 19:00:04.865 | WARN  | [] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 19:00:26.128 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Starting updateAlertConfig for alertType: LOW_STOCK_WAREHOUSE
-2026-02-06 19:00:26.141 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Creating new AlertConfiguration for type: LOW_STOCK_WAREHOUSE
-2026-02-06 19:00:26.141 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE enabled by admin
-2026-02-06 19:00:26.141 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE filled threshold updated to 90
-2026-02-06 19:00:26.141 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Alert LOW_STOCK_WAREHOUSE empty threshold updated to 90
-2026-02-06 19:00:26.141 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Saving AlertConfiguration for type: LOW_STOCK_WAREHOUSE with enabled: true
-2026-02-06 19:00:26.158 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | AlertConfiguration saved with id: 1, pendingReturnThreshold: null
-2026-02-06 19:00:26.158 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.s.AlertConfigurationService | Triggering immediate alert detection after config update
-2026-02-06 19:00:26.159 | INFO  | [388b6301-be2c-477e-809d-d7906e458dbc] [] [] | http-nio-8080-exec-8 | c.g.service.AlertDetectionService | Manual alert detection triggered
-2026-02-06 19:00:26.256 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Starting updateAlertConfig for alertType: PENDING_RETURN_CYLINDERS
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Creating new AlertConfiguration for type: PENDING_RETURN_CYLINDERS
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Alert PENDING_RETURN_CYLINDERS enabled by admin
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Alert PENDING_RETURN_CYLINDERS pending return threshold updated to 5
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Saving AlertConfiguration for type: PENDING_RETURN_CYLINDERS with enabled: true
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | AlertConfiguration saved with id: 2, pendingReturnThreshold: 5
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.s.AlertConfigurationService | Triggering immediate alert detection after config update
-2026-02-06 19:00:26.262 | INFO  | [ee0e20f8-6dad-46ba-b5d8-7ac3bb313372] [] [] | http-nio-8080-exec-12 | c.g.service.AlertDetectionService | Manual alert detection triggered
-2026-02-06 19:01:19.414 | INFO  | [285b8e35-ae08-432f-83f1-2fef3dc306bd] [] [] | http-nio-8080-exec-21 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=BPCL
-2026-02-06 19:01:19.439 | INFO  | [285b8e35-ae08-432f-83f1-2fef3dc306bd] [] [] | http-nio-8080-exec-21 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=1 | name=BPCL
-2026-02-06 19:01:24.958 | INFO  | [135e2d2c-8313-4935-acdd-fb459d444a07] [] [] | http-nio-8080-exec-24 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 20:15:53.763 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-06 20:15:53.763 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-06 20:15:53.763 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
-2026-02-06 20:29:16.102 | INFO  | [0578834b-c97f-4b3c-bc81-6f8017d0c7fc] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 20:29:16.462 | INFO  | [302d32bd-6003-4407-9b1e-b8cdebeb485a] [] [] | http-nio-8080-exec-3 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 20:31:16.630 | INFO  | [7b41d108-9a4c-49c6-8a9e-c3ed9fb1cf51] [] [] | http-nio-8080-exec-36 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=Tushar Rokade
-2026-02-06 20:31:16.683 | INFO  | [7b41d108-9a4c-49c6-8a9e-c3ed9fb1cf51] [] [] | http-nio-8080-exec-36 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=null | variantId=1
-2026-02-06 20:31:16.749 | INFO  | [7b41d108-9a4c-49c6-8a9e-c3ed9fb1cf51] [] [] | http-nio-8080-exec-36 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=1 | customerId=1 | balance=0
-2026-02-06 20:31:16.789 | INFO  | [7b41d108-9a4c-49c6-8a9e-c3ed9fb1cf51] [] [] | http-nio-8080-exec-36 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=1 | variantId=1 | filledOut=0 | balance=0
-2026-02-06 20:31:16.789 | INFO  | [7b41d108-9a4c-49c6-8a9e-c3ed9fb1cf51] [] [] | http-nio-8080-exec-36 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=1 | name=Tushar Rokade | mobile=8987876787
-2026-02-06 20:31:16.878 | INFO  | [f6ea3cfa-cd86-4d9e-a273-4a9d0647a1a9] [] [] | http-nio-8080-exec-38 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=1 | variantId=1
-2026-02-06 20:31:16.930 | INFO  | [f6ea3cfa-cd86-4d9e-a273-4a9d0647a1a9] [] [] | http-nio-8080-exec-38 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=1 | customerId=1 | variantId=1
-2026-02-06 20:32:23.267 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@3f65d0db
-2026-02-06 20:32:23.327 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=200 | emptyQty=200
-2026-02-06 20:32:23.338 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 2800.00, Items: 1
-2026-02-06 20:32:23.380 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | com.gasagency.service.SaleService | Sale created with id: 1 for customer: Tushar Rokade - Total: 2800.00 - Reference: SO-WH002-202602-000001
-2026-02-06 20:32:23.421 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=198
-2026-02-06 20:32:23.438 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=202
-2026-02-06 20:32:23.444 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
-2026-02-06 20:32:23.468 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=2 | customerId=1 | balance=0
-2026-02-06 20:32:23.482 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | com.gasagency.service.SaleService | Sale 1 completed successfully for customer Tushar Rokade
-2026-02-06 20:32:23.501 | INFO  | [c8b37390-8ae0-4731-9419-a7ebeb5c8eb8] [] [8b59cce1-b18b-4c72-a9f4-6f99d8640827] | http-nio-8080-exec-5 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=8b59cce1-b18b-4c72-a9f4-6f99d8640827 | saleId=1 | customer=Tushar Rokade | amount=2800.00 | duration=233ms
-2026-02-06 20:33:31.535 | INFO  | [33c27865-7763-496c-804e-9c7e47fa8560] [] [] | http-nio-8080-exec-33 | c.g.service.BankDepositService | Creating new bank deposit for account: 1
-2026-02-06 20:33:31.556 | INFO  | [33c27865-7763-496c-804e-9c7e47fa8560] [] [] | http-nio-8080-exec-33 | c.g.service.BankDepositService | Bank deposit created successfully with ID: 1
-2026-02-06 20:34:14.395 | INFO  | [667e5fa2-f0e9-4d8c-98c6-f77159ccfd2b] [] [] | http-nio-8080-exec-45 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=1 | variantId=1
-2026-02-06 20:34:14.429 | INFO  | [667e5fa2-f0e9-4d8c-98c6-f77159ccfd2b] [] [] | http-nio-8080-exec-45 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 1 - Reference: PO-SUP001-202602-000001
-2026-02-06 20:34:14.433 | INFO  | [667e5fa2-f0e9-4d8c-98c6-f77159ccfd2b] [] [] | http-nio-8080-exec-45 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=298
-2026-02-06 20:34:14.433 | INFO  | [667e5fa2-f0e9-4d8c-98c6-f77159ccfd2b] [] [] | http-nio-8080-exec-45 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=1 | supplierId=1 | filled=100
-2026-02-06 20:34:44.772 | INFO  | [04164ebc-1d11-4431-a213-3a4277c94d74] [] [] | http-nio-8080-exec-11 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=RECORD_PAYMENT | customerId=1 | amount=800
-2026-02-06 20:36:04.429 | INFO  | [5b31161a-3f9c-4276-8e9b-07f317c9641d] [] [] | http-nio-8080-exec-44 | c.g.service.BankDepositService | Fetching bank deposits with filters
-2026-02-06 20:36:41.448 | INFO  | [32c37d90-1299-429b-a394-ec1b6564baa6] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User staff subscribing to alerts
-2026-02-06 20:37:03.213 | INFO  | [7ab086a6-ec31-4edc-98ca-0e0e85b9fcf5] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:37:03.338 | INFO  | [17b2d1b3-06df-40b1-9074-a088127f0237] [] [] | http-nio-8080-exec-12 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 20:37:16.263 | WARN  | [] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:37:41.452 | WARN  | [] [] [] | http-nio-8080-exec-22 | com.gasagency.service.SseService | User staff SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:42:44.101 | INFO  | [82e5d198-f6ba-4aee-87c6-886a8500c7ff] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:42:51.233 | INFO  | [73c75d57-9421-4628-bf15-3cb0ef1a76ac] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:43:01.431 | INFO  | [154123fe-32e0-4573-9f58-7ae3f4a11b35] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:43:03.275 | WARN  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:43:15.852 | INFO  | [c4a0e12b-4ee2-4fd6-a49d-a6743db4b040] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin subscribing to alerts
-2026-02-06 20:43:15.956 | INFO  | [520c3a99-7924-4624-a872-351f84e55bed] [] [] | http-nio-8080-exec-45 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 20:43:40.002 | INFO  | [44fbf128-3523-4b28-b4fa-eae88c20cf23] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:43:40.052 | INFO  | [0c1875b1-5b55-4355-92a2-b1f681435f7a] [] [] | http-nio-8080-exec-7 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
-2026-02-06 20:43:44.104 | WARN  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:43:51.241 | WARN  | [] [] [] | http-nio-8080-exec-10 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:44:01.443 | WARN  | [] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:44:15.858 | WARN  | [] [] [] | http-nio-8080-exec-16 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:45:02.176 | INFO  | [38534158-f1c9-4629-acfe-d4ae29cdabc6] [] [] | http-nio-8080-exec-18 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:45:05.912 | INFO  | [94a151de-e716-4993-9cf0-968d6d78f1aa] [] [] | http-nio-8080-exec-22 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:46:02.355 | WARN  | [] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
-2026-02-06 20:46:29.326 | INFO  | [dabf07bb-ddc2-470d-8451-85356368a2d1] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:46:33.250 | INFO  | [47283ff7-63d6-4750-b745-264371f16b10] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User manager subscribing to alerts
-2026-02-06 20:47:29.344 | WARN  | [] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User manager SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:19:39.128 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
+2026-02-07 10:19:39.136 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
+2026-02-07 10:19:39.136 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
+2026-02-07 10:22:20.318 | INFO  | [2bb92e4b-c59d-4fa8-8551-88abe25bee74] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:22:21.075 | INFO  | [23c5a81b-e76c-447f-9ffe-5e8035f24fa0] [] [] | http-nio-8080-exec-28 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 10:26:59.455 | INFO  | [3eea4da5-2df1-48f0-88dc-4b958c24ec2c] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:27:10.205 | INFO  | [1babb2f4-13ce-4daf-aa1b-7feb465297cc] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:27:20.492 | WARN  | [] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:27:59.515 | WARN  | [] [] [] | http-nio-8080-exec-17 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:28:40.563 | INFO  | [c7f7c8f4-e1a5-43b4-b370-e609a610ebea] [] [] | http-nio-8080-exec-19 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-02-07 10:31:49.232 | INFO  | [2bd5daa6-bb3c-467c-9d8d-e4b25d7716ff] [] [] | http-nio-8080-exec-18 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:33:32.079 | INFO  | [6aed1fb3-1d94-4d79-84bb-9e3ca0246e55] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:33:37.680 | INFO  | [a13595d1-67c7-4501-82ed-ed21b55821f0] [] [] | http-nio-8080-exec-1 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:33:49.249 | WARN  | [] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:33:49.298 | INFO  | [f414fd9c-a1ee-474f-b059-2560552189b5] [] [] | http-nio-8080-exec-48 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 10:34:32.295 | WARN  | [] [] [] | http-nio-8080-exec-10 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:35:24.483 | INFO  | [8355a489-9700-45aa-b284-488ce8a25ded] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:37:01.186 | INFO  | [6f7e3fae-8347-4cec-b69c-a6e9fe5f2a76] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:37:24.768 | WARN  | [] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:38:46.501 | INFO  | [2580aa17-4650-4509-87c2-13f10b124c6b] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:38:46.668 | INFO  | [ebd5a101-c05e-4338-bfaa-f807eff72fe4] [] [] | http-nio-8080-exec-21 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 10:40:51.842 | INFO  | [278b94c2-0f35-4bbd-91c7-67f9b24aef98] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:40:59.880 | INFO  | [28802a4f-72ac-4ce8-b967-ed7434722b36] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:41:41.571 | INFO  | [748102e6-bbeb-4852-bf75-f1147b475828] [] [] | http-nio-8080-exec-38 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:41:46.529 | WARN  | [] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:41:51.848 | WARN  | [] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:41:59.980 | WARN  | [] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:43:21.216 | INFO  | [bf87c203-56d3-4727-b532-76843527485a] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:43:52.764 | INFO  | [d7467a38-adfe-4c0e-a9fc-f349801abdb0] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:44:00.618 | INFO  | [93079c6f-100b-440f-90e5-ebbf871a8296] [] [] | http-nio-8080-exec-44 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 10:44:21.232 | WARN  | [] [] [] | http-nio-8080-exec-38 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:45:30.283 | INFO  | [b1ecb974-dab3-405d-9dd3-9aa83e25d503] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:46:46.447 | INFO  | [3c17a4a0-7274-470c-8134-f4d03439b273] [] [] | http-nio-8080-exec-40 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:46:54.106 | INFO  | [82886608-fac3-4315-8cf2-98957dbbbbc3] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:46:58.307 | INFO  | [d78360f4-ea2a-4049-8b46-a2bc6775825e] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:47:30.301 | WARN  | [] [] [] | http-nio-8080-exec-35 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:47:46.452 | WARN  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:47:54.134 | WARN  | [] [] [] | http-nio-8080-exec-22 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:48:15.016 | INFO  | [96737a13-b08f-4873-aff1-9688be199232] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:49:42.771 | INFO  | [dc744f6f-31be-4aa5-9499-65e9b7b2f2d2] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:49:47.377 | INFO  | [21649abe-cc5d-4524-9754-22e23777f702] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:50:15.043 | WARN  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:50:19.919 | INFO  | [ddbbdace-a67f-42ce-ad1a-4d53082b2c82] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:50:24.720 | INFO  | [221111ca-58c2-4241-835a-166a0db46e08] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:50:42.781 | WARN  | [] [] [] | http-nio-8080-exec-26 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:50:47.393 | WARN  | [] [] [] | http-nio-8080-exec-35 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:51:01.071 | INFO  | [2488c7de-05d9-49e4-8ded-138cda1a6ae2] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:51:06.339 | INFO  | [3000b4ba-0073-40fe-bd74-cf682c70aeb9] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:51:19.946 | WARN  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:51:24.730 | WARN  | [] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:51:39.276 | INFO  | [941f56ca-6281-40d0-95d3-f02d1a168ebc] [] [] | http-nio-8080-exec-21 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:52:01.106 | WARN  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:52:06.342 | WARN  | [] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:53:09.917 | INFO  | [7b2a85e3-3366-4030-afef-11deb0d101fd] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:54:49.877 | INFO  | [04c0a01a-bf02-46d0-be48-d825abf710ad] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:54:49.980 | INFO  | [023e8a77-3ac4-42c4-af52-8e3eeb9ec170] [] [] | http-nio-8080-exec-5 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 10:55:09.941 | WARN  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 10:56:20.703 | INFO  | [ba66acc7-e760-4854-a906-42432d4feb10] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:57:10.368 | INFO  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 10:57:10.385 | INFO  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 10:58:32.829 | INFO  | [2703e83c-c032-4c91-87d9-cb539a1cecea] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 10:59:38.878 | INFO  | [896828de-ab59-42f2-9011-acb6ee5bd1ea] [] [] | http-nio-8080-exec-21 | c.gasagency.service.CustomerService | OPERATION_START | operation=CREATE_CUSTOMER | name=mrunal
+2026-02-07 10:59:38.950 | INFO  | [896828de-ab59-42f2-9011-acb6ee5bd1ea] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=null | variantId=1
+2026-02-07 10:59:39.039 | INFO  | [896828de-ab59-42f2-9011-acb6ee5bd1ea] [] [] | http-nio-8080-exec-21 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=4 | customerId=2 | balance=0
+2026-02-07 10:59:39.093 | INFO  | [896828de-ab59-42f2-9011-acb6ee5bd1ea] [] [] | http-nio-8080-exec-21 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_INITIAL_LEDGER | customerId=2 | variantId=1 | filledOut=0 | balance=0
+2026-02-07 10:59:39.093 | INFO  | [896828de-ab59-42f2-9011-acb6ee5bd1ea] [] [] | http-nio-8080-exec-21 | c.gasagency.service.CustomerService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER | id=2 | name=mrunal | mobile=9989878789
+2026-02-07 10:59:39.177 | INFO  | [f81331c6-ba87-4a3b-88d6-09ce4d0116f4] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerVariantPriceService | OPERATION_START | operation=CREATE_CUSTOMER_VARIANT_PRICE | customerId=2 | variantId=1
+2026-02-07 10:59:39.227 | INFO  | [f81331c6-ba87-4a3b-88d6-09ce4d0116f4] [] [] | http-nio-8080-exec-17 | c.g.s.CustomerVariantPriceService | OPERATION_SUCCESS | operation=CREATE_CUSTOMER_VARIANT_PRICE | id=2 | customerId=2 | variantId=1
+2026-02-07 11:01:07.295 | INFO  | [8a67f87d-633d-4e70-be34-0e2b77aa99ba] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:01:32.849 | WARN  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:02:06.821 | INFO  | [796ccab3-3d05-4a49-be6e-117d2664e928] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:02:07.315 | WARN  | [] [] [] | http-nio-8080-exec-18 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:03:38.368 | INFO  | [] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:03:38.371 | INFO  | [] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:04:25.689 | INFO  | [e84fd105-6816-4759-9a4d-0e688b9ab991] [] [] | http-nio-8080-exec-22 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:04:31.109 | INFO  | [7b478dbf-0cac-48e9-a25a-a2cf1688600a] [] [] | http-nio-8080-exec-16 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:05:25.705 | WARN  | [] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:07:01.356 | INFO  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:07:01.357 | INFO  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:11:42.356 | INFO  | [] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:11:42.359 | INFO  | [] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:12:33.689 | INFO  | [36ec83b9-5a8f-4835-af02-9533202e8d8e] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:12:33.755 | INFO  | [3b2dd731-a278-47d1-b2c0-79340517a7d7] [] [] | http-nio-8080-exec-7 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:13:38.959 | INFO  | [2eca817c-2b77-433f-b415-c6894b23a3f5] [] [] | http-nio-8080-exec-35 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:13:47.361 | INFO  | [5c7d1fc2-0196-442c-8c85-080d9abfcced] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:13:53.355 | INFO  | [] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:13:53.358 | INFO  | [] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:14:18.114 | INFO  | [eb1eeadf-be3a-4984-81ff-238510183d98] [] [] | http-nio-8080-exec-25 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:14:33.719 | WARN  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:14:39.016 | WARN  | [] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:14:47.376 | WARN  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:15:29.207 | INFO  | [e15f6018-ee14-4bb0-8c88-24d6ae4fb790] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:16:58.365 | INFO  | [] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:16:58.366 | INFO  | [] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:18:12.275 | INFO  | [ef9e53af-43b6-4fb1-9f8c-651670cc16f7] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:18:20.048 | INFO  | [804204b1-9c0d-4d4c-8635-10a985cebde9] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:19:12.279 | WARN  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:19:35.341 | INFO  | [4a6e534c-f937-4c1f-94ee-1229ea64fa0e] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:19:40.980 | INFO  | [7870f28f-3163-4338-8e40-1106564c7cea] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:20:35.349 | WARN  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:20:56.501 | INFO  | [6f5574d4-bb03-411e-a089-628b0ac7f437] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:21:04.573 | INFO  | [8563c866-3981-4443-b611-8a5b4c2fdfa8] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:21:39.359 | INFO  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:21:39.363 | INFO  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:21:56.506 | WARN  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:22:44.699 | INFO  | [1a16b535-aa1d-4ab5-a828-ebf40f9e38c3] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:24:14.301 | INFO  | [6f9ac7b2-8c8a-484e-b75e-5325279c4289] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:24:44.707 | WARN  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:24:50.354 | INFO  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:24:50.354 | INFO  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:26:21.355 | INFO  | [] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:26:21.359 | INFO  | [] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:32:07.363 | INFO  | [] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:32:07.368 | INFO  | [] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:34:31.366 | INFO  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:34:31.370 | INFO  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:37:24.272 | INFO  | [c8c6e73f-7780-4c62-b5a8-91b113686203] [] [] | http-nio-8080-exec-1 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:37:24.342 | INFO  | [73f41cae-4765-4915-b191-1f5e3aee23a1] [] [] | http-nio-8080-exec-41 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:37:44.018 | INFO  | [391c780f-959f-4085-b678-2614ca53f557] [] [] | http-nio-8080-exec-33 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:37:45.700 | INFO  | [2c3b1cd4-7974-4ead-b074-50ead2c08c84] [] [] | http-nio-8080-exec-17 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:38:45.480 | INFO  | [720d13ce-e7c0-4d1a-ae2d-81200450dd72] [] [] | http-nio-8080-exec-9 | c.g.s.CustomerDuePaymentService | OPERATION_START | operation=GET_DUE_PAYMENT_REPORT | fromDate=null | toDate=null | customerId=null
+2026-02-07 11:39:46.991 | INFO  | [a6e6bca0-a366-4c47-80cb-09c15d328fd4] [] [] | http-nio-8080-exec-24 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 11:40:47.200 | INFO  | [2fd09d3e-b964-4f62-8c06-7f3bcf1c88a5] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:41:24.315 | WARN  | [] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:41:45.086 | INFO  | [21c55aa5-e0c3-4346-9ad9-8f0b87b6dca3] [] [] | http-nio-8080-exec-18 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:41:47.211 | WARN  | [] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:42:29.443 | INFO  | [33f03149-346f-4d98-9229-877445e2abeb] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:42:29.522 | INFO  | [7195563d-27eb-4622-b72e-1e58d5a25ef9] [] [] | http-nio-8080-exec-8 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:42:45.090 | WARN  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:43:59.389 | INFO  | [d76dedce-e5b1-4537-9102-95ec6e14da65] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:44:04.209 | INFO  | [d720a88c-5cdb-4b67-8093-d6a6612c3288] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:44:18.357 | INFO  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:44:18.368 | INFO  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:44:18.782 | INFO  | [2d420f6b-2e37-41e7-a11a-986fc3616970] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:44:59.405 | WARN  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:45:04.211 | WARN  | [] [] [] | http-nio-8080-exec-46 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:45:29.359 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:45:29.363 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:46:36.186 | INFO  | [a1e6f4b6-4837-42e5-aac9-92161990c213] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:46:43.838 | INFO  | [c3f8dd3d-9e36-4078-bb52-a611e7236228] [] [] | http-nio-8080-exec-25 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:47:36.195 | WARN  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:48:08.573 | INFO  | [72cf2885-250b-4db5-8f1e-717e50fead0b] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:48:14.445 | INFO  | [3bdd1254-5b65-4171-81de-043b0b7f668b] [] [] | http-nio-8080-exec-27 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:48:17.949 | INFO  | [ca5e74fa-1222-44be-8a62-70be41c9af8b] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:48:20.361 | INFO  | [] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:48:20.367 | INFO  | [] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:48:21.545 | INFO  | [e7c31fe3-5d67-4e1e-8115-5ae9e10485d2] [] [] | http-nio-8080-exec-31 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:49:08.609 | WARN  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:49:14.567 | WARN  | [] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:49:17.964 | WARN  | [] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:49:29.332 | INFO  | [feb8ac0e-d960-4849-bdb3-e273fd21180b] [] [] | http-nio-8080-exec-1 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:49:34.301 | INFO  | [1e0ad7db-ae5a-4fa9-9c99-f9cb8b575a9f] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:49:41.362 | INFO  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:49:41.368 | INFO  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:50:29.343 | WARN  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:51:05.361 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:51:05.368 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:51:58.654 | INFO  | [a40c0fef-7fc6-49f2-ab44-0c1e3126be1a] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:52:00.386 | INFO  | [b36d89b6-2680-4fe5-b617-626e148828c8] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:52:58.669 | WARN  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 11:53:56.806 | INFO  | [87092276-7f7a-4f24-9e71-20f14ebcba52] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:53:56.838 | INFO  | [284a2689-b257-4909-a7c0-ad8738877f63] [] [] | http-nio-8080-exec-25 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:54:14.362 | INFO  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 11:54:14.367 | INFO  | [] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 11:54:25.834 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@20b030cb
+2026-02-07 11:54:25.849 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=298 | emptyQty=202
+2026-02-07 11:54:25.849 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 3000.00, Items: 1
+2026-02-07 11:54:25.882 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale created with id: 2 for customer: mrunal - Total: 3000.00 - Reference: SO-WH002-202602-000002
+2026-02-07 11:54:25.898 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=296
+2026-02-07 11:54:25.918 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=1 | newQty=203
+2026-02-07 11:54:25.926 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
+2026-02-07 11:54:25.931 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=5 | customerId=2 | balance=1
+2026-02-07 11:54:25.953 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | Sale 2 completed successfully for customer mrunal
+2026-02-07 11:54:25.959 | INFO  | [892e39b7-3e97-4200-9bd2-4d57d455f2b8] [] [3eb42a6d-cd44-46e9-a06e-8e328236714b] | http-nio-8080-exec-14 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=3eb42a6d-cd44-46e9-a06e-8e328236714b | saleId=2 | customer=mrunal | amount=3000.00 | duration=125ms
+2026-02-07 11:54:43.640 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@5d80fabe
+2026-02-07 11:54:43.648 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=296 | emptyQty=203
+2026-02-07 11:54:43.652 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 3000.00, Items: 1
+2026-02-07 11:54:43.666 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale created with id: 3 for customer: mrunal - Total: 3000.00 - Reference: SO-WH002-202602-000003
+2026-02-07 11:54:43.680 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=294
+2026-02-07 11:54:43.685 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=2 | warehouseId=2 | variantId=1
+2026-02-07 11:54:43.698 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=6 | customerId=2 | balance=3
+2026-02-07 11:54:43.708 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | Sale 3 completed successfully for customer mrunal
+2026-02-07 11:54:43.716 | INFO  | [fb437f34-ed3e-4851-92c9-59d6d447742d] [] [15549e32-284b-47ed-a69f-277e85d8c2ad] | http-nio-8080-exec-4 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=15549e32-284b-47ed-a69f-277e85d8c2ad | saleId=3 | customer=mrunal | amount=3000.00 | duration=76ms
+2026-02-07 11:55:26.709 | INFO  | [ac3a5af0-4d08-4378-9b4b-6ed2cc6a9e1b] [] [] | http-nio-8080-exec-37 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 11:55:55.510 | INFO  | [6c7a24ae-28d0-4d23-94c7-2ed516c4d3fc] [] [ba15a6d6-bbda-4f73-822c-4ab3d913a7c1] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@5fb8acb0
+2026-02-07 11:55:55.510 | ERROR | [6c7a24ae-28d0-4d23-94c7-2ed516c4d3fc] [] [ba15a6d6-bbda-4f73-822c-4ab3d913a7c1] | http-nio-8080-exec-2 | com.gasagency.service.SaleService | Invalid sale request - bankAccountId is required for non-cash payment mode: Cheque
+2026-02-07 11:57:52.875 | INFO  | [9e40c649-930b-493e-b9a9-f3def95853cf] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:57:58.414 | INFO  | [e3f47829-376a-4a30-b895-9c84d65ebfd0] [] [] | http-nio-8080-exec-26 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 11:58:22.512 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Creating new sale with request: com.gasagency.dto.CreateSaleRequestDTO@6e18c716
+2026-02-07 11:58:22.526 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=GET_STOCK_WAREHOUSE_VARIANT_WITH_LOCK | warehouseId=2 | variantId=1 | filledQty=294 | emptyQty=203
+2026-02-07 11:58:22.532 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Sale validation complete - Total amount: 4200.00, Items: 1
+2026-02-07 11:58:22.537 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.s.CustomerCylinderLedgerService | getCustomerPreviousDue - customerId: 1, total entries found: 3
+2026-02-07 11:58:22.537 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.s.CustomerCylinderLedgerService | Latest ledger for customer 1 - Entry ID: 3, Due Amount: 2000.00, Total Amount: 0.00, Amount Received: 800.00
+2026-02-07 11:58:22.537 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Payment validation - customerId: 1, previousDue: 2000.00, currentSale: 4200.00, totalDue: 6200.00, amountReceived: 1000
+2026-02-07 11:58:22.551 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Bank account linked to sale: HDFC Bank
+2026-02-07 11:58:22.558 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Sale created with id: 4 for customer: Tushar Rokade - Total: 4200.00 - Reference: SO-WH002-202602-000004
+2026-02-07 11:58:22.598 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Bank ledger entry recorded for sale id: 4 - Amount: 1000
+2026-02-07 11:58:22.607 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_FILLED_QTY | warehouseId=2 | variantId=1 | newQty=291
+2026-02-07 11:58:22.612 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.s.CustomerCylinderLedgerService | OPERATION_START | operation=CREATE_LEDGER_ENTRY | customerId=1 | warehouseId=2 | variantId=1
+2026-02-07 11:58:22.624 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | c.g.s.CustomerCylinderLedgerService | OPERATION_SUCCESS | operation=CREATE_LEDGER_ENTRY | id=7 | customerId=1 | balance=3
+2026-02-07 11:58:22.641 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | Sale 4 completed successfully for customer Tushar Rokade
+2026-02-07 11:58:22.651 | INFO  | [8ea82800-555c-45a0-825e-e3c9a795db09] [] [a433e313-9c21-40ce-a138-cd39ba47157b] | http-nio-8080-exec-46 | com.gasagency.service.SaleService | TRANSACTION_SUMMARY | txnId=a433e313-9c21-40ce-a138-cd39ba47157b | saleId=4 | customer=Tushar Rokade | amount=4200.00 | duration=139ms
+2026-02-07 11:58:52.878 | WARN  | [] [] [] | http-nio-8080-exec-17 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:00:17.449 | INFO  | [500f7456-1c4f-4260-b78e-8c5133506d26] [] [] | http-nio-8080-exec-40 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:00:32.582 | INFO  | [0abd465d-35ad-4deb-a7ed-f4ba290d3ec1] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:01:00.804 | INFO  | [360adf0b-8dfc-4e2d-b6fa-141907a771c6] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:01:08.246 | INFO  | [e07488e9-5dc6-4fc2-84c3-e16d61f537d2] [] [] | http-nio-8080-exec-4 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:01:17.461 | WARN  | [] [] [] | http-nio-8080-exec-46 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:01:32.596 | WARN  | [] [] [] | http-nio-8080-exec-31 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:01:47.219 | INFO  | [293734e5-56a4-42d2-a038-ca8637b31104] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:01:53.390 | INFO  | [7f5faa70-2d44-4c18-9440-a3c73ee958be] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:01:57.184 | INFO  | [4c63527a-b1c9-4e84-b24b-84a2862b1d33] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:02:00.822 | WARN  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:02:08.374 | WARN  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:02:47.226 | WARN  | [] [] [] | http-nio-8080-exec-40 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:02:53.397 | WARN  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:02:57.655 | INFO  | [31b04c99-33e5-4c25-83f9-60622d01517d] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:03:07.979 | INFO  | [837c67d6-4f09-494a-9a2a-fdb897acd997] [] [] | http-nio-8080-exec-26 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:03:57.661 | WARN  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:04:10.585 | INFO  | [20dcfa64-567b-419f-8a2e-d0a3a7425e0b] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:04:16.296 | INFO  | [0d93d69e-3391-4535-9ad1-fd64eb24b87a] [] [] | http-nio-8080-exec-25 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:04:58.796 | INFO  | [72f6328f-89e7-4f70-b433-7e29bf0e46bb] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:05:03.237 | INFO  | [8b6220f7-abc5-40a3-8c52-a7e762e72ecc] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:05:10.597 | WARN  | [] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:05:16.312 | WARN  | [] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:05:58.813 | WARN  | [] [] [] | http-nio-8080-exec-41 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:06:47.862 | INFO  | [fe4d1f2e-3979-4fde-8c74-bd0034f718df] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:06:55.213 | INFO  | [5b672bb9-aa94-4931-93b6-6b9b9ea2f495] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:07:42.578 | INFO  | [8aec2a6c-51b5-4641-9a43-9dc2c1ef46e3] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:07:47.874 | WARN  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:07:54.149 | INFO  | [4e995c3d-39df-4c2f-ab1b-16ffcf149801] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:07:55.220 | WARN  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:08:31.526 | INFO  | [1c624c3a-bf30-40b2-99b1-5cfa3ab3a21c] [] [] | http-nio-8080-exec-12 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:08:41.713 | INFO  | [54fb1289-428c-4ab6-babd-bd3831ce9ff5] [] [] | http-nio-8080-exec-43 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:08:42.589 | WARN  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:08:54.158 | WARN  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:09:11.386 | INFO  | [d3c93ddb-8d93-455c-97ab-3e2385aebb9b] [] [] | http-nio-8080-exec-10 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:09:11.621 | INFO  | [0f8e40da-a5f4-4aed-bf59-941f69c19531] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:09:17.283 | INFO  | [f5af2c44-f57d-4abf-805c-fa08a863e715] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:09:17.361 | INFO  | [b9973c0f-9178-447a-9b24-97dd22bd8fce] [] [] | http-nio-8080-exec-11 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:09:24.271 | INFO  | [176f12ee-22ae-4623-aae2-1d3a894d31b3] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:09:24.399 | INFO  | [0d72059d-1242-4a6f-963b-346298b54793] [] [] | http-nio-8080-exec-18 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:09:31.539 | WARN  | [] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:09:41.737 | WARN  | [] [] [] | http-nio-8080-exec-39 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:10:08.613 | INFO  | [fd6b0425-0fe8-4aba-bd41-4f2341d33ae4] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:10:11.632 | WARN  | [] [] [] | http-nio-8080-exec-31 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:10:17.285 | WARN  | [] [] [] | http-nio-8080-exec-17 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:10:24.284 | WARN  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:12:15.399 | INFO  | [fc471e64-41ac-4042-a186-10857ea78857] [] [] | http-nio-8080-exec-26 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:12:24.152 | INFO  | [3832f031-a4d5-44a1-a7c3-b50ba7b88516] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:12:24.270 | INFO  | [ac493213-eda5-4b09-9175-c3ed89ce460d] [] [] | http-nio-8080-exec-35 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:12:30.366 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:12:30.370 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:12:33.124 | INFO  | [81f6ff2b-bb31-409c-9e77-8ef55584e607] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:13:24.163 | WARN  | [] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:14:18.810 | INFO  | [c92f909c-da4c-42d2-ac15-6f1c175d6da6] [] [] | http-nio-8080-exec-32 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:14:19.357 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:14:19.365 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:14:22.265 | INFO  | [913ad351-dbbd-4cf3-9b87-72ac5203eecc] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:14:27.820 | INFO  | [d3094257-1f2e-4a72-9ed8-7f47fe454583] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:14:42.765 | INFO  | [f9af17fc-a335-4ca0-80f0-179ec883b652] [] [] | http-nio-8080-exec-46 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:15:09.150 | INFO  | [9466cef0-fc07-4f50-b15a-bbaed227169c] [] [] | http-nio-8080-exec-41 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:15:18.816 | WARN  | [] [] [] | http-nio-8080-exec-5 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:15:22.278 | WARN  | [] [] [] | http-nio-8080-exec-1 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:15:27.848 | WARN  | [] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:15:41.696 | INFO  | [d9d437c2-03bb-4a42-978c-9c78abd4631d] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:15:41.852 | INFO  | [90d54a86-b388-4c49-bfdc-da38ff7951f0] [] [] | http-nio-8080-exec-9 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:15:42.777 | WARN  | [] [] [] | http-nio-8080-exec-14 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:15:47.315 | INFO  | [86ca4f66-6ce6-4a95-9be4-977c8be8b47e] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:15:47.485 | INFO  | [4d41665e-d4b9-4169-966e-2770432d6848] [] [] | http-nio-8080-exec-26 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:15:52.714 | INFO  | [396ca0e0-fd2b-4256-9e13-50e187168eb2] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:15:52.798 | INFO  | [8604f0e5-4238-4475-861b-20f428bd99a6] [] [] | http-nio-8080-exec-35 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:15:58.798 | INFO  | [47a7cc9b-aa72-4a5e-8d22-234b6b25b376] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:15:58.916 | INFO  | [1d887c65-b8ef-40c9-bed2-8c4ac216c85d] [] [] | http-nio-8080-exec-30 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:16:24.564 | INFO  | [cd0ec68a-d1fb-48a5-b401-cdcaaf958cbf] [] [] | http-nio-8080-exec-21 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:16:24.678 | INFO  | [9f5b5d18-665c-407e-a913-9f040e6bb517] [] [] | http-nio-8080-exec-47 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:16:41.707 | WARN  | [] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:16:44.362 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:16:44.366 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:16:47.326 | WARN  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:16:52.721 | WARN  | [] [] [] | http-nio-8080-exec-18 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:16:58.801 | WARN  | [] [] [] | http-nio-8080-exec-34 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:17:02.058 | INFO  | [84d71678-3a37-46e8-81f3-305b2c6babd4] [] [] | http-nio-8080-exec-42 | c.g.service.BankDepositService | Fetching bank deposits with filters
+2026-02-07 12:18:21.378 | INFO  | [edbb79f0-aef8-4b12-af28-60f5d8660031] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=1 | filledQty=91 | emptyQty=203
+2026-02-07 12:18:21.379 | INFO  | [edbb79f0-aef8-4b12-af28-60f5d8660031] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=1
+2026-02-07 12:18:21.379 | INFO  | [edbb79f0-aef8-4b12-af28-60f5d8660031] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_START | operation=UPDATE_STOCK | stockId=3 | filledQty=300 | emptyQty=100
+2026-02-07 12:18:21.379 | INFO  | [edbb79f0-aef8-4b12-af28-60f5d8660031] [] [] | http-nio-8080-exec-48 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=UPDATE_STOCK | stockId=3
+2026-02-07 12:18:21.418 | INFO  | [edbb79f0-aef8-4b12-af28-60f5d8660031] [] [] | http-nio-8080-exec-48 | c.g.service.WarehouseTransferService | Warehouse transfer created with id: 1 - Reference: WT-WH002-WH001-202602-000001
+2026-02-07 12:18:22.361 | INFO  | [] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:18:22.366 | INFO  | [] [] [] | http-nio-8080-exec-45 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:18:59.273 | INFO  | [5e405271-9589-40fb-b8b1-cfa94fddb9d9] [] [] | http-nio-8080-exec-27 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:19:34.362 | INFO  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:19:34.365 | INFO  | [] [] [] | http-nio-8080-exec-6 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:20:26.165 | INFO  | [3cfb8de8-cfdd-40da-9bfc-2c3f4c873383] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:20:42.992 | INFO  | [1231e149-bf44-4070-8e00-e2b975e45ed2] [] [] | http-nio-8080-exec-16 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:20:51.277 | INFO  | [4d109905-1609-417a-98cb-15d269d5b2e6] [] [] | http-nio-8080-exec-47 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:21:25.907 | INFO  | [1ca50cd4-b0c3-443f-8b70-8b84e5781781] [] [] | http-nio-8080-exec-36 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:21:26.182 | WARN  | [] [] [] | http-nio-8080-exec-40 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:21:33.939 | INFO  | [3dfdd454-5d8a-463c-8c19-1f6e91260b43] [] [] | http-nio-8080-exec-9 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:21:42.998 | WARN  | [] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:21:51.288 | WARN  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:22:01.371 | INFO  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:22:01.375 | INFO  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:22:25.929 | WARN  | [] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine

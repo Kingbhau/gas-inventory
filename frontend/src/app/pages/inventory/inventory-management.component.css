@@ -24,7 +24,7 @@
 
 .variant-filter {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   width: 53%;
 }
@@ -34,14 +34,23 @@
 .variant-filter #typeSelect{
   width: 45%;
 }
-.variant-filter select {
- padding: 10px;
+.variant-filter select,
+.variant-filter .form-control {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 4px;
+  background-color: #ffffff;
 }
-.variantSelect{
- padding: 10px;
+
+:host ::ng-deep .variant-filter .autocomplete-wrapper .form-control {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 4px;
+  background-color: #ffffff;
 }
 .variant-filter label {
   font-weight: 500;
+  margin-bottom: 0;
 }
 
 .form-control {
@@ -60,7 +69,7 @@
   gap: 0.75rem;
   justify-content: flex-end;
   margin-bottom: 2rem;
-  margin-top: -1.5rem;
+  margin-top: 0;
   width: fit-content;
   margin-left: auto;
 }
@@ -71,10 +80,21 @@
 }
 
 .warehouse-filter-section select {
-  padding: 8px 12px;
+  height: 40px;
+  padding: 0 12px;
   border-radius: 4px;
   border: 1px solid #ccc;
   min-width: 200px;
+  background-color: #ffffff;
+}
+
+.warehouse-filter-section .btn {
+  height: 40px;
+  min-width: 110px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .warehouse-filter-dropdown label {
@@ -652,6 +672,25 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .warehouse-filter-section {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0;
+    justify-content: stretch;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .warehouse-filter-section select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .warehouse-filter-section .btn {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
   .page-header-with-filter {
     flex-direction: column;
     align-items: stretch;

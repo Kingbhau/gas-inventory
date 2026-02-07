@@ -398,8 +398,8 @@
         <button class="modal-close" (click)="closeLedger()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="variant-filter" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin-bottom: 1rem;">
-          <div style="flex: 1;">
+        <div class="variant-filter ledger-filter-row">
+          <div class="ledger-filter-control">
             
             <app-autocomplete-input
               [items]="variantsWithAll"
@@ -408,7 +408,7 @@
               (selectedChange)="ledgerFilterVariant = $event?.name === 'All' ? '' : ($event?.name || '')"
             ></app-autocomplete-input>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
+          <div class="ledger-filter-actions">
             <button class="btn btn-primary" (click)="exportLedgerToPDF()" style="height: fit-content;" title="Export to PDF">
               <fa-icon [icon]="faDownload"></fa-icon> Export PDF
             </button>
@@ -676,7 +676,7 @@
 
           <!-- Payment Mode for SALE, EMPTY_RETURN, and PAYMENT -->
           <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT'" class="form-group">
-            <label class="form-label">Payment Mode (Optional)</label>
+            <label class="form-label">Payment Mode</label>
             <select 
               [ngModel]="updateForm.paymentMode" 
               (ngModelChange)="updateForm.paymentMode = $event; cdr.markForCheck()"

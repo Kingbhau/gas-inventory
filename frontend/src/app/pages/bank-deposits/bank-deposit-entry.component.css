@@ -253,7 +253,8 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .bank-deposit-entry-container {
-    padding: 0 1rem;
+    max-width: 100%;
+    padding: 0;
   }
 
   .page-title {

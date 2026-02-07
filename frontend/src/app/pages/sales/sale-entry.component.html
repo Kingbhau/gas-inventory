@@ -155,7 +155,7 @@
 
           <!-- Bank Account Selection (visible only when payment mode requires bank account) -->
           <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired">
-            <label class="form-label">Bank Account</label>
+            <label class="form-label">Bank Account <span class="required">*</span></label>
             <select formControlName="bankAccountId" class="form-control">
               <option [value]="null" disabled>Select Bank Account</option>
               <option *ngFor="let account of bankAccounts" [value]="account.id">
@@ -206,12 +206,11 @@
 
         <!-- Form Actions -->
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="!saleForm.valid">
-            <span>✓</span> Save Sale
-          </button>
-          <button type="button" class="btn btn-secondary" (click)="resetForm()">
-            <span>↻</span> Reset
-          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!saleForm.valid || (saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired && !saleForm.get('bankAccountId')?.value)">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
         </div>
       </form>
 

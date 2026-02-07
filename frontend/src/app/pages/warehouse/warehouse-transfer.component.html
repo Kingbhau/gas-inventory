@@ -78,11 +78,11 @@
 
         <div class="form-actions">
           <button mat-raised-button color="primary" type="submit" [disabled]="isTransferring || transferForm.invalid">
-            <span *ngIf="!isTransferring">Complete Transfer</span>
-            <span *ngIf="isTransferring">Processing...</span>
+            <span *ngIf="!isTransferring">Save</span>
+            <span *ngIf="isTransferring">Saving...</span>
             <mat-spinner *ngIf="isTransferring" diameter="20" style="margin-left: 10px;"></mat-spinner>
           </button>
-          <button mat-stroked-button type="button" (click)="resetForm()">Clear</button>
+          <button mat-stroked-button type="button" (click)="resetForm()">Reset</button>
         </div>
       </form>
     </mat-card-content>

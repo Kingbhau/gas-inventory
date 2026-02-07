@@ -68,15 +68,12 @@
             (click)="saveInventory()"
             [disabled]="isSaving"
             class="btn btn-primary">
-            {{ isSaving ? 'Saving...' : 'Save Inventory Setup' }}
+            {{ isSaving ? 'Saving...' : 'Save' }}
           </button>
           <button 
             (click)="resetInventory()"
             [disabled]="isSaving"
-            class="btn btn-secondary">
-            <fa-icon [icon]="faSync"></fa-icon>
-            Reset
-          </button>
+            class="btn btn-secondary">Reset</button>
         </div>
       </div>
 

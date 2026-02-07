@@ -619,6 +619,44 @@
     justify-content: flex-start;
   }
 }
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .modal-close {
+    align-self: flex-end;
+  }
+
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .form-control {
+    font-size: 16px;
+  }
+}
 /* Pagination - Match Sales History */
 .pagination {
   padding: 1.5rem;

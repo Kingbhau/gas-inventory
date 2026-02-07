@@ -77,15 +77,28 @@
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  align-items: flex-start;
+  margin-bottom: 30px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.header-content {
+  flex: 1;
+  min-width: 250px;
 }
 
 .page-title {
   font-size: 2rem;
   font-weight: 600;
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   color: #0f172a;
+}
+
+.page-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
 }
 
 /* Filters Card */
@@ -453,12 +466,13 @@
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
-    gap: 1rem;
     align-items: flex-start;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
   }
 
   .page-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
   .filter-row {

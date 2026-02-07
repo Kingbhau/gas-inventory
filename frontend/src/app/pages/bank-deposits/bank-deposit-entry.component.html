@@ -38,7 +38,7 @@
           </div>
         </div>
 
-        <!-- Row 2: Deposit Amount -->
+        <!-- Row 2: Deposit Amount & Reference Number -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Deposit Amount (₹) <span class="required">*</span></label>
@@ -53,10 +53,7 @@
               {{ getFieldError('depositAmount') }}
             </div>
           </div>
-        </div>
 
-        <!-- Row 3: Reference Number & Payment Mode -->
-        <div class="form-row">
           <div class="form-group">
             <label class="form-label">Reference #</label>
             <input type="text" formControlName="referenceNumber" class="form-control"
@@ -66,7 +63,10 @@
               {{ getFieldError('referenceNumber') }}
             </div>
           </div>
+        </div>
 
+        <!-- Row 3: Payment Mode & Notes -->
+        <div class="form-row">
           <div class="form-group">
             <label class="form-label">Payment Mode <span class="required">*</span></label>
             <select formControlName="paymentMode" class="form-control"
@@ -80,14 +80,13 @@
               {{ getFieldError('paymentMode') }}
             </div>
           </div>
-        </div>
 
-        <!-- Notes -->
-        <div class="form-group">
-          <label class="form-label">Notes</label>
-          <textarea formControlName="notes" class="form-control" 
-            placeholder="Additional remarks (optional)"
-            rows="3"></textarea>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea formControlName="notes" class="form-control" 
+              placeholder="Additional remarks (optional)"
+              rows="3"></textarea>
+          </div>
         </div>
 
         <!-- Selected Bank Account Info -->
@@ -110,11 +109,9 @@
         <!-- Form Actions -->
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="!depositForm.valid || isSubmitting">
-            {{ isSubmitting ? 'Processing...' : 'Record Deposit' }}
+            {{ isSubmitting ? 'Saving...' : 'Save' }}
           </button>
-          <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="isSubmitting">
-            Clear
-          </button>
+          <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="isSubmitting">Reset</button>
         </div>
       </form>
     </div>
