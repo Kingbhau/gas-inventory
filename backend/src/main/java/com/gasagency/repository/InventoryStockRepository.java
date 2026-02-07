@@ -24,6 +24,10 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
 
         Optional<InventoryStock> findByVariant(CylinderVariant variant);
 
+        List<InventoryStock> findAllByVariant(CylinderVariant variant);
+
+        boolean existsByVariant(CylinderVariant variant);
+
         // Pessimistic lock for concurrent access prevention - warehouse aware
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT i FROM InventoryStock i WHERE i.warehouse = :warehouse AND i.variant = :variant")
@@ -64,6 +68,15 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
 
         @Query("SELECT COALESCE(SUM(i.emptyQty), 0) FROM InventoryStock i")
         Long sumEmptyQty();
+
+        @Query("SELECT COALESCE(SUM(i.filledQty), 0) FROM InventoryStock i WHERE i.variant = :variant")
+        Long sumFilledQtyByVariant(@Param("variant") CylinderVariant variant);
+
+        @Query("SELECT COALESCE(SUM(i.emptyQty), 0) FROM InventoryStock i WHERE i.variant = :variant")
+        Long sumEmptyQtyByVariant(@Param("variant") CylinderVariant variant);
+
+        @Query("SELECT MAX(i.lastUpdated) FROM InventoryStock i WHERE i.variant = :variant")
+        java.time.LocalDateTime maxLastUpdatedByVariant(@Param("variant") CylinderVariant variant);
 
         @Query("SELECT i.warehouse.id, i.warehouse.name, COALESCE(SUM(i.filledQty), 0), COALESCE(SUM(i.emptyQty), 0) " +
                         "FROM InventoryStock i GROUP BY i.warehouse.id, i.warehouse.name")

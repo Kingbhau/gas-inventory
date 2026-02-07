@@ -101,9 +101,11 @@ public class SupplierTransactionService {
                 }
 
                 if (emptyDifference > 0) {
-                        inventoryStockService.incrementEmptyQty(warehouse, transaction.getVariant(), emptyDifference);
+                        // More empties sent to supplier => reduce empty stock
+                        inventoryStockService.decrementEmptyQty(warehouse, transaction.getVariant(), emptyDifference);
                 } else if (emptyDifference < 0) {
-                        inventoryStockService.decrementEmptyQty(warehouse, transaction.getVariant(),
+                        // Fewer empties sent => add back to empty stock
+                        inventoryStockService.incrementEmptyQty(warehouse, transaction.getVariant(),
                                         Math.abs(emptyDifference));
                 }
 

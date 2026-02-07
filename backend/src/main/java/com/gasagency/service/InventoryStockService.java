@@ -117,13 +117,26 @@ public class InventoryStockService {
                                         return new ResourceNotFoundException(
                                                         "Variant not found with id: " + variantId);
                                 });
-                InventoryStock stock = repository.findByVariant(variant)
-                                .orElseThrow(() -> {
-                                        LoggerUtil.logBusinessError(logger, "GET_STOCK_BY_VARIANT", "Stock not found",
-                                                        "variantId", variantId);
-                                        return new ResourceNotFoundException("Stock not found for variant");
-                                });
-                return toDTO(stock);
+                if (!repository.existsByVariant(variant)) {
+                        LoggerUtil.logBusinessError(logger, "GET_STOCK_BY_VARIANT", "Stock not found",
+                                        "variantId", variantId);
+                        throw new ResourceNotFoundException("Stock not found for variant");
+                }
+
+                Long filledQty = repository.sumFilledQtyByVariant(variant);
+                Long emptyQty = repository.sumEmptyQtyByVariant(variant);
+                LocalDateTime lastUpdated = repository.maxLastUpdatedByVariant(variant);
+
+                InventoryStockDTO dto = new InventoryStockDTO(
+                                null,
+                                variant.getId(),
+                                variant.getName(),
+                                null,
+                                "All Warehouses",
+                                filledQty != null ? filledQty : 0L,
+                                emptyQty != null ? emptyQty : 0L,
+                                lastUpdated);
+                return dto;
         }
 
         public List<InventoryStockDTO> getAllStock() {
@@ -169,12 +182,19 @@ public class InventoryStockService {
                                         return new ResourceNotFoundException(
                                                         "Variant not found with id: " + variantId);
                                 });
-                return repository.findByVariant(variant)
-                                .orElseThrow(() -> {
-                                        LoggerUtil.logBusinessError(logger, "GET_STOCK_ENTITY", "Stock not found",
-                                                        "variantId", variantId);
-                                        return new ResourceNotFoundException("Stock not found for variant");
-                                });
+                List<InventoryStock> stocks = repository.findAllByVariant(variant);
+                if (stocks.isEmpty()) {
+                        LoggerUtil.logBusinessError(logger, "GET_STOCK_ENTITY", "Stock not found",
+                                        "variantId", variantId);
+                        throw new ResourceNotFoundException("Stock not found for variant");
+                }
+                if (stocks.size() > 1) {
+                        LoggerUtil.logBusinessError(logger, "GET_STOCK_ENTITY", "Multiple warehouse stocks found",
+                                        "variantId", variantId, "count", stocks.size());
+                        throw new IllegalStateException(
+                                        "Multiple warehouse stocks exist for this variant. Use warehouse-specific methods.");
+                }
+                return stocks.get(0);
         }
 
         @Transactional
@@ -188,6 +208,18 @@ public class InventoryStockService {
                                         return new ResourceNotFoundException(
                                                         "Variant not found with id: " + variantId);
                                 });
+                List<InventoryStock> stocks = repository.findAllByVariant(variant);
+                if (stocks.isEmpty()) {
+                        LoggerUtil.logBusinessError(logger, "GET_STOCK_WITH_LOCK", "Stock not found",
+                                        "variantId", variantId);
+                        throw new ResourceNotFoundException("Stock not found for variant");
+                }
+                if (stocks.size() > 1) {
+                        LoggerUtil.logBusinessError(logger, "GET_STOCK_WITH_LOCK", "Multiple warehouse stocks found",
+                                        "variantId", variantId, "count", stocks.size());
+                        throw new IllegalStateException(
+                                        "Multiple warehouse stocks exist for this variant. Use warehouse-specific methods.");
+                }
                 return repository.findByVariantWithLock(variant)
                                 .orElseThrow(() -> {
                                         LoggerUtil.logBusinessError(logger, "GET_STOCK_WITH_LOCK", "Stock not found",

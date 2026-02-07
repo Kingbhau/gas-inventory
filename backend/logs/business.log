@@ -322,3 +322,57 @@
 2026-02-07 12:46:25.370 | INFO  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE completed
 2026-02-07 12:51:34.364 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE timeout
 2026-02-07 12:51:34.373 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:59:24.218 | INFO  | [3a1095dc-6cff-42f1-a575-fcbbfb6ccad8] [] [] | http-nio-8080-exec-8 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:59:24.356 | INFO  | [584fc983-0235-4845-b389-c0dbda5d7543] [] [] | http-nio-8080-exec-34 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:59:54.685 | INFO  | [a9292ecf-05dd-40ee-b1db-62165064e5d5] [] [] | http-nio-8080-exec-41 | c.gasagency.service.SupplierService | OPERATION_START | operation=CREATE_SUPPLIER | name=BPCL2
+2026-02-07 12:59:54.720 | INFO  | [a9292ecf-05dd-40ee-b1db-62165064e5d5] [] [] | http-nio-8080-exec-41 | c.gasagency.service.SupplierService | OPERATION_SUCCESS | operation=CREATE_SUPPLIER | id=2 | name=BPCL2
+2026-02-07 13:00:24.913 | INFO  | [1c41e317-30bb-47ff-96e1-5810d9254243] [] [] | http-nio-8080-exec-7 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=1 | variantId=2
+2026-02-07 13:00:24.937 | INFO  | [1c41e317-30bb-47ff-96e1-5810d9254243] [] [] | http-nio-8080-exec-7 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 2 - Reference: PO-SUP001-202602-000002
+2026-02-07 13:00:24.939 | INFO  | [1c41e317-30bb-47ff-96e1-5810d9254243] [] [] | http-nio-8080-exec-7 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=2 | newQty=400
+2026-02-07 13:00:24.940 | INFO  | [1c41e317-30bb-47ff-96e1-5810d9254243] [] [] | http-nio-8080-exec-7 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=2 | supplierId=1 | filled=200
+2026-02-07 13:00:52.599 | INFO  | [4a71dc8b-c683-4cf6-9034-ad55391b3766] [] [] | http-nio-8080-exec-50 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=2 | variantId=2
+2026-02-07 13:00:52.605 | INFO  | [4a71dc8b-c683-4cf6-9034-ad55391b3766] [] [] | http-nio-8080-exec-50 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 3 - Reference: PO-SUP002-202602-000001
+2026-02-07 13:00:52.607 | INFO  | [4a71dc8b-c683-4cf6-9034-ad55391b3766] [] [] | http-nio-8080-exec-50 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=2 | newQty=600
+2026-02-07 13:00:52.608 | INFO  | [4a71dc8b-c683-4cf6-9034-ad55391b3766] [] [] | http-nio-8080-exec-50 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=3 | supplierId=2 | filled=200
+2026-02-07 13:06:00.368 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 13:06:00.380 | INFO  | [] [] [] | http-nio-8080-exec-7 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 13:07:22.045 | INFO  | [bf3c2047-a290-4028-aeae-83cd83b1f680] [] [] | http-nio-8080-exec-23 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:07:31.999 | INFO  | [73f336cc-5bbf-4d11-aa32-6e9185843436] [] [] | http-nio-8080-exec-15 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:08:20.936 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
+2026-02-07 13:08:20.936 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
+2026-02-07 13:08:20.937 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
+2026-02-07 13:08:59.269 | INFO  | [2a3eb06a-c7d5-4663-a721-5ea5674bb1a5] [] [] | http-nio-8080-exec-15 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | variantId=2
+2026-02-07 13:08:59.303 | INFO  | [2a3eb06a-c7d5-4663-a721-5ea5674bb1a5] [] [] | http-nio-8080-exec-15 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=300
+2026-02-07 13:08:59.304 | INFO  | [2a3eb06a-c7d5-4663-a721-5ea5674bb1a5] [] [] | http-nio-8080-exec-15 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | filled=200
+2026-02-07 13:13:48.759 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
+2026-02-07 13:13:48.759 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
+2026-02-07 13:13:48.759 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
+2026-02-07 13:13:53.619 | INFO  | [9b56a046-8990-49bb-bf50-a11fd746ac3f] [] [] | http-nio-8080-exec-3 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:14:17.422 | INFO  | [9d7465f5-fe02-43d6-bba7-77caa6575d69] [] [] | http-nio-8080-exec-5 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | variantId=2
+2026-02-07 13:14:17.467 | INFO  | [9d7465f5-fe02-43d6-bba7-77caa6575d69] [] [] | http-nio-8080-exec-5 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=200
+2026-02-07 13:14:17.469 | INFO  | [9d7465f5-fe02-43d6-bba7-77caa6575d69] [] [] | http-nio-8080-exec-5 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | filled=200
+2026-02-07 13:14:45.105 | INFO  | [a446b941-70f7-417d-a9be-d2dd15cf27f9] [] [] | http-nio-8080-exec-37 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:14:45.334 | INFO  | [79e75444-96c2-471d-a2b9-e12c5743f943] [] [] | http-nio-8080-exec-46 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 13:14:53.681 | WARN  | [] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 13:15:34.487 | INFO  | [3bcc4b05-3843-4282-b970-b4963b3cd890] [] [] | http-nio-8080-exec-31 | c.g.s.SupplierTransactionService | OPERATION_START | operation=RECORD_TRANSACTION | warehouseId=2 | supplierId=1 | variantId=2
+2026-02-07 13:15:34.517 | INFO  | [3bcc4b05-3843-4282-b970-b4963b3cd890] [] [] | http-nio-8080-exec-31 | c.g.s.SupplierTransactionService | Supplier transaction created with id: 4 - Reference: PO-SUP001-202602-000003
+2026-02-07 13:15:34.520 | INFO  | [3bcc4b05-3843-4282-b970-b4963b3cd890] [] [] | http-nio-8080-exec-31 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_FILLED_QTY | warehouseId=2 | variantId=2 | newQty=700
+2026-02-07 13:15:34.527 | INFO  | [3bcc4b05-3843-4282-b970-b4963b3cd890] [] [] | http-nio-8080-exec-31 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=100
+2026-02-07 13:15:34.527 | INFO  | [3bcc4b05-3843-4282-b970-b4963b3cd890] [] [] | http-nio-8080-exec-31 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=RECORD_TRANSACTION | id=4 | supplierId=1 | filled=100
+2026-02-07 13:20:09.451 | INFO  | [9184ea32-87d4-4bf6-bb80-8242907453a9] [] [] | http-nio-8080-exec-49 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:20:13.627 | INFO  | [75544ba0-95a4-4d9e-afeb-0a6eb670f33f] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:20:55.925 | INFO  | [2e770742-ce64-4297-9006-95f263c6df05] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=4 | supplierId=1 | variantId=2
+2026-02-07 13:20:55.929 | INFO  | [2e770742-ce64-4297-9006-95f263c6df05] [] [] | http-nio-8080-exec-17 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=DECREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=0
+2026-02-07 13:20:55.929 | INFO  | [2e770742-ce64-4297-9006-95f263c6df05] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=4 | supplierId=1 | filled=100
+2026-02-07 13:21:09.470 | WARN  | [] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 13:21:10.715 | INFO  | [23adee2d-7a7c-4be8-a8e6-6d914655e227] [] [] | http-nio-8080-exec-37 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=4 | supplierId=1 | variantId=2
+2026-02-07 13:21:10.724 | INFO  | [23adee2d-7a7c-4be8-a8e6-6d914655e227] [] [] | http-nio-8080-exec-37 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=2 | variantId=2 | newQty=150
+2026-02-07 13:21:10.724 | INFO  | [23adee2d-7a7c-4be8-a8e6-6d914655e227] [] [] | http-nio-8080-exec-37 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=4 | supplierId=1 | filled=100
+2026-02-07 13:21:30.509 | INFO  | [ccb916fa-f493-47d5-a411-f78c5289c646] [] [] | http-nio-8080-exec-10 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 13:21:46.189 | INFO  | [f1dbb6e4-6d6e-4779-aea9-c7758b7207ab] [] [] | http-nio-8080-exec-9 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 13:44:45.634 | INFO  | [] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 13:44:45.662 | INFO  | [] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 13:50:13.634 | INFO  | [] [] [] | http-nio-8080-exec-26 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 13:50:13.647 | INFO  | [] [] [] | http-nio-8080-exec-26 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 13:51:30.641 | INFO  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 13:51:30.648 | INFO  | [] [] [] | http-nio-8080-exec-28 | com.gasagency.service.SseService | User admin SSE completed

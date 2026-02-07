@@ -52,6 +52,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   filterReference: string = '';
   filterCreatedBy = '';
   selectedTransaction: any = null;
+  originalTransaction: any = null;
   transactionForm!: FormGroup;
 
   // Font Awesome Icons
@@ -231,6 +232,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   openAddForm() {
     this.editingId = null;
+    this.originalTransaction = null;
     this.transactionForm.reset({ supplierId: '', variantId: '' });
     this.showForm = true;
     // Refresh variants to get any newly activated ones
@@ -241,6 +243,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   editTransaction(transaction: any) {
     this.editingId = transaction.id;
+    this.originalTransaction = { ...transaction };
     const warehouseId = transaction.warehouseId ? parseInt(transaction.warehouseId) : (this.warehouses.length > 0 ? this.warehouses[0].id : null);
     console.log('Editing transaction:', transaction); // Debug
     console.log('Setting warehouseId to:', warehouseId); // Debug
@@ -274,11 +277,16 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Prevent sending more empty than available in inventory
+    // Prevent sending more empty than available in inventory (warehouse-specific)
     if (formData.emptySent > 0) {
-      this.inventoryStockService.getStockByVariant(formData.variantId).subscribe(stock => {
-        if (formData.emptySent > stock.emptyQty) {
-          this.toastr.error('Cannot send more empty cylinders than available in inventory for this variant.', 'Validation Error');
+      this.inventoryStockService.getStockByWarehouse(formData.warehouseId).subscribe(stocks => {
+        const stockForVariant = (stocks || []).find((s: any) => s.variantId === formData.variantId);
+        const currentEmpty = stockForVariant?.emptyQty ?? 0;
+        const originalEmptySent = this.editingId ? (this.originalTransaction?.emptySent ?? 0) : 0;
+        // When editing, allow using the empties already accounted for in this transaction.
+        const availableEmpty = currentEmpty + originalEmptySent;
+        if (formData.emptySent > availableEmpty) {
+          this.toastr.error('Cannot send more empty cylinders than available in inventory for this warehouse.', 'Validation Error');
           return;
         } else {
           this._submitTransaction(formData);

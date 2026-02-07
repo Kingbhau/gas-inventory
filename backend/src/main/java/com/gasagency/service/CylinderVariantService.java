@@ -2,7 +2,6 @@ package com.gasagency.service;
 
 import com.gasagency.dto.CylinderVariantDTO;
 import com.gasagency.entity.CylinderVariant;
-import com.gasagency.entity.InventoryStock;
 import com.gasagency.entity.MonthlyPrice;
 import com.gasagency.entity.SaleItem;
 import com.gasagency.entity.CustomerCylinderLedger;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -191,16 +189,15 @@ public class CylinderVariantService {
                 });
 
         // Check for inventory stock with quantities
-        Optional<InventoryStock> stock = inventoryStockRepository.findByVariant(variant);
-        if (stock.isPresent()) {
-            InventoryStock inv = stock.get();
-            if (inv.getFilledQty() > 0 || inv.getEmptyQty() > 0) {
-                LoggerUtil.logBusinessError(logger, "DELETE_VARIANT", "Cannot delete - has inventory", "id", id,
-                        "filledQty", inv.getFilledQty(), "emptyQty", inv.getEmptyQty());
-                throw new InvalidOperationException(
-                        "Cannot delete variant with existing inventory. " +
-                                "Current: " + inv.getFilledQty() + " filled, " + inv.getEmptyQty() + " empty");
-            }
+        Long totalFilled = inventoryStockRepository.sumFilledQtyByVariant(variant);
+        Long totalEmpty = inventoryStockRepository.sumEmptyQtyByVariant(variant);
+        if ((totalFilled != null && totalFilled > 0) || (totalEmpty != null && totalEmpty > 0)) {
+            LoggerUtil.logBusinessError(logger, "DELETE_VARIANT", "Cannot delete - has inventory", "id", id,
+                    "filledQty", totalFilled, "emptyQty", totalEmpty);
+            throw new InvalidOperationException(
+                    "Cannot delete variant with existing inventory. " +
+                            "Current: " + (totalFilled != null ? totalFilled : 0) + " filled, " +
+                            (totalEmpty != null ? totalEmpty : 0) + " empty");
         }
 
         // Check for price history

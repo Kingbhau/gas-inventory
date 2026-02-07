@@ -136,11 +136,6 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
       this.toastr.error('Please correct the errors in the form.', 'Validation Error');
       return;
     }
-    // Restrict to only one supplier
-    if (!this.editingId && this.suppliers.length >= 1) {
-      this.toastr.error('Only one supplier can be added.', 'Restriction');
-      return;
-    }
     // Prevent duplicate supplier name on frontend
     const name = this.supplierForm.get('name')?.value.trim().toLowerCase();
     const duplicate = this.suppliers.some(s => s.name.trim().toLowerCase() === name && s.id !== this.editingId);
