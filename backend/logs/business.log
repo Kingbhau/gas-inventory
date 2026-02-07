@@ -302,3 +302,23 @@
 2026-02-07 12:22:01.371 | INFO  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin SSE timeout
 2026-02-07 12:22:01.375 | INFO  | [] [] [] | http-nio-8080-exec-11 | com.gasagency.service.SseService | User admin SSE completed
 2026-02-07 12:22:25.929 | WARN  | [] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin SSE error: An established connection was aborted by the software in your host machine
+2026-02-07 12:23:57.366 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:23:57.369 | INFO  | [] [] [] | http-nio-8080-exec-30 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:27:59.357 | INFO  | [] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:27:59.361 | INFO  | [] [] [] | http-nio-8080-exec-29 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:31:57.380 | INFO  | [] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:31:57.380 | INFO  | [] [] [] | http-nio-8080-exec-24 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:33:08.363 | INFO  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:33:08.370 | INFO  | [] [] [] | http-nio-8080-exec-13 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:35:03.359 | INFO  | [] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:35:03.364 | INFO  | [] [] [] | http-nio-8080-exec-42 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:36:00.057 | INFO  | [014c4d31-edfb-434f-a890-a620e9dc10fb] [] [] | http-nio-8080-exec-1 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-07 12:36:00.104 | INFO  | [643ca840-7dfa-4bf8-a52f-7e0bfebff27f] [] [] | http-nio-8080-exec-31 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-07 12:40:09.369 | INFO  | [] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:40:09.377 | INFO  | [] [] [] | http-nio-8080-exec-33 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:42:33.365 | INFO  | [] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:42:33.371 | INFO  | [] [] [] | http-nio-8080-exec-20 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:46:25.363 | INFO  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:46:25.370 | INFO  | [] [] [] | http-nio-8080-exec-48 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-07 12:51:34.364 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-07 12:51:34.373 | INFO  | [] [] [] | http-nio-8080-exec-19 | com.gasagency.service.SseService | User admin SSE completed

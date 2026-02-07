@@ -1264,3 +1264,14 @@
 2026-02-07 12:22:06.306 | [00891857-be62-476e-a7d9-5360833ba6c0] | 00891857-be62-476e-a7d9-5360833ba6c0|method=GET|path=/api/customers|status=200|duration=28ms|category=FAST
 2026-02-07 12:22:06.329 | [262abb18-1f46-47c6-bf55-d47ca76dc286] | 262abb18-1f46-47c6-bf55-d47ca76dc286|method=GET|path=/api/ledger/customer-balances|status=200|duration=8ms|category=FAST
 2026-02-07 12:22:06.329 | [e6ce0d92-44a9-4a5e-90e2-2b0a3a9c40e0] | e6ce0d92-44a9-4a5e-90e2-2b0a3a9c40e0|method=POST|path=/api/ledger/customer-due-amounts|status=200|duration=0ms|category=FAST
+2026-02-07 12:35:59.994 | [126e2ea3-af0a-42bc-b74f-d699e5801e0f] | 126e2ea3-af0a-42bc-b74f-d699e5801e0f|method=POST|path=/api/auth/login|status=200|duration=77ms|category=FAST
+2026-02-07 12:36:00.004 | [fa38e654-fad8-4f35-8582-b8decf76bedc] | fa38e654-fad8-4f35-8582-b8decf76bedc|method=GET|path=/api/alerts|status=200|duration=0ms|category=FAST
+2026-02-07 12:36:00.057 | [014c4d31-edfb-434f-a890-a620e9dc10fb] | 014c4d31-edfb-434f-a890-a620e9dc10fb|method=GET|path=/api/alerts/stream|status=200|duration=0ms|category=FAST
+2026-02-07 12:36:00.105 | [643ca840-7dfa-4bf8-a52f-7e0bfebff27f] | 643ca840-7dfa-4bf8-a52f-7e0bfebff27f|method=GET|path=/api/dashboard/comprehensive|status=200|duration=79ms|category=FAST
+2026-02-07 12:46:59.771 | [8561f976-2762-486e-9ef3-52aa4392311a] | 8561f976-2762-486e-9ef3-52aa4392311a|method=GET|path=/api/business-info/1|status=200|duration=6ms|category=FAST
+2026-02-07 12:46:59.774 | [d4f13068-a347-4174-8171-04f09c33df96] | d4f13068-a347-4174-8171-04f09c33df96|method=GET|path=/api/warehouses/active|status=200|duration=8ms|category=FAST
+2026-02-07 12:46:59.775 | [9172c130-6866-474e-b0c2-7ff2711cd28c] | 9172c130-6866-474e-b0c2-7ff2711cd28c|method=GET|path=/api/suppliers|status=200|duration=8ms|category=FAST
+2026-02-07 12:46:59.785 | [7b126d03-cb9e-4c57-af8f-f8fb540d0c70] | 7b126d03-cb9e-4c57-af8f-f8fb540d0c70|method=GET|path=/api/users|status=200|duration=4ms|category=FAST
+2026-02-07 12:46:59.785 | [dcc58473-db9f-4680-976d-e0277450e6be] | dcc58473-db9f-4680-976d-e0277450e6be|method=GET|path=/api/variants/active/list|status=200|duration=10ms|category=FAST
+2026-02-07 12:46:59.806 | [abbfb9c3-c538-41b3-a313-350f63bbc372] | abbfb9c3-c538-41b3-a313-350f63bbc372|method=GET|path=/api/supplier-transactions|status=200|duration=31ms|category=FAST
+2026-02-07 12:47:14.152 | [392a3dd6-2b02-4c6a-aef7-cfd97d46b321] | 392a3dd6-2b02-4c6a-aef7-cfd97d46b321|method=GET|path=/api/variants/active/list|status=200|duration=1ms|category=FAST

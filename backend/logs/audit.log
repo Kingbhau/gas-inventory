@@ -1262,3 +1262,13 @@
 2026-02-07 12:22:06.278 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
 2026-02-07 12:22:06.321 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
 2026-02-07 12:22:06.329 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:35:59.994 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:36:00.026 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:36:00.056 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.764 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.766 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.767 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.774 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.775 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:46:59.781 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
+2026-02-07 12:47:14.151 | INFO  | [] [] | com.gasagency.audit | AUDIT | action=AUTHENTICATION_SUCCESS | entity=JWT_VALIDATION | username=admin | ip=0:0:0:0:0:0:0:1
