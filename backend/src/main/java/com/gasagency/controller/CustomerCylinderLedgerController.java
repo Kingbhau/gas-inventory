@@ -344,6 +344,63 @@ public class CustomerCylinderLedgerController {
         return ResponseEntity.ok(service.getEmptyReturns(from, to, customerId, variantId, createdBy, pageable));
     }
 
+    // Get payment history with filtering
+    @GetMapping("/payments")
+    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getPayments(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "transactionDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        LocalDate from = null;
+        LocalDate to = null;
+        try {
+            if (fromDate != null && !fromDate.isEmpty()) {
+                from = LocalDate.parse(fromDate);
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                to = LocalDate.parse(toDate);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
+        }
+
+        return ResponseEntity.ok(service.getPayments(from, to, customerId, paymentMode, bankAccountId, createdBy, pageable));
+    }
+
+    // Get payment summary for filters
+    @GetMapping("/payments-summary")
+    public ResponseEntity<Map<String, Object>> getPaymentsSummary(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) String createdBy) {
+        LocalDate from = null;
+        LocalDate to = null;
+        try {
+            if (fromDate != null && !fromDate.isEmpty()) {
+                from = LocalDate.parse(fromDate);
+            }
+            if (toDate != null && !toDate.isEmpty()) {
+                to = LocalDate.parse(toDate);
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
+        }
+
+        java.math.BigDecimal totalAmount = service.getPaymentsSummary(from, to, customerId, paymentMode, bankAccountId, createdBy);
+        return ResponseEntity.ok(Map.of("totalAmount", totalAmount));
+    }
+
     // Update a ledger entry with full chain recalculation
     // Validates that no due amounts go negative anywhere in the chain
     @PutMapping("/{ledgerId}")

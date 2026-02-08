@@ -83,6 +83,18 @@
               class="form-control" 
               placeholder="0"
               (change)="calculateTotal()">
+            <div class="balance-info" *ngIf="balanceLoading">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!balanceLoading && currentBalance !== null">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">{{ currentBalance }} cylinders</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!balanceLoading && balanceError">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">{{ balanceError }}</span>
+            </div>
           </div>
         </div>
 
@@ -135,6 +147,18 @@
                 class="form-control" 
                 placeholder="0.00"
                 indianCurrencyFormat>
+            </div>
+            <div class="balance-info" *ngIf="dueLoading">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!dueLoading && currentDue !== null">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">{{ currentDue | indianCurrency }}</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!dueLoading && dueError">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">{{ dueError }}</span>
             </div>
             <div *ngIf="saleForm.get('amountReceived')?.invalid && saleForm.get('amountReceived')?.touched" class="error-message">
               Please enter amount received

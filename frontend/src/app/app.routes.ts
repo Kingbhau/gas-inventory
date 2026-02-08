@@ -60,6 +60,12 @@ export const routes: Routes = [
 
   // Payment Routes
   {
+    path: 'payments/history',
+    loadComponent: () => import('./pages/payment/payment-history.component').then(m => m.PaymentHistoryComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'MANAGER'] }
+  },
+  {
     path: 'payments',
     loadComponent: () => import('./pages/payment/payment-management.component').then(m => m.PaymentManagementComponent),
     canActivate: [RoleGuard],
@@ -77,7 +83,7 @@ export const routes: Routes = [
     path: 'bank-deposits/history',
     loadComponent: () => import('./pages/bank-deposits/bank-deposit-history.component').then(m => m.BankDepositHistoryComponent),
     canActivate: [RoleGuard],
-    data: { roles: ['OWNER', 'MANAGER'] }
+    data: { roles: ['OWNER'] }
   },
   { path: 'bank-deposits', redirectTo: 'bank-deposits/entry', pathMatch: 'full' },
 

@@ -213,6 +213,56 @@ export class CustomerCylinderLedgerService {
       .pipe(applyTimeout());
   }
 
+  getPayments(
+    page: number = 0,
+    pageSize: number = 10,
+    sortBy: string = 'transactionDate',
+    direction: string = 'DESC',
+    fromDate?: string,
+    toDate?: string,
+    customerId?: number,
+    paymentMode?: string,
+    bankAccountId?: number,
+    createdBy?: string
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', pageSize.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (customerId) params = params.set('customerId', customerId.toString());
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
+    if (createdBy) params = params.set('createdBy', createdBy);
+
+    return this.http.get(`${this.apiUrl}/payments`, { params, withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  getPaymentsSummary(
+    fromDate?: string,
+    toDate?: string,
+    customerId?: number,
+    paymentMode?: string,
+    bankAccountId?: number,
+    createdBy?: string
+  ): Observable<{ totalAmount: number }> {
+    let params = new HttpParams();
+
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (customerId) params = params.set('customerId', customerId.toString());
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
+    if (createdBy) params = params.set('createdBy', createdBy);
+
+    return this.http.get<{ totalAmount: number }>(`${this.apiUrl}/payments-summary`, { params, withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
   /**
    * Update a ledger entry with full chain recalculation
    * Validates that no due amounts go negative anywhere in the chain

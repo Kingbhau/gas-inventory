@@ -13,4 +13,9 @@ export class CustomerCylinderLedgerService {
   getCustomerVariantBalance(customerId: number, variantId: number): Observable<number> {
     return this.http.get<number>(`${this.apiUrl}/customer/${customerId}/variant/${variantId}/balance`, { withCredentials: true });
   }
+
+  // Get current due amounts for one or more customers
+  getCustomerDueAmounts(customerIds: number[]): Observable<{ [key: number]: number }> {
+    return this.http.post<{ [key: number]: number }>(`${this.apiUrl}/customer-due-amounts`, { customerIds }, { withCredentials: true });
+  }
 }

@@ -798,6 +798,35 @@ public class CustomerCylinderLedgerService {
                                 .map(this::toDTO);
         }
 
+        public Page<CustomerCylinderLedgerDTO> getPayments(LocalDate fromDate, LocalDate toDate, Long customerId,
+                        String paymentMode, Long bankAccountId, String createdBy, Pageable pageable) {
+                LoggerUtil.logDatabaseOperation(logger, "SELECT_PAYMENTS", "LEDGER",
+                                "fromDate", fromDate, "toDate", toDate, "customerId", customerId,
+                                "paymentMode", paymentMode, "bankAccountId", bankAccountId,
+                                "page", pageable.getPageNumber(), "size", pageable.getPageSize());
+
+                return repository.findPayments(
+                                fromDate,
+                                toDate,
+                                customerId,
+                                (paymentMode != null && !paymentMode.isEmpty()) ? paymentMode : null,
+                                bankAccountId,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null,
+                                pageable)
+                                .map(this::toDTO);
+        }
+
+        public java.math.BigDecimal getPaymentsSummary(LocalDate fromDate, LocalDate toDate, Long customerId,
+                        String paymentMode, Long bankAccountId, String createdBy) {
+                return repository.sumPayments(
+                                fromDate,
+                                toDate,
+                                customerId,
+                                (paymentMode != null && !paymentMode.isEmpty()) ? paymentMode : null,
+                                bankAccountId,
+                                (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
+        }
+
         public List<CustomerCylinderLedgerDTO> getLedgerByCustomer(Long customerId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "LEDGER", "customerId", customerId);
 

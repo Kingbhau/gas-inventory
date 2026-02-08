@@ -16,7 +16,7 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
-import { finalize } from 'rxjs';
+import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { UserService, User } from '../../services/user.service';
 
@@ -29,6 +29,7 @@ import { UserService, User } from '../../services/user.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SupplierTransactionComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
   agencyName: string = '';
     // Pagination state for supplier transactions table
     transactionPage = 1;
@@ -54,6 +55,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   selectedTransaction: any = null;
   originalTransaction: any = null;
   transactionForm!: FormGroup;
+  currentEmpty: number | null = null;
+  emptyLoading = false;
+  emptyError = '';
 
   // Font Awesome Icons
   faEdit = faEdit;
@@ -117,7 +121,10 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.loadTransactions();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   exportSupplierTransactionsPDF() {
     const supplierName = this.selectedSupplier ? (this.suppliers.find(s => s.id == this.selectedSupplier)?.name || '') : undefined;
@@ -228,6 +235,14 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       reference: [''],
       amount: [0, [Validators.required, Validators.min(0)]]
     });
+
+    this.transactionForm.get('warehouseId')?.valueChanges
+      .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => this.loadCurrentEmpty());
+
+    this.transactionForm.get('variantId')?.valueChanges
+      .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => this.loadCurrentEmpty());
   }
 
   openAddForm() {
@@ -238,6 +253,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     // Refresh variants to get any newly activated ones
     this.variantService.invalidateCache();
     this.loadVariants();
+    this.loadCurrentEmpty();
     this.cdr.markForCheck();
   }
 
@@ -258,6 +274,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       amount: transaction.amount || 0
     });
     this.showForm = true;
+    this.loadCurrentEmpty();
     this.cdr.markForCheck();
   }
 
@@ -298,6 +315,37 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     } else {
       this._submitTransaction(formData);
     }
+  }
+
+  loadCurrentEmpty() {
+    const warehouseId = this.transactionForm.get('warehouseId')?.value;
+    const variantId = this.transactionForm.get('variantId')?.value;
+    if (!warehouseId || !variantId) {
+      this.currentEmpty = null;
+      this.emptyLoading = false;
+      this.emptyError = '';
+      return;
+    }
+    this.emptyLoading = true;
+    this.emptyError = '';
+    this.inventoryStockService.getStockByWarehouse(Number(warehouseId)).subscribe({
+      next: (stocks: any[]) => {
+        const stockForVariant = (stocks || []).find((s: any) => s.variantId === Number(variantId));
+        const currentEmpty = stockForVariant?.emptyQty ?? 0;
+        const originalEmptySent = this.editingId ? (this.originalTransaction?.emptySent ?? 0) : 0;
+        // Show available empties (include original sent when editing)
+        this.currentEmpty = currentEmpty + originalEmptySent;
+        this.emptyLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        console.error('Error loading current empty stock:', error);
+        this.emptyError = 'Current empty unavailable';
+        this.currentEmpty = null;
+        this.emptyLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   _submitTransaction(formData: any) {

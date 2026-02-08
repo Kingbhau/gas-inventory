@@ -32,6 +32,15 @@ export class DayBookComponent implements OnInit, OnDestroy {
   // Data
   dayBookTransactions: any[] = [];
   dayBookSummary: any = null;
+  dayBookTypeSummaries: Array<{
+    type: string;
+    label: string;
+    count: number;
+    totalAmount: number;
+    amountReceived: number;
+    dueAmount: number;
+    quantityMoved: number;
+  }> = [];
   selectedDate: string = '';
   isLoading = false;
   filterCreatedBy = '';
@@ -143,11 +152,13 @@ export class DayBookComponent implements OnInit, OnDestroy {
                 if (this.isManager) {
                   const filteredTransactions = this.filterOutBankDeposits(summaryResponse?.transactions || []);
                   this.dayBookTransactions = filteredTransactions;
-                  this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
+                this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
+                this.dayBookTypeSummaries = this.buildTypeSummaries(filteredTransactions);
                   this.applyPaginationFromTransactions(filteredTransactions);
                 } else {
                   this.dayBookSummary = summaryResponse;
                   this.dayBookTransactions = summaryResponse.transactions || [];
+                this.dayBookTypeSummaries = this.buildTypeSummaries(this.dayBookTransactions);
                 }
                 this.cdr.markForCheck();
               },
@@ -155,6 +166,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                 console.error('Error loading day book summary:', error);
                 if (this.isManager) {
                   this.dayBookSummary = this.buildSummaryFromTransactions(this.paginatedDayBookTransactions);
+                this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
                 }
               }
             });
@@ -166,6 +178,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
           this.toastr.error('Failed to load day book data', 'Error');
           this.paginatedDayBookTransactions = [];
           this.dayBookSummary = null;
+          this.dayBookTypeSummaries = [];
           this.cdr.markForCheck();
         }
       });
@@ -311,6 +324,89 @@ export class DayBookComponent implements OnInit, OnDestroy {
       totalDueAmount,
       totalTransactions: transactions.length
     };
+  }
+
+  private buildTypeSummaries(transactions: any[]): Array<{
+    type: string;
+    label: string;
+    count: number;
+    totalAmount: number;
+    amountReceived: number;
+    dueAmount: number;
+    quantityMoved: number;
+  }> {
+    const types = this.transactionTypeOptions
+      .filter(option => option.value)
+      .map(option => option.value);
+
+    const summaryMap = new Map<string, {
+      type: string;
+      label: string;
+      count: number;
+      totalAmount: number;
+      amountReceived: number;
+      dueAmount: number;
+      quantityMoved: number;
+    }>();
+
+    types.forEach(type => {
+      summaryMap.set(type, {
+        type,
+        label: this.getTypeLabel(type),
+        count: 0,
+        totalAmount: 0,
+        amountReceived: 0,
+        dueAmount: 0,
+        quantityMoved: 0
+      });
+    });
+
+    let totalReceivedAll = 0;
+    let receivedTxnCount = 0;
+
+    (transactions || []).forEach(tx => {
+      const type = tx?.transactionType;
+      if (!type || !summaryMap.has(type)) {
+        return;
+      }
+      const summary = summaryMap.get(type);
+      if (!summary) {
+        return;
+      }
+      summary.count += 1;
+      summary.totalAmount += Number(tx?.totalAmount) || 0;
+      const received = Number(tx?.amountReceived) || 0;
+      summary.amountReceived += received;
+      summary.dueAmount += Number(tx?.dueAmount) || 0;
+      if (type === 'WAREHOUSE_TRANSFER') {
+        summary.quantityMoved += this.getTransferQuantity(tx?.details);
+      }
+
+      if (received > 0) {
+        totalReceivedAll += received;
+        receivedTxnCount += 1;
+      }
+    });
+
+    const paymentSummary = summaryMap.get('PAYMENT');
+    if (paymentSummary) {
+      paymentSummary.amountReceived = totalReceivedAll;
+      paymentSummary.count = receivedTxnCount;
+    }
+
+    return Array.from(summaryMap.values());
+  }
+
+  private getTransferQuantity(details?: string | null): number {
+    if (!details) {
+      return 0;
+    }
+    const match = details.match(/Qty:\s*(\d+)/i);
+    if (!match) {
+      return 0;
+    }
+    const qty = Number(match[1]);
+    return isNaN(qty) ? 0 : qty;
   }
 
   private loadUsers() {

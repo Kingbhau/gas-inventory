@@ -135,6 +135,41 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         @Param("createdBy") String createdBy,
                         Pageable pageable);
 
+        // Get payment transactions with optional date range and customer/mode/bank filtering
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE l.refType = 'PAYMENT' " +
+                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
+                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
+                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "AND (:paymentMode IS NULL OR l.paymentMode = :paymentMode) " +
+                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
+                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        Page<CustomerCylinderLedger> findPayments(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("customerId") Long customerId,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("createdBy") String createdBy,
+                        Pageable pageable);
+
+        @Query("SELECT COALESCE(SUM(l.amountReceived), 0) FROM CustomerCylinderLedger l " +
+                        "WHERE l.refType = 'PAYMENT' " +
+                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
+                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
+                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "AND (:paymentMode IS NULL OR l.paymentMode = :paymentMode) " +
+                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
+                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy)")
+        BigDecimal sumPayments(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("customerId") Long customerId,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("createdBy") String createdBy);
+
         // Lock for reading latest balance without duplicates
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer.id = :customerId " +

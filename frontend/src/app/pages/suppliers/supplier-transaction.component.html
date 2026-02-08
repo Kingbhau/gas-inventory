@@ -160,7 +160,7 @@
           </ng-container>
           <ng-template #warehouseSelect>
             <!-- Editable warehouse select for new transaction -->
-            <select formControlName="warehouseId" class="form-control" [compareWith]="warehouseCompare">
+            <select formControlName="warehouseId" class="form-control" [compareWith]="warehouseCompare" (change)="loadCurrentEmpty()">
               <option [ngValue]="null">Select a warehouse</option>
               <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
             </select>
@@ -183,7 +183,7 @@
 
         <div class="form-group">
           <label class="form-label">Variant <span class="required">*</span></label>
-          <select formControlName="variantId" class="form-control">
+          <select formControlName="variantId" class="form-control" (change)="loadCurrentEmpty()">
             <option value="">Select variant</option>
             <option *ngFor="let variant of variants" [value]="variant.id">{{ variant.name }}</option>
           </select>
@@ -214,6 +214,18 @@
             <input formControlName="emptySent" type="number" class="form-control" placeholder="0">
             <div *ngIf="transactionForm.get('emptySent')?.invalid && transactionForm.get('emptySent')?.touched" class="error-message">
               Valid quantity required
+            </div>
+            <div class="balance-info" *ngIf="emptyLoading">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!emptyLoading && currentEmpty !== null">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">{{ currentEmpty }} cylinders</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!emptyLoading && emptyError">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">{{ emptyError }}</span>
             </div>
           </div>
         </div>

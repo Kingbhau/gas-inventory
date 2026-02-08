@@ -233,6 +233,38 @@
   color: #0f172a;
 }
 
+/* Current Empty Info */
+.balance-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.balance-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.balance-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.balance-info-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.balance-info-error .balance-value {
+  color: #dc2626;
+}
+
 .table tbody tr {
   transition: background 0.2s;
 }

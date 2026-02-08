@@ -1,4 +1,4 @@
-import { catchError, of, finalize } from 'rxjs';
+import { catchError, of, finalize, Subject, takeUntil } from 'rxjs';
 import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -29,6 +29,7 @@ import { SharedModule } from '../../shared/shared.module';
 export class EmptyReturnComponent implements OnInit, OnDestroy {
     @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
     
+    private destroy$ = new Subject<void>();
     emptyReturnForm: FormGroup;
     submitting = false;
     customers: any[] = [];
@@ -38,6 +39,12 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     bankAccounts: BankAccount[] = [];
     paymentModes: PaymentMode[] = [];
     successMessage = '';
+    currentBalance: number | null = null;
+    balanceLoading = false;
+    balanceError = '';
+    currentDue: number | null = null;
+    dueLoading = false;
+    dueError = '';
 
     constructor(
         private fb: FormBuilder,
@@ -174,7 +181,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             });
     }
 
-    ngOnDestroy() {}
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
 
     resetForm() {
         // Reset autocomplete components
@@ -205,6 +215,12 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.emptyReturnForm.markAsUntouched();
         this.filteredVariants = this.variants;
         this.successMessage = '';
+        this.currentBalance = null;
+        this.balanceLoading = false;
+        this.balanceError = '';
+        this.currentDue = null;
+        this.dueLoading = false;
+        this.dueError = '';
         
         // Clear validation state on all controls
         Object.keys(this.emptyReturnForm.controls).forEach(key => {
@@ -240,10 +256,18 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             this.filterVariantsByCustomerConfig(customer.id);
             // Clear variant selection when customer changes
             this.emptyReturnForm.get('variantId')?.setValue(null);
+            this.loadCurrentBalance();
+            this.loadCurrentDue();
             this.cdr.markForCheck();
         } else {
             this.emptyReturnForm.get('customerId')?.setValue(null);
             this.filteredVariants = this.variants;
+            this.currentBalance = null;
+            this.balanceLoading = false;
+            this.balanceError = '';
+            this.currentDue = null;
+            this.dueLoading = false;
+            this.dueError = '';
             this.cdr.markForCheck();
         }
     }
@@ -255,9 +279,78 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         if (variant && variant.id) {
             this.emptyReturnForm.get('variantId')?.setValue(variant.id);
             this.emptyReturnForm.get('variantId')?.markAsTouched();
+            this.loadCurrentBalance();
         } else {
             this.emptyReturnForm.get('variantId')?.setValue(null);
+            this.currentBalance = null;
+            this.balanceLoading = false;
+            this.balanceError = '';
         }
+    }
+
+    private loadCurrentBalance(): void {
+        const customerId = this.emptyReturnForm.get('customerId')?.value;
+        const variantId = this.emptyReturnForm.get('variantId')?.value;
+        if (!customerId || !variantId) {
+            this.currentBalance = null;
+            this.balanceLoading = false;
+            this.balanceError = '';
+            return;
+        }
+        this.balanceLoading = true;
+        this.balanceError = '';
+        this.ledgerService.getBalance(customerId, variantId)
+            .pipe(
+                catchError((err: any) => {
+                    console.error('Error loading customer balance:', err);
+                    this.balanceError = 'Current balance unavailable';
+                    return of(null);
+                }),
+                finalize(() => {
+                    this.balanceLoading = false;
+                    this.cdr.markForCheck();
+                }),
+                takeUntil(this.destroy$)
+            )
+            .subscribe(balance => {
+                if (balance !== null && balance !== undefined) {
+                    this.currentBalance = balance;
+                } else {
+                    this.currentBalance = null;
+                }
+            });
+    }
+
+    private loadCurrentDue(): void {
+        const customerId = this.emptyReturnForm.get('customerId')?.value;
+        if (!customerId) {
+            this.currentDue = null;
+            this.dueLoading = false;
+            this.dueError = '';
+            return;
+        }
+        this.dueLoading = true;
+        this.dueError = '';
+        this.ledgerService.getCustomerDueAmounts([customerId])
+            .pipe(
+                catchError((err: any) => {
+                    console.error('Error loading customer due amount:', err);
+                    this.dueError = 'Current due unavailable';
+                    return of(null);
+                }),
+                finalize(() => {
+                    this.dueLoading = false;
+                    this.cdr.markForCheck();
+                }),
+                takeUntil(this.destroy$)
+            )
+            .subscribe(dueMap => {
+                if (dueMap && typeof dueMap[customerId] !== 'undefined') {
+                    this.currentDue = dueMap[customerId];
+                } else {
+                    this.currentDue = 0;
+                }
+            });
     }
 
     /**

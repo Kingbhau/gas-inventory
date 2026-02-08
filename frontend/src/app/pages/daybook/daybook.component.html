@@ -69,6 +69,30 @@
         </div>
       </div>
 
+      <div class="report-summary type-summary" *ngIf="dayBookTypeSummaries.length > 0">
+        <div class="summary-card" *ngFor="let summary of dayBookTypeSummaries">
+          <span class="label">{{ summary.label }}</span>
+          <ng-container *ngIf="summary.type === 'WAREHOUSE_TRANSFER'; else amountSummary">
+            <span class="value">{{ summary.quantityMoved }} units</span>
+            <span class="summary-meta">{{ summary.count }} txn · {{ summary.quantityMoved }} units moved</span>
+          </ng-container>
+          <ng-template #amountSummary>
+            <span class="value" *ngIf="summary.type === 'PAYMENT' || summary.type === 'EMPTY_RETURN'; else totalAmountValue">
+              ₹{{ formatAmount(summary.amountReceived) }}
+            </span>
+            <ng-template #totalAmountValue>
+              <span class="value">₹{{ formatAmount(summary.totalAmount) }}</span>
+            </ng-template>
+            <span class="summary-meta" *ngIf="summary.amountReceived > 0; else countOnly">
+              {{ summary.count }} txn · ₹{{ formatAmount(summary.amountReceived) }} received
+            </span>
+            <ng-template #countOnly>
+              <span class="summary-meta">{{ summary.count }} txn</span>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+
       <!-- Transactions Table -->
       <div *ngIf="dayBookTransactions.length > 0; else noData" class="table-wrapper" id="daybook-table">
         <div class="mobile-table-scroll">

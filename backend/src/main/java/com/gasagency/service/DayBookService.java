@@ -296,7 +296,7 @@ public class DayBookService {
                 : "N/A");
         dayBook.setDetails(deposit.getNotes());
         dayBook.setTotalAmount(deposit.getDepositAmount());
-        dayBook.setAmountReceived(deposit.getDepositAmount());
+        dayBook.setAmountReceived(BigDecimal.ZERO);
         dayBook.setDueAmount(BigDecimal.ZERO);
         dayBook.setPaymentMode(deposit.getPaymentMode());
         dayBook.setCreatedBy(deposit.getCreatedBy());

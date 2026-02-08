@@ -43,6 +43,12 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   successMessage = '';
   baseAmount = 0;
   discountPrice: number = 0; // Customer-specific discount price
+  currentBalance: number | null = null;
+  balanceLoading = false;
+  balanceError = '';
+  currentDue: number | null = null;
+  dueLoading = false;
+  dueError = '';
 
   customerIdControl = new FormControl(null, Validators.required);
   variantIdControl = new FormControl(null, Validators.required);
@@ -214,6 +220,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         if (variantObj && variantObj.id) {
           this.prefillPrice(customerId, variantObj.id);
         }
+        this.loadCurrentBalance();
+        this.loadCurrentDue();
         this.cdr.markForCheck();
       });
     
@@ -229,6 +237,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         const customerObj = this.saleForm.get('customerId')?.value;
         const customerId = customerObj && customerObj.id ? customerObj.id : null;
         this.prefillPrice(customerId, variantId);
+        this.loadCurrentBalance();
         this.cdr.markForCheck();
       });
 
@@ -525,12 +534,20 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       this.saleForm.get('variantId')?.setValue(null);
       // Reload prices when customer changes
       this.prefillPrice(customer.id, this.saleForm.get('variantId')?.value);
+      this.loadCurrentBalance();
+      this.loadCurrentDue();
       this.cdr.markForCheck();
     } else {
       this.saleForm.get('customerId')?.setValue(null);
       this.filteredVariants = this.variants;
       this.saleForm.get('basePrice')?.setValue(0);
       this.discountPrice = 0;
+      this.currentBalance = null;
+      this.balanceLoading = false;
+      this.balanceError = '';
+      this.currentDue = null;
+      this.dueLoading = false;
+      this.dueError = '';
       this.cdr.markForCheck();
     }
   }
@@ -544,11 +561,83 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       const customerObj = this.saleForm.get('customerId')?.value;
       const customerId = customerObj && customerObj.id ? customerObj.id : null;
       this.prefillPrice(customerId, variant.id);
+      this.loadCurrentBalance();
     } else {
       this.saleForm.get('variantId')?.setValue(null);
       this.saleForm.get('basePrice')?.setValue(0);
       this.discountPrice = 0;
+      this.currentBalance = null;
+      this.balanceLoading = false;
+      this.balanceError = '';
     }
+  }
+
+  private loadCurrentBalance(): void {
+    const customerObj = this.saleForm.get('customerId')?.value;
+    const variantObj = this.saleForm.get('variantId')?.value;
+    const customerId = customerObj && customerObj.id ? customerObj.id : null;
+    const variantId = variantObj && variantObj.id ? variantObj.id : null;
+    if (!customerId || !variantId) {
+      this.currentBalance = null;
+      this.balanceLoading = false;
+      this.balanceError = '';
+      return;
+    }
+    this.balanceLoading = true;
+    this.balanceError = '';
+    this.customerCylinderLedgerService.getCustomerVariantBalance(customerId, variantId)
+      .pipe(
+        catchError((err: any) => {
+          console.error('Error loading customer balance:', err);
+          this.balanceError = 'Current balance unavailable';
+          return of(null);
+        }),
+        finalize(() => {
+          this.balanceLoading = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(balance => {
+        if (balance !== null && balance !== undefined) {
+          this.currentBalance = balance;
+        } else {
+          this.currentBalance = null;
+        }
+      });
+  }
+
+  private loadCurrentDue(): void {
+    const customerObj = this.saleForm.get('customerId')?.value;
+    const customerId = customerObj && customerObj.id ? customerObj.id : null;
+    if (!customerId) {
+      this.currentDue = null;
+      this.dueLoading = false;
+      this.dueError = '';
+      return;
+    }
+    this.dueLoading = true;
+    this.dueError = '';
+    this.customerCylinderLedgerService.getCustomerDueAmounts([customerId])
+      .pipe(
+        catchError((err: any) => {
+          console.error('Error loading customer due amount:', err);
+          this.dueError = 'Current due unavailable';
+          return of(null);
+        }),
+        finalize(() => {
+          this.dueLoading = false;
+          this.cdr.markForCheck();
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(dueMap => {
+        if (dueMap && typeof dueMap[customerId] !== 'undefined') {
+          this.currentDue = dueMap[customerId];
+        } else {
+          this.currentDue = 0;
+        }
+      });
   }
 
   /**
@@ -749,5 +838,11 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.baseAmount = 0;
     this.discountPrice = 0;
     this.filteredVariants = this.variants;
+    this.currentBalance = null;
+    this.balanceLoading = false;
+    this.balanceError = '';
+    this.currentDue = null;
+    this.dueLoading = false;
+    this.dueError = '';
   }
 }

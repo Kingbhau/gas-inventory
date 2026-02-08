@@ -1,0 +1,5 @@
+@import '../bank-deposits/bank-deposit-history.component.css';
+
+.payment-history-container {
+  padding: 0;
+}
