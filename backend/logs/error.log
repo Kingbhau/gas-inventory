@@ -16774,3 +16774,5 @@ Caused by: org.springframework.security.access.AccessDeniedException: Access Den
 	at org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:137)
 	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)
 	... 87 common frames omitted
+2026-02-08 12:58:44.665 | ERROR | [f9b8cc01-4ca5-457c-86a8-5995aa8a4796] [] [80d3ab09-f046-4c42-8e7a-e3a1888fe8e1] | http-nio-8080-exec-3 | o.h.e.jdbc.spi.SqlExceptionHelper | ERROR: duplicate key value violates unique constraint "uk_kphiqj5r82mq4av6sq9v31wpl"
+  Detail: Key (alert_key)=(LOW_STOCK_FILLED_WH_1_VAR_1) already exists.

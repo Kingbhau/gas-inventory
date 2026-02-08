@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, timer } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
 
@@ -35,6 +35,8 @@ export class AlertService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 3;
   private initialized = false;
+  private pollSubscription: Subscription | null = null;
+  private pollIntervalMs = 30000;
   
   constructor(private http: HttpClient) {
     // Don't initialize automatically - only after login
@@ -53,6 +55,7 @@ export class AlertService {
         this.eventSource.close();
         this.eventSource = null;
       }
+      this.stopPolling();
       // Don't clear alerts here - we want to preserve them if already loaded
       // Only clear if this is the first initialization
       if (!this.initialized) {
@@ -74,6 +77,7 @@ export class AlertService {
     this.alertCount$.next(0);
     this.initialized = false;
     this.reconnectAttempts = 0;
+    this.stopPolling();
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
@@ -85,6 +89,8 @@ export class AlertService {
    */
   private initializeAlerts(): void {
     this.loadInitialAlerts();
+    // Start polling immediately as a fallback; SSE will disable it on connect.
+    this.startPolling();
     this.initSSE();
   }
   
@@ -125,6 +131,12 @@ export class AlertService {
    */
   private initSSE(): void {
     try {
+      if (typeof EventSource === 'undefined') {
+        console.warn('⚠️ EventSource is not supported. Falling back to polling.');
+        this.startPolling();
+        return;
+      }
+
       const sseUrl = `${this.apiUrl}/stream`;
       console.log('🔌 Initiating SSE connection to:', sseUrl);
       
@@ -135,6 +147,7 @@ export class AlertService {
       this.eventSource.onopen = () => {
         console.log('✅ SSE connection established');
         this.reconnectAttempts = 0; // Reset reconnect counter on successful connection
+        this.stopPolling();
       };
 
       // Handle connection confirmation
@@ -188,10 +201,32 @@ export class AlertService {
           }, delay);
         } else {
           console.warn('⚠️ Max SSE reconnection attempts reached. Alerts may be unavailable.');
+          this.startPolling();
         }
       };
     } catch (error) {
       console.error('Failed to initialize SSE:', error);
+      this.startPolling();
+    }
+  }
+
+  /**
+   * Poll alerts periodically as a fallback when SSE is unavailable.
+   */
+  private startPolling(): void {
+    if (this.pollSubscription) {
+      return;
+    }
+    console.log(`🔁 Starting alert polling every ${this.pollIntervalMs}ms`);
+    this.pollSubscription = timer(0, this.pollIntervalMs).subscribe(() => {
+      this.loadInitialAlerts();
+    });
+  }
+
+  private stopPolling(): void {
+    if (this.pollSubscription) {
+      this.pollSubscription.unsubscribe();
+      this.pollSubscription = null;
     }
   }
   
@@ -259,5 +294,6 @@ export class AlertService {
     if (this.eventSource) {
       this.eventSource.close();
     }
+    this.stopPolling();
   }
 }
