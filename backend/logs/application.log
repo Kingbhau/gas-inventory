@@ -1,1 +1,2 @@
 2026-02-09 11:25:02.411 | WARN  | [] [] [] | HikariPool-1 housekeeper | com.zaxxer.hikari.pool.HikariPool | HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=13h3m18s251ms572µs500ns).
+2026-02-09 12:13:18.050 | WARN  | [] [] [] | SpringApplicationShutdownHook | org.hibernate.orm.cache | HHH90001002: Attempt to restop an already stopped JCacheRegionFactory.
