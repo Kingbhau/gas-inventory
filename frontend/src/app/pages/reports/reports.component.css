@@ -164,6 +164,30 @@
   margin-top: 0.5rem;
 }
 
+@media (max-width: 768px) {
+  .filters-card {
+    padding: 0.75rem;
+  }
+  .filter-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .filter-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .filter-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .filter-actions .btn {
+    width: 100%;
+  }
+  .selector-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
 /* Card */
 .card {
   background: white;
