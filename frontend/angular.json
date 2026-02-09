@@ -38,7 +38,12 @@
           },
           "configurations": {
             "production": {
-             "budgets": [
+              "optimization": {
+                "fonts": {
+                  "inline": false
+                }
+              },
+              "budgets": [
                 {
                   "type": "initial",
                   "maximumWarning": "1.2mb",
