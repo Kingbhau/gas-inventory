@@ -45,14 +45,21 @@ public class SupplierTransactionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") String direction) {
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllTransactions(pageable));
+        return ResponseEntity.ok(service.getAllTransactions(pageable, referenceNumber, createdBy));
     }
 
     @GetMapping("/supplier/{supplierId}")
     public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsBySupplier(@PathVariable Long supplierId) {
         return ResponseEntity.ok(service.getTransactionsBySupplier(supplierId));
+    }
+
+    @GetMapping("/warehouse/{warehouseId}")
+    public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsByWarehouse(@PathVariable Long warehouseId) {
+        return ResponseEntity.ok(service.getTransactionsByWarehouse(warehouseId));
     }
 }

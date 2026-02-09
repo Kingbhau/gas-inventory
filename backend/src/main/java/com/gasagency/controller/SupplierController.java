@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/suppliers")
@@ -21,8 +22,24 @@ public class SupplierController {
     }
 
     @PostMapping
-    public ResponseEntity<SupplierDTO> createSupplier(@Valid @RequestBody SupplierDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createSupplier(dto));
+    public ResponseEntity<SupplierDTO> createSupplier(@Valid @RequestBody Map<String, Object> request) {
+        String name = (String) request.get("name");
+        String contact = (String) request.get("contact");
+        Long businessId = null;
+
+        if (request.get("businessId") instanceof Number) {
+            businessId = ((Number) request.get("businessId")).longValue();
+        }
+
+        if (businessId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        SupplierDTO dto = new SupplierDTO();
+        dto.setName(name);
+        dto.setContact(contact);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createSupplier(dto, businessId));
     }
 
     @GetMapping("/{id}")

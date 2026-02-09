@@ -1,9 +1,13 @@
 package com.gasagency.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public class SupplierTransactionDTO {
     private Long id;
+    private Long warehouseId;
+    private String warehouseName;
     private Long supplierId;
     private String supplierName;
     private Long variantId;
@@ -12,14 +16,21 @@ public class SupplierTransactionDTO {
     private Long filledReceived;
     private Long emptySent;
     private String reference;
-    private Double amount;
+    private BigDecimal amount;
+    private String createdBy;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+    private String updatedBy;
 
     public SupplierTransactionDTO() {
     }
 
-    public SupplierTransactionDTO(Long id, Long supplierId, String supplierName, Long variantId, String variantName,
-            LocalDate transactionDate, Long filledReceived, Long emptySent, String reference, Double amount) {
+    public SupplierTransactionDTO(Long id, Long warehouseId, String warehouseName, Long supplierId, String supplierName,
+            Long variantId, String variantName,
+            LocalDate transactionDate, Long filledReceived, Long emptySent, String reference, BigDecimal amount) {
         this.id = id;
+        this.warehouseId = warehouseId;
+        this.warehouseName = warehouseName;
         this.supplierId = supplierId;
         this.supplierName = supplierName;
         this.variantId = variantId;
@@ -32,11 +43,11 @@ public class SupplierTransactionDTO {
     }
 
     public Double getAmount() {
-        return amount;
+        return amount != null ? amount.doubleValue() : null;
     }
 
     public void setAmount(Double amount) {
-        this.amount = amount;
+        this.amount = amount != null ? BigDecimal.valueOf(amount) : null;
     }
 
     public Long getId() {
@@ -45,6 +56,22 @@ public class SupplierTransactionDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
     }
 
     public Long getSupplierId() {
@@ -109,5 +136,37 @@ public class SupplierTransactionDTO {
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(LocalDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public LocalDateTime getUpdatedDate() {
+        return updatedDate;
+    }
+
+    public void setUpdatedDate(LocalDateTime updatedDate) {
+        this.updatedDate = updatedDate;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

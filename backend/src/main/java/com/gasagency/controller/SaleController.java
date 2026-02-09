@@ -36,9 +36,27 @@ public class SaleController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         return ResponseEntity
-                .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount));
+                .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount,
+                        referenceNumber, createdBy));
+    }
+
+    @GetMapping("/payment-mode-summary")
+    public ResponseEntity<com.gasagency.dto.PaymentModeSummaryDTO> getPaymentModeSummary(
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) Integer minTransactionCount) {
+        return ResponseEntity.ok(service.getPaymentModeSummary(fromDate, toDate, customerId, paymentMode,
+                variantId, bankAccountId, minAmount, maxAmount, minTransactionCount));
     }
 
     @PostMapping
@@ -62,10 +80,13 @@ public class SaleController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long variantId,
             @RequestParam(required = false) Double minAmount,
-            @RequestParam(required = false) Double maxAmount) {
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String referenceNumber,
+            @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         return ResponseEntity
-                .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount));
+                .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount,
+                        referenceNumber, createdBy));
     }
 
     @GetMapping("/customer/{customerId}")

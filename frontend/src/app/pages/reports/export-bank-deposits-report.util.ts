@@ -1,0 +1,183 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+// Helper function for IST date
+function getTodayInIST(): string {
+  const now = new Date();
+  // Get date components in local time (which is IST for Indian users)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export function exportBankDepositsReportToPDF({
+  deposits,
+  fromDate,
+  toDate,
+  bankAccountName,
+  paymentMode,
+  referenceNumber,
+  totalAmount,
+  avgDepositValue,
+  depositCount,
+  businessName
+}: {
+  deposits: any[],
+  fromDate?: string,
+  toDate?: string,
+  bankAccountName?: string,
+  paymentMode?: string,
+  referenceNumber?: string,
+  totalAmount: number,
+  avgDepositValue: number,
+  depositCount: number,
+  businessName?: string
+}) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let y = 18;
+
+  // Company Name (bold, top center, larger)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.text(businessName || 'GAS AGENCY SYSTEM', pageWidth / 2, y, { align: 'center' });
+  y += 9;
+
+  // Report Title (modern, clear)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('Bank Deposits Report', pageWidth / 2, y, { align: 'center' });
+  y += 7;
+
+  // Generated Date (centered, subtle)
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  doc.setTextColor(90);
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
+  y += 5;
+
+  // Date Range (centered, subtle)
+  doc.setFontSize(10);
+  if (fromDate || toDate) {
+    doc.text(`Date: ${fromDate || '...'} to ${toDate || '...'}`, pageWidth / 2, y, { align: 'center' });
+    y += 5;
+  }
+  doc.setTextColor(0);
+
+  // Divider line
+  doc.setDrawColor(180);
+  doc.setLineWidth(0.5);
+  doc.line(12, y, pageWidth - 12, y);
+  y += 4;
+
+  // Improved Summary Section (shaded, grid/table style)
+  doc.setFillColor(245, 250, 255);
+  doc.roundedRect(12, y, pageWidth - 24, 20, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.text('Summary', 16, y + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5);
+  // Grid layout for summary (2 columns)
+  doc.text(`Total Deposits:`, 16, y + 13);
+  doc.text(`Rs. ${totalAmount.toLocaleString()}`, 45, y + 13);
+  doc.text(`Count:`, 80, y + 13);
+  doc.text(`${depositCount}`, 110, y + 13);
+  doc.text(`Avg. Deposit:`, 16, y + 18);
+  doc.text(`Rs. ${avgDepositValue.toLocaleString()}`, 45, y + 18);
+  doc.text(`Account:`, 80, y + 18);
+  doc.text(`${bankAccountName || 'All'}`, 110, y + 18);
+  y += 25;
+
+  // Improved Filters Section (shaded, two-column layout)
+  doc.setFillColor(235, 240, 245);
+  doc.roundedRect(12, y, pageWidth - 24, 13, 2, 2, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('Filters:', 16, y + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  let filterArr = [];
+  // Date filter removed to avoid redundancy (date range is shown above)
+  filterArr.push(`Account: ${bankAccountName || 'All'}`);
+  filterArr.push(`Mode: ${paymentMode || 'All'}`);
+  if (referenceNumber) filterArr.push(`Reference: ${referenceNumber}`);
+  // Two-column filter display
+  let filterY = y + 6;
+  let col1X = 35, col2X = 90;
+  for (let i = 0; i < filterArr.length; i++) {
+    const x = i % 2 === 0 ? col1X : col2X;
+    const yPos = filterY + Math.floor(i / 2) * 5;
+    doc.text(filterArr[i], x, yPos);
+  }
+  y += 16;
+
+  // Divider line
+  doc.setDrawColor(220);
+  doc.setLineWidth(0.2);
+  doc.line(12, y, pageWidth - 12, y);
+  y += 2;
+
+  // Table Data
+  const tableData = deposits.map(deposit => [
+    deposit.depositDate ? formatDateInIST(new Date(deposit.depositDate)) : '-',
+    deposit.referenceNumber || '-',
+    deposit.bankAccountName || '-',
+    `Rs. ${Number(deposit.depositAmount).toLocaleString()}`,
+    deposit.paymentMode || 'N/A',
+    deposit.notes || '-'
+  ]);
+
+  autoTable(doc, {
+    startY: y + 2,
+    head: [[
+      'Date',
+      'Reference #',
+      'Bank Account',
+      'Amount',
+      'Payment Mode',
+      'Notes'
+    ]],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
+    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
+    alternateRowStyles: { fillColor: [245, 250, 255] },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 28 },
+      1: { halign: 'center', cellWidth: 33 },
+      2: { halign: 'left', cellWidth: 39 },
+      3: { halign: 'right', cellWidth: 31 },
+      4: { halign: 'left', cellWidth: 31 },
+      5: { halign: 'left', cellWidth: 39 }
+    },
+    margin: { left: 5, right: 5 },
+    didDrawPage: (data) => {
+      // Professional footer: left "Confidential", right page number
+      const pageCount = doc.getNumberOfPages();
+      const pageNumber = doc.getCurrentPageInfo().pageNumber;
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text('Confidential', 12, pageHeight - 8);
+      doc.setTextColor(150);
+      doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 12, pageHeight - 8, { align: 'right' });
+    }
+  });
+
+  let fileDate = '';
+  if (fromDate || toDate) {
+    fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
+  } else {
+    const now = new Date();
+    fileDate = getTodayInIST();
+  }
+  doc.save(`bank-deposits-report-${fileDate}.pdf`);
+}

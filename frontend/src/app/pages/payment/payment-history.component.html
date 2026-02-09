@@ -1,0 +1,203 @@
+<div class="bank-deposit-history-container payment-history-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Payment History</h1>
+    <p class="page-subtitle">Track all customer payments</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [labelClass]="'filter-label'"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All Customers"
+          (selectedChange)="filterCustomerId = $event?.id || null"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Payment Mode</label>
+        <select [(ngModel)]="filterPaymentMode" class="filter-input">
+          <option value="">All Modes</option>
+          <option *ngFor="let mode of paymentModes" [value]="mode.name">
+            {{ mode.name }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Bank Account</label>
+        <select [(ngModel)]="filterBankAccountId" (ngModelChange)="onBankAccountChange($event)" class="filter-input">
+          <option [ngValue]="null">All Accounts</option>
+          <option *ngFor="let account of bankAccounts" [ngValue]="account.id">
+            {{ account.bankName }} - {{ account.accountNumber }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-actions">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="report-summary">
+    <div class="summary-card">
+      <span class="label">Total Payments</span>
+      <span class="value">{{ totalAmount | indianCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">No. of Payments</span>
+      <span class="value">{{ totalElements }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Avg. Payment</span>
+      <span class="value">{{ (totalElements > 0 ? totalAmount / totalElements : 0) | indianCurrency }}</span>
+    </div>
+  </div>
+
+  <!-- Payments Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Payment Records</h3>
+      <span class="record-count">{{ totalElements }} records</span>
+    </div>
+    <div class="card-body">
+      <div *ngIf="paginatedPayments.length > 0; else noData" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Mode</th>
+              <th>Bank Account</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let payment of paginatedPayments">
+              <td>{{ payment.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td>{{ payment.customerName || 'N/A' }}</td>
+              <td class="amount">₹{{ payment.amountReceived | number: '1.2-2' }}</td>
+              <td>{{ payment.paymentMode || 'N/A' }}</td>
+              <td>{{ payment.bankAccountName || getBankAccountName(payment.bankAccountId) }}</td>
+              <td>
+                <button class="btn-action" (click)="viewPayment(payment)" title="View Details">
+                  <fa-icon [icon]="faEye"></fa-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- No Data Message -->
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No payments found</p>
+        </div>
+      </ng-template>
+
+      <!-- Pagination -->
+      <div *ngIf="payments.length > 0" class="pagination">
+        <button 
+          (click)="previousPage()" 
+          [disabled]="currentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button 
+          (click)="nextPage()" 
+          [disabled]="currentPage === totalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Details Modal -->
+  <div *ngIf="selectedPayment" class="modal-overlay" (click)="closeViewModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Payment Details - #{{ selectedPayment.id }}</h3>
+        <button class="modal-close" (click)="closeViewModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="details-section">
+          <div class="detail-row">
+            <span class="label">Payment Date:</span>
+            <span class="value">{{ selectedPayment.transactionDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Customer:</span>
+            <span class="value">{{ selectedPayment.customerName || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Amount:</span>
+            <span class="value">₹{{ selectedPayment.amountReceived | number: '1.2-2' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ selectedPayment.paymentMode || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Bank Account:</span>
+            <span class="value">{{ selectedPayment.bankAccountName || getBankAccountName(selectedPayment.bankAccountId) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedPayment.createdBy) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedPayment.updatedBy) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedPayment.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedPayment.note">
+            <span class="label">Note:</span>
+            <span class="value">{{ selectedPayment.note }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

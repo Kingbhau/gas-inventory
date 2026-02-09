@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -7,20 +7,31 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './autocomplete-input.component.html',
-  styleUrls: ['./autocomplete-input.component.css']
+  styleUrls: ['./autocomplete-input.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AutocompleteInputComponent<T = any> {
+export class AutocompleteInputComponent<T = any> implements OnChanges {
   @Input() placeholder: string = '';
   @Input() label: string = '';
   @Input() required: boolean = false;
   @Input() items: T[] = [];
   @Input() displayKey: keyof T | null = null;
+  @Input() labelClass: string = 'form-label';
   @Input() selected: T | null = null;
 
   @Output() selectedChange = new EventEmitter<T | null>();
+  @ViewChild('searchInput') searchInput!: ElementRef;
 
   searchText: string = '';
   isOpen: boolean = false;
+
+  constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['items'] && !changes['items'].firstChange) {
+      this.cdr.markForCheck();
+    }
+  }
 
   get filteredItems(): T[] {
     const text = (this.searchText || '').toLowerCase();
@@ -35,12 +46,23 @@ export class AutocompleteInputComponent<T = any> {
 
   onFocus() {
     this.isOpen = true;
+    this.cdr.markForCheck();
   }
 
   onBlur() {
     setTimeout(() => {
       this.isOpen = false;
+      this.cdr.markForCheck();
     }, 150);
+  }
+
+  onInputChange() {
+    // If input is cleared, emit null to clear the form value
+    if (!this.searchText || this.searchText.trim() === '') {
+      this.selected = null;
+      this.selectedChange.emit(null);
+      this.cdr.markForCheck();
+    }
   }
 
   onSelect(item: T) {
@@ -48,6 +70,7 @@ export class AutocompleteInputComponent<T = any> {
     this.selectedChange.emit(item);
     this.searchText = this.getDisplayValue(item);
     this.isOpen = false;
+    this.cdr.markForCheck();
   }
 
   getDisplayValue(item: T | null): string {
@@ -56,6 +79,16 @@ export class AutocompleteInputComponent<T = any> {
       return String((item as any)[this.displayKey] ?? '');
     }
     return String(item);
+  }
+
+  resetInput(): void {
+    this.searchText = '';
+    this.selected = null;
+    this.isOpen = false;
+    if (this.searchInput) {
+      this.searchInput.nativeElement.value = '';
+    }
+    this.cdr.markForCheck();
   }
 }
 

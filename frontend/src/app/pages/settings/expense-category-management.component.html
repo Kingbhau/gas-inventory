@@ -32,6 +32,18 @@
             rows="2"></textarea>
         </div>
 
+        <!-- Status -->
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="isActive"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
         <!-- Modal Footer -->
         <div class="modal-footer">
           <button 
@@ -85,13 +97,12 @@
               <td><strong>{{ category.name }}</strong></td>
               <td class="muted">{{ category.description || '-' }}</td>
               <td class="text-center">
-                <button 
-                  (click)="toggleStatus(category)"
-                  [class.badge-active]="category.isActive"
-                  [class.badge-inactive]="!category.isActive"
-                  class="badge">
+                <span 
+                  [class.active]="category.isActive"
+                  [class.inactive]="!category.isActive"
+                  class="status-badge">
                   {{ category.isActive ? 'Active' : 'Inactive' }}
-                </button>
+                </span>
               </td>
               <td class="text-center">
                 <button 
@@ -100,12 +111,6 @@
                   title="Edit">
                   <fa-icon [icon]="faEdit"></fa-icon>
                 </button>
-                <!-- <button 
-                  (click)="onDelete(category.id)"
-                  class="btn-action delete"
-                  title="Delete">
-                  <fa-icon [icon]="faTrash"></fa-icon>
-                </button> -->
               </td>
             </tr>
           </tbody>

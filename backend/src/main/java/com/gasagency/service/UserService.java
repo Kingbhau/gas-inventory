@@ -8,6 +8,8 @@ import com.gasagency.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,7 @@ public class UserService {
     @Autowired
     private BusinessInfoRepository businessInfoRepository;
 
+    @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
     public User createUser(UserDTO userDTO) {
         User newUser = new User();
         newUser.setUsername(userDTO.getUsername());
@@ -61,13 +64,14 @@ public class UserService {
         return false;
     }
 
+    @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
     public Optional<User> updateUser(Long id, User updatedUser) {
         return userRepository.findById(id).map(user -> {
             if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
                 user.setUsername(updatedUser.getUsername());
             }
             if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-                user.setPassword(updatedUser.getPassword());
+                user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
             }
             if (updatedUser.getRole() != null) {
                 user.setRole(updatedUser.getRole());
@@ -88,6 +92,7 @@ public class UserService {
         });
     }
 
+    @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
     public boolean softDeleteUser(Long id) {
         return userRepository.findById(id).map(user -> {
             user.setActive(false);
@@ -96,11 +101,52 @@ public class UserService {
         }).orElse(false);
     }
 
+    @Cacheable("usersActive")
     public List<User> getAllActiveUsers() {
         return userRepository.findByActiveTrue();
     }
 
+    @Cacheable("usersAll")
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id).filter(User::isActive);
+    }
+
+    @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
+    public Optional<UserDTO> reactivateUser(Long id) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        User user = userOpt.get();
+        if (user.isActive()) {
+            throw new IllegalArgumentException("User is already active");
+        }
+
+        user.setActive(true);
+        User saved = userRepository.save(user);
+        return Optional.of(convertToDTO(saved));
+    }
+
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setName(user.getName());
+        dto.setMobileNo(user.getMobileNo());
+        dto.setRole(user.getRole().toString());
+        dto.setActive(user.isActive());
+        dto.setCreatedBy(user.getCreatedBy());
+        dto.setCreatedDate(user.getCreatedDate());
+        dto.setUpdatedBy(user.getUpdatedBy());
+        dto.setUpdatedDate(user.getUpdatedDate());
+        if (user.getBusiness() != null) {
+            dto.setBusinessId(user.getBusiness().getId());
+        }
+        return dto;
     }
 }

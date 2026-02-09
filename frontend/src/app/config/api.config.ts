@@ -8,7 +8,10 @@ export const API_CONFIG = {
     monthlyPrices: '/monthly-prices',
     supplierTransactions: '/supplier-transactions',
     variants: '/variants',
-    ledger: '/ledger'
+    ledger: '/ledger',
+    warehouses: '/warehouses',
+    warehouseTransfers: '/warehouse-transfers',
+    bankDeposits: '/bank-deposits'
   }
 };
 

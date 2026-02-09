@@ -1,0 +1,119 @@
+<div class="bank-deposit-entry-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Record Bank Deposit</h1>
+    <p class="page-subtitle">Track deposits to bank account</p>
+  </div>
+
+  <!-- Bank Deposit Form -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Deposit Details</h3>
+    </div>
+    <div class="card-body">
+      <form [formGroup]="depositForm" (ngSubmit)="onSubmit()" class="deposit-form">
+        <!-- Row 1: Bank Account & Deposit Date -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Bank Account <span class="required">*</span></label>
+            <select formControlName="bankAccountId" class="form-control" 
+              [class.is-invalid]="isFieldInvalid('bankAccountId')">
+              <option [ngValue]="null" disabled selected hidden>Select bank account</option>
+              <option *ngFor="let account of bankAccounts" [value]="account.id">
+                {{ account.bankName }} - {{ account.accountNumber }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('bankAccountId')" class="error-message">
+              {{ getFieldError('bankAccountId') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Deposit Date <span class="required">*</span></label>
+            <input type="date" formControlName="depositDate" class="form-control"
+              [class.is-invalid]="isFieldInvalid('depositDate')">
+            <div *ngIf="isFieldInvalid('depositDate')" class="error-message">
+              {{ getFieldError('depositDate') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Deposit Amount & Reference Number -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Deposit Amount (₹) <span class="required">*</span></label>
+            <div class="input-with-prefix">
+              <span class="currency">₹</span>
+              <input type="text" formControlName="depositAmount" class="form-control"
+                placeholder="0.00"
+                indianCurrencyFormat
+                [class.is-invalid]="isFieldInvalid('depositAmount')">
+            </div>
+            <div *ngIf="isFieldInvalid('depositAmount')" class="error-message">
+              {{ getFieldError('depositAmount') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Reference #</label>
+            <input type="text" formControlName="referenceNumber" class="form-control"
+              placeholder="Cheque #, Transaction ID, or Deposit Slip #"
+              [class.is-invalid]="isFieldInvalid('referenceNumber')">
+            <div *ngIf="isFieldInvalid('referenceNumber')" class="error-message">
+              {{ getFieldError('referenceNumber') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Payment Mode & Notes -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Payment Mode <span class="required">*</span></label>
+            <select formControlName="paymentMode" class="form-control"
+              [class.is-invalid]="isFieldInvalid('paymentMode')">
+              <option [ngValue]="''" disabled selected hidden>Select payment mode</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">
+                {{ mode.name }}
+              </option>
+            </select>
+            <div *ngIf="isFieldInvalid('paymentMode')" class="error-message">
+              {{ getFieldError('paymentMode') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea formControlName="notes" class="form-control" 
+              placeholder="Additional remarks (optional)"
+              rows="3"></textarea>
+          </div>
+        </div>
+
+        <!-- Selected Bank Account Info -->
+        <div *ngIf="getSelectedBankAccount()" class="bank-info-display">
+          <div class="info-title">Selected Bank Account</div>
+          <div class="info-row">
+            <span class="info-label">Bank:</span>
+            <span class="info-value">{{ getSelectedBankAccount()?.bankName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Account #:</span>
+            <span class="info-value">{{ getSelectedBankAccount()?.accountNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Account Holder:</span>
+            <span class="info-value">{{ getSelectedBankAccount()?.accountHolderName }}</span>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="!depositForm.valid || isSubmitting">
+            {{ isSubmitting ? 'Saving...' : 'Save' }}
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="isSubmitting">Reset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

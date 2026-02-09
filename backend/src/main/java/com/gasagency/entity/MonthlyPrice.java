@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "monthly_price", indexes = {
+        @Index(name = "idx_mp_variant_month", columnList = "variant_id, month_year"),
         @Index(name = "idx_monthlyprice_variant_id", columnList = "variant_id"),
-        @Index(name = "idx_monthlyprice_month_year", columnList = "monthYear")
+        @Index(name = "idx_monthlyprice_month_year", columnList = "month_year")
 })
 public class MonthlyPrice extends Auditable {
     @Id
@@ -19,6 +21,7 @@ public class MonthlyPrice extends Auditable {
     @NotNull(message = "Variant is required.")
     @ManyToOne
     @JoinColumn(name = "variant_id", nullable = false)
+    @JsonBackReference("variant-monthlyPrices")
     private CylinderVariant variant;
 
     @NotNull(message = "Month/Year is required.")

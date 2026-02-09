@@ -2,9 +2,15 @@ package com.gasagency.service;
 
 import com.gasagency.dto.SupplierDTO;
 import com.gasagency.entity.Supplier;
+import com.gasagency.entity.BusinessInfo;
 import com.gasagency.repository.SupplierRepository;
+import com.gasagency.repository.BusinessInfoRepository;
 import com.gasagency.exception.ResourceNotFoundException;
+import com.gasagency.repository.SupplierTransactionRepository;
 import com.gasagency.util.LoggerUtil;
+import com.gasagency.util.CodeGenerator;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,17 +25,38 @@ public class SupplierService {
     private static final Logger logger = LoggerFactory.getLogger(SupplierService.class);
     private final SupplierRepository repository;
     private final com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository;
+    private final CodeGenerator codeGenerator;
+    private final BusinessInfoRepository businessInfoRepository;
 
     public SupplierService(SupplierRepository repository,
-            com.gasagency.repository.SupplierTransactionRepository supplierTransactionRepository) {
+            SupplierTransactionRepository supplierTransactionRepository,
+            CodeGenerator codeGenerator,
+            BusinessInfoRepository businessInfoRepository) {
         this.repository = repository;
         this.supplierTransactionRepository = supplierTransactionRepository;
+        this.codeGenerator = codeGenerator;
+        this.businessInfoRepository = businessInfoRepository;
     }
 
-    public SupplierDTO createSupplier(SupplierDTO dto) {
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
+    public SupplierDTO createSupplier(SupplierDTO dto, Long businessId) {
         LoggerUtil.logBusinessEntry(logger, "CREATE_SUPPLIER", "name", dto != null ? dto.getName() : "null");
 
+        // Validate businessId
+        if (businessId == null) {
+            throw new IllegalArgumentException("Business ID is required");
+        }
+
+        // Load business entity
+        BusinessInfo business = businessInfoRepository.findById(businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Business not found with id: " + businessId));
+
         Supplier supplier = new Supplier(dto.getName(), dto.getContact());
+        // Auto-generate unique supplier code
+        String supplierCode = codeGenerator.generateSupplierCode();
+        supplier.setCode(supplierCode);
+        supplier.setBusiness(business);
+
         supplier = repository.save(supplier);
 
         LoggerUtil.logBusinessSuccess(logger, "CREATE_SUPPLIER", "id", supplier.getId(), "name", supplier.getName());
@@ -49,6 +76,7 @@ public class SupplierService {
         return toDTO(supplier);
     }
 
+    @Cacheable("suppliersAll")
     public List<SupplierDTO> getAllSuppliers() {
         LoggerUtil.logDatabaseOperation(logger, "SELECT_ALL", "SUPPLIER");
 
@@ -65,6 +93,7 @@ public class SupplierService {
                 .map(this::toDTO);
     }
 
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
     public SupplierDTO updateSupplier(Long id, SupplierDTO dto) {
         LoggerUtil.logBusinessEntry(logger, "UPDATE_SUPPLIER", "id", id, "name", dto != null ? dto.getName() : "null");
 
@@ -85,6 +114,7 @@ public class SupplierService {
     }
 
     @Transactional
+    @CacheEvict(value = { "suppliersAll" }, allEntries = true)
     public void deleteSupplier(Long id) {
         LoggerUtil.logBusinessEntry(logger, "DELETE_SUPPLIER", "id", id);
 
@@ -108,6 +138,8 @@ public class SupplierService {
     }
 
     private SupplierDTO toDTO(Supplier supplier) {
-        return new SupplierDTO(supplier.getId(), supplier.getName(), supplier.getContact());
+        SupplierDTO dto = new SupplierDTO(supplier.getId(), supplier.getName(), supplier.getContact());
+        dto.setCode(supplier.getCode());
+        return dto;
     }
 }

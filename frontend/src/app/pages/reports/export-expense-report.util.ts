@@ -1,6 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function getTodayInIST(): string {
+  const now = new Date();
+  // Get date components in local time (which is IST for Indian users)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportExpenseReportToPDF({
   expenseData,
   fromDate,
@@ -12,7 +29,9 @@ export function exportExpenseReportToPDF({
   minAmount,
   maxAmount,
   transactionCount,
-  categoryFilter
+  categoryFilter,
+  paymentMode,
+  bankAccountName
 }: {
   expenseData: any[],
   fromDate?: string,
@@ -24,7 +43,9 @@ export function exportExpenseReportToPDF({
   minAmount?: number,
   maxAmount?: number,
   transactionCount?: number,
-  categoryFilter?: string
+  categoryFilter?: string,
+  paymentMode?: string,
+  bankAccountName?: string
 }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -47,7 +68,7 @@ export function exportExpenseReportToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range (centered, subtle)
@@ -93,6 +114,8 @@ export function exportExpenseReportToPDF({
   doc.setFontSize(8.5);
   let filterArr = [];
   if (categoryFilter) filterArr.push(`Category: ${categoryFilter}`);
+  if (paymentMode) filterArr.push(`Payment Mode: ${paymentMode}`);
+  if (bankAccountName) filterArr.push(`Bank: ${bankAccountName}`);
   if (minAmount !== undefined && minAmount !== null) filterArr.push(`Min: Rs. ${minAmount}`);
   if (maxAmount !== undefined && maxAmount !== null) filterArr.push(`Max: Rs. ${maxAmount}`);
   // Two-column filter display
@@ -113,10 +136,12 @@ export function exportExpenseReportToPDF({
 
   // Table Data
   const tableData = expenseData.map((expense: any) => [
-    expense.expenseDate ? new Date(expense.expenseDate).toLocaleDateString() : '',
+    expense.expenseDate ? formatDateInIST(new Date(expense.expenseDate)) : '',
     expense.description,
     expense.category || 'Uncategorized',
     `Rs. ${Number(expense.amount).toLocaleString()}`,
+    expense.paymentMode || '-',
+    expense.bankDetails || expense.bankAccountNumber || '-',
     expense.notes || '-'
   ]);
 
@@ -127,12 +152,17 @@ export function exportExpenseReportToPDF({
       'Description',
       'Category',
       'Amount',
+      'Payment Mode',
+      'Bank Details',
       'Notes'
     ]],
     body: tableData,
-    styles: { fontSize: 9, cellPadding: 2.2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
-    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 10, halign: 'center' },
+    styles: { fontSize: 8.5, cellPadding: 2, valign: 'middle', textColor: [40, 40, 40], lineColor: [220, 220, 220], lineWidth: 0.1 },
+    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold', fontSize: 9, halign: 'center' },
     alternateRowStyles: { fillColor: [245, 250, 255] },
+    columnStyles: {
+      5: { fontSize: 7.5, cellPadding: 1.5 } // Bank Details column - smaller font
+    },
     margin: { left: 10, right: 10 },
     didDrawPage: (data) => {
       // Professional footer: left "Confidential", right page number
@@ -151,7 +181,7 @@ export function exportExpenseReportToPDF({
     fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
   } else {
     const now = new Date();
-    fileDate = now.toISOString().slice(0, 10);
+    fileDate = getTodayInIST();
   }
   doc.save(`expense-report-${fileDate}.pdf`);
 }

@@ -38,6 +38,11 @@ public class SaleItemDTO {
     @Digits(integer = 10, fraction = 2, message = "Final price must have at most 2 decimal places.")
     private BigDecimal finalPrice;
 
+    // Payment info from CustomerCylinderLedger
+    private BigDecimal amountReceived;
+    private BigDecimal dueAmount;
+    private String paymentMode;
+
     public SaleItemDTO() {
     }
 
@@ -51,6 +56,23 @@ public class SaleItemDTO {
         this.basePrice = basePrice;
         this.discount = discount;
         this.finalPrice = finalPrice;
+    }
+
+    public SaleItemDTO(Long id, Long variantId, String variantName, Long qtyIssued, Long qtyEmptyReceived,
+            BigDecimal basePrice, BigDecimal discount, BigDecimal finalPrice,
+            BigDecimal amountReceived, BigDecimal dueAmount) {
+        this(id, variantId, variantName, qtyIssued, qtyEmptyReceived, basePrice, discount, finalPrice);
+        this.amountReceived = amountReceived;
+        this.dueAmount = dueAmount;
+    }
+
+    public SaleItemDTO(Long id, Long variantId, String variantName, Long qtyIssued, Long qtyEmptyReceived,
+            BigDecimal basePrice, BigDecimal discount, BigDecimal finalPrice,
+            BigDecimal amountReceived, BigDecimal dueAmount, String paymentMode) {
+        this(id, variantId, variantName, qtyIssued, qtyEmptyReceived, basePrice, discount, finalPrice);
+        this.amountReceived = amountReceived;
+        this.dueAmount = dueAmount;
+        this.paymentMode = paymentMode;
     }
 
     public Long getId() {
@@ -115,5 +137,29 @@ public class SaleItemDTO {
 
     public void setFinalPrice(BigDecimal finalPrice) {
         this.finalPrice = finalPrice;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public BigDecimal getDueAmount() {
+        return dueAmount;
+    }
+
+    public void setDueAmount(BigDecimal dueAmount) {
+        this.dueAmount = dueAmount;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
     }
 }

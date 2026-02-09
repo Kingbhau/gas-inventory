@@ -1,20 +1,39 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Helper function for IST date
+function getTodayInIST(): string {
+  const now = new Date();
+  // Get date components in local time (which is IST for Indian users)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateInIST(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 export function exportSupplierTransactionsToPDF({
   transactions,
   fromDate,
   toDate,
   businessName,
   supplierName,
-  variantName
+  variantName,
+  referenceNumber
 }: {
   transactions: any[],
   fromDate?: string,
   toDate?: string,
   businessName?: string,
   supplierName?: string,
-  variantName?: string
+  variantName?: string,
+  referenceNumber?: string
 }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -37,7 +56,7 @@ export function exportSupplierTransactionsToPDF({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(90);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: 'center' });
+  doc.text(`Generated on: ${formatDateInIST(new Date())}`, pageWidth / 2, y, { align: 'center' });
   y += 5;
 
   // Date Range
@@ -62,8 +81,13 @@ export function exportSupplierTransactionsToPDF({
   doc.text('Summary', 16, y + 7);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
-  doc.text(`Total Transactions: ${transactions.length}`, 45, y + 7);
-  const totalAmount = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  let filteredTransactions = transactions;
+  if (referenceNumber) {
+    const refFilter = referenceNumber.toLowerCase();
+    filteredTransactions = transactions.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
+  }
+  doc.text(`Total Transactions: ${filteredTransactions.length}`, 45, y + 7);
+  const totalAmount = filteredTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
   doc.text(`Total Amount: Rs. ${totalAmount.toLocaleString()}`, 110, y + 7);
   y += 16;
 
@@ -79,7 +103,7 @@ export function exportSupplierTransactionsToPDF({
   filterArr.push(`Supplier: ${supplierName || 'All'}`);
   filterArr.push(`Variant: ${variantName || 'All'}`);
   if (fromDate || toDate) filterArr.push(`Date: ${fromDate || '...'} to ${toDate || '...'}`);
-  // Two-column filter display
+  if (referenceNumber) filterArr.push(`Reference: ${referenceNumber}`);
   let filterY = y + 6;
   let col1X = 35, col2X = 90;
   for (let i = 0; i < filterArr.length; i++) {
@@ -96,13 +120,13 @@ export function exportSupplierTransactionsToPDF({
   y += 2;
 
   // Table Data
-  const tableData = transactions.map(t => [
+  const tableData = filteredTransactions.map(t => [
     t.transactionDate,
+    t.warehouseName,
     t.supplierName,
     t.variantName,
     t.filledReceived,
     t.emptySent,
-    t.reference,
     `Rs. ${Number(t.amount).toLocaleString()}`
   ]);
 
@@ -110,11 +134,11 @@ export function exportSupplierTransactionsToPDF({
     startY: y + 2,
     head: [[
       'Date',
+      'Warehouse',
       'Supplier',
       'Variant',
       'Filled Received',
       'Empty Sent',
-      'Reference',
       'Amount'
     ]],
     body: tableData,
@@ -138,7 +162,7 @@ export function exportSupplierTransactionsToPDF({
     fileDate = `${fromDate || 'start'}_to_${toDate || 'end'}`;
   } else {
     const now = new Date();
-    fileDate = now.toISOString().slice(0, 10);
+    fileDate = getTodayInIST();
   }
   doc.save(`supplier-transactions-report-${fileDate}.pdf`);
 }

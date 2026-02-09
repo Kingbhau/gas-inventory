@@ -1,0 +1,121 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h2>Alert Configuration</h2>
+    <p class="subtitle">Manage which alerts you want to receive and set thresholds</p>
+  </div>
+
+  <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="settings-form">
+    <!-- Low Stock Alert -->
+    <div class="alert-setting">
+      <div class="setting-header">
+        <label class="toggle-label">
+          <input 
+            type="checkbox"
+            formControlName="lowStockEnabled"
+            class="toggle-checkbox"
+          >
+          <span class="toggle-text">Low Stock Alert</span>
+        </label>
+        <span class="alert-type-badge warning">WARNING</span>
+      </div>
+      
+      <p class="setting-description">
+        Alerts when warehouse filled or empty cylinder stock falls below threshold
+      </p>
+
+      <div *ngIf="settingsForm.get('lowStockEnabled')?.value" class="threshold-inputs">
+        <div class="input-group">
+          <label>Filled Cylinders Threshold (minimum quantity)</label>
+          <input 
+            type="number"
+            formControlName="filledThreshold"
+            class="form-input"
+            min="0"
+            placeholder="e.g., 50"
+          >
+          <small>Alert when filled cylinders drop below this number</small>
+        </div>
+
+        <div class="input-group">
+          <label>Empty Cylinders Threshold (minimum quantity)</label>
+          <input 
+            type="number"
+            formControlName="emptyThreshold"
+            class="form-input"
+            min="0"
+            placeholder="e.g., 50"
+          >
+          <small>Alert when empty cylinders drop below this number</small>
+        </div>
+      </div>
+
+      <div *ngIf="!settingsForm.get('lowStockEnabled')?.value" class="disabled-message">
+        This alert is disabled
+      </div>
+    </div>
+
+    <!-- Pending Returns Alert -->
+    <div class="alert-setting">
+      <div class="setting-header">
+        <label class="toggle-label">
+          <input 
+            type="checkbox"
+            formControlName="pendingReturnEnabled"
+            class="toggle-checkbox"
+          >
+          <span class="toggle-text">Pending Returns Alert</span>
+        </label>
+        <span class="alert-type-badge warning">WARNING</span>
+      </div>
+
+      <p class="setting-description">
+        Alerts when customer has cylinders pending return beyond threshold
+      </p>
+
+      <div *ngIf="settingsForm.get('pendingReturnEnabled')?.value" class="threshold-inputs">
+        <div class="input-group">
+          <label>Cylinders Pending Threshold (minimum count)</label>
+          <input 
+            type="number"
+            formControlName="pendingReturnThreshold"
+            class="form-input"
+            min="0"
+            placeholder="e.g., 10"
+          >
+          <small>Alert when a customer has this many or more cylinders pending return</small>
+        </div>
+      </div>
+
+      <div *ngIf="!settingsForm.get('pendingReturnEnabled')?.value" class="disabled-message">
+        This alert is disabled
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button 
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="!settingsForm.dirty || saving"
+      >
+        {{ saving ? 'Saving...' : 'Save Settings' }}
+      </button>
+      <button 
+        type="button"
+        class="btn btn-secondary"
+        (click)="resetForm()"
+        [disabled]="!settingsForm.dirty"
+      >
+        Cancel
+      </button>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      ✓ {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-error">
+      ✕ {{ errorMessage }}
+    </div>
+  </form>
+</div>

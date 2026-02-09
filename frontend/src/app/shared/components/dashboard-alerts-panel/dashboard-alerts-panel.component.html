@@ -1,0 +1,53 @@
+<div class="alerts-panel" *ngIf="(alertCount$ | async) as count; else noAlerts">
+  <div class="panel-header">
+    <h3>⚠️ ALERTS SUMMARY</h3>
+    <a routerLink="/settings" class="settings-link" title="Configure alerts">⚙️</a>
+  </div>
+
+  <!-- Alert Items -->
+  <div class="alerts-list">
+    <div 
+      *ngFor="let alert of alerts$ | async"
+      class="alert-block"
+      [ngClass]="'alert-' + alert.severity"
+    >
+      <div class="alert-icon">
+        <span *ngIf="alert.severity === 'warning'">⚠️</span>
+        <span *ngIf="alert.severity === 'critical'">🔴</span>
+      </div>
+
+      <div class="alert-body">
+        <div class="alert-title">{{ alert.alertType }}</div>
+        <div class="alert-message">{{ alert.message }}</div>
+        <small class="alert-time">{{ formatTime(alert.createdAt) }}</small>
+      </div>
+
+      <button 
+        class="close-btn"
+        (click)="dismissAlert(alert.id)"
+        title="Dismiss this alert"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Dismiss all button (if multiple alerts) -->
+  <div *ngIf="count > 1" class="panel-footer">
+    <button class="dismiss-all-btn" (click)="dismissAllAlerts()">
+      Dismiss All
+    </button>
+  </div>
+</div>
+
+<ng-template #noAlerts>
+  <div class="alerts-panel no-alerts">
+    <div class="panel-header">
+      <h3>✓ ALERTS</h3>
+      <a routerLink="/settings" class="settings-link" title="Configure alerts">⚙️</a>
+    </div>
+    <div class="empty-state">
+      No active alerts - Great job!
+    </div>
+  </div>
+</ng-template>

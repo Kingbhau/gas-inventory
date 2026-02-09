@@ -82,6 +82,13 @@
   opacity: 0.8;
 }
 
+.brand-logo {
+  height: 36px;
+  width: auto;
+  max-width: 180px;
+  object-fit: contain;
+}
+
 .brand-icon {
   font-size: 32px;
   display: flex;
@@ -169,19 +176,23 @@
 
 .notification-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: -4px;
+  right: -4px;
   background-color: var(--danger-color);
   color: var(--text-inverse);
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   font-weight: var(--font-weight-bold);
-  padding: 2px 5px;
-  border-radius: 50%;
-  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 10px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg-primary);
 }
 
 .user-section {
@@ -437,6 +448,10 @@
    RESPONSIVE DESIGN
    ==================================== */
 
+.mobile-only {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     width: 240px;
@@ -453,6 +468,10 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+
   .sidebar {
     position: fixed;
     left: 0;
@@ -1182,6 +1201,110 @@
 @keyframes fadeInMenu {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Bell Button and Alert Dropdown Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bell-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bell-button:hover {
+  background-color: #eef2ff;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.bell-button:active {
+  transform: translateY(0);
+}
+
+/* Ensure fa-icon renders properly */
+fa-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bell-button fa-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: #1e293b;
+}
+
+.alert-dropdown-professional {
+  animation: slideDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile responsive styles for alert dropdown */
+@media (max-width: 480px) {
+  .alert-dropdown-professional {
+    position: fixed !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    top: 70px !important;
+    width: 90vw !important;
+    max-width: 320px !important;
+    min-width: auto !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Alert item hover styling */
+.alert-item-professional:hover {
+  background-color: #f8f9fa !important;
+}
+
+/* Alert close button hover */
+.close-btn-professional:hover {
+  color: #2c3e50 !important;
+}
+
+/* Alert dismiss button hover */
+.dismiss-btn-professional:hover {
+  color: #dc3545 !important;
+}
+
+/* Scrollbar styling for professional alert dropdown */
+.alert-dropdown-professional::-webkit-scrollbar {
+  width: 6px;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-thumb {
+  background: #dee2e6;
+  border-radius: 3px;
+}
+
+.alert-dropdown-professional::-webkit-scrollbar-thumb:hover {
+  background: #adb5bd;
 }
 
 

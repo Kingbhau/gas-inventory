@@ -12,27 +12,47 @@
     </div>
     <div class="card-body">
       <form [formGroup]="saleForm" (ngSubmit)="onSubmit()" class="sale-form">
-        <!-- Customer Selection (Autocomplete) -->
-        <app-autocomplete-input
-          label="Customer"
-          [required]="true"
-          [items]="customers"
-          [displayKey]="'name'"
-          placeholder="Customer name..."
-          (selectedChange)="saleForm.get('customerId')?.setValue($event)"
-        ></app-autocomplete-input>
-        <div *ngIf="saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched" class="error-message">
-          Customer is required
+        <!-- Two Column Layout for Selection Fields -->
+        <div class="form-row">
+          <!-- Warehouse Selection (Autocomplete) -->
+          <div class="form-group">
+            <app-autocomplete-input
+              label="Warehouse"
+              [required]="true"
+              [items]="warehouses"
+              [displayKey]="'name'"
+              placeholder="Warehouse name..."
+              (selectedChange)="onWarehouseSelected($event)"
+            ></app-autocomplete-input>
+            <div *ngIf="saleForm.get('warehouseId')?.invalid && saleForm.get('warehouseId')?.touched" class="error-message">
+              Warehouse is required
+            </div>
+          </div>
+
+          <!-- Customer Selection (Autocomplete) -->
+          <div class="form-group">
+            <app-autocomplete-input
+              label="Customer"
+              [required]="true"
+              [items]="customers"
+              [displayKey]="'name'"
+              placeholder="Customer name..."
+              (selectedChange)="onCustomerSelected($event)"
+            ></app-autocomplete-input>
+            <div *ngIf="saleForm.get('customerId')?.invalid && saleForm.get('customerId')?.touched" class="error-message">
+              Customer is required
+            </div>
+          </div>
         </div>
 
-        <!-- Variant Selection (Autocomplete) -->
+        <!-- Variant Selection -->
         <app-autocomplete-input
           label="Cylinder Variant"
           [required]="true"
-          [items]="variants"
+          [items]="filteredVariants"
           [displayKey]="'name'"
           placeholder="Variant name..."
-          (selectedChange)="saleForm.get('variantId')?.setValue($event)"
+          (selectedChange)="onVariantSelected($event)"
         ></app-autocomplete-input>
         <div *ngIf="saleForm.get('variantId')?.invalid && saleForm.get('variantId')?.touched" class="error-message">
           Variant is required
@@ -63,6 +83,18 @@
               class="form-control" 
               placeholder="0"
               (change)="calculateTotal()">
+            <div class="balance-info" *ngIf="balanceLoading">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!balanceLoading && currentBalance !== null">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">{{ currentBalance }} cylinders</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!balanceLoading && balanceError">
+              <span class="balance-label">Current balance</span>
+              <span class="balance-value">{{ balanceError }}</span>
+            </div>
           </div>
         </div>
 
@@ -70,7 +102,7 @@
         <div class="form-row">
           <!-- Base Price -->
           <div class="form-group">
-            <label class="form-label">Base Price Per Unit <span class="required">*</span></label>
+            <label class="form-label">Base Price Per Unit</label>
             <div class="input-with-prefix">
               <span class="currency">₹</span>
               <input 
@@ -86,17 +118,76 @@
             </div>
           </div>
 
-          <!-- Discount -->
+          <!-- Discount Price (Read-only) -->
           <div class="form-group">
-            <label class="form-label">Discount</label>
+            <label class="form-label">Discount Amount Per Unit</label>
             <div class="input-with-prefix">
               <span class="currency">₹</span>
               <input 
-                formControlName="discount" 
                 type="number" 
                 class="form-control" 
+                [value]="discountPrice"
+                [readonly]="true"
                 placeholder="0.00"
                 (change)="calculateTotal()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Column Layout for Amount Fields -->
+        <div class="form-row">
+          <!-- Amount Received -->
+          <div class="form-group">
+            <label class="form-label">Amount Received (₹)</label>
+            <div class="input-with-prefix">
+              <span class="currency">₹</span>
+              <input 
+                formControlName="amountReceived" 
+                type="text" 
+                class="form-control" 
+                placeholder="0.00"
+                indianCurrencyFormat>
+            </div>
+            <div class="balance-info" *ngIf="dueLoading">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!dueLoading && currentDue !== null">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">{{ currentDue | indianCurrency }}</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!dueLoading && dueError">
+              <span class="balance-label">Current due</span>
+              <span class="balance-value">{{ dueError }}</span>
+            </div>
+            <div *ngIf="saleForm.get('amountReceived')?.invalid && saleForm.get('amountReceived')?.touched" class="error-message">
+              Please enter amount received
+            </div>
+          </div>
+
+          <!-- Payment Mode -->
+          <div class="form-group">
+            <label class="form-label">Payment Mode</label>
+            <select formControlName="modeOfPayment" class="form-control">
+              <option [value]="null" disabled hidden>Select Payment Mode</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+            </select>
+            <div *ngIf="saleForm.get('modeOfPayment')?.invalid && saleForm.get('modeOfPayment')?.touched" class="error-message">
+              Please select payment mode
+            </div>
+          </div>
+
+          <!-- Bank Account Selection (visible only when payment mode requires bank account) -->
+          <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired">
+            <label class="form-label">Bank Account <span class="required">*</span></label>
+            <select formControlName="bankAccountId" class="form-control">
+              <option [value]="null" disabled>Select Bank Account</option>
+              <option *ngFor="let account of bankAccounts" [value]="account.id">
+                {{ account.bankName }} - {{ account.accountNumber }}
+              </option>
+            </select>
+            <div *ngIf="saleForm.get('bankAccountId')?.invalid && saleForm.get('bankAccountId')?.touched" class="error-message">
+              Please select a bank account for this payment mode
             </div>
           </div>
         </div>
@@ -104,27 +195,46 @@
         <!-- Summary Section -->
         <div class="summary-section">
           <div class="summary-row">
-            <span class="summary-label">Base Amount:</span>
-            <span class="summary-value">{{ baseAmount | indianCurrency }}</span>
+            <span class="summary-label">Quantity:</span>
+            <span class="summary-value">{{ saleForm.get('filledIssuedQty')?.value || 0 }} units</span>
           </div>
           <div class="summary-row">
-            <span class="summary-label">Discount:</span>
-            <span class="summary-value">-{{ (saleForm.get('discount')?.value || 0) | indianCurrency }}</span>
+            <span class="summary-label">Base Price Per Unit:</span>
+            <span class="summary-value">{{ saleForm.get('basePrice')?.value | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountPrice > 0">
+            <span class="summary-label">Discount Per Unit:</span>
+            <span class="summary-value" style="color: #d32f2f;">-{{ discountPrice | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountPrice > 0">
+            <span class="summary-label">Price Per Unit After Discount:</span>
+            <span class="summary-value" style="color: #28a745;">{{ (saleForm.get('basePrice')?.value - discountPrice) | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" *ngIf="discountAmount > 0">
+            <span class="summary-label">Total Discount (Savings):</span>
+            <span class="summary-value" style="color: #28a745;">-{{ discountAmount | indianCurrency }}</span>
           </div>
           <div class="summary-row total">
-            <span class="summary-label">Total Amount:</span>
+            <span class="summary-label">Total Amount to Pay:</span>
             <span class="summary-value">{{ totalAmount | indianCurrency }}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Amount Received:</span>
+            <span class="summary-value" style="color: #0066cc;">{{ saleForm.get('amountReceived')?.value | indianCurrency }}</span>
+          </div>
+          <div class="summary-row" [style.color]="(totalAmount - (saleForm.get('amountReceived')?.value || 0)) > 0 ? '#d32f2f' : '#28a745'">
+            <span class="summary-label">Amount Due:</span>
+            <span class="summary-value">{{ (totalAmount - (saleForm.get('amountReceived')?.value || 0)) | indianCurrency }}</span>
           </div>
         </div>
 
         <!-- Form Actions -->
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" [disabled]="!saleForm.valid">
-            <span>✓</span> Save Sale
-          </button>
-          <button type="button" class="btn btn-secondary" (click)="resetForm()">
-            <span>↻</span> Reset
-          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!saleForm.valid || (saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired && !saleForm.get('bankAccountId')?.value)">Save</button>
+          <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
         </div>
       </form>
 

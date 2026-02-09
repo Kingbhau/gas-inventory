@@ -52,6 +52,10 @@
   align-items: flex-end;
 }
 
+.filters-card .filter-row + .filter-row {
+  margin-top: 1rem;
+}
+
 .filter-group {
   display: flex;
   flex-direction: column;
@@ -179,20 +183,7 @@
   color: #16a34a;
 }
 
-/* Action Button */
-.btn-action {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.btn-action:hover {
-  background: #e2e8f0;
-}
+/* Action Button - Using global btn-action styles */
 
 /* No Data */
 .no-data {
@@ -459,4 +450,23 @@
     text-align: center;
     padding-right: 6px;
   }
+}
+/* Reference Badge - Consistent styling across all pages */
+.reference-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.reference-badge:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
 }

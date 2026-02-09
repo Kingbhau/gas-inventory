@@ -1,0 +1,25 @@
+2026-01-13 11:32:41.190 | INFO  | [93c9e600-abb8-44e0-9bf7-a48fd48289d7] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=1 | name=Raj Patil
+2026-01-13 11:32:57.138 | INFO  | [ebeb8467-c635-4b63-9c52-31e2abd80348] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=1 | customerId=1
+2026-01-13 11:32:57.138 | INFO  | [ebeb8467-c635-4b63-9c52-31e2abd80348] [] | com.gasagency.audit | SALE_CREATED | saleId=1 | customerId=1 | customer=Raj Patil | amount=3000.0 | timestamp=2026-01-13 11:32:57
+2026-01-13 11:38:02.406 | INFO  | [0368fcdb-534f-4e7b-bed1-4a4f80feb831] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=2 | name=Mahesh
+2026-01-13 12:21:05.070 | INFO  | [45426897-683f-4e5f-b0ed-5729bea1bb03] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=2 | customerId=1
+2026-01-13 12:21:05.070 | INFO  | [45426897-683f-4e5f-b0ed-5729bea1bb03] [] | com.gasagency.audit | SALE_CREATED | saleId=2 | customerId=1 | customer=Raj Patil | amount=3000.0 | timestamp=2026-01-13 12:21:05
+2026-01-13 12:21:11.072 | INFO  | [78c39995-1f98-493b-9faf-08404e349aba] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=3 | customerId=1
+2026-01-13 12:21:11.078 | INFO  | [78c39995-1f98-493b-9faf-08404e349aba] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=1
+2026-01-13 12:21:17.260 | INFO  | [ad3e75b0-f862-479f-aae2-440fa15c9ab2] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=4 | customerId=1
+2026-01-13 12:21:17.262 | INFO  | [ad3e75b0-f862-479f-aae2-440fa15c9ab2] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=2
+2026-01-13 12:21:54.946 | INFO  | [5f6197d7-dc32-43d7-87f0-bf4b77be9409] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=5 | customerId=1
+2026-01-13 12:21:54.946 | INFO  | [5f6197d7-dc32-43d7-87f0-bf4b77be9409] [] | com.gasagency.audit | SALE_CREATED | saleId=3 | customerId=1 | customer=Raj Patil | amount=1500.0 | timestamp=2026-01-13 12:21:54
+2026-01-13 12:22:03.724 | INFO  | [5d8586e5-64bf-4fda-a63c-bac98692f129] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=6 | customerId=1
+2026-01-13 12:22:03.724 | INFO  | [5d8586e5-64bf-4fda-a63c-bac98692f129] [] | com.gasagency.audit | SALE_CREATED | saleId=4 | customerId=1 | customer=Raj Patil | amount=1000.0 | timestamp=2026-01-13 12:22:03
+2026-01-13 12:22:09.576 | INFO  | [fa412081-0f1a-4fca-a973-d61301d29c3a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=7 | customerId=1
+2026-01-13 12:22:09.582 | INFO  | [fa412081-0f1a-4fca-a973-d61301d29c3a] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=2 | variantId=2 | emptyQty=1
+2026-01-13 12:22:14.254 | INFO  | [1b910b75-1804-47c9-bcd6-661989499bbd] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=8 | customerId=1
+2026-01-13 12:22:14.258 | INFO  | [1b910b75-1804-47c9-bcd6-661989499bbd] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=2 | variantId=2 | emptyQty=2
+2026-01-13 12:22:18.456 | INFO  | [be7c6cde-3931-4b02-96af-7ef6c23f5bbe] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=9 | customerId=1
+2026-01-13 12:22:18.459 | INFO  | [be7c6cde-3931-4b02-96af-7ef6c23f5bbe] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=2 | variantId=2 | emptyQty=4
+2026-01-13 12:29:03.697 | INFO  | [ecb9b67e-87e7-4ed2-835b-a9a5eb497d5d] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=CUSTOMER | customerId=3 | name=Mrunal
+2026-01-13 14:35:46.038 | INFO  | [4541623d-63d2-443f-9bca-1da610292452] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=10 | customerId=2
+2026-01-13 14:35:46.039 | INFO  | [4541623d-63d2-443f-9bca-1da610292452] [] | com.gasagency.audit | SALE_CREATED | saleId=5 | customerId=2 | customer=Mahesh | amount=4500.0 | timestamp=2026-01-13 14:35:46
+2026-01-13 16:07:24.319 | INFO  | [c9346e23-f413-446c-b3c6-bd03214276f7] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=4 | variantId=2
+2026-01-13 16:07:24.319 | INFO  | [f8669a0a-a441-4259-8009-e9b18460bcb4] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=MONTHLY_PRICE | priceId=3 | variantId=1

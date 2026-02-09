@@ -7,6 +7,8 @@ import com.gasagency.repository.MonthlyPriceRepository;
 import com.gasagency.repository.CylinderVariantRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ public class MonthlyPriceService {
         }
 
         @Transactional
+        @CacheEvict(value = { "monthlyPricesAll", "monthlyPricesByVariant",
+                        "monthlyPriceForVariantMonth", "monthlyPriceLatestForVariant" }, allEntries = true)
         public MonthlyPriceDTO createPrice(MonthlyPriceDTO dto) {
                 LoggerUtil.logBusinessEntry(logger, "CREATE_PRICE", "variantId",
                                 dto != null ? dto.getVariantId() : "null", "month",
@@ -89,6 +93,7 @@ public class MonthlyPriceService {
                 return toDTO(price);
         }
 
+        @Cacheable("monthlyPricesAll")
         public List<MonthlyPriceDTO> getAllPrices() {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_ALL", "MONTHLY_PRICE");
 
@@ -105,6 +110,7 @@ public class MonthlyPriceService {
                                 .map(this::toDTO);
         }
 
+        @Cacheable(value = "monthlyPricesByVariant", key = "#variantId")
         public List<MonthlyPriceDTO> getPricesByVariant(Long variantId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "MONTHLY_PRICE", "variantId", variantId);
 
@@ -120,6 +126,7 @@ public class MonthlyPriceService {
                                 .collect(Collectors.toList());
         }
 
+        @Cacheable(value = "monthlyPriceForVariantMonth", key = "#variantId + ':' + #monthYear")
         public MonthlyPriceDTO getPriceForVariantAndMonth(Long variantId, LocalDate monthYear) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "MONTHLY_PRICE", "variantId", variantId, "month",
                                 monthYear);
@@ -141,6 +148,7 @@ public class MonthlyPriceService {
                 return toDTO(price);
         }
 
+        @Cacheable(value = "monthlyPriceLatestForVariant", key = "#variantId + ':' + #monthYear")
         public MonthlyPriceDTO getLatestPriceForVariant(Long variantId, LocalDate monthYear) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "MONTHLY_PRICE", "variantId", variantId, "month",
                                 monthYear);
@@ -164,6 +172,8 @@ public class MonthlyPriceService {
         }
 
         @Transactional
+        @CacheEvict(value = { "monthlyPricesAll", "monthlyPricesByVariant",
+                        "monthlyPriceForVariantMonth", "monthlyPriceLatestForVariant" }, allEntries = true)
         public MonthlyPriceDTO updatePrice(Long id, MonthlyPriceDTO dto) {
                 LoggerUtil.logBusinessEntry(logger, "UPDATE_PRICE", "id", id);
 
@@ -204,6 +214,8 @@ public class MonthlyPriceService {
         }
 
         @Transactional
+        @CacheEvict(value = { "monthlyPricesAll", "monthlyPricesByVariant",
+                        "monthlyPriceForVariantMonth", "monthlyPriceLatestForVariant" }, allEntries = true)
         public void deletePrice(Long id) {
                 LoggerUtil.logBusinessEntry(logger, "DELETE_PRICE", "id", id);
 

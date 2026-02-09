@@ -1,0 +1,52 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo/Title -->
+    <div class="navbar-brand">
+      <img class="navbar-logo" src="assets/logo.png" alt="Cylinex logo" />
+      <span class="navbar-title">{{ title }}</span>
+    </div>
+
+    <!-- Navigation Links -->
+    <div class="navbar-links">
+      <a
+        *ngFor="let link of links"
+        (click)="navigateTo(link.path)"
+        class="nav-link"
+      >
+        <fa-icon *ngIf="link.icon" [icon]="link.icon" class="nav-icon"></fa-icon>
+        {{ link.label }}
+      </a>
+    </div>
+
+    <!-- Alerts Bell Icon -->
+    <button class="bell-button" (click)="toggleAlertDropdown()" title="Alerts">
+      🔔
+      <span class="badge" *ngIf="alertCount > 0">{{ alertCount }}</span>
+    </button>
+
+    <!-- Alert Dropdown -->
+    <div *ngIf="showAlertDropdown" class="alert-dropdown">
+      <div class="dropdown-header">
+        <strong>ALERTS ({{ alertCount }})</strong>
+        <button class="close-btn" (click)="closeAlertDropdown()">✕</button>
+      </div>
+      <div class="dropdown-items">
+        <div *ngIf="alertCount === 0" class="no-alerts">✓ No active alerts yet</div>
+        <div *ngFor="let alert of alerts" class="alert-item" [ngClass]="alert.severity">
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-time">{{ alert.createdAt | date:'short' }}</div>
+          <button class="dismiss-btn" (click)="dismissAlert(alert.id)" title="Dismiss">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Info & Logout -->
+    <div class="navbar-user">
+      <span class="user-name">{{ userName }}</span>
+      <button (click)="logout()" class="btn-logout" title="Logout">
+        <fa-icon [icon]="faSignOut"></fa-icon>
+        Logout
+      </button>
+    </div>
+  </div>
+</nav>

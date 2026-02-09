@@ -1,6 +1,7 @@
 package com.gasagency.controller;
 
 import com.gasagency.dto.ExpenseDTO;
+import com.gasagency.dto.ExpenseSummaryDTO;
 import com.gasagency.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/expenses")
-@PreAuthorize("hasRole('MANAGER')")
+@PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
 public class ExpenseController {
 
     private final ExpenseService service;
@@ -27,9 +28,18 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<Page<ExpenseDTO>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.getAllExpenses(pageable));
+        return ResponseEntity.ok(service.getAllExpenses(pageable, fromDate, toDate, categoryId, paymentMode,
+                bankAccountId, minAmount, maxAmount, createdBy));
     }
 
     @GetMapping("/range")
@@ -40,6 +50,20 @@ public class ExpenseController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(service.getExpensesByDateRange(fromDate, toDate, pageable));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String paymentMode,
+            @RequestParam(required = false) Long bankAccountId,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount,
+            @RequestParam(required = false) String createdBy) {
+        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId, paymentMode, bankAccountId,
+                minAmount, maxAmount, createdBy));
     }
 
     @GetMapping("/category/{categoryId}")

@@ -14,5 +14,9 @@ public interface SaleRepositoryCustom {
             Long variantId,
             Double minAmount,
             Double maxAmount,
+            String referenceNumber,
+            String createdBy,
             Pageable pageable);
+
+    Page<Sale> findByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable);
 }

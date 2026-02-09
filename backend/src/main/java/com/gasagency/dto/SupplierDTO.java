@@ -11,6 +11,8 @@ public class SupplierDTO {
     @Size(min = 2, max = 100, message = "Supplier name must be between 2 and 100 characters")
     private String name;
 
+    private String code; // Auto-generated, read-only
+
     @NotBlank(message = "Contact cannot be null or blank")
     @Size(min = 5, max = 50, message = "Contact must be between 5 and 50 characters")
     @Pattern(regexp = "^[+0-9\\-\\s()]+$", message = "Contact must contain only valid phone number characters")
@@ -39,6 +41,14 @@ public class SupplierDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getContact() {

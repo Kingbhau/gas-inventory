@@ -10,6 +10,17 @@ public class CreateSaleRequestDTO {
     @Positive(message = "Customer ID must be a positive number")
     private Long customerId;
 
+    @NotNull(message = "Warehouse ID cannot be null")
+    @Positive(message = "Warehouse ID must be a positive number")
+    private Long warehouseId;
+
+    @PositiveOrZero(message = "Amount received cannot be negative")
+    private BigDecimal amountReceived;
+
+    private String modeOfPayment;
+
+    private Long bankAccountId;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -18,8 +29,13 @@ public class CreateSaleRequestDTO {
     public CreateSaleRequestDTO() {
     }
 
-    public CreateSaleRequestDTO(Long customerId, List<SaleItemRequestDTO> items) {
+    public CreateSaleRequestDTO(Long customerId, Long warehouseId, BigDecimal amountReceived, String modeOfPayment,
+            Long bankAccountId, List<SaleItemRequestDTO> items) {
         this.customerId = customerId;
+        this.warehouseId = warehouseId;
+        this.amountReceived = amountReceived;
+        this.modeOfPayment = modeOfPayment;
+        this.bankAccountId = bankAccountId;
         this.items = items;
     }
 
@@ -91,11 +107,43 @@ public class CreateSaleRequestDTO {
         this.customerId = customerId;
     }
 
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public BigDecimal getAmountReceived() {
+        return amountReceived;
+    }
+
+    public void setAmountReceived(BigDecimal amountReceived) {
+        this.amountReceived = amountReceived;
+    }
+
+    public String getModeOfPayment() {
+        return modeOfPayment;
+    }
+
+    public void setModeOfPayment(String modeOfPayment) {
+        this.modeOfPayment = modeOfPayment;
+    }
+
     public List<SaleItemRequestDTO> getItems() {
         return items;
     }
 
     public void setItems(List<SaleItemRequestDTO> items) {
         this.items = items;
+    }
+
+    public Long getBankAccountId() {
+        return bankAccountId;
+    }
+
+    public void setBankAccountId(Long bankAccountId) {
+        this.bankAccountId = bankAccountId;
     }
 }

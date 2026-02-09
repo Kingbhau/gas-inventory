@@ -1,0 +1,162 @@
+<div class="payment-mode-wrapper">
+  <!-- Payment Mode Form Modal -->
+  <div *ngIf="showModal" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingId ? 'Edit Payment Mode' : 'Add New Payment Mode' }}</h2>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+      <form [formGroup]="paymentModeForm" (ngSubmit)="onSubmit()" class="modal-body">
+        <!-- Payment Mode Name -->
+        <div class="form-group">
+          <label class="form-label">Payment Mode Name <span class="required">*</span></label>
+          <input 
+            formControlName="name"
+            type="text"
+            class="form-control"
+            placeholder="e.g., Cash, Cheque, Bank Transfer, UPI"
+            [class.is-invalid]="paymentModeForm.get('name')?.invalid && paymentModeForm.get('name')?.touched">
+          <div *ngIf="paymentModeForm.get('name')?.invalid && paymentModeForm.get('name')?.touched" class="form-error">
+            <span *ngIf="paymentModeForm.get('name')?.errors?.['required']">Payment mode name is required</span>
+            <span *ngIf="paymentModeForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters</span>
+          </div>
+        </div>
+
+        <!-- Payment Mode Code -->
+        <div class="form-group">
+          <label class="form-label">Payment Mode Code <span class="required">*</span></label>
+          <input 
+            formControlName="code"
+            type="text"
+            class="form-control"
+            placeholder="e.g., CASH, CHEQUE, BANK_TRANSFER, UPI"
+            [class.is-invalid]="paymentModeForm.get('code')?.invalid && paymentModeForm.get('code')?.touched">
+          <div *ngIf="paymentModeForm.get('code')?.invalid && paymentModeForm.get('code')?.touched" class="form-error">
+            <span *ngIf="paymentModeForm.get('code')?.errors?.['required']">Payment mode code is required</span>
+            <span *ngIf="paymentModeForm.get('code')?.errors?.['minlength']">Code must be at least 2 characters</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea 
+            formControlName="description"
+            class="form-control"
+            placeholder="Optional description for this payment mode"
+            rows="2"></textarea>
+        </div>
+
+        <!-- Bank Account Required -->
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox"
+              formControlName="isBankAccountRequired"
+              class="checkbox-input">
+            <span>Bank Account Required</span>
+          </label>
+          <small class="form-hint">Check this if bank account details are required for this payment mode</small>
+        </div>
+
+        <!-- Active Status -->
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="isActive"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button 
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="paymentModeForm.invalid || isSubmitting">
+            <span *ngIf="!isSubmitting">{{ editingId ? 'Update' : 'Create' }}</span>
+            <span *ngIf="isSubmitting">{{ editingId ? 'Updating...' : 'Creating...' }}</span>
+          </button>
+          <button 
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modes Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Payment Modes</h3>
+      <button (click)="onAddNew()" class="btn btn-primary">+ Add Payment Mode</button>
+    </div>
+    <div class="card-body">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <p>Loading payment modes...</p>
+      </div>
+
+      <!-- No Data State -->
+      <div *ngIf="!isLoading && paymentModes.length === 0" class="no-data-container">
+        <p>No payment modes found. Create one to get started.</p>
+      </div>
+
+      <!-- Table -->
+      <div *ngIf="!isLoading && paymentModes.length > 0" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Description</th>
+              <th class="text-center">Bank Account Required</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let paymentMode of paymentModes">
+              <td><strong>{{ paymentMode.name }}</strong></td>
+              <td><code>{{ paymentMode.code }}</code></td>
+              <td class="muted">{{ paymentMode.description || '-' }}</td>
+              <td class="text-center">
+                <span [class.active]="paymentMode.isBankAccountRequired" [class.inactive]="!paymentMode.isBankAccountRequired" class="status-badge">
+                  {{ paymentMode.isBankAccountRequired ? 'Yes' : 'No' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span 
+                  [class.active]="paymentMode.isActive"
+                  [class.inactive]="!paymentMode.isActive"
+                  class="status-badge">
+                  {{ paymentMode.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button 
+                  (click)="onEdit(paymentMode)"
+                  class="btn-action"
+                  title="Edit">
+                  <fa-icon [icon]="faEdit"></fa-icon>
+                </button>
+                <!-- <button 
+                  (click)="onDelete(paymentMode.id)"
+                  class="btn-action btn-danger"
+                  title="Delete">
+                  <fa-icon [icon]="faTrash"></fa-icon>
+                </button> -->
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

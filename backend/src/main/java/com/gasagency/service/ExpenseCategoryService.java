@@ -4,6 +4,8 @@ import com.gasagency.dto.ExpenseCategoryDTO;
 import com.gasagency.entity.ExpenseCategory;
 import com.gasagency.repository.ExpenseCategoryRepository;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class ExpenseCategoryService {
                 .map(category -> modelMapper.map(category, ExpenseCategoryDTO.class));
     }
 
+    @Cacheable("expenseCategoriesActive")
     public List<ExpenseCategoryDTO> getActiveCategories() {
         return repository.findByIsActiveTrue()
                 .stream()
@@ -33,6 +36,7 @@ public class ExpenseCategoryService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable("expenseCategoryNames")
     public List<String> getActiveNames() {
         return repository.findActiveNames();
     }
@@ -43,6 +47,7 @@ public class ExpenseCategoryService {
         return modelMapper.map(category, ExpenseCategoryDTO.class);
     }
 
+    @CacheEvict(value = { "expenseCategoriesActive", "expenseCategoryNames" }, allEntries = true)
     public ExpenseCategoryDTO createCategory(ExpenseCategoryDTO dto) {
         // Check if category already exists
         if (repository.findByName(dto.getName()).isPresent()) {
@@ -56,6 +61,7 @@ public class ExpenseCategoryService {
         return modelMapper.map(saved, ExpenseCategoryDTO.class);
     }
 
+    @CacheEvict(value = { "expenseCategoriesActive", "expenseCategoryNames" }, allEntries = true)
     public ExpenseCategoryDTO updateCategory(Long id, ExpenseCategoryDTO dto) {
         ExpenseCategory category = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));
@@ -68,11 +74,15 @@ public class ExpenseCategoryService {
 
         category.setName(dto.getName());
         category.setDescription(dto.getDescription());
+        if (dto.getIsActive() != null) {
+            category.setIsActive(dto.getIsActive());
+        }
 
         ExpenseCategory updated = repository.save(category);
         return modelMapper.map(updated, ExpenseCategoryDTO.class);
     }
 
+    @CacheEvict(value = { "expenseCategoriesActive", "expenseCategoryNames" }, allEntries = true)
     public void deleteCategory(Long id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Category not found with id: " + id);
@@ -80,6 +90,7 @@ public class ExpenseCategoryService {
         repository.deleteById(id);
     }
 
+    @CacheEvict(value = { "expenseCategoriesActive", "expenseCategoryNames" }, allEntries = true)
     public ExpenseCategoryDTO toggleCategoryStatus(Long id, Boolean isActive) {
         ExpenseCategory category = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + id));

@@ -6,6 +6,12 @@ export interface Expense {
   categoryId: number;
   expenseDate: string;
   notes?: string;
+  paymentMode?: string;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
   createdDate?: string;
   createdBy?: string;
+  updatedDate?: string;
+  updatedBy?: string;
 }

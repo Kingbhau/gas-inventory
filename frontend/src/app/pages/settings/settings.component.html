@@ -5,130 +5,318 @@
     <p class="page-subtitle">Manage business configuration and master data</p>
   </div>
 
-  <!-- Settings Tabs -->
-  <div class="settings-tabs">
-    <button 
-      *ngFor="let tab of tabs"
-      [class.active]="activeTab === tab.id"
-      (click)="activeTab = tab.id"
-      class="tab-btn">
-      <fa-icon [icon]="tab.icon"></fa-icon> {{ tab.name }}
-    </button>
-  </div>
-
-  <!-- Cylinder Variants -->
-  <div *ngIf="activeTab === 'variants'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Cylinder Variants</h3>
-      <button (click)="openVariantForm()" class="btn btn-primary">+ Add Variant</button>
-    </div>
-    <div class="card-body">
-      <div class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Variant Name</th>
-              <th>Code</th>
-              <th>Weight (kg)</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let variant of variantsList">
-              <td><strong>{{ variant.name }}</strong></td>
-              <td class="muted">{{ variant.code }}</td>
-              <td>{{ variant.weight }} kg</td>
-              <td>
-                <span class="badge" [class.badge-active]="variant.active">
-                  {{ variant.active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
-                <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- Accordion Sections -->
+  <div class="accordion">
+    <!-- Cylinder Variants -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('variants')"
+        [class.active]="expandedSections.includes('variants')">
+        <fa-icon [icon]="faBox" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Cylinder Variants</span>
+        <fa-icon [icon]="expandedSections.includes('variants') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('variants')">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Cylinder Variants</h3>
+            <button (click)="openVariantForm()" class="btn btn-primary">+ Add Variant</button>
+          </div>
+          <div class="card-body">
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Variant Name</th>
+                    <th>Weight (kg)</th>
+                    <th>Base Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let variant of variantsList">
+                    <td><strong>{{ variant.name }}</strong></td>
+                    <td>{{ variant.weightKg }} kg</td>
+                    <td>₹ {{ variant.basePrice | number: '1.2-2' }}</td>
+                    <td>
+                      <span [class.active]="variant.active" [class.inactive]="!variant.active" class="status-badge">
+                        {{ variant.active ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn-action" (click)="editVariant(variant)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+                      <!-- <button class="btn-action delete" (click)="deleteVariant(variant.id)" title="Delete"><fa-icon [icon]="faTrash"></fa-icon></button> -->
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Monthly Pricing -->
-  <div *ngIf="activeTab === 'pricing'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Monthly Base Price</h3>
-      <button (click)="openPriceForm()" class="btn btn-primary">+ Add Price</button>
+    <!-- Expense Categories -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('categories')"
+        [class.active]="expandedSections.includes('categories')">
+        <fa-icon [icon]="faReceipt" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Expense Categories</span>
+        <fa-icon [icon]="expandedSections.includes('categories') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('categories')">
+        <app-expense-category-management></app-expense-category-management>
+      </div>
     </div>
-    <div class="card-body">
-      <div class="pricing-grid">
-        <div class="pricing-card" *ngFor="let price of monthlyPrices">
-          <div class="price-month">{{ price.month || 'N/A' }}</div>
-          <div class="price-list">
-            <ng-container *ngIf="price.variants && price.variants.length > 0">
-              <div class="price-item" *ngFor="let variant of price.variants">
-                <span class="variant-name">{{ variant.name || 'Unknown' }}</span>
-                <span class="price-value">₹ {{ variant.price || 0 }}</span>
+
+    <!-- Payment Modes -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('payment-modes')"
+        [class.active]="expandedSections.includes('payment-modes')">
+        <fa-icon [icon]="faReceipt" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Payment Modes</span>
+        <fa-icon [icon]="expandedSections.includes('payment-modes') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('payment-modes')">
+        <app-payment-mode-management></app-payment-mode-management>
+      </div>
+    </div>
+
+    <!-- Warehouses -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('warehouses')"
+        [class.active]="expandedSections.includes('warehouses')">
+        <fa-icon [icon]="faWarehouse" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Warehouses</span>
+        <fa-icon [icon]="expandedSections.includes('warehouses') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('warehouses')">
+        <app-warehouse-management></app-warehouse-management>
+      </div>
+    </div>
+
+    <!-- Warehouse Inventory Setup -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('inventory')"
+        [class.active]="expandedSections.includes('inventory')">
+        <fa-icon [icon]="faDatabase" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Inventory Setup</span>
+        <fa-icon [icon]="expandedSections.includes('inventory') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('inventory')">
+        <app-warehouse-inventory-setup></app-warehouse-inventory-setup>
+      </div>
+    </div>
+
+    <!-- Bank Accounts -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('bank-accounts')"
+        [class.active]="expandedSections.includes('bank-accounts')">
+        <fa-icon [icon]="faBank" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Bank Accounts</span>
+        <fa-icon [icon]="expandedSections.includes('bank-accounts') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('bank-accounts')">
+        <app-bank-account-management></app-bank-account-management>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('alerts')"
+        [class.active]="expandedSections.includes('alerts')">
+        <fa-icon [icon]="faBell" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Alerts Configuration</span>
+        <fa-icon [icon]="expandedSections.includes('alerts') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('alerts')">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Alert Settings</h3>
+            <p class="card-subtitle">Manage which alerts you want to receive and set thresholds</p>
+          </div>
+          <div class="card-body">
+            <form [formGroup]="alertSettingsForm" (ngSubmit)="saveAlertSettings()" class="form">
+              <!-- Low Stock Alert -->
+              <div class="alert-setting">
+                <div class="setting-header">
+                  <span class="toggle-text">Low Stock Alert</span>
+                  <div class="toggle-button-group">
+                    <label class="toggle-switch">
+                      <input 
+                        type="checkbox"
+                        formControlName="lowStockEnabled"
+                        class="toggle-switch-checkbox"
+                      >
+                      <span class="toggle-switch-slider"></span>
+                    </label>
+                    <span class="alert-type-badge warning">WARNING</span>
+                  </div>
+                </div>
+                
+                <p class="setting-description">
+                  Alerts when warehouse filled or empty cylinder stock falls below threshold
+                </p>
+
+                <div *ngIf="alertSettingsForm.get('lowStockEnabled')?.value" class="threshold-inputs">
+                  <div class="input-group">
+                    <label class="form-label">Filled Cylinders Threshold (minimum quantity)</label>
+                    <input 
+                      type="number"
+                      formControlName="filledThreshold"
+                      class="form-control"
+                      min="0"
+                      placeholder="e.g., 50"
+                    >
+                    <small>Alert when filled cylinders drop below this number</small>
+                  </div>
+
+                  <div class="input-group">
+                    <label class="form-label">Empty Cylinders Threshold (minimum quantity)</label>
+                    <input 
+                      type="number"
+                      formControlName="emptyThreshold"
+                      class="form-control"
+                      min="0"
+                      placeholder="e.g., 50"
+                    >
+                    <small>Alert when empty cylinders drop below this number</small>
+                  </div>
+                </div>
+
+                <div *ngIf="!alertSettingsForm.get('lowStockEnabled')?.value" class="disabled-message">
+                  This alert is disabled
+                </div>
               </div>
-            </ng-container>
+
+              <!-- Pending Returns Alert -->
+              <div class="alert-setting">
+                <div class="setting-header">
+                  <span class="toggle-text">Pending Returns Alert</span>
+                  <div class="toggle-button-group">
+                    <label class="toggle-switch">
+                      <input 
+                        type="checkbox"
+                        formControlName="pendingReturnEnabled"
+                        class="toggle-switch-checkbox"
+                      >
+                      <span class="toggle-switch-slider"></span>
+                    </label>
+                    <span class="alert-type-badge warning">WARNING</span>
+                  </div>
+                </div>
+
+                <p class="setting-description">
+                  Alerts when customer has cylinders pending return beyond threshold
+                </p>
+
+                <div *ngIf="alertSettingsForm.get('pendingReturnEnabled')?.value" class="threshold-inputs">
+                  <div class="input-group">
+                    <label class="form-label">Cylinders Pending Threshold (minimum count)</label>
+                    <input 
+                      type="number"
+                      formControlName="pendingReturnThreshold"
+                      class="form-control"
+                      min="0"
+                      placeholder="e.g., 10"
+                    >
+                    <small>Alert when a customer has this many or more cylinders pending return</small>
+                  </div>
+                </div>
+
+                <div *ngIf="!alertSettingsForm.get('pendingReturnEnabled')?.value" class="disabled-message">
+                  This alert is disabled
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="form-actions">
+                <button 
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="!alertSettingsForm.dirty || alertSaving"
+                >
+                  {{ alertSaving ? 'Saving...' : 'Save' }}
+                </button>
+              </div>
+            </form>
           </div>
-          <button (click)="editPrice(price)" class="btn btn-secondary">Edit</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Expense Categories -->
-  <div *ngIf="activeTab === 'categories'" class="card">
-    <app-expense-category-management></app-expense-category-management>
-  </div>
-
-  <!-- Business Info -->
-  <div *ngIf="activeTab === 'business'" class="card">
-    <div class="card-header">
-      <h3 class="card-title">Business Information</h3>
-    </div>
-    <div class="card-body">
-      <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="form">
-        <div class="form-group">
-          <label class="form-label">Agency Name <span class="required">*</span></label>
-          <input formControlName="agencyName" type="text" class="form-control" placeholder="Your agency name">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Registration Number</label>
-            <input formControlName="registrationNumber" type="text" class="form-control">
+    <!-- Business Info -->
+    <div class="accordion-item">
+      <button 
+        class="accordion-header"
+        (click)="toggleSection('business')"
+        [class.active]="expandedSections.includes('business')">
+        <fa-icon [icon]="faBuilding" class="accordion-icon"></fa-icon>
+        <span class="accordion-title">Business Information</span>
+        <fa-icon [icon]="expandedSections.includes('business') ? faChevronUp : faChevronDown" class="accordion-toggle"></fa-icon>
+      </button>
+      <div class="accordion-body" *ngIf="expandedSections.includes('business')">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Business Information</h3>
           </div>
+          <div class="card-body">
+            <form [formGroup]="businessForm" (ngSubmit)="saveBusinessInfo()" class="form">
+              <div class="form-group">
+                <label class="form-label">Agency Name <span class="required">*</span></label>
+                <input formControlName="agencyName" type="text" class="form-control" placeholder="Your agency name">
+              </div>
 
-          <div class="form-group">
-            <label class="form-label">GST Number</label>
-            <input formControlName="gstNumber" type="text" class="form-control">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Registration Number</label>
+                  <input formControlName="registrationNumber" type="text" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">GST Number</label>
+                  <input formControlName="gstNumber" type="text" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <textarea formControlName="address" class="form-control" rows="3"></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Contact Number</label>
+                  <input formControlName="contactNumber" type="tel" class="form-control">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input formControlName="email" type="email" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Address</label>
-          <textarea formControlName="address" class="form-control" rows="3"></textarea>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Contact Number</label>
-            <input formControlName="contactNumber" type="tel" class="form-control">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input formControlName="email" type="email" class="form-control">
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">✓ Save Changes</button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -145,28 +333,35 @@
           <input formControlName="name" type="text" class="form-control" placeholder="e.g., 19kg Cylinder">
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Code <span class="required">*</span></label>
-            <input formControlName="code" type="text" class="form-control" placeholder="e.g., V001">
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Weight (kg) <span class="required">*</span></label>
-            <input formControlName="weightKg" type="number" class="form-control" placeholder="19" step="0.1" min="0.1">
-            <div *ngIf="variantForm.get('weightKg')?.invalid && variantForm.get('weightKg')?.touched" class="form-error">
-              <span *ngIf="variantForm.get('weightKg')?.errors?.['required']">Weight is required</span>
-              <span *ngIf="variantForm.get('weightKg')?.errors?.['min']">Weight must be greater than 0</span>
-              <span *ngIf="variantForm.get('weightKg')?.errors?.['pattern']">Enter a valid weight (e.g., 19 or 2.5)</span>
-            </div>
+        <div class="form-group">
+          <label class="form-label">Weight (kg) <span class="required">*</span></label>
+          <input formControlName="weightKg" type="number" class="form-control" placeholder="19" step="0.1" min="0.1">
+          <div *ngIf="variantForm.get('weightKg')?.invalid && variantForm.get('weightKg')?.touched" class="form-error">
+            <span *ngIf="variantForm.get('weightKg')?.errors?.['required']">Weight is required</span>
+            <span *ngIf="variantForm.get('weightKg')?.errors?.['min']">Weight must be greater than 0</span>
+            <span *ngIf="variantForm.get('weightKg')?.errors?.['pattern']">Enter a valid weight (e.g., 19 or 2.5)</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label checkbox">
-            <input formControlName="active" type="checkbox">
-            <span>Active</span>
-          </label>
+          <label class="form-label">Base Price <span class="required">*</span></label>
+          <input formControlName="basePrice" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
+          <div *ngIf="variantForm.get('basePrice')?.invalid && variantForm.get('basePrice')?.touched" class="form-error">
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['required']">Base price is required</span>
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['min']">Base price must be non-negative</span>
+            <span *ngIf="variantForm.get('basePrice')?.errors?.['pattern']">Enter a valid price (e.g., 500 or 450.50)</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status <span class="required">*</span></label>
+          <select 
+            formControlName="active"
+            class="form-control"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
         </div>
 
         <div class="modal-footer">
@@ -177,37 +372,5 @@
     </div>
   </div>
 
-  <!-- Price Edit Modal -->
-  <div *ngIf="showPriceForm" class="modal-overlay" (click)="closePriceForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>{{ isEditingPrice ? 'Edit Prices - ' + editingPrice?.month : 'Add New Price' }}</h2>
-        <button class="modal-close" (click)="closePriceForm()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div *ngIf="!isEditingPrice" class="form-group">
-          <label class="form-label">Select Month <span class="required">*</span></label>
-          <input type="month" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange(selectedMonth)" class="form-control" placeholder="Select month">
-        </div>
-        <div class="price-edit-list">
-          <ng-container *ngIf="editingPrice?.variants && editingPrice.variants.length > 0">
-            <div class="price-edit-item" *ngFor="let variant of editingPrice.variants">
-              <label class="form-label">{{ variant.name || 'Unknown' }}</label>
-              <div class="input-with-currency">
-                <span class="currency">₹</span>
-                <input type="number" [(ngModel)]="variant.price" class="form-control" placeholder="Enter price">
-              </div>
-            </div>
-          </ng-container>
-          <div *ngIf="!editingPrice?.variants || editingPrice.variants.length === 0" class="no-data">
-            <p>All variants already have prices for this month</p>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button (click)="savePrices()" class="btn btn-primary">Save Prices</button>
-        <button (click)="closePriceForm()" class="btn btn-secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
+  <!-- Price Edit Modal removed - now using customer-specific pricing -->
 </div>

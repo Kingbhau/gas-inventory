@@ -5,6 +5,15 @@
     <p class="page-subtitle">Track cylinder stock and movements</p>
   </div>
 
+  <!-- Warehouse Filter Section -->
+  <div class="warehouse-filter-section">
+    <select id="warehouseSelect" [(ngModel)]="selectedWarehouse" (ngModelChange)="onWarehouseChange()" class="form-control">
+      <option [ngValue]="null">All Warehouses</option>
+      <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse">{{ warehouse.name }}</option>
+    </select>
+    <button class="btn btn-primary" (click)="openStockTransferModal()" style="margin-left: 0.5rem;">Transfer</button>
+  </div>
+
   <!-- Stock Summary Cards -->
   <div class="stock-summary">
     <div class="stock-card" *ngFor="let stock of stockSummary">
@@ -38,14 +47,14 @@
           [items]="variants"
           [displayKey]="'name'"
           placeholder="All Variants"
-          (selectedChange)="filterVariant = $event?.name || ''; onFilterChange()"
+          (selectedChange)="filterVariant = $event?.name || ''; filterVariantId = $event?.id || null; onFilterChange()"
         ></app-autocomplete-input>
-          <label for="typeSelect" style="margin-left: 1rem;">Type:</label>
-          <select id="typeSelect" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="form-control">
-            <option value="">All Types</option>
-            <option value="Sale">Sale</option>
-            <option value="Return">Return</option>
-          </select>
+        <select id="typeSelect" [(ngModel)]="filterType" (ngModelChange)="onFilterChange()" class="form-control">
+          <option value="">All Types</option>
+          <option value="Sale">Sale</option>
+          <option value="Return">Return</option>
+          <option value="Transfer">Transfer</option>
+        </select>
       </div>
     </div>
     <div class="card-body">
@@ -66,21 +75,29 @@
               <tr *ngFor="let movement of paginatedMovements" [class.outgoing]="movement.type === 'Sale'">
                 <td>{{ movement.date | date: 'dd MMM yyyy' }}</td>
                 <td>
-                  <span class="variant-badge" [ngStyle]="{'background-color': getVariantColor(movement.variant)}"></span>
-                  <strong>{{ movement.variant }}</strong>
+                  <div *ngIf="movement.variant">
+                    <strong>{{ movement.variant }}</strong>
+                  </div>
+                  <div *ngIf="!movement.variant">
+                    <div *ngIf="movement.paymentMode"><strong>By {{ getPaymentModeLabel(movement.paymentMode) }}</strong></div>
+                    <div *ngIf="!movement.paymentMode"><strong>PAYMENT</strong></div>
+                  </div>
                 </td>
                 <td>
-                  <span class="badge"
-                    [class.badge-sale]="movement.type === 'Sale'"
-                    [class.badge-purchase]="movement.type === 'Purchase'"
-                    [class.badge-empty]="movement.type === 'Empty Return'"
-                    [class.badge-return]="movement.type === 'Return'">
-                    {{ movement.type }}
+                  <span class="type-badge" [ngClass]="'type-' + getMovementTypeClass(movement.type)">
+                    {{ formatMovementType(movement.type) }}
                   </span>
                 </td>
                 <td class="text-center">{{ movement.filledQty }}</td>
                 <td class="text-center">{{ movement.emptyQty }}</td>
-                <td class="muted text-center">{{ movement.reference }}</td>
+                <td class="muted text-center">
+                  <span *ngIf="movement.type === 'Transfer'">
+                    {{ movement.fromWarehouse }} → {{ movement.toWarehouse }}
+                  </span>
+                  <span *ngIf="movement.type !== 'Transfer'">
+                    {{ movement.customer }}
+                  </span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -122,4 +139,90 @@
     </div>
   </div>
 
+  <!-- Stock Transfer Modal -->
+  <div class="transfer-modal-overlay" *ngIf="showTransferModal" (click)="closeStockTransferModal()">
+    <div class="transfer-modal-card" (click)="$event.stopPropagation()">
+      <div class="transfer-modal-content">
+        <h2 class="transfer-modal-title">Transfer Stock</h2>
+        <p class="transfer-modal-subtitle">Move cylinders between warehouses</p>
+        
+        <form [formGroup]="stockTransferForm" (ngSubmit)="submitStockTransfer()" class="transfer-form">
+          <!-- From Warehouse -->
+          <div class="form-group">
+            <label class="form-label">From Warehouse <span class="required">*</span></label>
+            <select formControlName="fromWarehouseId" class="form-control" required>
+              <option [ngValue]="null">Select source warehouse</option>
+              <option *ngFor="let warehouse of activeWarehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
+            </select>
+            <div *ngIf="stockTransferForm.get('fromWarehouseId')?.invalid && stockTransferForm.get('fromWarehouseId')?.touched" class="error-message">
+              Source warehouse is required
+            </div>
+          </div>
+
+          <!-- To Warehouse -->
+          <div class="form-group">
+            <label class="form-label">To Warehouse <span class="required">*</span></label>
+            <select formControlName="toWarehouseId" class="form-control" required>
+              <option [ngValue]="null">Select destination warehouse</option>
+              <option *ngFor="let warehouse of activeWarehouses" [ngValue]="warehouse.id" 
+                [disabled]="warehouse.id === stockTransferForm.get('fromWarehouseId')?.value">
+                {{ warehouse.name }}
+              </option>
+            </select>
+            <div *ngIf="stockTransferForm.get('toWarehouseId')?.invalid && stockTransferForm.get('toWarehouseId')?.touched" class="error-message">
+              Destination warehouse is required and must be different
+            </div>
+          </div>
+
+          <!-- Cylinder Variant -->
+          <div class="form-group">
+            <label class="form-label">Cylinder Variant <span class="required">*</span></label>
+            <select formControlName="variantId" class="form-control" required>
+              <option [ngValue]="null">Select variant</option>
+          <option *ngFor="let variant of activeVariantsList" [ngValue]="variant.id">{{ variant.name }}</option>
+            </select>
+            <div *ngIf="stockTransferForm.get('variantId')?.invalid && stockTransferForm.get('variantId')?.touched" class="error-message">
+              Variant is required
+            </div>
+          </div>
+
+          <!-- Filled Qty -->
+          <div class="form-group">
+            <label class="form-label">Filled Cylinders <span class="required">*</span></label>
+            <div class="input-with-hint">
+              <input type="number" formControlName="filledQty" class="form-control" min="0" 
+                [max]="availableStock?.filledQty || 0" required />
+              <span class="input-hint" *ngIf="availableStock">Available: {{ availableStock.filledQty }}</span>
+            </div>
+            <div *ngIf="stockTransferForm.get('filledQty')?.invalid && stockTransferForm.get('filledQty')?.touched" class="error-message">
+              <span *ngIf="stockTransferForm.get('filledQty')?.errors?.['required']">Filled quantity is required</span>
+              <span *ngIf="stockTransferForm.get('filledQty')?.errors?.['min']">Cannot be negative</span>
+            </div>
+            <div *ngIf="availableStock && (stockTransferForm.get('filledQty')?.value > availableStock.filledQty)" class="error-message">
+              Insufficient filled cylinders. Max available: {{ availableStock.filledQty }}
+            </div>
+          </div>
+
+          <!-- Empty Qty -->
+          <div class="form-group">
+            <label class="form-label">Empty Cylinders</label>
+            <div class="input-with-hint">
+              <input type="number" formControlName="emptyQty" class="form-control" min="0" 
+                [max]="availableStock?.emptyQty || 0" />
+              <span class="input-hint" *ngIf="availableStock">Available: {{ availableStock.emptyQty }}</span>
+            </div>
+            <div *ngIf="availableStock && (stockTransferForm.get('emptyQty')?.value > availableStock.emptyQty)" class="error-message">
+              Insufficient empty cylinders. Max available: {{ availableStock.emptyQty }}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="transfer-modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeStockTransferModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="stockTransferForm.invalid">Transfer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 

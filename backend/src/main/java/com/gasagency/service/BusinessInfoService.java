@@ -5,6 +5,8 @@ import com.gasagency.dto.BusinessInfoDto;
 import com.gasagency.entity.BusinessInfo;
 import com.gasagency.repository.BusinessInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +21,7 @@ public class BusinessInfoService {
     }
     // Removed stray closing brace
 
+    @Cacheable("businessInfo")
     public BusinessInfoDto getBusinessInfo() {
         List<BusinessInfo> all = businessInfoRepository.findAll();
         if (all.isEmpty()) {
@@ -27,6 +30,7 @@ public class BusinessInfoService {
         return toDtoSafe(all.get(0));
     }
 
+    @Cacheable(value = "businessInfoById", key = "#id")
     public BusinessInfoDto getBusinessInfoById(Long id) {
         try {
             return businessInfoRepository.findById(id)
@@ -40,6 +44,7 @@ public class BusinessInfoService {
     }
 
 
+    @CacheEvict(value = { "businessInfo", "businessInfoById" }, allEntries = true)
     public BusinessInfoDto saveBusinessInfo(BusinessInfoDto dto) {
         List<BusinessInfo> all = businessInfoRepository.findAll();
         BusinessInfo entity = all.isEmpty() ? new BusinessInfo() : all.get(0);

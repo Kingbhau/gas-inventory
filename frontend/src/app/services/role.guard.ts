@@ -26,6 +26,8 @@ export class RoleGuard implements CanActivate {
     // If role doesn't match, redirect based on user's role
     if (role === 'STAFF') {
       this.router.navigate(['/sales/entry']);
+    } else if (role === 'OWNER') {
+      this.router.navigate(['/dashboard']);
     } else {
       // For MANAGER or unknown roles, try dashboard first, fallback to sales/entry
       this.router.navigate(['/dashboard']);

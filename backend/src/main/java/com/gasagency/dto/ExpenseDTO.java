@@ -30,6 +30,10 @@ public class ExpenseDTO {
     private String createdBy;
     private LocalDateTime updatedDate;
     private String updatedBy;
+    private String paymentMode;
+    private Long bankAccountId;
+    private String bankAccountName;
+    private String bankAccountNumber;
 
     // Constructors
     public ExpenseDTO() {
@@ -37,7 +41,8 @@ public class ExpenseDTO {
 
     public ExpenseDTO(Long id, String description, BigDecimal amount, String category, Long categoryId,
             LocalDate expenseDate, String notes, LocalDateTime createdDate, String createdBy,
-            LocalDateTime updatedDate, String updatedBy) {
+            LocalDateTime updatedDate, String updatedBy, String paymentMode, Long bankAccountId,
+            String bankAccountName, String bankAccountNumber) {
         this.id = id;
         this.description = description;
         this.amount = amount;
@@ -49,6 +54,10 @@ public class ExpenseDTO {
         this.createdBy = createdBy;
         this.updatedDate = updatedDate;
         this.updatedBy = updatedBy;
+        this.paymentMode = paymentMode;
+        this.bankAccountId = bankAccountId;
+        this.bankAccountName = bankAccountName;
+        this.bankAccountNumber = bankAccountNumber;
     }
 
     // Getters and Setters
@@ -138,5 +147,37 @@ public class ExpenseDTO {
 
     public void setUpdatedBy(String updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public Long getBankAccountId() {
+        return bankAccountId;
+    }
+
+    public void setBankAccountId(Long bankAccountId) {
+        this.bankAccountId = bankAccountId;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
     }
 }

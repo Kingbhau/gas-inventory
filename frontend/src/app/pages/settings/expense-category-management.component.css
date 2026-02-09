@@ -177,58 +177,9 @@ textarea.form-control {
   text-align: center !important;
 }
 
-/* Badge */
-.badge {
-  display: inline-block;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: #fef3c7;
-  color: #92400e;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.badge-active {
-  background: #dcfce7;
-  color: #16a34a;
-}
-
-.badge-active:hover {
-  background: #bbf7d0;
-}
-
-.badge-inactive {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.badge-inactive:hover {
-  background: #fecaca;
-}
+/* Badge styles use global definitions from styles.css */
 
 /* Action Buttons */
-.btn-action {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: all 0.2s;
-  margin-right: 0.5rem;
-}
-
-.btn-action:hover {
-  background: #e2e8f0;
-}
-
-.btn-action.delete:hover {
-  background: #fee2e2;
-}
-
 /* Loading & No Data */
 .loading-container,
 .no-data-container {
@@ -249,6 +200,16 @@ textarea.form-control {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .card-header .btn {
+    width: 100%;
+  }
+
   .form-actions {
     flex-direction: column;
   }

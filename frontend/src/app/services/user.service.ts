@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
+import { applyTimeout } from '../config/http.config';
+import { CacheService, CACHE_KEYS } from './cache.service';
 
 export interface User {
   id?: number;
@@ -11,25 +13,35 @@ export interface User {
   role: string;
   active: boolean;
   businessId?: number;
+  createdBy?: string;
+  createdDate?: string;
+  updatedBy?: string;
+  updatedDate?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private apiUrl = getApiUrl('/users');
 
-
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private cacheService: CacheService) {}
 
   getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl, { withCredentials: true });
+    return this.http.get<User[]>(this.apiUrl, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   getUser(id: number): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${id}`, { withCredentials: true });
+    return this.http.get<User>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout());
+  }
+
+  invalidateCache(): void {
+    this.cacheService.invalidate(CACHE_KEYS.USERS);
   }
 
   addUser(user: Partial<User>): Observable<User> {
-    return this.http.post<User>(this.apiUrl, user, { withCredentials: true });
+    return this.http.post<User>(this.apiUrl, user, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 
   updateUser(id: number, user: Partial<User>): Observable<User> {
@@ -45,5 +57,10 @@ export class UserService {
       currentPassword,
       newPassword
     }, { withCredentials: true });
+  }
+
+  reactivateUser(id: number): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/${id}/reactivate`, {}, { withCredentials: true })
+      .pipe(applyTimeout());
   }
 }

@@ -19,6 +19,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All Customers"
@@ -29,6 +30,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Variant"
+          [labelClass]="'filter-label'"
           [items]="variantsList"
           [displayKey]="'name'"
           placeholder="All"
@@ -44,6 +46,22 @@
         <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
       </div>
       <br>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
+    </div>
+    <div class="filter-row">
       <div class="filter-actions">
         <button (click)="applyFilters()" class="btn btn-primary">Search</button>
         <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
@@ -63,6 +81,7 @@
           <thead>
             <tr>
                 <th>Date</th>
+                <th>Reference #</th>
                 <th>Customer</th>
                 <th>Variant & Qty</th>
                 <th>Amount</th>
@@ -72,6 +91,7 @@
           <tbody>
             <tr *ngFor="let sale of paginatedSales" [class.highlight]="sale.totalAmount > 50000">
                 <td>{{ sale.saleDate | date: 'dd MMM yyyy' }}</td>
+                <td>{{ sale.referenceNumber }}</td>
                 <td><strong>{{ sale.customerName }}</strong></td>
                 <td>{{ sale.variantName }} - {{ sale.filledIssuedQty || 0 }} units</td>
                 <td class="amount">{{ sale.totalAmount | indianCurrency }}</td>
@@ -126,6 +146,10 @@
       <div class="modal-body">
         <div class="invoice-section">
           <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedSale.referenceNumber || '-' }}</span>
+          </div>
+          <div class="invoice-row">
             <span class="label">Date:</span>
             <span class="value">{{ selectedSale.saleDate | date: 'dd MMM yyyy' }}</span>
           </div>
@@ -133,25 +157,65 @@
             <span class="label">Customer:</span>
             <span class="value">{{ selectedSale.customerName }}</span>
           </div>
-          <div class="invoice-row">
-            <span class="label">Variant:</span>
-            <span class="value">{{ selectedSale.variantName }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Quantity:</span>
-            <span class="value">{{ selectedSale.filledIssuedQty }} units</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Base Price:</span>
-            <span class="value">{{ selectedSale.basePrice | indianCurrency }}</span>
-          </div>
-          <div class="invoice-row">
-            <span class="label">Discount:</span>
-            <span class="value">{{ selectedSale.discount | indianCurrency }}</span>
-          </div>
+          <ng-container *ngIf="selectedSale.saleItems && selectedSale.saleItems.length > 0">
+            <ng-container *ngFor="let item of selectedSale.saleItems">
+              <div class="invoice-row">
+                <span class="label">Variant:</span>
+                <span class="value">{{ item.variantName }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Filled Cylinders Issued:</span>
+                <span class="value">{{ item.qtyIssued }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Empty Cylinders Returned:</span>
+                <span class="value">{{ item.qtyEmptyReceived || 0 }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Base Price:</span>
+                <span class="value">{{ item.basePrice | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Discount:</span>
+                <span class="value">{{ item.discount | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Final Price:</span>
+                <span class="value">{{ item.finalPrice | indianCurrency }}</span>
+              </div>
+            </ng-container>
+          </ng-container>
           <div class="invoice-row total">
             <span class="label">Total Amount:</span>
             <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Amount Received:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.amountReceived || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Due Amount:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.dueAmount || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.createdBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedSale.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
+            <span class="label">Bank Name:</span>
+            <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>
         </div>
       </div>

@@ -58,4 +58,9 @@ public class CylinderVariantController {
         service.deleteVariant(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/reactivate")
+    public ResponseEntity<CylinderVariantDTO> reactivateVariant(@PathVariable Long id) {
+        return ResponseEntity.ok(service.reactivateVariant(id));
+    }
 }

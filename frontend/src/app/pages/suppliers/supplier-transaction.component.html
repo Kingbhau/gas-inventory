@@ -1,47 +1,72 @@
 <div class="supplier-transaction-container">
   <!-- Page Header -->
   <div class="page-header">
-    <h1 class="page-title">Supplier Transactions</h1>
+    <div class="header-content">
+      <h1 class="page-title">Supplier Transactions</h1>
+      <p class="page-subtitle">Track cylinder movements, payments, and balances by supplier</p>
+    </div>
     <button (click)="openAddForm()" class="btn btn-primary">+ New Transaction</button>
+  </div>
 
   <!-- Filters Section -->
   <div class="filters-card">
-    <div class="filter-row" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+    <!-- Row 1: From Date, To Date, Supplier -->
+    <div class="filter-row three-col">
+      <div class="filter-group">
         <label class="filter-label">From Date</label>
         <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
       </div>
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
+      <div class="filter-group">
         <label class="filter-label">To Date</label>
         <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
       </div>
-      <div class="filter-group" style="flex: 1 1 220px; min-width: 220px;">
-        <app-autocomplete-input
-          label="Supplier"
-          [items]="suppliers"
-          [displayKey]="'name'"
-          placeholder="All Suppliers"
-          (selectedChange)="selectedSupplier = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
-      </div>
-      <div class="filter-group" style="flex: 1 1 180px; min-width: 180px;">
-        <app-autocomplete-input
-          label="Variant"
-          [items]="variants"
-          [displayKey]="'name'"
-          placeholder="All"
-          (selectedChange)="filterVariantId = $event?.id?.toString() || ''"
-        ></app-autocomplete-input>
-      </div>
-      <div class="filter-actions" style="display: flex; gap: 0.5rem;">
-        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
-        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
-        <button (click)="exportSupplierTransactionsPDF()" class="btn btn-secondary" style="display: flex; align-items: center;">
-          <fa-icon [icon]="faDownload" style="margin-right: 4px;"></fa-icon> Export PDF
-        </button>
+      <div class="filter-group">
+        <label class="filter-label">Supplier</label>
+        <select [(ngModel)]="selectedSupplier" class="filter-input">
+          <option value="">All Suppliers</option>
+          <option *ngFor="let supplier of suppliers" [value]="supplier.id?.toString()">{{ supplier.name }}</option>
+        </select>
       </div>
     </div>
-  </div>
+    <!-- Row 2: Warehouse, Variant, Reference -->
+    <div class="filter-row three-col">
+      <div class="filter-group">
+        <label class="filter-label">Warehouse</label>
+        <select [(ngModel)]="selectedWarehouse" class="filter-input">
+          <option value="">All Warehouses</option>
+          <option *ngFor="let warehouse of warehouses" [value]="warehouse.id?.toString()">{{ warehouse.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Variant</label>
+        <select [(ngModel)]="filterVariantId" class="filter-input">
+          <option value="">All Variants</option>
+          <option *ngFor="let variant of variants" [value]="variant.id?.toString()">{{ variant.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
+      </div>
+    </div>
+    <!-- Row 3: Buttons -->
+    <div class="filter-actions-row">
+      <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+      <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+      <button (click)="exportSupplierTransactionsPDF()" class="btn btn-secondary">
+        <fa-icon [icon]="faDownload"></fa-icon> Export PDF
+      </button>
+    </div>
   </div>
 
 
@@ -63,9 +88,8 @@
               <th>Variant</th>
               <th class="text-center">Filled Received</th>
               <th class="text-center">Empty Returned</th>
-              <th>Reference</th>
               <th class="text-center">Amount</th>
-              <th>Actions</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -75,10 +99,12 @@
               <td>{{ transaction.variantName }}</td>
               <td class="text-center received">{{ transaction.filledReceived }} units</td>
               <td class="text-center returned">{{ transaction.emptySent }} units</td>
-              <td class="muted">{{ transaction.reference }}</td>
               <td class="text-center">{{ transaction.amount | number:'1.2-2' }}</td>
-              <td>
-                <button class="action-btn" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faPencil"></fa-icon></button>
+              <td class="text-center">
+                <button class="btn-action" (click)="viewTransactionDetails(transaction)" title="View Details" style="margin-right: 0.5rem;">
+                  <fa-icon [icon]="faEye"></fa-icon>
+                </button>
+                <button class="btn-action" (click)="editTransaction(transaction)" title="Edit"><fa-icon [icon]="faEdit"></fa-icon></button>
               </td>
             </tr>
           </tbody>
@@ -124,28 +150,46 @@
         <button class="modal-close" (click)="closeForm()">✕</button>
       </div>
       <form [formGroup]="transactionForm" (ngSubmit)="saveTransaction()" class="modal-body">
-        <app-autocomplete-input
-          label="Supplier"
-          [required]="true"
-          [items]="suppliers"
-          [displayKey]="'name'"
-          placeholder="Select a supplier"
-          (selectedChange)="transactionForm.get('supplierId')?.setValue($event?.id || '')"
-        ></app-autocomplete-input>
-        <div *ngIf="transactionForm.get('supplierId')?.invalid && transactionForm.get('supplierId')?.touched" class="error-message">
-          Supplier is required
+        <div class="form-group">
+          <label class="form-label">Warehouse <span class="required">*</span></label>
+          <ng-container *ngIf="editingId; else warehouseSelect">
+            <!-- Read-only warehouse display during edit -->
+            <div class="form-control" style="background-color: #f5f5f5; cursor: not-allowed; display: flex; align-items: center; height: 38px;">
+              {{ getSelectedWarehouseName() }}
+            </div>
+          </ng-container>
+          <ng-template #warehouseSelect>
+            <!-- Editable warehouse select for new transaction -->
+            <select formControlName="warehouseId" class="form-control" [compareWith]="warehouseCompare" (change)="loadCurrentEmpty()">
+              <option [ngValue]="null">Select a warehouse</option>
+              <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
+            </select>
+          </ng-template>
+          <div *ngIf="transactionForm.get('warehouseId')?.invalid && transactionForm.get('warehouseId')?.touched" class="error-message">
+            Warehouse is required
+          </div>
         </div>
 
-        <app-autocomplete-input
-          label="Variant"
-          [required]="true"
-          [items]="variants"
-          [displayKey]="'name'"
-          placeholder="Select variant"
-          (selectedChange)="transactionForm.get('variantId')?.setValue($event?.id || '')"
-        ></app-autocomplete-input>
-        <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
-          Variant is required
+        <div class="form-group">
+          <label class="form-label">Supplier <span class="required">*</span></label>
+          <select formControlName="supplierId" class="form-control">
+            <option value="">Select a supplier</option>
+            <option *ngFor="let supplier of suppliers" [value]="supplier.id">{{ supplier.name }}</option>
+          </select>
+          <div *ngIf="transactionForm.get('supplierId')?.invalid && transactionForm.get('supplierId')?.touched" class="error-message">
+            Supplier is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Variant <span class="required">*</span></label>
+          <select formControlName="variantId" class="form-control" (change)="loadCurrentEmpty()">
+            <option value="">Select variant</option>
+            <option *ngFor="let variant of variants" [value]="variant.id">{{ variant.name }}</option>
+          </select>
+          <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
+            Variant is required
+          </div>
         </div>
 
         <div class="form-group">
@@ -171,12 +215,24 @@
             <div *ngIf="transactionForm.get('emptySent')?.invalid && transactionForm.get('emptySent')?.touched" class="error-message">
               Valid quantity required
             </div>
+            <div class="balance-info" *ngIf="emptyLoading">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="!emptyLoading && currentEmpty !== null">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">{{ currentEmpty }} cylinders</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="!emptyLoading && emptyError">
+              <span class="balance-label">Current empty available</span>
+              <span class="balance-value">{{ emptyError }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="editingId !== null">
           <label class="form-label">Reference Number</label>
-          <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001">
+          <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001" readonly style="background-color: #f5f5f5;">
         </div>
 
         <div class="form-group">
@@ -194,3 +250,65 @@
     </div>
   </div>
 
+  <!-- View Transaction Details Modal -->
+  <div *ngIf="selectedTransaction" class="modal-overlay" (click)="closeTransactionDetails()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Transaction Details</h2>
+        <button class="modal-close" (click)="closeTransactionDetails()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ selectedTransaction.transactionDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedTransaction.reference || '-' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Warehouse:</span>
+            <span class="value">{{ selectedTransaction.warehouseName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Supplier:</span>
+            <span class="value">{{ selectedTransaction.supplierName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Variant:</span>
+            <span class="value">{{ selectedTransaction.variantName }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Filled Received:</span>
+            <span class="value">{{ selectedTransaction.filledReceived }} units</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Empty Returned:</span>
+            <span class="value">{{ selectedTransaction.emptySent }} units</span>
+          </div>
+          <div class="invoice-row total">
+            <span class="label">Amount:</span>
+            <span class="value">{{ selectedTransaction.amount | number:'1.2-2' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedTransaction.createdBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedTransaction.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedTransaction.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeTransactionDetails()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+</div>

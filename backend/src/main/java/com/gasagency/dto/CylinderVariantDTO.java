@@ -3,6 +3,8 @@ package com.gasagency.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.DecimalMin;
+import java.math.BigDecimal;
 
 public class CylinderVariantDTO {
     private Long id;
@@ -16,7 +18,18 @@ public class CylinderVariantDTO {
 
     private Boolean active;
 
+    @DecimalMin(value = "0.0", inclusive = true, message = "Base price must be non-negative.")
+    private BigDecimal basePrice;
+
     public CylinderVariantDTO() {
+    }
+
+    public CylinderVariantDTO(Long id, String name, Double weightKg, Boolean active, BigDecimal basePrice) {
+        this.id = id;
+        this.name = name;
+        this.weightKg = weightKg;
+        this.active = active;
+        this.basePrice = basePrice;
     }
 
     public CylinderVariantDTO(Long id, String name, Double weightKg, Boolean active) {
@@ -56,5 +69,13 @@ public class CylinderVariantDTO {
 
     public void setActive(Boolean active) {
         this.active = active;
+    }
+
+    public BigDecimal getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(BigDecimal basePrice) {
+        this.basePrice = basePrice;
     }
 }

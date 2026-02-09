@@ -1,6 +1,12 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.gasagency.config.BusinessInfoDeserializer;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -26,13 +32,20 @@ public class User extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id")
+    @JsonBackReference("business-users")
+    @JsonProperty("businessId")
+    @JsonDeserialize(using = BusinessInfoDeserializer.class)
     private BusinessInfo business;
 
     @Column(nullable = false)
     private boolean active = true;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("user-refreshTokens")
+    private List<RefreshToken> refreshTokens;
+
     public enum Role {
-        MANAGER, STAFF
+        OWNER, MANAGER, STAFF
     }
 
     // Getters and setters
@@ -102,5 +115,13 @@ public class User extends Auditable {
 
     public Boolean getActive() {
         return active;
+    }
+
+    public List<RefreshToken> getRefreshTokens() {
+        return refreshTokens;
+    }
+
+    public void setRefreshTokens(List<RefreshToken> refreshTokens) {
+        this.refreshTokens = refreshTokens;
     }
 }

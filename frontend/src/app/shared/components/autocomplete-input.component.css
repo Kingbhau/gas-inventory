@@ -20,7 +20,17 @@
   display: block;
 }
 
-.form-label .required {
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #0f172a;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.form-label .required,
+.filter-label .required {
   color: #dc2626;
   margin-left: 0.25rem;
 }

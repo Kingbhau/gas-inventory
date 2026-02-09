@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,21 +12,25 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { UserService, User } from '../../services/user.service';
 
 @Component({
   selector: 'app-sales-history',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, FontAwesomeModule, SharedModule, AutocompleteInputComponent],
   templateUrl: './sales-history.component.html',
-  styleUrl: './sales-history.component.css'
+  styleUrl: './sales-history.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SalesHistoryComponent implements OnInit {
+export class SalesHistoryComponent implements OnInit, OnDestroy {
   filterFromDate = '';
   filterToDate = '';
   selectedCustomer = '';
   filterVariantId: string = '';
   filterMinAmount: number | null = null;
   filterMaxAmount: number | null = null;
+  filterReference: string = '';
+  filterCreatedBy = '';
   variantsList: any[] = [];
   currentPage = 1;
   pageSize = 10;
@@ -48,30 +52,36 @@ export class SalesHistoryComponent implements OnInit {
   filteredSales: any[] = [];
   selectedSale: any = null;
   customersList: any[] = [];
+  users: User[] = [];
+  originalSalesMap: Map<number, any> = new Map();
 
   constructor(
     private saleService: SaleService,
     private customerService: CustomerService,
     private toastr: ToastrService,
     private variantService: CylinderVariantService,
-    private loadingService: LoadingService
+    private loadingService: LoadingService,
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     this.loadSales();
     this.loadCustomers();
-    // Load variants
-    if (this.variantService && this.variantService.getAllVariants) {
-      this.variantService.getAllVariants(0, 100).subscribe({
-        next: (data: any) => {
-          this.variantsList = data.content || data;
-        },
-        error: (error: any) => {
-          this.variantsList = [];
-        }
-      });
-    }
+    this.loadUsers();
+    // Load all variants (including inactive) for filtering historical sales
+    this.variantService.getAllVariantsAll().subscribe({
+      next: (data: any) => {
+        this.variantsList = data || [];
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        this.variantsList = [];
+      }
+    });
   }
+
+  ngOnDestroy() {}
 
   loadSales() {
     // Use filters if set
@@ -81,8 +91,9 @@ export class SalesHistoryComponent implements OnInit {
     const variantId = this.filterVariantId ? Number(this.filterVariantId) : undefined;
     const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
     const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
+    const referenceNumber = this.filterReference ? this.filterReference : undefined;
     this.loadingService.show('Loading sales...');
-    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount)
+    this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
@@ -105,28 +116,38 @@ export class SalesHistoryComponent implements OnInit {
                 }
                 flattenedSales.push({
                   id: sale.id,
+                  referenceNumber: sale.referenceNumber,
                   customerId: sale.customerId,
                   customerName: sale.customerName,
                   saleDate: sale.saleDate,
                   totalAmount: sale.totalAmount,
+                  paymentMode: sale.paymentMode,
+                  bankAccountId: sale.bankAccountId,
+                  bankAccountName: sale.bankAccountName,
                   variantName: item.variantName,
                   filledIssuedQty: item.qtyIssued,
                   qtyEmptyReceived: item.qtyEmptyReceived,
                   basePrice: item.basePrice,
                   discount: item.discount,
-                  finalPrice: finalPrice
+                  finalPrice: finalPrice,
+                  createdBy: sale.createdBy
                 });
               });
             } else {
               // Handle sales without items
               flattenedSales.push({
                 id: sale.id,
+                referenceNumber: sale.referenceNumber,
                 customerId: sale.customerId,
                 customerName: sale.customerName,
                 saleDate: sale.saleDate,
                 totalAmount: sale.totalAmount,
+                paymentMode: sale.paymentMode,
+                bankAccountId: sale.bankAccountId,
+                bankAccountName: sale.bankAccountName,
                 variantName: 'N/A',
-                filledIssuedQty: 0
+                filledIssuedQty: 0,
+                createdBy: sale.createdBy
               });
             }
           });
@@ -134,6 +155,12 @@ export class SalesHistoryComponent implements OnInit {
           this.filteredSales = [...this.allSales];
           this.totalElements = data.totalElements || this.filteredSales.length;
           this.totalPages = data.totalPages || 1;
+          // Store original sales for modal display
+          this.originalSalesMap.clear();
+          salesArray.forEach((sale: any) => {
+            this.originalSalesMap.set(sale.id, sale);
+          });
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales';
@@ -145,11 +172,12 @@ export class SalesHistoryComponent implements OnInit {
 
   loadCustomers() {
     this.loadingService.show('Loading customers...');
-    this.customerService.getAllCustomers(0, 100)
+    this.customerService.getAllCustomersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data) => {
-          this.customersList = data.content || data;
+          this.customersList = data;
+          this.cdr.markForCheck();
         },
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
@@ -171,6 +199,8 @@ export class SalesHistoryComponent implements OnInit {
     this.filterVariantId = '';
     this.filterMinAmount = null;
     this.filterMaxAmount = null;
+    this.filterReference = '';
+    this.filterCreatedBy = '';
     this.currentPage = 1;
     this.loadSales();
   }
@@ -195,7 +225,8 @@ export class SalesHistoryComponent implements OnInit {
   }
 
   viewInvoice(saleId: string) {
-    this.selectedSale = this.filteredSales.find(s => s.id === saleId);
+    const numericId = Number(saleId);
+    this.selectedSale = this.originalSalesMap.get(numericId) || this.filteredSales.find(s => s.id === saleId);
   }
 
   closeInvoice() {
@@ -204,5 +235,26 @@ export class SalesHistoryComponent implements OnInit {
 
   printInvoice() {
     window.print();
+  }
+
+  getCreatedByName(createdBy?: string | null): string {
+    if (!createdBy) {
+      return 'N/A';
+    }
+    const user = this.users.find(u => u.username === createdBy);
+    return user?.name || createdBy;
+  }
+
+  private loadUsers() {
+    this.userService.getUsers()
+      .subscribe({
+        next: (users) => {
+          this.users = users || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.users = [];
+        }
+      });
   }
 }

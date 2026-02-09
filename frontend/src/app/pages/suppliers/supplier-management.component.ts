@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faSearch, faPencil, faTrash, faPlus, faTimes, faExclamation, faBuilding } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faEdit, faTrash, faPlus, faTimes, faExclamation, faBuilding } from '@fortawesome/free-solid-svg-icons';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../services/supplier.service';
+import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
@@ -15,9 +16,10 @@ import { catchError, finalize } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, FontAwesomeModule],
   templateUrl: './supplier-management.component.html',
-  styleUrl: './supplier-management.component.css'
+  styleUrl: './supplier-management.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SupplierManagementComponent implements OnInit {
+export class SupplierManagementComponent implements OnInit, OnDestroy {
     // Pagination state for suppliers table
     supplierPage = 1;
     supplierPageSize = 10;
@@ -44,20 +46,21 @@ export class SupplierManagementComponent implements OnInit {
 
   // Font Awesome Icons
   faSearch = faSearch;
-  faPencil = faPencil;
+  faEdit = faEdit;
   faTrash = faTrash;
   faPlus = faPlus;
   faTimes = faTimes;
   faExclamation = faExclamation;
   faBuilding = faBuilding;
-
   suppliers: any[] = [];
 
   constructor(
     private fb: FormBuilder,
     private supplierService: SupplierService,
+    private authService: AuthService,
     private loadingService: LoadingService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
@@ -65,6 +68,8 @@ export class SupplierManagementComponent implements OnInit {
   ngOnInit() {
     this.loadSuppliers();
   }
+
+  ngOnDestroy() {}
 
   loadSuppliers() {
     this.loadingService.show('Loading suppliers...');
@@ -82,6 +87,7 @@ export class SupplierManagementComponent implements OnInit {
         this.suppliers = (data.content || data).sort((a: any, b: any) => b.id - a.id);
         this.totalSuppliers = data.totalElements || this.suppliers.length;
         this.totalPages = data.totalPages || 1;
+        this.cdr.markForCheck();
         sub.unsubscribe();
       });
   }
@@ -101,6 +107,7 @@ export class SupplierManagementComponent implements OnInit {
 
   initForm() {
     this.supplierForm = this.fb.group({
+      code: [''],
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
       contact: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(20), Validators.pattern('^[+0-9\-\s()]+$')]]
     });
@@ -129,11 +136,6 @@ export class SupplierManagementComponent implements OnInit {
       this.toastr.error('Please correct the errors in the form.', 'Validation Error');
       return;
     }
-    // Restrict to only one supplier
-    if (!this.editingId && this.suppliers.length >= 1) {
-      this.toastr.error('Only one supplier can be added.', 'Restriction');
-      return;
-    }
     // Prevent duplicate supplier name on frontend
     const name = this.supplierForm.get('name')?.value.trim().toLowerCase();
     const duplicate = this.suppliers.some(s => s.name.trim().toLowerCase() === name && s.id !== this.editingId);
@@ -157,14 +159,24 @@ export class SupplierManagementComponent implements OnInit {
             if (index > -1) {
               this.suppliers[index] = updatedSupplier;
             }
+            this.supplierService.invalidateCache();
             this.toastr.success('Supplier updated successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
+            this.cdr.markForCheck();
           }
           sub.unsubscribe();
         });
     } else {
-      const sub = this.supplierService.createSupplier(this.supplierForm.value)
+      const userInfo = this.authService.getUserInfo();
+      const businessId = userInfo && userInfo.businessId ? userInfo.businessId : null;
+      
+      if (!businessId) {
+        this.toastr.error('User business information not found', 'Error');
+        return;
+      }
+
+      const sub = this.supplierService.createSupplier(this.supplierForm.value, businessId)
         .pipe(
           catchError((error: any) => {
             const errorMessage = error?.error?.message || error?.message || 'Error creating supplier';
@@ -176,9 +188,11 @@ export class SupplierManagementComponent implements OnInit {
         .subscribe(newSupplier => {
           if (newSupplier) {
             this.suppliers.push(newSupplier);
+            this.supplierService.invalidateCache();
             this.toastr.success('Supplier created successfully', 'Success');
             this.showForm = false;
             this.supplierForm.reset();
+            this.cdr.markForCheck();
           }
           sub.unsubscribe();
         });
@@ -190,6 +204,7 @@ export class SupplierManagementComponent implements OnInit {
       this.supplierService.deleteSupplier(id).subscribe({
         next: () => {
           this.suppliers = this.suppliers.filter(s => s.id !== id);
+          this.supplierService.invalidateCache();
           this.toastr.success('Supplier deleted successfully', 'Success');
         },
         error: (error) => {

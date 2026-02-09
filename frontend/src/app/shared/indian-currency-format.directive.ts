@@ -1,34 +1,74 @@
-import { Directive, HostListener, ElementRef } from '@angular/core';
+import { Directive, HostListener, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { NgControl } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Directive({
   selector: '[indianCurrencyFormat]'
 })
-export class IndianCurrencyFormatDirective {
+export class IndianCurrencyFormatDirective implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
   constructor(private el: ElementRef, private control: NgControl) {}
+
+  ngOnInit() {
+    // Listen for form control value changes and format them
+    if (this.control.control) {
+      this.control.control.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          setTimeout(() => {
+            this.formatDisplay();
+          }, 0);
+        });
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private formatDisplay() {
+    const input = this.el.nativeElement as HTMLInputElement;
+    let value = input.value.replace(/,/g, '');
+    
+    if (value && value !== '') {
+      const sanitizedValue = value.replace(/[^0-9.]/g, '');
+      if (sanitizedValue !== '' && !isNaN(Number(sanitizedValue))) {
+        input.value = this.formatIndianCurrency(sanitizedValue);
+      }
+    }
+  }
 
   @HostListener('input', ['$event'])
   onInput(event: Event) {
     const input = event.target as HTMLInputElement;
     let value = input.value.replace(/,/g, '');
-    if (!isNaN(Number(value)) && value !== '') {
-      // Update the form control value without commas
-      this.control.control?.setValue(value.replace(/,/g, ''));
-      // Format after Angular updates
-      setTimeout(() => {
-        input.value = this.formatIndianCurrency(value);
-      });
+    
+    // Allow only digits and decimal point
+    const sanitizedValue = value.replace(/[^0-9.]/g, '');
+    
+    // Prevent multiple decimal points
+    let finalValue = sanitizedValue;
+    const decimalCount = (sanitizedValue.match(/\./g) || []).length;
+    if (decimalCount > 1) {
+      finalValue = sanitizedValue.substring(0, sanitizedValue.lastIndexOf('.'));
     }
+    
+    // Update control value immediately without emitting change event
+    this.control.control?.setValue(finalValue, { emitEvent: false });
+    
+    // Update the display with formatted value
+    input.value = finalValue === '' ? '' : this.formatIndianCurrency(finalValue);
   }
 
   @HostListener('blur', ['$event'])
   onBlur(event: Event) {
     const input = event.target as HTMLInputElement;
     let value = input.value.replace(/,/g, '');
-    if (!isNaN(Number(value)) && value !== '') {
-      setTimeout(() => {
-        input.value = this.formatIndianCurrency(value);
-      });
+    if (value !== '' && !isNaN(Number(value))) {
+      input.value = this.formatIndianCurrency(value);
     }
   }
 

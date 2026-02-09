@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 import { Sale } from '../models/sale.model';
 import { getApiUrl } from '../config/api.config';
 
@@ -9,18 +9,21 @@ import { getApiUrl } from '../config/api.config';
 })
 export class SaleService {
     getRecentSales(): Observable<any> {
-      return this.http.get<any>(`${this.apiUrl}/recent`, { withCredentials: true });
+      return this.http.get<any>(`${this.apiUrl}/recent`, { withCredentials: true })
+        .pipe(timeout(30000));
     }
   private apiUrl = getApiUrl('/sales');
 
   constructor(private http: HttpClient) { }
 
   createSale(saleRequest: any): Observable<Sale> {
-    return this.http.post<Sale>(this.apiUrl, saleRequest, { withCredentials: true });
+    return this.http.post<Sale>(this.apiUrl, saleRequest, { withCredentials: true })
+      .pipe(timeout(30000));
   }
 
   getSale(id: number): Observable<Sale> {
-    return this.http.get<Sale>(`${this.apiUrl}/${id}`, { withCredentials: true });
+    return this.http.get<Sale>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(timeout(30000));
   }
 
   getAllSales(
@@ -33,7 +36,9 @@ export class SaleService {
     customerId?: string,
     variantId?: number,
     minAmount?: number,
-    maxAmount?: number
+    maxAmount?: number,
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -46,14 +51,18 @@ export class SaleService {
     if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
-    return this.http.get<any>(this.apiUrl, { params, withCredentials: true });
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
+      .pipe(timeout(30000));
   }
 
   getSalesByCustomer(customerId: number, page: number = 0, size: number = 20): Observable<any> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
-    return this.http.get<any>(`${this.apiUrl}/customer/${customerId}`, { params, withCredentials: true });
+    return this.http.get<any>(`${this.apiUrl}/customer/${customerId}`, { params, withCredentials: true })
+      .pipe(timeout(30000));
   }
 
   getSalesSummary(
@@ -62,7 +71,9 @@ export class SaleService {
     customerId?: string,
     variantId?: number,
     minAmount?: number,
-    maxAmount?: number
+    maxAmount?: number,
+    referenceNumber?: string,
+    createdBy?: string
   ): Observable<any> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
@@ -71,6 +82,32 @@ export class SaleService {
     if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
     if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
     if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
+    if (createdBy) params = params.set('createdBy', createdBy);
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true });
+  }
+
+  getPaymentModeSummary(
+    fromDate?: string,
+    toDate?: string,
+    customerId?: string,
+    paymentMode?: string,
+    variantId?: number,
+    bankAccountId?: number,
+    minAmount?: number,
+    maxAmount?: number,
+    minTransactionCount?: number
+  ): Observable<any> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (customerId) params = params.set('customerId', customerId);
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (variantId !== undefined && variantId !== null) params = params.set('variantId', variantId.toString());
+    if (bankAccountId !== undefined && bankAccountId !== null) params = params.set('bankAccountId', bankAccountId.toString());
+    if (minAmount !== undefined && minAmount !== null) params = params.set('minAmount', minAmount.toString());
+    if (maxAmount !== undefined && maxAmount !== null) params = params.set('maxAmount', maxAmount.toString());
+    if (minTransactionCount !== undefined && minTransactionCount !== null) params = params.set('minTransactionCount', minTransactionCount.toString());
+    return this.http.get<any>(`${this.apiUrl}/payment-mode-summary`, { params, withCredentials: true });
   }
 }

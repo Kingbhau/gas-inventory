@@ -3,9 +3,16 @@ package com.gasagency.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
-@Table(name = "expenses")
+@Table(name = "expenses", indexes = {
+        @Index(name = "idx_expense_date", columnList = "expense_date"),
+        @Index(name = "idx_expense_category_date", columnList = "category_id, expense_date"),
+        @Index(name = "idx_expense_payment_mode", columnList = "payment_mode"),
+        @Index(name = "idx_expense_bank_account", columnList = "bank_account_id"),
+        @Index(name = "idx_expense_date_payment", columnList = "expense_date, payment_mode")
+})
 public class Expense extends Auditable {
 
     @Id
@@ -20,6 +27,7 @@ public class Expense extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
+    @JsonBackReference("category-expenses")
     private ExpenseCategory category;
 
     @Column(nullable = false)
@@ -28,18 +36,28 @@ public class Expense extends Auditable {
     @Column(length = 500)
     private String notes;
 
+    @Column(length = 50)
+    private String paymentMode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bank_account_id")
+    @JsonBackReference("bankAccount-expenses")
+    private BankAccount bankAccount;
+
     // Constructors
     public Expense() {
     }
 
     public Expense(Long id, String description, BigDecimal amount, ExpenseCategory category,
-            LocalDate expenseDate, String notes) {
+            LocalDate expenseDate, String notes, String paymentMode, BankAccount bankAccount) {
         this.id = id;
         this.description = description;
         this.amount = amount;
         this.category = category;
         this.expenseDate = expenseDate;
         this.notes = notes;
+        this.paymentMode = paymentMode;
+        this.bankAccount = bankAccount;
     }
 
     // Getters and Setters
@@ -89,5 +107,21 @@ public class Expense extends Auditable {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public BankAccount getBankAccount() {
+        return bankAccount;
+    }
+
+    public void setBankAccount(BankAccount bankAccount) {
+        this.bankAccount = bankAccount;
     }
 }

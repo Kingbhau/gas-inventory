@@ -11,7 +11,7 @@
       <button 
         *ngFor="let report of availableReports"
         [class.active]="selectedReport === report.id"
-        (click)="selectedReport = report.id; loadReportData();"
+        (click)="onTabChange(report.id)"
         class="selector-btn">
         <fa-icon [icon]="report.icon"></fa-icon> {{ report.name }}
       </button>
@@ -32,6 +32,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Customer"
+          [labelClass]="'filter-label'"
           [items]="customersList"
           [displayKey]="'name'"
           placeholder="All"
@@ -41,6 +42,7 @@
       <div class="filter-group">
         <app-autocomplete-input
           label="Variant"
+          [labelClass]="'filter-label'"
           [items]="variantsList"
           [displayKey]="'name'"
           placeholder="All"
@@ -54,6 +56,20 @@
       <div class="filter-group">
         <label class="filter-label">Max Amount</label>
         <input type="number" [(ngModel)]="filterMaxAmount" class="filter-input" placeholder="Max">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Reference #</label>
+        <input type="text" [(ngModel)]="filterSalesReference" class="filter-input" placeholder="Reference number">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterSalesCreatedBy = $event?.username || ''"
+        ></app-autocomplete-input>
       </div>
       <div class="filter-actions">
         <button (click)="onGenerateClick()" class="btn btn-primary">Search</button>
@@ -87,7 +103,7 @@
         </div>
       </div>
 
-      <div *ngIf="salesData.length > 0" class="table-wrapper">
+      <div *ngIf="flattenedSaleItems.length > 0" class="table-wrapper">
         <div class="mobile-table-scroll">
           <table class="data-table">
             <thead>
@@ -99,10 +115,11 @@
                 <th class="text-center">Base Price</th>
                 <th class="text-center">Discount</th>
                 <th class="text-center">Amount</th>
+                <th class="text-center">Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let row of paginatedSalesData">
+              <tr *ngFor="let row of flattenedSaleItems">
                 <td>{{ row.sale.saleDate | date: 'dd MMM yyyy' }}</td>
                 <td><strong>{{ row.sale.customerName }}</strong></td>
                 <td>{{ row.item.variantName }}</td>
@@ -110,13 +127,24 @@
                 <td class="text-center">{{ row.item.basePrice | indianCurrency }}</td>
                 <td class="text-center">{{ row.item.discount | indianCurrency }}</td>
                 <td class="text-center amount">{{ row.item.finalPrice | indianCurrency }}</td>
+                <td class="text-center">
+                  <button (click)="viewInvoice(row.sale.id)" class="btn btn-sm btn-info" title="View Details">
+                    <fa-icon [icon]="faEye"></fa-icon>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+      <div *ngIf="salesData.length > 0 && flattenedSaleItems.length === 0" class="empty-state">
+        <p>No data available for the selected filters.</p>
+      </div>
+      <div *ngIf="salesData.length === 0" class="empty-state">
+        <p>No sales data available.</p>
+      </div>
       <!-- Pagination Controls -->
-      <div *ngIf="salesTotalElements > 0" class="pagination">
+      <div *ngIf="flattenedSaleItems.length > 0" class="pagination">
         <button 
           (click)="onSalesPageChange(salesPage - 1)" 
           [disabled]="salesPage === 1"
@@ -142,11 +170,341 @@
     </div>
   </div>
 
+  <!-- Invoice Modal -->
+  <div *ngIf="selectedSale" class="modal-overlay" (click)="closeInvoice()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Invoice #{{ selectedSale.id }}</h2>
+        <button class="modal-close" (click)="closeInvoice()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="invoice-section">
+          <div class="invoice-row">
+            <span class="label">Date:</span>
+            <span class="value">{{ selectedSale.saleDate | date: 'dd MMM yyyy' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Reference Number:</span>
+            <span class="value">{{ selectedSale.referenceNumber || '-' }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Customer:</span>
+            <span class="value">{{ selectedSale.customerName }}</span>
+          </div>
+          <ng-container *ngIf="selectedSale.saleItems && selectedSale.saleItems.length > 0">
+            <ng-container *ngFor="let item of selectedSale.saleItems">
+              <div class="invoice-row">
+                <span class="label">Variant:</span>
+                <span class="value">{{ item.variantName }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Filled Cylinders Issued:</span>
+                <span class="value">{{ item.qtyIssued }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Empty Cylinders Returned:</span>
+                <span class="value">{{ item.qtyEmptyReceived || 0 }} units</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Base Price:</span>
+                <span class="value">{{ item.basePrice | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Discount:</span>
+                <span class="value">{{ item.discount | indianCurrency }}</span>
+              </div>
+              <div class="invoice-row">
+                <span class="label">Final Price:</span>
+                <span class="value">{{ item.finalPrice | indianCurrency }}</span>
+              </div>
+            </ng-container>
+          </ng-container>
+          <div class="invoice-row total">
+            <span class="label">Total Amount:</span>
+            <span class="value">{{ selectedSale.totalAmount | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Amount Received:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.amountReceived || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Due Amount:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.dueAmount || 0) | indianCurrency }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Payment Mode:</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Created By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.createdBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified By:</span>
+            <span class="value">{{ getCreatedByName(selectedSale.updatedBy) }}</span>
+          </div>
+          <div class="invoice-row">
+            <span class="label">Last Modified Date:</span>
+            <span class="value">{{ selectedSale.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
+            <span class="label">Bank Name:</span>
+            <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="closeInvoice()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Expense Report -->
   <app-expense-report 
     *ngIf="selectedReport === 'expenses'"
     [agencyName]="agencyName">
   </app-expense-report>
+
+  <!-- Customer Due Payment Filters -->
+  <div *ngIf="selectedReport === 'customerDuePayment'" class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [labelClass]="'filter-label'"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterDuePaymentCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterDuePaymentFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterDuePaymentToDate" class="filter-input" [min]="filterDuePaymentFromDate">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Due Amount</label>
+        <input type="number" [(ngModel)]="filterDuePaymentMinAmount" class="filter-input" placeholder="Min">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Due Amount</label>
+        <input type="number" [(ngModel)]="filterDuePaymentMaxAmount" class="filter-input" placeholder="Max">
+      </div>
+      <div class="filter-actions">
+        <button (click)="onGenerateDuePaymentClick()" class="btn btn-primary">Search</button>
+        <button (click)="exportReport()" class="btn btn-secondary"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Due Payment Report -->
+  <div *ngIf="selectedReport === 'customerDuePayment'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Customer Due Payment Report</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Cards -->
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Due Amount</span>
+          <span class="value">{{ duePaymentSummary.totalDueAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Sales Amount</span>
+          <span class="value">{{ duePaymentSummary.totalSalesAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Amount Received</span>
+          <span class="value">{{ duePaymentSummary.totalAmountReceived | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Customers with Due</span>
+          <span class="value">{{ duePaymentSummary.totalCustomersWithDue }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Avg. Due Amount</span>
+          <span class="value">{{ duePaymentSummary.averageDueAmount | indianCurrency }}</span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="duePaymentData.length > 0" class="table-wrapper">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th class="text-center">Total Sales</th>
+                <th class="text-center">Amount Received</th>
+                <th class="text-center">Due Amount</th>
+                <th class="text-center">Last Transaction</th>
+                <th class="text-center">Transaction Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of paginatedDuePaymentData">
+                <td><strong>{{ row.customerName }}</strong></td>
+                <td>{{ row.customerPhone }}</td>
+                <td class="text-center">{{ row.totalSalesAmount | indianCurrency }}</td>
+                <td class="text-center">{{ row.amountReceived | indianCurrency }}</td>
+                <td class="text-center amount" [style.color]="'#d32f2f'"><strong>{{ row.dueAmount | indianCurrency }}</strong></td>
+                <td class="text-center">{{ row.lastTransactionDate | date: 'dd MMM yyyy' }}</td>
+                <td class="text-center">{{ row.transactionCount }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="duePaymentData.length === 0" class="empty-state">
+        <p>No customer due payment data available.</p>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="duePaymentData.length > 0" class="pagination">
+        <button 
+          (click)="onDuePaymentPageChange(duePaymentPage - 1)" 
+          [disabled]="duePaymentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ duePaymentPage }} of {{ duePaymentTotalPages }}</span>
+        <button 
+          (click)="onDuePaymentPageChange(duePaymentPage + 1)" 
+          [disabled]="duePaymentPage === duePaymentTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="duePaymentPageSize" (ngModelChange)="onDuePaymentPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Mode Report Filters -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterPaymentModeFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterPaymentModeToDate" class="filter-input" [min]="filterPaymentModeFromDate">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Payment Mode</label>
+        <select [(ngModel)]="filterPaymentModePaymentMode" class="filter-input">
+          <option value="">All Modes</option>
+          <option *ngFor="let mode of paymentModesList" [value]="mode.name">{{ mode.name }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Customer"
+          [labelClass]="'filter-label'"
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Cylinder Variant"
+          [labelClass]="'filter-label'"
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Bank Account"
+          [labelClass]="'filter-label'"
+          [items]="bankAccountsList"
+          [displayKey]="'bankName'"
+          placeholder="All"
+          (selectedChange)="filterPaymentModeBankAccountId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Min Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinAmount" class="filter-input" placeholder="0" step="0.01">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Max Amount</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMaxAmount" class="filter-input" placeholder="Unlimited" step="0.01">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Min Transactions</label>
+        <input type="number" [(ngModel)]="filterPaymentModeMinTransactions" class="filter-input" placeholder="0" min="0" step="1">
+      </div>
+      <div class="filter-actions">
+        <button (click)="applyPaymentModeFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetPaymentModeFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Mode Report Card -->
+  <div *ngIf="selectedReport === 'paymentModes'" class="card">
+    <div class="card-header">
+      <h3 class="card-title">Payment Mode Report</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Cards -->
+      <div class="report-summary">
+        <div class="summary-card">
+          <span class="label">Total Amount</span>
+          <span class="value">{{ paymentModesSummary.totalAmount | indianCurrency }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Transactions</span>
+          <span class="value">{{ paymentModesSummary.totalTransactions }}</span>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div *ngIf="paymentModesData && paymentModesData.length > 0" class="table-wrapper" style="margin-top: 20px;">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Payment Mode</th>
+                <th class="text-center">Transactions</th>
+                <th class="text-center">Total Amount</th>
+                <th class="text-center">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of paymentModesData">
+                <td><strong>{{ row.paymentMode }}</strong></td>
+                <td class="text-center">{{ row.transactionCount }}</td>
+                <td class="text-center">{{ row.totalAmount | indianCurrency }}</td>
+                <td class="text-center">{{ (row.totalAmount / paymentModesSummary.totalAmount * 100 | number: '1.1-1') }}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="!paymentModesData || paymentModesData.length === 0" class="empty-state">
+        <p>No payment mode data available. Click Search to load data.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- Return Pending Cylinders Report -->
   <div *ngIf="selectedReport === 'returnPending'" class="card">
@@ -174,7 +532,7 @@
           <span class="value">{{ customersWithReturnPending }}</span>
         </div>
         <div class="summary-card">
-          <span class="label">High Risk (>10 units)</span>
+          <span class="label">High Risk</span>
           <span class="value">{{ getHighRiskReturnPendingCount() }}</span>
         </div>
       </div>
@@ -196,9 +554,9 @@
                 <td>{{ item.variant }}</td>
                 <td class="text-center">{{ item.returnPending }}</td>
                 <td>
-                  <span *ngIf="item.returnPending > 10" class="badge badge-danger">High Risk</span>
-                  <span *ngIf="item.returnPending > 0 && item.returnPending <= 10" class="badge badge-warning">Pending</span>
-                  <span *ngIf="item.returnPending <= 0" class="badge badge-success">Clear</span>
+                  <span [ngClass]="getReturnPendingStatus(item.returnPending) === 'High Risk' ? 'badge badge-danger' : getReturnPendingStatus(item.returnPending) === 'Pending' ? 'badge badge-warning' : 'badge badge-success'">
+                    {{ getReturnPendingStatus(item.returnPending) }}
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -234,13 +592,21 @@
 
   <!-- Inventory Report -->
   <div *ngIf="selectedReport === 'inventory'" class="card">
-    <div class="card-header">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
       <h3 class="card-title">Inventory Summary Report</h3>
+      <!-- Warehouse Filter -->
+      <div class="filter-group" style="margin: 0; width: 220px;">
+        <label class="filter-label" style="margin-bottom: 0.25rem;">Warehouse</label>
+        <select [(ngModel)]="filterInventoryWarehouseId" (ngModelChange)="onInventoryWarehouseChange()" class="filter-input">
+          <option value="">All Warehouses</option>
+          <option *ngFor="let warehouse of warehousesList" [value]="warehouse.id?.toString()">{{ warehouse.name }}</option>
+        </select>
+      </div>
     </div>
     <div class="card-body">
       <div class="inventory-grid">
         <div *ngFor="let item of inventoryData" class="inventory-item">
-          <div class="item-header">{{ item.variant }}</div>
+          <div class="item-header">{{ item.warehouse }} - {{ item.variant }}</div>
           <div class="item-content">
             <div class="stock-row">
               <span class="label">Filled:</span>
@@ -263,15 +629,16 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>Warehouse</th>
                 <th>Variant</th>
                 <th class="text-center">Filled</th>
                 <th class="text-center">Empty</th>
                 <th class="text-center">Total</th>
-                
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let item of paginatedInventoryData">
+                <td><strong>{{ item.warehouse }}</strong></td>
                 <td><strong>{{ item.variant }}</strong></td>
                 <td class="text-center">{{ item.filled }}</td>
                 <td class="text-center">{{ item.empty }}</td>

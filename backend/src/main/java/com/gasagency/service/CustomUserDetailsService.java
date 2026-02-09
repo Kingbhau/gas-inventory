@@ -21,6 +21,24 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        // Allow login only if user is active
+        if (user.isActive()) {
+            GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+            return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
+                    Collections.singleton(authority));
+        } else {
+            throw new UsernameNotFoundException("User account is inactive");
+        }
+    }
+
+    // Load user for JWT validation without checking active status
+    // This allows users with valid JWT tokens to continue using them even if status
+    // changes
+    public UserDetails loadUserByUsernameForJwt(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
                 Collections.singleton(authority));

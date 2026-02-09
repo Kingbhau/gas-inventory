@@ -21,12 +21,12 @@
         <!-- Description -->
         <div class="form-group">
           <label class="form-label">Description <span class="required">*</span></label>
-          <input 
+          <textarea
             formControlName="description"
-            type="text"
             class="form-control"
+            rows="3"
             placeholder="Enter expense description (e.g., Monthly office rent, Fuel for delivery, etc.)"
-            [class.is-invalid]="expenseForm.get('description')?.invalid && expenseForm.get('description')?.touched">
+            [class.is-invalid]="expenseForm.get('description')?.invalid && expenseForm.get('description')?.touched"></textarea>
           <div *ngIf="expenseForm.get('description')?.invalid && expenseForm.get('description')?.touched" class="error-message">
             <span *ngIf="expenseForm.get('description')?.errors?.['required']">Description is required</span>
             <span *ngIf="expenseForm.get('description')?.errors?.['minlength']">Description must be at least 3 characters</span>
@@ -55,11 +55,10 @@
             <label class="form-label">Amount <span class="required">*</span></label>
             <input 
               formControlName="amount"
-              type="number"
+              type="text"
               class="form-control"
               placeholder="0.00"
-              step="0.01"
-              min="0"
+              indianCurrencyFormat
               [class.is-invalid]="expenseForm.get('amount')?.invalid && expenseForm.get('amount')?.touched">
             <div *ngIf="expenseForm.get('amount')?.invalid && expenseForm.get('amount')?.touched" class="error-message">
               <span *ngIf="expenseForm.get('amount')?.errors?.['required']">Amount is required</span>
@@ -68,16 +67,47 @@
           </div>
         </div>
 
-        <!-- Expense Date -->
-        <div class="form-group">
-          <label class="form-label">Expense Date <span class="required">*</span></label>
-          <input 
-            formControlName="expenseDate"
-            type="date"
+        <!-- Expense Date and Payment Mode -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expense Date <span class="required">*</span></label>
+            <input 
+              formControlName="expenseDate"
+              type="date"
+              class="form-control"
+              [class.is-invalid]="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched">
+            <div *ngIf="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched" class="error-message">
+              Expense date is required
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Mode <span class="required">*</span></label>
+            <select 
+              formControlName="paymentMode"
+              class="form-control"
+              [class.is-invalid]="expenseForm.get('paymentMode')?.invalid && expenseForm.get('paymentMode')?.touched">
+              <option value="">Select payment mode...</option>
+              <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+            </select>
+            <div *ngIf="expenseForm.get('paymentMode')?.invalid && expenseForm.get('paymentMode')?.touched" class="error-message">
+              Payment mode is required for this amount
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Account (shown only if bank account is required for payment mode) -->
+        <div class="form-group" *ngIf="expenseForm.get('paymentMode')?.value && getSelectedPaymentMode(expenseForm.get('paymentMode')?.value)?.isBankAccountRequired === true">
+          <label class="form-label">Bank Account <span class="required">*</span></label>
+          <select 
+            formControlName="bankAccountId"
             class="form-control"
-            [class.is-invalid]="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched">
-          <div *ngIf="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched" class="error-message">
-            Expense date is required
+            [class.is-invalid]="expenseForm.get('bankAccountId')?.invalid && expenseForm.get('bankAccountId')?.touched">
+            <option [value]="null">Select bank account...</option>
+            <option *ngFor="let bank of bankAccounts" [value]="bank.id">{{ bank.bankName }} - {{ bank.accountNumber }}</option>
+          </select>
+          <div *ngIf="expenseForm.get('bankAccountId')?.invalid && expenseForm.get('bankAccountId')?.touched" class="error-message">
+            Bank account is required for this payment mode
           </div>
         </div>
 
@@ -97,8 +127,8 @@
             type="submit"
             class="btn btn-primary"
             [disabled]="expenseForm.invalid || isSubmitting">
-            <span *ngIf="!isSubmitting">Record Expense</span>
-            <span *ngIf="isSubmitting">Recording...</span>
+            <span *ngIf="!isSubmitting">Save</span>
+            <span *ngIf="isSubmitting">Saving...</span>
           </button>
           <button 
             type="button"

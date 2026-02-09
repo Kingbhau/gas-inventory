@@ -7,6 +7,7 @@ import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.util.LoggerUtil;
+import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,16 +24,22 @@ public class SupplierTransactionService {
         private final SupplierTransactionRepository repository;
         private final SupplierRepository supplierRepository;
         private final CylinderVariantRepository variantRepository;
+        private final WarehouseRepository warehouseRepository;
         private final InventoryStockService inventoryStockService;
+        private final ReferenceNumberGenerator referenceNumberGenerator;
 
         public SupplierTransactionService(SupplierTransactionRepository repository,
                         SupplierRepository supplierRepository,
                         CylinderVariantRepository variantRepository,
-                        InventoryStockService inventoryStockService) {
+                        WarehouseRepository warehouseRepository,
+                        InventoryStockService inventoryStockService,
+                        ReferenceNumberGenerator referenceNumberGenerator) {
                 this.repository = repository;
                 this.supplierRepository = supplierRepository;
                 this.variantRepository = variantRepository;
+                this.warehouseRepository = warehouseRepository;
                 this.inventoryStockService = inventoryStockService;
+                this.referenceNumberGenerator = referenceNumberGenerator;
         }
 
         @Transactional
@@ -45,11 +52,21 @@ public class SupplierTransactionService {
                                                 "Transaction not found with id: " + id));
 
                 // Validate request
-                if (request == null || request.getSupplierId() == null || request.getVariantId() == null) {
+                if (request == null || request.getWarehouseId() == null || request.getSupplierId() == null
+                                || request.getVariantId() == null) {
                         LoggerUtil.logBusinessError(logger, "UPDATE_TRANSACTION", "Invalid request", "reason",
-                                        "supplier or variant ID is null");
-                        throw new IllegalArgumentException("Supplier ID and Variant ID cannot be null");
+                                        "warehouse, supplier or variant ID is null");
+                        throw new IllegalArgumentException("Warehouse ID, Supplier ID and Variant ID cannot be null");
                 }
+
+                // Warehouse cannot be changed after transaction creation
+                if (!transaction.getWarehouse().getId().equals(request.getWarehouseId())) {
+                        LoggerUtil.logBusinessError(logger, "UPDATE_TRANSACTION", "Warehouse change not allowed",
+                                        "originalWarehouse", transaction.getWarehouse().getId(),
+                                        "requestedWarehouse", request.getWarehouseId());
+                        throw new IllegalArgumentException("Warehouse cannot be changed after transaction creation");
+                }
+
                 if (request.getFilledReceived() < 0 || request.getEmptySent() < 0) {
                         LoggerUtil.logBusinessError(logger, "UPDATE_TRANSACTION", "Negative quantities", "filled",
                                         request.getFilledReceived(), "empty", request.getEmptySent());
@@ -62,6 +79,7 @@ public class SupplierTransactionService {
                                         "Transaction must have at least one quantity (filled or empty)");
                 }
 
+                Warehouse warehouse = transaction.getWarehouse(); // Use existing warehouse
                 Supplier supplier = supplierRepository.findById(request.getSupplierId())
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Supplier not found with id: " + request.getSupplierId()));
@@ -69,14 +87,29 @@ public class SupplierTransactionService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Variant not found with id: " + request.getVariantId()));
 
-                // Inventory adjustment: revert old transaction, apply new
-                inventoryStockService.decrementFilledQty(transaction.getVariant().getId(),
-                                transaction.getFilledReceived());
-                inventoryStockService.incrementEmptyQty(transaction.getVariant().getId(), transaction.getEmptySent());
+                // Inventory adjustment: only adjust quantities for the same warehouse
+                // Calculate quantity differences
+                long filledDifference = request.getFilledReceived() - transaction.getFilledReceived();
+                long emptyDifference = request.getEmptySent() - transaction.getEmptySent();
 
-                inventoryStockService.incrementFilledQty(variant.getId(), request.getFilledReceived());
-                inventoryStockService.decrementEmptyQty(variant.getId(), request.getEmptySent());
+                // Apply adjustments only if there are differences
+                if (filledDifference > 0) {
+                        inventoryStockService.incrementFilledQty(warehouse, transaction.getVariant(), filledDifference);
+                } else if (filledDifference < 0) {
+                        inventoryStockService.decrementFilledQty(warehouse, transaction.getVariant(),
+                                        Math.abs(filledDifference));
+                }
 
+                if (emptyDifference > 0) {
+                        // More empties sent to supplier => reduce empty stock
+                        inventoryStockService.decrementEmptyQty(warehouse, transaction.getVariant(), emptyDifference);
+                } else if (emptyDifference < 0) {
+                        // Fewer empties sent => add back to empty stock
+                        inventoryStockService.incrementEmptyQty(warehouse, transaction.getVariant(),
+                                        Math.abs(emptyDifference));
+                }
+
+                // Update transaction fields (warehouse remains unchanged)
                 transaction.setSupplier(supplier);
                 transaction.setVariant(variant);
                 transaction.setTransactionDate(request.getTransactionDate() != null ? request.getTransactionDate()
@@ -84,7 +117,8 @@ public class SupplierTransactionService {
                 transaction.setFilledReceived(request.getFilledReceived());
                 transaction.setEmptySent(request.getEmptySent());
                 transaction.setReference(request.getReference());
-                transaction.setAmount(request.getAmount());
+                transaction.setAmount(
+                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
                 transaction = repository.save(transaction);
 
                 LoggerUtil.logBusinessSuccess(logger, "UPDATE_TRANSACTION", "id", transaction.getId(), "supplierId",
@@ -97,15 +131,17 @@ public class SupplierTransactionService {
 
         @Transactional
         public SupplierTransactionDTO recordTransaction(CreateSupplierTransactionRequestDTO request) {
-                LoggerUtil.logBusinessEntry(logger, "RECORD_TRANSACTION", "supplierId",
+                LoggerUtil.logBusinessEntry(logger, "RECORD_TRANSACTION", "warehouseId",
+                                request != null ? request.getWarehouseId() : "null", "supplierId",
                                 request != null ? request.getSupplierId() : "null", "variantId",
                                 request != null ? request.getVariantId() : "null");
 
                 // Validate request
-                if (request == null || request.getSupplierId() == null || request.getVariantId() == null) {
+                if (request == null || request.getWarehouseId() == null || request.getSupplierId() == null
+                                || request.getVariantId() == null) {
                         LoggerUtil.logBusinessError(logger, "RECORD_TRANSACTION", "Invalid request", "reason",
-                                        "supplier or variant ID is null");
-                        throw new IllegalArgumentException("Supplier ID and Variant ID cannot be null");
+                                        "warehouse, supplier or variant ID is null");
+                        throw new IllegalArgumentException("Warehouse ID, Supplier ID and Variant ID cannot be null");
                 }
 
                 if (request.getFilledReceived() < 0 || request.getEmptySent() < 0) {
@@ -120,6 +156,17 @@ public class SupplierTransactionService {
                         throw new IllegalArgumentException(
                                         "Transaction must have at least one quantity (filled or empty)");
                 }
+
+                Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
+                                .orElseThrow(
+                                                () -> {
+                                                        LoggerUtil.logBusinessError(logger, "RECORD_TRANSACTION",
+                                                                        "Warehouse not found", "warehouseId",
+                                                                        request.getWarehouseId());
+                                                        return new ResourceNotFoundException(
+                                                                        "Warehouse not found with id: "
+                                                                                        + request.getWarehouseId());
+                                                });
 
                 Supplier supplier = supplierRepository.findById(request.getSupplierId())
                                 .orElseThrow(
@@ -143,16 +190,24 @@ public class SupplierTransactionService {
                                                                                         + request.getVariantId());
                                                 });
 
-                // Create transaction
+                // Create transaction with warehouse
                 SupplierTransaction transaction = new SupplierTransaction(
-                                supplier, variant, LocalDate.now(),
+                                warehouse, supplier, variant, LocalDate.now(),
                                 request.getFilledReceived(), request.getEmptySent(), request.getReference(),
-                                request.getAmount());
-                transaction = repository.save(transaction);
+                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
 
-                // Update inventory
-                inventoryStockService.incrementFilledQty(variant.getId(), request.getFilledReceived());
-                inventoryStockService.decrementEmptyQty(variant.getId(), request.getEmptySent());
+                // Generate reference number BEFORE initial save
+                String referenceNumber = referenceNumberGenerator.generateSupplierPurchaseOrderReference(
+                                supplier.getCode());
+                transaction.setReference(referenceNumber);
+
+                transaction = repository.save(transaction);
+                logger.info("Supplier transaction created with id: {} - Reference: {}",
+                                transaction.getId(), referenceNumber);
+
+                // Update inventory for the specific warehouse using warehouse-aware methods
+                inventoryStockService.incrementFilledQty(warehouse, variant, request.getFilledReceived());
+                inventoryStockService.decrementEmptyQty(warehouse, variant, request.getEmptySent());
 
                 LoggerUtil.logBusinessSuccess(logger, "RECORD_TRANSACTION", "id", transaction.getId(), "supplierId",
                                 supplier.getId(), "filled", request.getFilledReceived());
@@ -191,6 +246,15 @@ public class SupplierTransactionService {
                                 .map(this::toDTO);
         }
 
+        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber, String createdBy) {
+                LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "SUPPLIER_TRANSACTION", "page",
+                                pageable.getPageNumber(), "size", pageable.getPageSize(), "referenceNumber",
+                                referenceNumber);
+
+                return repository.findByReferenceAndCreatedBy(referenceNumber, createdBy, pageable)
+                                .map(this::toDTO);
+        }
+
         public List<SupplierTransactionDTO> getTransactionsBySupplier(Long supplierId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "SUPPLIER_TRANSACTION", "supplierId", supplierId);
 
@@ -206,9 +270,26 @@ public class SupplierTransactionService {
                                 .collect(Collectors.toList());
         }
 
+        public List<SupplierTransactionDTO> getTransactionsByWarehouse(Long warehouseId) {
+                LoggerUtil.logDatabaseOperation(logger, "SELECT", "SUPPLIER_TRANSACTION", "warehouseId", warehouseId);
+
+                Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                                .orElseThrow(() -> {
+                                        LoggerUtil.logBusinessError(logger, "GET_TRANSACTIONS_BY_WAREHOUSE",
+                                                        "Warehouse not found", "warehouseId", warehouseId);
+                                        return new ResourceNotFoundException(
+                                                        "Warehouse not found with id: " + warehouseId);
+                                });
+                return repository.findByWarehouse(warehouse).stream()
+                                .map(this::toDTO)
+                                .collect(Collectors.toList());
+        }
+
         private SupplierTransactionDTO toDTO(SupplierTransaction transaction) {
-                return new SupplierTransactionDTO(
+                SupplierTransactionDTO dto = new SupplierTransactionDTO(
                                 transaction.getId(),
+                                transaction.getWarehouse().getId(),
+                                transaction.getWarehouse().getName(),
                                 transaction.getSupplier().getId(),
                                 transaction.getSupplier().getName(),
                                 transaction.getVariant().getId(),
@@ -218,5 +299,10 @@ public class SupplierTransactionService {
                                 transaction.getEmptySent(),
                                 transaction.getReference(),
                                 transaction.getAmount());
+                dto.setCreatedBy(transaction.getCreatedBy());
+                dto.setCreatedDate(transaction.getCreatedDate());
+                dto.setUpdatedBy(transaction.getUpdatedBy());
+                dto.setUpdatedDate(transaction.getUpdatedDate());
+                return dto;
         }
 }

@@ -1,0 +1,164 @@
+<div class="daybook-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Day Book</h1>
+    <p class="page-subtitle">View all sales and empty return transactions for the selected day</p>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Select Date</label>
+        <input type="date" [(ngModel)]="selectedDate" (change)="onDateChange()" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Type</label>
+        <select [(ngModel)]="filterTransactionType" (ngModelChange)="loadDayBookData()" class="filter-input">
+          <option *ngFor="let option of transactionTypeOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''; loadDayBookData()"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-actions">
+        <!-- <button (click)="refreshData()" class="btn btn-primary">Search</button> -->
+        <button (click)="printDayBook()" class="btn btn-secondary" *ngIf="dayBookTransactions.length > 0"><fa-icon [icon]="faDownload"></fa-icon> Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transactions Table with Summary -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Day Book Transactions</h3>
+    </div>
+    <div class="card-body">
+      <!-- Summary Section -->
+      <div class="report-summary" *ngIf="dayBookSummary && dayBookTransactions.length > 0">
+        <div class="summary-card">
+          <span class="label">Total Filled</span>
+          <span class="value">{{ dayBookSummary.totalFilledCount || 0 }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Returned</span>
+          <span class="value">{{ dayBookSummary.totalEmptyCount || 0 }}</span>
+        </div>
+        <div class="summary-card" style="display: none;">
+          <span class="label">Total Amount</span>
+          <span class="value">₹{{ formatAmount(dayBookSummary.totalAmount) }}</span>
+        </div>
+        <div class="summary-card" style="display: none;">
+          <span class="label">Amount Received</span>
+          <span class="value">₹{{ formatAmount(dayBookSummary.totalAmountReceived) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total Due</span>
+          <span class="value due">₹{{ formatAmount(dayBookSummary.totalDueAmount) }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Transactions</span>
+          <span class="value">{{ dayBookSummary.totalTransactions || 0 }}</span>
+        </div>
+      </div>
+
+      <div class="report-summary type-summary" *ngIf="dayBookTypeSummaries.length > 0">
+        <div class="summary-card" *ngFor="let summary of dayBookTypeSummaries">
+          <span class="label">{{ summary.label }}</span>
+          <ng-container *ngIf="summary.type === 'WAREHOUSE_TRANSFER'; else amountSummary">
+            <span class="value">{{ summary.quantityMoved }} units</span>
+            <span class="summary-meta">{{ summary.count }} txn · {{ summary.quantityMoved }} units moved</span>
+          </ng-container>
+          <ng-template #amountSummary>
+            <span class="value" *ngIf="summary.type === 'PAYMENT' || summary.type === 'EMPTY_RETURN'; else totalAmountValue">
+              ₹{{ formatAmount(summary.amountReceived) }}
+            </span>
+            <ng-template #totalAmountValue>
+              <span class="value">₹{{ formatAmount(summary.totalAmount) }}</span>
+            </ng-template>
+            <span class="summary-meta" *ngIf="summary.amountReceived > 0; else countOnly">
+              {{ summary.count }} txn · ₹{{ formatAmount(summary.amountReceived) }} received
+            </span>
+            <ng-template #countOnly>
+              <span class="summary-meta">{{ summary.count }} txn</span>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div *ngIf="dayBookTransactions.length > 0; else noData" class="table-wrapper" id="daybook-table">
+        <div class="mobile-table-scroll">
+          <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-date">Date</th>
+              <th class="col-type">Type</th>
+              <th class="col-party">Party</th>
+              <th class="col-ref">Reference</th>
+              <th class="col-details">Details</th>
+              <th class="col-amount text-center">Amount</th>
+              <th class="col-amount text-center">Received</th>
+              <th class="col-amount text-center">Due</th>
+              <th class="col-mode">Mode</th>
+              <th class="col-created">Created By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of paginatedDayBookTransactions">
+              <td class="col-date">{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td class="col-type"><span class="type-badge">{{ getTypeLabel(transaction.transactionType) }}</span></td>
+              <td class="col-party"><strong>{{ transaction.partyName || '-' }}</strong></td>
+              <td class="col-ref">{{ transaction.referenceNumber || '-' }}</td>
+              <td class="col-details details-cell">{{ transaction.details || '-' }}</td>
+              <td class="col-amount text-center amount">₹{{ formatAmount(transaction.totalAmount) }}</td>
+              <td class="col-amount text-center amount">₹{{ formatAmount(transaction.amountReceived) }}</td>
+              <td class="col-amount text-center amount" [class.due-highlight]="transaction.dueAmount && transaction.dueAmount > 0">₹{{ formatAmount(transaction.dueAmount) }}</td>
+              <td class="col-mode">{{ transaction.paymentMode || '-' }}</td>
+              <td class="col-created">{{ getCreatedByName(transaction.createdBy) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div *ngIf="dayBookTotalElements > 0" class="pagination">
+        <button 
+          (click)="onDayBookPageChange(dayBookPage - 1)" 
+          [disabled]="dayBookPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ dayBookPage }} of {{ dayBookTotalPages }}</span>
+        <button 
+          (click)="onDayBookPageChange(dayBookPage + 1)" 
+          [disabled]="dayBookPage === dayBookTotalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="dayBookPageSize" (ngModelChange)="onDayBookPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of [5,10,20,50,100]" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+
+      <!-- No Data Message -->
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No transactions found for this day</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

@@ -1,17 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faBox, faDollarSign, faBuilding, faPencil, faTrash, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faBox, faBuilding, faEdit, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp, faBell } from '@fortawesome/free-solid-svg-icons';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
-import { MonthlyPriceService } from '../../services/monthly-price.service';
+import { AlertSettingsService } from '../../services/alert-settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { ToastrModule } from 'ngx-toastr';
 import { BusinessInfoService, BusinessInfo } from '../../services/business-info.service';
 import { IndianCurrencyPipe } from 'src/app/shared/indian-currency.pipe';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ExpenseCategoryManagementComponent } from './expense-category-management.component';
+import { WarehouseManagementComponent } from './warehouse-management.component';
+import { WarehouseInventorySetupComponent } from './warehouse-inventory-setup.component';
+import { BankAccountManagementComponent } from './bank-account-management.component';
+import { PaymentModeManagementComponent } from './payment-mode-management.component';
 
 interface SettingsTab {
   id: string;
@@ -22,76 +26,76 @@ interface SettingsTab {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FontAwesomeModule, ToastrModule, SharedModule, ExpenseCategoryManagementComponent, WarehouseManagementComponent, WarehouseInventorySetupComponent, BankAccountManagementComponent, PaymentModeManagementComponent],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.css'
+  styleUrl: './settings.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SettingsComponent implements OnInit {
-      // Pagination state for price section
-      pricePage = 1;
-      pricePageSize = 10;
-      totalPrices = 0;
-      priceTotalPages = 1;
+export class SettingsComponent implements OnInit, OnDestroy {
+  // Pagination state for variants table
+  variantPage = 1;
+  variantPageSize = 10;
+  totalVariants = 0;
+  variantTotalPages = 1;
 
-  get paginatedMonthlyPrices() {
-    // Paginate the grouped months array
-    const start = (this.pricePage - 1) * this.pricePageSize;
-    const end = start + this.pricePageSize;
-    return this.monthlyPrices.slice(start, end);
+  get paginatedVariants() {
+    // Already paged from backend
+    return this.variantsList;
   }
-    // Pagination state for variants table
-    variantPage = 1;
-    variantPageSize = 10;
-    totalVariants = 0;
-    variantTotalPages = 1;
+  getVariantTotalPages() {
+    return this.variantTotalPages;
+  }
 
-    get paginatedVariants() {
-      // Already paged from backend
-      return this.variantsList;
-    }
-    getVariantTotalPages() {
-      return this.variantTotalPages;
-    }
-    // getPriceTotalPages() is now backend-driven, see above
   activeTab = 'variants';
   variantForm!: FormGroup;
-  priceForm!: FormGroup;
   businessForm!: FormGroup;
   businessLoading = false;
   businessError: string | null = null;
 
   showVariantForm = false;
-  showPriceForm = false;
   editingVariantId: string | null = null;
-  editingPrice: any = null;
-  isEditingPrice = false; // Track if we're editing a price
-  selectedMonth: string = ''; // Store selected month in YYYY-MM format
 
   // Font Awesome Icons
   faBox = faBox;
-  faDollarSign = faDollarSign;
   faBuilding = faBuilding;
-  faPencil = faPencil;
+  faPencil = faEdit; // Renamed to faEdit for consistency, keeping variable name for compatibility
   faTrash = faTrash;
   faReceipt = faReceipt;
+  faWarehouse = faWarehouse;
+  faDatabase = faDatabase;
+  faBank = faBank;
+  faBell = faBell;
+  faChevronDown = faChevronDown;
+  faChevronUp = faChevronUp;
+
+  // Accordion state
+  expandedSections: string[] = ['variants']; // Default expand variants
 
   tabs: SettingsTab[] = [
     { id: 'variants', name: 'Variants', icon: faBox },
-    { id: 'pricing', name: 'Pricing', icon: faDollarSign },
+    { id: 'warehouses', name: 'Warehouses', icon: faWarehouse },
+    { id: 'inventory', name: 'Inventory Setup', icon: faDatabase },
     { id: 'categories', name: 'Expense Categories', icon: faReceipt },
+    { id: 'payment-modes', name: 'Payment Modes', icon: faReceipt },
+    { id: 'bank-accounts', name: 'Bank Accounts', icon: faBank },
+    { id: 'alerts', name: 'Alerts', icon: faBell },
     { id: 'business', name: 'Business', icon: faBuilding }
   ];
 
   variantsList: any[] = [];
-  monthlyPrices: any[] = [];
+  alertSettingsForm!: FormGroup;
+  alertSaving = false;
+  alertSuccessMessage = '';
+  alertErrorMessage = '';
 
 
   constructor(
     private fb: FormBuilder,
     private variantService: CylinderVariantService,
-    private priceService: MonthlyPriceService,
+    private alertSettingsService: AlertSettingsService,
     private toastr: ToastrService,
-    private businessInfoService: BusinessInfoService
+    private businessInfoService: BusinessInfoService,
+    private cdr: ChangeDetectorRef
   ) {
     this.initForms();
   }
@@ -99,8 +103,21 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit() {
     this.loadVariants();
-    this.loadPrices();
     this.loadBusinessInfo();
+    this.loadAlertSettings();
+  }
+
+  ngOnDestroy() {}
+
+  // Accordion toggle method - only one section open at a time
+  toggleSection(sectionId: string): void {
+    const index = this.expandedSections.indexOf(sectionId);
+    if (index > -1) {
+      this.expandedSections.splice(index, 1); // Remove if exists (collapse)
+    } else {
+      this.expandedSections = [sectionId]; // Close all others and open this one
+    }
+    this.cdr.markForCheck();
   }
 
   loadBusinessInfo() {
@@ -111,6 +128,7 @@ export class SettingsComponent implements OnInit {
       next: (data: BusinessInfo) => {
         this.businessForm.patchValue(data || {});
         this.businessLoading = false;
+        this.cdr.markForCheck();
       },
       error: (error: any) => {
         // Only show a clean error message in a popup
@@ -119,6 +137,7 @@ export class SettingsComponent implements OnInit {
           : 'Failed to load business info';
         this.toastr.error(errorMsg, 'Error');
         this.businessLoading = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -132,6 +151,7 @@ export class SettingsComponent implements OnInit {
         }
         this.totalVariants = data.totalElements || this.variantsList.length;
         this.variantTotalPages = data.totalPages || 1;
+        this.cdr.markForCheck();
       },
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Failed to load variants';
@@ -140,6 +160,7 @@ export class SettingsComponent implements OnInit {
         this.variantsList = [];
         this.totalVariants = 0;
         this.variantTotalPages = 1;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -147,76 +168,22 @@ export class SettingsComponent implements OnInit {
   onVariantPageChange(page: number) {
     this.variantPage = page;
     this.loadVariants();
+    this.cdr.markForCheck();
   }
 
   onVariantPageSizeChange(size: number) {
     this.variantPageSize = size;
     this.variantPage = 1;
     this.loadVariants();
-  }
-
-  loadPrices() {
-    this.priceService.getAllPrices(0, 10000).subscribe({
-      next: (data) => {
-        const priceList = (data.content || data);
-        if (!Array.isArray(priceList)) {
-          this.monthlyPrices = [];
-          this.totalPrices = 0;
-          this.priceTotalPages = 1;
-          return;
-        }
-        // Group prices by monthYear
-        const grouped: { [key: string]: any } = {};
-        priceList.forEach((price: any) => {
-          if (!grouped[price.monthYear]) {
-            grouped[price.monthYear] = {
-              month: price.monthYear,
-              variants: []
-            };
-          }
-          grouped[price.monthYear].variants.push({
-            id: price.variantId,
-            priceId: price.id, // Store the individual price record ID
-            name: price.variantName,
-            price: price.basePrice
-          });
-        });
-        this.monthlyPrices = Object.values(grouped);
-        this.totalPrices = this.monthlyPrices.length;
-        this.priceTotalPages = Math.ceil(this.totalPrices / this.pricePageSize) || 1;
-      },
-      error: (error) => {
-        const errorMessage = error?.error?.message || error?.message || 'Failed to load prices';
-        this.toastr.error(errorMessage, 'Error');
-        console.error('Full error:', error);
-        this.monthlyPrices = [];
-        this.totalPrices = 0;
-        this.priceTotalPages = 1;
-      }
-    });
-  }
-
-  onPricePageChange(page: number) {
-    this.pricePage = page;
-    this.loadPrices();
-  }
-
-  onPricePageSizeChange(size: number) {
-    this.pricePageSize = size;
-    this.pricePage = 1;
-    this.loadPrices();
+    this.cdr.markForCheck();
   }
 
   initForms() {
     this.variantForm = this.fb.group({
       name: ['', Validators.required],
       weightKg: ['', [Validators.required, Validators.min(0.1), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
+      basePrice: ['', [Validators.required, Validators.min(0), Validators.pattern(/^\d+(\.\d{1,2})?$/)]],
       active: [true]
-    });
-
-    this.priceForm = this.fb.group({
-      month: ['', Validators.required],
-      variants: this.fb.array([])
     });
 
     this.businessForm = this.fb.group({
@@ -227,25 +194,41 @@ export class SettingsComponent implements OnInit {
       contactNumber: ['', [Validators.pattern(/^\+?[0-9]{7,15}$/)]],
       email: ['', [Validators.email, Validators.maxLength(100)]]
     });
+
+    this.alertSettingsForm = this.fb.group({
+      lowStockEnabled: [false],
+      filledThreshold: [null, [Validators.min(0)]],
+      emptyThreshold: [null, [Validators.min(0)]],
+      pendingReturnEnabled: [false],
+      pendingReturnThreshold: [null, [Validators.min(0)]]
+    });
   }
 
   openVariantForm() {
     this.editingVariantId = null;
-    this.variantForm.reset({ weightKg: '', active: true });
+    this.variantForm.reset({ weightKg: '', active: 'true' });
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   editVariant(variant: any) {
     this.editingVariantId = variant.id;
-    this.variantForm.patchValue(variant);
+    this.variantForm.patchValue({
+      ...variant,
+      active: (variant.active !== false).toString()
+    });
     this.showVariantForm = true;
     document.querySelector('.content-wrapper')?.classList.add('modal-open');
+    this.cdr.markForCheck();
   }
 
   saveVariant() {
     if (this.variantForm.valid) {
-      const formValue = { ...this.variantForm.value };
+      const formValue = { 
+        ...this.variantForm.value,
+        active: this.variantForm.value.active === 'true' || this.variantForm.value.active === true
+      };
       // Ensure weightKg is a number and > 0
       formValue.weightKg = parseFloat(formValue.weightKg);
       if (formValue.weightKg <= 0) {
@@ -258,6 +241,7 @@ export class SettingsComponent implements OnInit {
         this.variantService.updateVariant(id, formValue).subscribe({
           next: () => {
             this.toastr.success('Variant updated successfully', 'Success');
+            this.variantService.invalidateCache();
             this.loadVariants();
             this.closeVariantForm();
           },
@@ -271,6 +255,7 @@ export class SettingsComponent implements OnInit {
         this.variantService.createVariant(formValue).subscribe({
           next: () => {
             this.toastr.success('Variant created successfully', 'Success');
+            this.variantService.invalidateCache();
             this.loadVariants();
             this.closeVariantForm();
           },
@@ -290,6 +275,7 @@ export class SettingsComponent implements OnInit {
       this.variantService.deleteVariant(numId).subscribe({
         next: () => {
           this.toastr.success('Variant deleted successfully', 'Success');
+          this.variantService.invalidateCache();
           this.loadVariants();
         },
         error: (error) => {
@@ -305,212 +291,7 @@ export class SettingsComponent implements OnInit {
     this.showVariantForm = false;
     this.editingVariantId = null;
     document.querySelector('.content-wrapper')?.classList.remove('modal-open');
-  }
-
-  openPriceForm() {
-    const today = new Date();
-    const dateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-    const monthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM format for input
-    
-    // Find existing prices for this month using the SAME format
-    const existingPricesThisMonth = this.monthlyPrices
-      .find((m: any) => m.month === dateString)?.variants || [];
-    const existingVariantIds = new Set(existingPricesThisMonth.map((v: any) => v.id));
-    
-    // Only show variants that don't already have a price for this month
-    const availableVariants = this.variantsList
-      .filter((v: any) => !existingVariantIds.has(v.id))
-      .map(v => ({
-        id: v.id,
-        name: v.name,
-        price: 0
-      }));
-    
-    this.selectedMonth = monthString; // Set initial month value
-    
-    this.editingPrice = {
-      id: null,
-      monthYear: dateString,
-      month: dateString,
-      variants: availableVariants
-    };
-    this.isEditingPrice = false; // We're adding new prices
-    this.priceForm.patchValue({
-      month: this.editingPrice.month
-    });
-    this.showPriceForm = true;
-    document.querySelector('.content-wrapper')?.classList.add('modal-open');
-  }
-
-  editPrice(price: any) {
-    // Extract month from the price month field (format: "2026-01-01")
-    const monthParts = price.month.split('-');
-    const monthString = `${monthParts[0]}-${monthParts[1]}`; // Convert to "2026-01" format
-    const dateString = `${monthParts[0]}-${monthParts[1]}-01`; // Ensure full date format "2026-01-01"
-    
-    this.editingPrice = JSON.parse(JSON.stringify(price));
-    this.isEditingPrice = true; // We're editing existing prices
-    this.selectedMonth = monthString; // Set the calendar to show the month
-    
-    // Ensure monthYear is set in the proper format
-    this.editingPrice.monthYear = dateString;
-    this.editingPrice.month = dateString;
-    
-    // For edit mode, ensure variants are available
-    if (!this.editingPrice.variants || this.editingPrice.variants.length === 0) {
-      this.editingPrice.variants = [];
-    }
-    
-    this.priceForm.patchValue({
-      month: this.editingPrice.month,
-      variants: this.editingPrice.variants
-    });
-    this.showPriceForm = true;
-    document.querySelector('.content-wrapper')?.classList.add('modal-open');
-  }
-
-  onMonthChange(monthValue: string) {
-    if (!monthValue) {
-      return;
-    }
-
-    // monthValue format: "2026-01"
-    const dateString = `${monthValue}-01`; // Convert to "2026-01-01"
-    
-    // Find existing prices for this month
-    const existingPricesThisMonth = this.monthlyPrices
-      .find((m: any) => m.month === dateString)?.variants || [];
-    const existingVariantIds = new Set(existingPricesThisMonth.map((v: any) => v.id));
-    
-    // Only show variants that don't already have a price for this month
-    const availableVariants = this.variantsList
-      .filter((v: any) => !existingVariantIds.has(v.id))
-      .map(v => ({
-        id: v.id,
-        name: v.name,
-        price: 0
-      }));
-    
-    // Update editingPrice with selected month
-    this.editingPrice = {
-      id: null,
-      monthYear: dateString,
-      month: dateString,
-      variants: availableVariants
-    };
-  }
-
-  savePrices() {
-    if (!this.editingPrice || !this.editingPrice.variants) {
-      return;
-    }
-
-    // Ensure monthYear is properly set - use monthYear if available, otherwise use month or construct from selectedMonth
-    let monthYear = this.editingPrice.monthYear;
-    
-    if (!monthYear) {
-      // Fallback: construct from selectedMonth or editingPrice.month
-      const monthStr = this.editingPrice.month || this.selectedMonth;
-      if (monthStr && monthStr.length >= 7) {
-        monthYear = `${monthStr.substring(0, 7)}-01`; // Ensure "YYYY-MM-01" format
-      }
-    }
-    
-    if (!monthYear) {
-      this.toastr.error('Month is required. Please select a month and try again.', 'Error');
-      return;
-    }
-    
-    // Only check for duplicates if we're adding new prices (not editing)
-    if (!this.isEditingPrice) {
-      // Check for duplicates in the variants being saved
-      const pricesByVariant = new Set<number>();
-      const duplicateVariants: string[] = [];
-      
-      for (const variant of this.editingPrice.variants) {
-        if (!variant.price) continue;
-        
-        if (pricesByVariant.has(variant.id)) {
-          duplicateVariants.push(variant.name);
-        }
-        pricesByVariant.add(variant.id);
-        
-        // Also check against existing prices
-        const existingForThisMonth = this.monthlyPrices
-          .find((m: any) => m.month === this.editingPrice.month);
-        
-        if (existingForThisMonth) {
-          const alreadyExists = existingForThisMonth.variants
-            .some((v: any) => v.id === variant.id);
-          
-          if (alreadyExists) {
-            duplicateVariants.push(variant.name);
-          }
-        }
-      }
-      
-      // Show error if duplicates found
-      if (duplicateVariants.length > 0) {
-        this.toastr.error(`Price already exists for: ${duplicateVariants.join(', ')} in ${this.editingPrice.month}`, 'Duplicate Price');
-        return;
-      }
-    }
-
-    // Create individual MonthlyPrice entries for each variant
-    const pricePromises = this.editingPrice.variants.map((variant: any) => {
-      if (!variant.price) {
-        return Promise.resolve();
-      }
-
-      const priceData: any = {
-        variantId: variant.id,
-        variantName: variant.name,
-        monthYear: monthYear,
-        basePrice: parseFloat(variant.price),
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-
-      // When editing, use variant.priceId if available; otherwise use variant.id
-      // When adding new, priceId won't exist, so create new
-      const priceId = variant.priceId || variant.id;
-      
-      if (this.isEditingPrice && variant.priceId) {
-        // Update existing price using the priceId
-        return new Promise((resolve, reject) => {
-          this.priceService.updatePrice(variant.priceId, priceData).subscribe({
-            next: () => resolve(true),
-            error: (err) => reject(err)
-          });
-        });
-      } else {
-        // Create new price
-        return new Promise((resolve, reject) => {
-          this.priceService.createPrice(priceData).subscribe({
-            next: () => resolve(true),
-            error: (err) => reject(err)
-          });
-        });
-      }
-    });
-
-    Promise.all(pricePromises)
-      .then(() => {
-        this.toastr.success('Prices saved successfully', 'Success');
-        this.loadPrices();
-        this.closePriceForm();
-      })
-      .catch((error) => {
-        const errorMessage = error?.error?.message || error?.message || 'Error saving prices. Please try again.';
-        this.toastr.error(errorMessage, 'Error');
-        console.error('Full error:', error);
-      });
-  }
-
-  closePriceForm() {
-    this.showPriceForm = false;
-    this.editingPrice = null;
-    this.isEditingPrice = false; // Reset the flag
-    document.querySelector('.content-wrapper')?.classList.remove('modal-open');
+    this.cdr.markForCheck();
   }
 
   saveBusinessInfo() {
@@ -533,5 +314,110 @@ export class SettingsComponent implements OnInit {
         this.businessLoading = false;
       }
     });
+  }
+
+  private loadAlertSettings(): void {
+    this.alertErrorMessage = '';
+    this.alertSuccessMessage = '';
+    
+    // Fetch from server
+    this.alertSettingsService.getAlertConfigurations().subscribe(
+      (response: any) => {
+        console.log('Alert settings response:', response);
+        if (response && response.data && Array.isArray(response.data)) {
+          console.log('Alert configs loaded:', response.data);
+          this.mapConfigsToForm(response.data);
+        }
+        this.cdr.markForCheck();
+      },
+      (error: any) => {
+        console.error('Error loading alert settings:', error);
+        this.cdr.markForCheck();
+      }
+    );
+  }
+
+  private mapConfigsToForm(configs: any[]): void {
+    configs.forEach(config => {
+      if (config.alertType === 'LOW_STOCK_WAREHOUSE') {
+        this.alertSettingsForm.patchValue({
+          lowStockEnabled: config.enabled,
+          filledThreshold: config.filledCylinderThreshold || 50,
+          emptyThreshold: config.emptyCylinderThreshold || 50
+        });
+      }
+      if (config.alertType === 'PENDING_RETURN_CYLINDERS') {
+        this.alertSettingsForm.patchValue({
+          pendingReturnEnabled: config.enabled,
+          pendingReturnThreshold: config.pendingReturnThreshold || 10
+        });
+      }
+    });
+    this.alertSettingsForm.markAsPristine();
+  }
+
+  saveAlertSettings(): void {
+    const formValue = this.alertSettingsForm.value;
+
+    // Validate enabled alerts have threshold values
+    if (formValue.lowStockEnabled) {
+      if (!formValue.filledThreshold && formValue.filledThreshold !== 0) {
+        this.toastr.error('Please enter Filled Cylinders Threshold for Low Stock Alert', 'Validation Error');
+        return;
+      }
+      if (!formValue.emptyThreshold && formValue.emptyThreshold !== 0) {
+        this.toastr.error('Please enter Empty Cylinders Threshold for Low Stock Alert', 'Validation Error');
+        return;
+      }
+    }
+
+    if (formValue.pendingReturnEnabled) {
+      if (!formValue.pendingReturnThreshold && formValue.pendingReturnThreshold !== 0) {
+        this.toastr.error('Please enter Cylinders Pending Threshold for Pending Returns Alert', 'Validation Error');
+        return;
+      }
+    }
+
+    this.alertSaving = true;
+
+    const lowStockPayload: any = {
+      enabled: formValue.lowStockEnabled
+    };
+    if (formValue.lowStockEnabled) {
+      lowStockPayload.filledThreshold = formValue.filledThreshold;
+      lowStockPayload.emptyThreshold = formValue.emptyThreshold;
+    }
+
+    this.alertSettingsService.updateAlertConfig('LOW_STOCK_WAREHOUSE', lowStockPayload).subscribe(
+      () => {
+        const pendingReturnPayload: any = {
+          enabled: formValue.pendingReturnEnabled
+        };
+        if (formValue.pendingReturnEnabled) {
+          pendingReturnPayload.pendingReturnThreshold = formValue.pendingReturnThreshold;
+        }
+
+        this.alertSettingsService.updateAlertConfig('PENDING_RETURN_CYLINDERS', pendingReturnPayload).subscribe(
+          () => {
+            this.alertSaving = false;
+            this.alertSettingsForm.markAsPristine();
+            this.toastr.success('Alert settings saved successfully', 'Success');
+            this.cdr.markForCheck();
+          },
+          (error: any) => {
+            this.alertSaving = false;
+            this.toastr.error('Failed to save pending returns alert settings', 'Error');
+            console.error('Error:', error);
+            this.cdr.markForCheck();
+          }
+        );
+      },
+      (error: any) => {
+        this.alertSaving = false;
+        this.toastr.error('Failed to save low stock alert settings', 'Error');
+        console.error('Error:', error);
+        this.cdr.markForCheck();
+      }
+    );
   }
 }

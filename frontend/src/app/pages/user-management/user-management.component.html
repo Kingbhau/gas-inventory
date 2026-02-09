@@ -50,7 +50,7 @@
               <td>{{ user.mobileNo }}</td>
               <td>{{ user.role }}</td>
               <td>
-                <span [class.badge-success]="user.active" [class.badge-danger]="!user.active" class="badge">
+                <span [class.active]="user.active" [class.inactive]="!user.active" class="status-badge">
                   {{ user.active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -65,12 +65,12 @@
                       <button class="dropdown-item" (click)="openDetailsModal(user); user.showMenu = false">
                         <fa-icon [icon]="faEye"></fa-icon> View Details
                       </button>
-                      <button class="dropdown-item" (click)="editUser(user); user.showMenu = false">
-                        <fa-icon [icon]="faPencil"></fa-icon> Edit
+                      <button *ngIf="canEditUser(user)" class="dropdown-item" (click)="editUser(user); user.showMenu = false">
+                        <fa-icon [icon]="faEdit"></fa-icon> Edit
                       </button>
-                      <button class="dropdown-item danger" (click)="openDeleteModal(user); user.showMenu = false">
+                      <!-- <button class="dropdown-item danger" (click)="openDeleteModal(user); user.showMenu = false">
                         <fa-icon [icon]="faTrash"></fa-icon> Delete
-                      </button>
+                      </button> -->
                     </div>
                   </div>
                 </div>
@@ -188,15 +188,14 @@
           <label class="form-label">Role <span class="required">*</span></label>
           <select formControlName="role" class="form-control">
             <option value="">Select Role</option>
-            <option value="MANAGER">Manager</option>
-            <option value="STAFF">Staff</option>
+            <option *ngFor="let role of availableRoles" [value]="role.value">{{ role.label }}</option>
           </select>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeForm()">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="!userForm.valid">
-            {{ editingId ? 'Update User' : 'Create User' }}
+          <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="isSubmitting">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="!userForm.valid || isSubmitting">
+            {{ isSubmitting ? 'Saving...' : (editingId ? 'Update User' : 'Create User') }}
           </button>
         </div>
       </form>
@@ -215,7 +214,7 @@
         </button>
       </div>
       <div class="modal-body details-modal-body">
-        <span class="details-status-badge" [ngClass]="{'inactive': !detailsUser.active}">
+        <span [class.active]="detailsUser.active" [class.inactive]="!detailsUser.active" class="status-badge">
           <fa-icon [icon]="detailsUser.active ? faUsers : faTimes"></fa-icon>
           {{ detailsUser.active ? 'Active' : 'Inactive' }}
         </span>
@@ -234,6 +233,18 @@
         <div class="details-section">
           <div class="details-label">Role</div>
           <div class="details-value">{{ detailsUser.role }}</div>
+        </div>
+        <div class="details-section">
+          <div class="details-label">Created By</div>
+          <div class="details-value">{{ getCreatedByName(detailsUser.createdBy) }}</div>
+        </div>
+        <div class="details-section">
+          <div class="details-label">Last Modified By</div>
+          <div class="details-value">{{ getCreatedByName(detailsUser.updatedBy) }}</div>
+        </div>
+        <div class="details-section">
+          <div class="details-label">Last Modified Date</div>
+          <div class="details-value">{{ detailsUser.updatedDate ? (detailsUser.updatedDate | date: 'dd MMM yyyy, hh:mm a') : 'N/A' }}</div>
         </div>
       </div>
       <div class="modal-footer details-modal-footer">

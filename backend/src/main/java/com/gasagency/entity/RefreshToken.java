@@ -1,7 +1,9 @@
 package com.gasagency.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Entity
 @Table(name = "refresh_tokens")
@@ -13,8 +15,11 @@ public class RefreshToken extends Auditable {
     @Column(nullable = false, unique = true)
     private String token;
 
-    @Column(nullable = false)
-    private String username;
+    @NotNull(message = "User is required.")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference("user-refreshTokens")
+    private User user;
 
     @Column(nullable = false)
     private Instant expiryDate;
@@ -35,12 +40,12 @@ public class RefreshToken extends Auditable {
         this.token = token;
     }
 
-    public String getUsername() {
-        return username;
+    public User getUser() {
+        return user;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public Instant getExpiryDate() {

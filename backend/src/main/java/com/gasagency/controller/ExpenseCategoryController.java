@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/expense-categories")
-@PreAuthorize("hasRole('MANAGER')")
+@PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
 public class ExpenseCategoryController {
 
     private final ExpenseCategoryService service;
