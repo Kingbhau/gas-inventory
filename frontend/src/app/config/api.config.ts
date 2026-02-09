@@ -1,5 +1,6 @@
 export const API_CONFIG = {
-  baseUrl: 'http://localhost:8080/api',
+  // Use same-origin API in production (nginx proxies /api to backend).
+  baseUrl: '/api',
   endpoints: {
     suppliers: '/suppliers',
     customers: '/customers',
