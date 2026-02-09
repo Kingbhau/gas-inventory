@@ -10,7 +10,7 @@ import { LoaderComponent } from './shared/components/loader.component';
 import { HttpClient } from '@angular/common/http';
 import { filter, takeUntil } from 'rxjs/operators';
 import { AlertService } from './services/alert.service';
-import { Subject } from 'rxjs';
+import { Subject, Subscription, timer } from 'rxjs';
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -22,6 +22,7 @@ import { Subject } from 'rxjs';
 export class AppComponent implements OnInit, OnDestroy {
   private globalClickUnlistener: (() => void) | null = null;
   private destroy$ = new Subject<void>();
+  private refreshSubscription: Subscription | null = null;
   loading$ = this.loadingService.loading$;
 
   constructor(
@@ -103,9 +104,24 @@ export class AppComponent implements OnInit, OnDestroy {
     // Initialize alerts if user is authenticated (handles page refresh)
     if (this.isAuthenticated) {
       this.alertService.initialize();
+      this.startRefreshTimer();
     }
     
     this.initializeAlerts();
+
+    // Start/stop refresh timer on navigation (e.g., after login)
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        if (this.isAuthenticated && !this.refreshSubscription) {
+          this.startRefreshTimer();
+        } else if (!this.isAuthenticated && this.refreshSubscription) {
+          this.stopRefreshTimer();
+        }
+      });
 
     // Hide sidebar by default on mobile
     if (window.innerWidth <= 1024) {
@@ -216,6 +232,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.globalClickUnlistener();
       this.globalClickUnlistener = null;
     }
+    this.stopRefreshTimer();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -237,6 +254,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   logout() {
     this.alertService.reset();
+    this.stopRefreshTimer();
     this.authService.logout().subscribe({
       next: () => {
         this.ngZone.run(() => {
@@ -259,6 +277,46 @@ export class AppComponent implements OnInit, OnDestroy {
           this.router.navigate(['/login']);
         });
       }
+    });
+  }
+
+  private startRefreshTimer(): void {
+    if (this.refreshSubscription) {
+      return;
+    }
+    // Refresh access token periodically to keep session alive during idle time.
+    const refreshIntervalMs = 10 * 60 * 1000; // 10 minutes
+    this.refreshSubscription = timer(refreshIntervalMs, refreshIntervalMs)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.isAuthenticated) {
+          return;
+        }
+        this.authService.refreshToken().subscribe({
+          error: () => {
+            this.handleSessionExpired();
+          }
+        });
+      });
+  }
+
+  private stopRefreshTimer(): void {
+    if (this.refreshSubscription) {
+      this.refreshSubscription.unsubscribe();
+      this.refreshSubscription = null;
+    }
+  }
+
+  private handleSessionExpired(): void {
+    this.alertService.reset();
+    this.stopRefreshTimer();
+    this.ngZone.run(() => {
+      localStorage.removeItem('user_info');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('user_name');
+      this.profileDropdownOpen = false;
+      this.cdr.markForCheck();
+      this.router.navigate(['/login']);
     });
   }
 

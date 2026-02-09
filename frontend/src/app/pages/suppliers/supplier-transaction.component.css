@@ -10,6 +10,10 @@
   .filter-group {
     min-width: 100% !important;
   }
+  .filter-input {
+    width: 100%;
+    box-sizing: border-box;
+  }
   .filter-actions-row {
     flex-direction: column !important;
     width: 100%;

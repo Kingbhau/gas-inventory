@@ -73,7 +73,8 @@ public class SseService {
         Thread keepAliveThread = new Thread(() -> {
             try {
                 while (emitters.containsKey(userId)) {
-                    Thread.sleep(60000); // Send keep-alive every 60 seconds
+                    // Send keep-alive frequently to avoid proxy/server idle timeouts
+                    Thread.sleep(15000);
                     try {
                         emitter.send(SseEmitter.event()
                                 .name("keep-alive")
