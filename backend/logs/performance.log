@@ -2579,3 +2579,8 @@
 2026-02-08 20:16:15.320 | [18f1c90f-d889-4d39-842e-ab3c593bc46d] | 18f1c90f-d889-4d39-842e-ab3c593bc46d|method=GET|path=/api/variants|status=200|duration=10ms|category=FAST
 2026-02-08 20:16:15.320 | [065b42bb-5412-4948-8e60-6e3f5f57f5a7] | 065b42bb-5412-4948-8e60-6e3f5f57f5a7|method=GET|path=/api/inventory|status=200|duration=15ms|category=FAST
 2026-02-08 20:16:15.337 | [93ec71b0-0110-432b-b8be-596ac176f473] | 93ec71b0-0110-432b-b8be-596ac176f473|method=GET|path=/api/ledger/movements/paged|status=200|duration=13ms|category=FAST
+2026-02-08 20:43:12.638 | [014c20e5-2067-44f1-bf1e-66bc058844c1] | 014c20e5-2067-44f1-bf1e-66bc058844c1|method=POST|path=/api/auth/login|status=200|duration=227ms|category=FAST
+2026-02-08 20:43:12.661 | [bedd084b-921d-444f-af16-8381d155e543] | bedd084b-921d-444f-af16-8381d155e543|method=GET|path=/api/alerts|status=200|duration=8ms|category=FAST
+2026-02-08 20:43:12.703 | [0a70f80c-41f6-4817-b9fa-8dd782e79877] | 0a70f80c-41f6-4817-b9fa-8dd782e79877|method=GET|path=/api/alerts/stream|status=200|duration=2ms|category=FAST
+2026-02-08 20:43:12.708 | [0af9a665-1dae-4cb9-90a1-d86bcf59e3e3] | 0af9a665-1dae-4cb9-90a1-d86bcf59e3e3|method=GET|path=/api/alerts|status=200|duration=8ms|category=FAST
+2026-02-08 20:43:12.909 | [79a13399-7afa-40b1-9232-96c1a7ce4673] | 79a13399-7afa-40b1-9232-96c1a7ce4673|method=GET|path=/api/dashboard/comprehensive|status=200|duration=232ms|category=FAST

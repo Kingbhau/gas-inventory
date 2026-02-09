@@ -988,3 +988,11 @@ Caused by: org.postgresql.util.PSQLException: ERROR: duplicate key value violate
 2026-02-08 20:16:00.785 | INFO  | [1f133f80-06dd-4b19-8516-3c8c26b91315] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_START | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | variantId=1
 2026-02-08 20:16:00.791 | INFO  | [1f133f80-06dd-4b19-8516-3c8c26b91315] [] [] | http-nio-8080-exec-17 | c.g.service.InventoryStockService | OPERATION_SUCCESS | operation=INCREMENT_EMPTY_QTY | warehouseId=1 | variantId=1 | newQty=4
 2026-02-08 20:16:00.791 | INFO  | [1f133f80-06dd-4b19-8516-3c8c26b91315] [] [] | http-nio-8080-exec-17 | c.g.s.SupplierTransactionService | OPERATION_SUCCESS | operation=UPDATE_TRANSACTION | id=2 | supplierId=1 | filled=0
+2026-02-08 20:41:27.857 | INFO  | [] [] [] | http-nio-8080-exec-31 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-08 20:41:27.872 | INFO  | [] [] [] | http-nio-8080-exec-31 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-08 20:43:12.702 | INFO  | [0a70f80c-41f6-4817-b9fa-8dd782e79877] [] [] | http-nio-8080-exec-44 | com.gasagency.service.SseService | User admin subscribing to alerts
+2026-02-08 20:43:12.890 | INFO  | [79a13399-7afa-40b1-9232-96c1a7ce4673] [] [] | http-nio-8080-exec-46 | c.gasagency.service.DashboardService | Dashboard alerts set: 0 active alerts
+2026-02-08 20:44:44.853 | INFO  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-08 20:44:44.862 | INFO  | [] [] [] | http-nio-8080-exec-50 | com.gasagency.service.SseService | User admin SSE completed
+2026-02-08 21:13:12.853 | INFO  | [] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin SSE timeout
+2026-02-08 21:13:12.863 | INFO  | [] [] [] | http-nio-8080-exec-2 | com.gasagency.service.SseService | User admin SSE completed
