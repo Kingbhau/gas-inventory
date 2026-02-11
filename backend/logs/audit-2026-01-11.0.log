@@ -1,9 +1,0 @@
-2026-01-11 21:53:15.163 | INFO  | [3667e0e0-0e4c-4bc0-b248-909f28e4d7cf] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=16 | customerId=1
-2026-01-11 21:53:15.163 | INFO  | [3667e0e0-0e4c-4bc0-b248-909f28e4d7cf] [] | com.gasagency.audit | SALE_CREATED | saleId=11 | customerId=1 | customer=Tushar Rokade | amount=1500.0 | timestamp=2026-01-11 21:53:15
-2026-01-11 22:20:00.134 | INFO  | [349732c1-6872-4a80-b9b2-d934b7d5562a] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=17 | customerId=1
-2026-01-11 22:20:00.147 | INFO  | [349732c1-6872-4a80-b9b2-d934b7d5562a] [] | com.gasagency.audit | AUDIT | action=UPDATE | entity=INVENTORY_STOCK | stockId=1 | variantId=1 | emptyQty=12
-2026-01-11 22:22:41.592 | INFO  | [6ca2fcf7-be0e-4260-b779-c714e2a5b340] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=SUPPLIER_TRANSACTION | transactionId=5 | supplierId=1
-2026-01-11 22:23:01.280 | INFO  | [179ac3b5-62f1-49a2-8649-b455d4117c76] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=18 | customerId=2
-2026-01-11 22:23:01.280 | INFO  | [179ac3b5-62f1-49a2-8649-b455d4117c76] [] | com.gasagency.audit | SALE_CREATED | saleId=12 | customerId=2 | customer=Mahesh Patil | amount=900.0 | timestamp=2026-01-11 22:23:01
-2026-01-11 23:02:43.616 | INFO  | [fa4361a4-8d6a-49ac-9fc1-73f49e27e460] [] | com.gasagency.audit | AUDIT | action=CREATE | entity=LEDGER | ledgerId=19 | customerId=1
-2026-01-11 23:02:43.617 | INFO  | [fa4361a4-8d6a-49ac-9fc1-73f49e27e460] [] | com.gasagency.audit | SALE_CREATED | saleId=13 | customerId=1 | customer=Tushar Rokade | amount=4500.0 | timestamp=2026-01-11 23:02:43

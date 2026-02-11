@@ -1,8 +1,0 @@
-2026-01-29 12:25:06.818 | ERROR | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] [54450323-6196-4584-bd1d-ae1aaea5dadf] | http-nio-8080-exec-14 | o.h.e.jdbc.spi.SqlExceptionHelper | ERROR: duplicate key value violates unique constraint "uk_kphiqj5r82mq4av6sq9v31wpl"
-  Detail: Key (alert_key)=(LOW_STOCK_FILLED_WH_2_VAR_1) already exists.
-2026-01-29 12:25:06.874 | ERROR | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] [54450323-6196-4584-bd1d-ae1aaea5dadf] | http-nio-8080-exec-14 | o.h.e.jdbc.spi.SqlExceptionHelper | ERROR: duplicate key value violates unique constraint "uk_kphiqj5r82mq4av6sq9v31wpl"
-  Detail: Key (alert_key)=(LOW_STOCK_EMPTY_WH_2_VAR_1) already exists.
-2026-01-29 12:25:06.889 | ERROR | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] [54450323-6196-4584-bd1d-ae1aaea5dadf] | http-nio-8080-exec-14 | o.h.e.jdbc.spi.SqlExceptionHelper | ERROR: duplicate key value violates unique constraint "uk_kphiqj5r82mq4av6sq9v31wpl"
-  Detail: Key (alert_key)=(LOW_STOCK_FILLED_WH_2_VAR_2) already exists.
-2026-01-29 12:25:06.909 | ERROR | [7074acfe-ecf1-4c76-9d31-1c8bf0400f1b] [] [54450323-6196-4584-bd1d-ae1aaea5dadf] | http-nio-8080-exec-14 | o.h.e.jdbc.spi.SqlExceptionHelper | ERROR: duplicate key value violates unique constraint "uk_kphiqj5r82mq4av6sq9v31wpl"
-  Detail: Key (alert_key)=(LOW_STOCK_EMPTY_WH_2_VAR_2) already exists.
