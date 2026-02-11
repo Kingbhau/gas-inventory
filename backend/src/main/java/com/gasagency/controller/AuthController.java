@@ -55,8 +55,8 @@ public class AuthController {
                             loginRequest.get("username"),
                             loginRequest.get("password")));
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            // Short-lived access token (e.g., 15 min)
-            String accessToken = jwtUtil.generateToken(userDetails, 15 * 60 * 1000L);
+            // Short-lived access token (e.g., 4 hours)
+            String accessToken = jwtUtil.generateToken(userDetails, 4 * 60 * 60 * 1000L);
             // Long-lived refresh token (e.g., 7 days)
             String refreshTokenStr = UUID.randomUUID().toString();
             Instant expiry = Instant.now().plusSeconds(7 * 24 * 60 * 60); // 7 days
@@ -72,7 +72,7 @@ public class AuthController {
             accessCookie.setHttpOnly(true);
             accessCookie.setSecure(true); // Set to true in production (HTTPS)
             accessCookie.setPath("/");
-            accessCookie.setMaxAge(15 * 60); // 15 min
+            accessCookie.setMaxAge(4 * 60 * 60); // 4 hours
             response.addCookie(accessCookie);
 
             // Set refresh token as HTTP-only cookie
@@ -125,12 +125,12 @@ public class AuthController {
                         .singleton(new org.springframework.security.core.authority.SimpleGrantedAuthority(
                                 "ROLE_" + user.getRole().name())));
         // Issue new access token
-        String newAccessToken = jwtUtil.generateToken(userDetails, 15 * 60 * 1000L);
+        String newAccessToken = jwtUtil.generateToken(userDetails, 4 * 60 * 60 * 1000L);
         Cookie accessCookie = new Cookie("jwt_token", newAccessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(true);
         accessCookie.setPath("/");
-        accessCookie.setMaxAge(15 * 60);
+        accessCookie.setMaxAge(4 * 60 * 60);
         response.addCookie(accessCookie);
         return ResponseEntity.ok().body("Access token refreshed");
     }

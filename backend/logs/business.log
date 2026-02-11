@@ -1,3 +1,0 @@
-2026-02-09 20:32:17.397 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService | AlertDetectionService initialized with 2 detectors
-2026-02-09 20:32:17.397 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - LOW_STOCK_WAREHOUSE
-2026-02-09 20:32:17.397 | INFO  | [] [] [] | main | c.g.service.AlertDetectionService |   - PENDING_RETURN_CYLINDERS
