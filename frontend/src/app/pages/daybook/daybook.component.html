@@ -45,10 +45,20 @@
       <div class="report-summary" *ngIf="dayBookSummary && dayBookTransactions.length > 0">
         <div class="summary-card">
           <span class="label">Total Filled</span>
+          <p class="summary-variants" *ngIf="filledVariantSummaries.length > 0">
+            <span class="summary-variant" *ngFor="let variant of filledVariantSummaries; let last = last">
+              {{ variant.variantName }} ({{ variant.filledCount || 0 }})<span *ngIf="!last"> · </span>
+            </span>
+          </p>
           <span class="value">{{ dayBookSummary.totalFilledCount || 0 }}</span>
         </div>
         <div class="summary-card">
           <span class="label">Total Returned</span>
+          <p class="summary-variants" *ngIf="emptyVariantSummaries.length > 0">
+            <span class="summary-variant" *ngFor="let variant of emptyVariantSummaries; let last = last">
+              {{ variant.variantName }} ({{ variant.emptyCount || 0 }})<span *ngIf="!last"> · </span>
+            </span>
+          </p>
           <span class="value">{{ dayBookSummary.totalEmptyCount || 0 }}</span>
         </div>
         <div class="summary-card" style="display: none;">

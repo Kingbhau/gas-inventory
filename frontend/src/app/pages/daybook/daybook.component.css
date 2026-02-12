@@ -184,6 +184,17 @@
   color: #2563eb;
 }
 
+.summary-variants {
+  margin: 0.25rem 0 0.5rem 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.summary-variant {
+  white-space: nowrap;
+}
+
 .summary-card .value.due {
   color: #dc2626;
 }
