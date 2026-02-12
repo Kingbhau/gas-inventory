@@ -41,6 +41,19 @@ export class DayBookComponent implements OnInit, OnDestroy {
     dueAmount: number;
     quantityMoved: number;
   }> = [];
+  variantSummaries: Array<{
+    variantName: string;
+    filledCount: number;
+    emptyCount: number;
+  }> = [];
+  filledVariantSummaries: Array<{
+    variantName: string;
+    filledCount: number;
+  }> = [];
+  emptyVariantSummaries: Array<{
+    variantName: string;
+    emptyCount: number;
+  }> = [];
   selectedDate: string = '';
   isLoading = false;
   filterCreatedBy = '';
@@ -152,13 +165,15 @@ export class DayBookComponent implements OnInit, OnDestroy {
                 if (this.isManager) {
                   const filteredTransactions = this.filterOutBankDeposits(summaryResponse?.transactions || []);
                   this.dayBookTransactions = filteredTransactions;
-                this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
-                this.dayBookTypeSummaries = this.buildTypeSummaries(filteredTransactions);
+                  this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
+                  this.dayBookTypeSummaries = this.buildTypeSummaries(filteredTransactions);
+                  this.setVariantSummaries(filteredTransactions);
                   this.applyPaginationFromTransactions(filteredTransactions);
                 } else {
                   this.dayBookSummary = summaryResponse;
                   this.dayBookTransactions = summaryResponse.transactions || [];
-                this.dayBookTypeSummaries = this.buildTypeSummaries(this.dayBookTransactions);
+                  this.dayBookTypeSummaries = this.buildTypeSummaries(this.dayBookTransactions);
+                  this.setVariantSummaries(this.dayBookTransactions);
                 }
                 this.cdr.markForCheck();
               },
@@ -166,7 +181,8 @@ export class DayBookComponent implements OnInit, OnDestroy {
                 console.error('Error loading day book summary:', error);
                 if (this.isManager) {
                   this.dayBookSummary = this.buildSummaryFromTransactions(this.paginatedDayBookTransactions);
-                this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
+                  this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
+                  this.setVariantSummaries(this.paginatedDayBookTransactions);
                 }
               }
             });
@@ -179,6 +195,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
           this.paginatedDayBookTransactions = [];
           this.dayBookSummary = null;
           this.dayBookTypeSummaries = [];
+          this.variantSummaries = [];
+          this.filledVariantSummaries = [];
+          this.emptyVariantSummaries = [];
           this.cdr.markForCheck();
         }
       });
@@ -395,6 +414,41 @@ export class DayBookComponent implements OnInit, OnDestroy {
     }
 
     return Array.from(summaryMap.values());
+  }
+
+  private buildVariantSummaries(transactions: any[]): Array<{
+    variantName: string;
+    filledCount: number;
+    emptyCount: number;
+  }> {
+    const summaryMap = new Map<string, { variantName: string; filledCount: number; emptyCount: number }>();
+
+    (transactions || []).forEach(tx => {
+      const rawName = typeof tx?.variantName === 'string' ? tx.variantName.trim() : '';
+      const filledCount = Number(tx?.filledCount) || 0;
+      const emptyCount = Number(tx?.emptyCount) || 0;
+      if (!rawName && filledCount === 0 && emptyCount === 0) {
+        return;
+      }
+
+      const name = rawName || 'Unspecified';
+      const existing = summaryMap.get(name) || { variantName: name, filledCount: 0, emptyCount: 0 };
+      existing.filledCount += filledCount;
+      existing.emptyCount += emptyCount;
+      summaryMap.set(name, existing);
+    });
+
+    return Array.from(summaryMap.values()).sort((a, b) => a.variantName.localeCompare(b.variantName));
+  }
+
+  private setVariantSummaries(transactions: any[]): void {
+    this.variantSummaries = this.buildVariantSummaries(transactions);
+    this.filledVariantSummaries = this.variantSummaries
+      .filter(summary => summary.filledCount > 0)
+      .map(summary => ({ variantName: summary.variantName, filledCount: summary.filledCount }));
+    this.emptyVariantSummaries = this.variantSummaries
+      .filter(summary => summary.emptyCount > 0)
+      .map(summary => ({ variantName: summary.variantName, emptyCount: summary.emptyCount }));
   }
 
   private getTransferQuantity(details?: string | null): number {
