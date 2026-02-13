@@ -1,7 +1,7 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.DayBookDTO;
-import com.gasagency.dto.DayBookSummaryDTO;
+import com.gasagency.dto.response.DayBookDTO;
+import com.gasagency.dto.response.DayBookSummaryDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.Expense;
 import com.gasagency.entity.BankDeposit;
@@ -63,55 +63,67 @@ public class DayBookService {
     public Page<DayBookDTO> getTransactionsByDate(LocalDate date, Pageable pageable, String createdBy, String transactionType) {
         List<DayBookDTO> dayBookList = new ArrayList<>();
 
-        // Ledger entries: sales, empty returns, payments, and transfers
-        List<CustomerCylinderLedger> ledgers = ledgerRepository.findByTransactionDateAndRefTypeIn(
-                date,
-                List.of(
-                        CustomerCylinderLedger.TransactionType.SALE,
-                        CustomerCylinderLedger.TransactionType.EMPTY_RETURN,
-                        CustomerCylinderLedger.TransactionType.PAYMENT,
-                        CustomerCylinderLedger.TransactionType.TRANSFER));
+        String typeFilter = transactionType != null && !transactionType.isEmpty()
+                ? transactionType.trim().toUpperCase()
+                : null;
 
-        ledgers.stream()
-                .filter(ledger -> createdBy == null || createdBy.isEmpty() || createdBy.equals(ledger.getCreatedBy()))
-                .map(this::convertLedgerToDayBook)
-                .forEach(dayBookList::add);
+        // Ledger entries: sales, empty returns, payments, and transfers
+        List<CustomerCylinderLedger.TransactionType> refTypes = new ArrayList<>();
+        if (typeFilter == null || "SALE".equals(typeFilter)) {
+            refTypes.add(CustomerCylinderLedger.TransactionType.SALE);
+        }
+        if (typeFilter == null || "EMPTY_RETURN".equals(typeFilter)) {
+            refTypes.add(CustomerCylinderLedger.TransactionType.EMPTY_RETURN);
+        }
+        if (typeFilter == null || "PAYMENT".equals(typeFilter)) {
+            refTypes.add(CustomerCylinderLedger.TransactionType.PAYMENT);
+        }
+        if (typeFilter == null || "TRANSFER".equals(typeFilter)) {
+            refTypes.add(CustomerCylinderLedger.TransactionType.TRANSFER);
+        }
+
+        if (!refTypes.isEmpty()) {
+            List<CustomerCylinderLedger> ledgers = ledgerRepository.findByTransactionDateAndRefTypeInAndCreatedBy(
+                    date,
+                    refTypes,
+                    createdBy);
+            ledgers.stream()
+                    .map(this::convertLedgerToDayBook)
+                    .forEach(dayBookList::add);
+        }
 
         // Warehouse transfers
-        List<WarehouseTransfer> transfers = warehouseTransferRepository.findByDateRange(date, date);
-        transfers.stream()
-                .filter(transfer -> createdBy == null || createdBy.isEmpty() || createdBy.equals(transfer.getCreatedBy()))
-                .map(this::convertWarehouseTransferToDayBook)
-                .forEach(dayBookList::add);
+        if (typeFilter == null || "WAREHOUSE_TRANSFER".equals(typeFilter)) {
+            List<WarehouseTransfer> transfers = warehouseTransferRepository.findByDateRangeAndCreatedBy(
+                    date, date, createdBy);
+            transfers.stream()
+                    .map(this::convertWarehouseTransferToDayBook)
+                    .forEach(dayBookList::add);
+        }
 
         // Supplier transactions
-        List<SupplierTransaction> supplierTransactions = supplierTransactionRepository.findByTransactionDate(date);
-        supplierTransactions.stream()
-                .filter(tx -> createdBy == null || createdBy.isEmpty() || createdBy.equals(tx.getCreatedBy()))
-                .map(this::convertSupplierTransactionToDayBook)
-                .forEach(dayBookList::add);
+        if (typeFilter == null || "SUPPLIER_TRANSACTION".equals(typeFilter)) {
+            List<SupplierTransaction> supplierTransactions = supplierTransactionRepository
+                    .findByTransactionDateAndCreatedBy(date, createdBy);
+            supplierTransactions.stream()
+                    .map(this::convertSupplierTransactionToDayBook)
+                    .forEach(dayBookList::add);
+        }
 
         // Bank deposits
-        List<BankDeposit> deposits = bankDepositRepository.findByDepositDate(date);
-        deposits.stream()
-                .filter(deposit -> createdBy == null || createdBy.isEmpty() || createdBy.equals(deposit.getCreatedBy()))
-                .map(this::convertBankDepositToDayBook)
-                .forEach(dayBookList::add);
+        if (typeFilter == null || "BANK_DEPOSIT".equals(typeFilter)) {
+            List<BankDeposit> deposits = bankDepositRepository.findByDepositDateAndCreatedBy(date, createdBy);
+            deposits.stream()
+                    .map(this::convertBankDepositToDayBook)
+                    .forEach(dayBookList::add);
+        }
 
         // Expenses
-        List<Expense> expenses = expenseRepository.findByExpenseDateBetween(date, date);
-        expenses.stream()
-                .filter(expense -> createdBy == null || createdBy.isEmpty() || createdBy.equals(expense.getCreatedBy()))
-                .map(this::convertExpenseToDayBook)
-                .forEach(dayBookList::add);
-
-        // Filter by transaction type (optional)
-        if (transactionType != null && !transactionType.isEmpty()) {
-            String typeFilter = transactionType.trim().toUpperCase();
-            dayBookList = dayBookList.stream()
-                    .filter(dto -> dto.getTransactionType() != null
-                            && dto.getTransactionType().trim().equalsIgnoreCase(typeFilter))
-                    .collect(Collectors.toList());
+        if (typeFilter == null || "EXPENSE".equals(typeFilter)) {
+            List<Expense> expenses = expenseRepository.findByExpenseDateBetweenAndCreatedBy(date, date, createdBy);
+            expenses.stream()
+                    .map(this::convertExpenseToDayBook)
+                    .forEach(dayBookList::add);
         }
 
         // Sort newest first (createdDate if available, else transactionDate)
@@ -249,7 +261,7 @@ public class DayBookService {
         dayBook.setCreatedDate(transfer.getCreatedDate());
         dayBook.setTransactionType("WAREHOUSE_TRANSFER");
         dayBook.setReferenceNumber(transfer.getReferenceNumber());
-        dayBook.setPartyName(String.format("%s → %s",
+        dayBook.setPartyName(String.format("%s -> %s",
                 transfer.getFromWarehouse() != null ? transfer.getFromWarehouse().getName() : "N/A",
                 transfer.getToWarehouse() != null ? transfer.getToWarehouse().getName() : "N/A"));
         dayBook.setDetails(String.format("Variant: %s | Qty: %d",
@@ -320,3 +332,4 @@ public class DayBookService {
         return dayBook;
     }
 }
+

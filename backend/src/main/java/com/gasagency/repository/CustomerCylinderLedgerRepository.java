@@ -118,6 +118,60 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         @Param("transactionDate") LocalDate transactionDate,
                         @Param("refTypes") List<CustomerCylinderLedger.TransactionType> refTypes);
 
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.transactionDate = :transactionDate " +
+                        "AND l.refType IN :refTypes " +
+                        "AND (:createdBy IS NULL OR :createdBy = '' OR l.createdBy = :createdBy) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        List<CustomerCylinderLedger> findByTransactionDateAndRefTypeInAndCreatedBy(
+                        @Param("transactionDate") LocalDate transactionDate,
+                        @Param("refTypes") List<CustomerCylinderLedger.TransactionType> refTypes,
+                        @Param("createdBy") String createdBy);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE l.refType <> 'INITIAL_STOCK' " +
+                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
+                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
+                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "AND (:paymentMode IS NULL OR :paymentMode = '' OR LOWER(l.paymentMode) = LOWER(:paymentMode)) " +
+                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
+                        "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
+                        "AND (:minAmount IS NULL OR l.amountReceived >= :minAmount) " +
+                        "AND (:maxAmount IS NULL OR l.amountReceived <= :maxAmount) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        List<CustomerCylinderLedger> findForPaymentModeSummary(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("customerId") Long customerId,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("variantId") Long variantId,
+                        @Param("minAmount") BigDecimal minAmount,
+                        @Param("maxAmount") BigDecimal maxAmount);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer.id = :customerId " +
+                        "AND l.id <> :excludedId ORDER BY l.id DESC")
+        List<CustomerCylinderLedger> findLatestByCustomerIdExcludingId(
+                        @Param("customerId") Long customerId,
+                        @Param("excludedId") Long excludedId,
+                        Pageable pageable);
+
+        @Query("SELECT COALESCE(SUM(l.emptyIn), 0) FROM CustomerCylinderLedger l " +
+                        "WHERE l.customer.id = :customerId AND l.emptyIn IS NOT NULL AND l.emptyIn > 0")
+        long sumPositiveEmptyInByCustomer(@Param("customerId") Long customerId);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer = :customer " +
+                        "AND l.variant = :variant ORDER BY l.transactionDate ASC, l.id ASC")
+        List<CustomerCylinderLedger> findByCustomerAndVariantOrdered(
+                        @Param("customer") Customer customer,
+                        @Param("variant") CylinderVariant variant);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer = :customer " +
+                        "ORDER BY l.transactionDate ASC, l.id ASC")
+        List<CustomerCylinderLedger> findByCustomerOrdered(@Param("customer") Customer customer);
+
+        boolean existsByCustomerIdAndVariantIdAndRefType(Long customerId, Long variantId,
+                        CustomerCylinderLedger.TransactionType refType);
+
         // Get empty return transactions with optional date range and customer/variant filtering
         @Query("SELECT l FROM CustomerCylinderLedger l " +
                         "WHERE l.refType = 'EMPTY_RETURN' " +
@@ -197,6 +251,25 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0 ORDER BY l.dueAmount DESC")
         Page<CustomerCylinderLedger> findLatestDuePerCustomer(Pageable pageable);
 
+        @Query("SELECT l.customer.id, l.customer.name, l.customer.mobile, l.customer.address, " +
+                        "COALESCE(SUM(l.totalAmount), 0), COALESCE(SUM(l.amountReceived), 0), " +
+                        "MAX(l.transactionDate), COUNT(l) " +
+                        "FROM CustomerCylinderLedger l " +
+                        "WHERE (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
+                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
+                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "GROUP BY l.customer.id, l.customer.name, l.customer.mobile, l.customer.address " +
+                        "HAVING (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) > 0 " +
+                        "AND (:minAmount IS NULL OR (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) >= :minAmount) " +
+                        "AND (:maxAmount IS NULL OR (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) <= :maxAmount) " +
+                        "ORDER BY (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) DESC")
+        List<Object[]> findDuePaymentAggregates(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("customerId") Long customerId,
+                        @Param("minAmount") BigDecimal minAmount,
+                        @Param("maxAmount") BigDecimal maxAmount);
+
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
                         "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 GROUP BY l2.customer.id) " +
                         "AND l.dueAmount IS NOT NULL AND l.dueAmount >= :minDueAmount " +
@@ -248,3 +321,4 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "FROM CustomerCylinderLedger l WHERE l.customer.id IN :customerIds GROUP BY l.customer.id")
         List<Object[]> getCustomerLedgerAggregates(@Param("customerIds") List<Long> customerIds);
 }
+

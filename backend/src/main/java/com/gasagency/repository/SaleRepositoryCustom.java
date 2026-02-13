@@ -20,3 +20,4 @@ public interface SaleRepositoryCustom {
 
     Page<Sale> findByDateRange(LocalDate fromDate, LocalDate toDate, Pageable pageable);
 }
+

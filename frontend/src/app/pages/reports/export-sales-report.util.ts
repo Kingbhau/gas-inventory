@@ -1,5 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Sale } from '../../models/sale.model';
+import { SaleItem } from '../../models/sale-item.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -33,7 +35,7 @@ export function exportSalesReportToPDF({
   referenceNumber,
   transactionCount
 }: {
-  salesData: any[],
+  salesData: Sale[],
   fromDate?: string,
   toDate?: string,
   totalSalesAmount: number,
@@ -142,7 +144,7 @@ export function exportSalesReportToPDF({
 
   // Table Data (match screen order: latest first by date, then ID)
   const flattenedItems = salesData
-    .flatMap(sale => (sale.saleItems || []).map((item: any) => ({ sale, item })))
+    .flatMap((sale) => (sale.saleItems || []).map((item: SaleItem) => ({ sale, item })))
     .sort((a, b) => {
       const dateA = new Date(a.sale.saleDate).getTime();
       const dateB = new Date(b.sale.saleDate).getTime();

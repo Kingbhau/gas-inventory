@@ -1,16 +1,18 @@
 package com.gasagency.controller;
 
+import com.gasagency.dto.response.AlertConfigurationDTO;
+import com.gasagency.dto.request.AlertConfigurationUpdateRequestDTO;
 import com.gasagency.util.ApiResponse;
-import com.gasagency.entity.AlertConfiguration;
+import com.gasagency.util.ApiResponseUtil;
 import com.gasagency.service.AlertConfigurationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST Controller for Alert Configuration
@@ -31,14 +33,16 @@ public class AlertConfigurationController {
      * Get all alert configurations
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AlertConfiguration>>> getAllConfigs() {
+    public ResponseEntity<ApiResponse<List<AlertConfigurationDTO>>> getAllConfigs() {
         try {
-            List<AlertConfiguration> configs = service.getAllConfigs();
-            logger.info("Fetched {} alert configurations", configs.size());
-            return ResponseEntity.ok(ApiResponse.success(configs, "Alert configurations retrieved"));
+            List<AlertConfigurationDTO> response = service.getAllConfigDTOs();
+            logger.info("Fetched {} alert configurations", response.size());
+            return ResponseEntity.ok(ApiResponseUtil.success("Alert configurations retrieved", response));
         } catch (Exception e) {
             logger.error("Error fetching alert configurations", e);
-            return ResponseEntity.ok(ApiResponse.error(500, "Error fetching alert configurations: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponseUtil.error("Error fetching alert configurations: " + e.getMessage(),
+                            "ALERT_CONFIG_FETCH_FAILED"));
         }
     }
 
@@ -46,21 +50,23 @@ public class AlertConfigurationController {
      * Get specific alert configuration by type
      */
     @GetMapping("/{alertType}")
-    public ResponseEntity<ApiResponse<AlertConfiguration>> getConfig(@PathVariable String alertType) {
+    public ResponseEntity<ApiResponse<AlertConfigurationDTO>> getConfig(@PathVariable String alertType) {
         try {
             logger.info("Fetching alert configuration for type: {}", alertType);
-            var config = service.getConfigOptional(alertType);
+            var config = service.getConfigDTOOptional(alertType);
             if (config.isPresent()) {
-                logger.info("Found alert configuration: {} with pending threshold: {}",
-                        alertType, config.get().getPendingReturnThreshold());
-                return ResponseEntity.ok(ApiResponse.success(config.get(), "Alert configuration retrieved"));
+                logger.info("Found alert configuration: {}", alertType);
+                return ResponseEntity.ok(ApiResponseUtil.success("Alert configuration retrieved", config.get()));
             } else {
                 logger.info("Alert configuration not found: {}", alertType);
-                return ResponseEntity.ok(ApiResponse.error(404, "Alert configuration not found"));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponseUtil.error("Alert configuration not found", "RESOURCE_NOT_FOUND"));
             }
         } catch (Exception e) {
             logger.error("Error fetching alert configuration: {}", alertType, e);
-            return ResponseEntity.ok(ApiResponse.error(500, "Error fetching alert configuration: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponseUtil.error("Error fetching alert configuration: " + e.getMessage(),
+                            "ALERT_CONFIG_FETCH_FAILED"));
         }
     }
 
@@ -71,36 +77,32 @@ public class AlertConfigurationController {
      */
     @PutMapping("/{alertType}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<ApiResponse<AlertConfiguration>> updateConfig(
+    public ResponseEntity<ApiResponse<AlertConfigurationDTO>> updateConfig(
             @PathVariable String alertType,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody AlertConfigurationUpdateRequestDTO request) {
 
         try {
             logger.info("Received update request for alertType: {}", alertType);
             logger.info("Request body: {}", request);
 
-            Boolean enabled = request.get("enabled") != null ? (Boolean) request.get("enabled") : null;
-            Integer filledThreshold = request.get("filledThreshold") != null
-                    ? ((Number) request.get("filledThreshold")).intValue()
-                    : null;
-            Integer emptyThreshold = request.get("emptyThreshold") != null
-                    ? ((Number) request.get("emptyThreshold")).intValue()
-                    : null;
-            Integer pendingReturnThreshold = request.get("pendingReturnThreshold") != null
-                    ? ((Number) request.get("pendingReturnThreshold")).intValue()
-                    : null;
+            Boolean enabled = request != null ? request.getEnabled() : null;
+            Integer filledThreshold = request != null ? request.getFilledThreshold() : null;
+            Integer emptyThreshold = request != null ? request.getEmptyThreshold() : null;
+            Integer pendingReturnThreshold = request != null ? request.getPendingReturnThreshold() : null;
 
             logger.info("Parsed values - enabled: {}, filled: {}, empty: {}, pending: {}",
                     enabled, filledThreshold, emptyThreshold, pendingReturnThreshold);
 
-            AlertConfiguration updated = service.updateAlertConfig(
+            AlertConfigurationDTO updated = service.updateAlertConfigDTO(
                     alertType, enabled, filledThreshold, emptyThreshold, pendingReturnThreshold);
 
             logger.info("Updated alert configuration: {}", alertType);
-            return ResponseEntity.ok(ApiResponse.success(updated, "Alert configuration updated"));
+            return ResponseEntity.ok(ApiResponseUtil.success("Alert configuration updated", updated));
         } catch (Exception e) {
             logger.error("Error updating alert configuration: {}", alertType, e);
-            return ResponseEntity.ok(ApiResponse.error(500, "Error updating alert configuration: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponseUtil.error("Error updating alert configuration: " + e.getMessage(),
+                            "ALERT_CONFIG_UPDATE_FAILED"));
         }
     }
 
@@ -109,13 +111,15 @@ public class AlertConfigurationController {
      */
     @PostMapping("/{alertType}/toggle")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    public ResponseEntity<ApiResponse<AlertConfiguration>> toggleAlert(@PathVariable String alertType) {
+    public ResponseEntity<ApiResponse<AlertConfigurationDTO>> toggleAlert(@PathVariable String alertType) {
         try {
-            AlertConfiguration updated = service.toggleAlert(alertType);
+            AlertConfigurationDTO updated = service.toggleAlertDTO(alertType);
             logger.info("Toggled alert: {} to {}", alertType, updated.getEnabled());
-            return ResponseEntity.ok(ApiResponse.success(updated, "Alert toggled"));
+            return ResponseEntity.ok(ApiResponseUtil.success("Alert toggled", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.ok(ApiResponse.error(404, "Alert configuration not found"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Alert configuration not found", "RESOURCE_NOT_FOUND"));
         }
     }
 }
+

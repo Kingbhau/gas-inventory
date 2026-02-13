@@ -4,11 +4,15 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faBox, faBuilding, faEdit, faTrash, faReceipt, faWarehouse, faDatabase, faBank, faChevronDown, faChevronUp, faBell } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { AlertSettingsService } from '../../services/alert-settings.service';
 import { ToastrService } from 'ngx-toastr';
 import { ToastrModule } from 'ngx-toastr';
-import { BusinessInfoService, BusinessInfo } from '../../services/business-info.service';
+import { BusinessInfoService } from '../../services/business-info.service';
+import { BusinessInfo } from '../../models/business-info.model';
+import { AlertConfig } from '../../models/alert-config.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { IndianCurrencyPipe } from 'src/app/shared/indian-currency.pipe';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { ExpenseCategoryManagementComponent } from './expense-category-management.component';
@@ -20,7 +24,7 @@ import { PaymentModeManagementComponent } from './payment-mode-management.compon
 interface SettingsTab {
   id: string;
   name: string;
-  icon: any;
+  icon: IconDefinition;
 }
 
 @Component({
@@ -53,7 +57,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   businessError: string | null = null;
 
   showVariantForm = false;
-  editingVariantId: string | null = null;
+  editingVariantId: number | null = null;
 
   // Font Awesome Icons
   faBox = faBox;
@@ -82,7 +86,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     { id: 'business', name: 'Business', icon: faBuilding }
   ];
 
-  variantsList: any[] = [];
+  variantsList: CylinderVariant[] = [];
   alertSettingsForm!: FormGroup;
   alertSaving = false;
   alertSuccessMessage = '';
@@ -130,10 +134,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
         this.businessLoading = false;
         this.cdr.markForCheck();
       },
-      error: (error: any) => {
+      error: (error: unknown) => {
         // Only show a clean error message in a popup
-        const errorMsg = typeof error?.error?.message === 'string' && !error?.error?.message.includes('<')
-          ? error.error.message
+        const err = error as { error?: { message?: string } };
+        const errorMsg = typeof err?.error?.message === 'string' && !err?.error?.message.includes('<')
+          ? err.error.message
           : 'Failed to load business info';
         this.toastr.error(errorMsg, 'Error');
         this.businessLoading = false;
@@ -145,7 +150,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   loadVariants() {
     this.variantService.getAllVariants(this.variantPage - 1, this.variantPageSize, 'id', 'DESC').subscribe({
       next: (data) => {
-        this.variantsList = (data.content || data);
+        this.variantsList = (data.items || data);
         if (!Array.isArray(this.variantsList)) {
           this.variantsList = [];
         }
@@ -156,7 +161,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
       error: (error) => {
         const errorMessage = error?.error?.message || error?.message || 'Failed to load variants';
         this.toastr.error(errorMessage, 'Error');
-        console.error('Full error:', error);
         this.variantsList = [];
         this.totalVariants = 0;
         this.variantTotalPages = 1;
@@ -212,8 +216,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  editVariant(variant: any) {
-    this.editingVariantId = variant.id;
+  editVariant(variant: CylinderVariant) {
+    this.editingVariantId = variant.id ?? null;
     this.variantForm.patchValue({
       ...variant,
       active: (variant.active !== false).toString()
@@ -232,12 +236,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
       // Ensure weightKg is a number and > 0
       formValue.weightKg = parseFloat(formValue.weightKg);
       if (formValue.weightKg <= 0) {
-        console.error('Weight must be greater than 0');
         return;
       }
 
       if (this.editingVariantId) {
-        const id = typeof this.editingVariantId === 'string' ? parseInt(this.editingVariantId, 10) : this.editingVariantId;
+        const id = this.editingVariantId;
         this.variantService.updateVariant(id, formValue).subscribe({
           next: () => {
             this.toastr.success('Variant updated successfully', 'Success');
@@ -248,7 +251,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
           error: (error) => {
             const errorMessage = error?.error?.message || error?.message || 'Failed to update variant';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
           }
         });
       } else {
@@ -262,7 +264,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
           error: (error) => {
             const errorMessage = error?.error?.message || error?.message || 'Failed to create variant';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
           }
         });
       }
@@ -281,7 +282,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Failed to delete variant';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
     }
@@ -322,22 +322,19 @@ export class SettingsComponent implements OnInit, OnDestroy {
     
     // Fetch from server
     this.alertSettingsService.getAlertConfigurations().subscribe(
-      (response: any) => {
-        console.log('Alert settings response:', response);
-        if (response && response.data && Array.isArray(response.data)) {
-          console.log('Alert configs loaded:', response.data);
-          this.mapConfigsToForm(response.data);
+      (response: AlertConfig[]) => {
+        if (response && Array.isArray(response)) {
+          this.mapConfigsToForm(response);
         }
         this.cdr.markForCheck();
       },
-      (error: any) => {
-        console.error('Error loading alert settings:', error);
+      (error: unknown) => {
         this.cdr.markForCheck();
       }
     );
   }
 
-  private mapConfigsToForm(configs: any[]): void {
+  private mapConfigsToForm(configs: AlertConfig[]): void {
     configs.forEach(config => {
       if (config.alertType === 'LOW_STOCK_WAREHOUSE') {
         this.alertSettingsForm.patchValue({
@@ -380,17 +377,17 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
     this.alertSaving = true;
 
-    const lowStockPayload: any = {
+    const lowStockPayload: Partial<AlertConfig> = {
       enabled: formValue.lowStockEnabled
     };
     if (formValue.lowStockEnabled) {
-      lowStockPayload.filledThreshold = formValue.filledThreshold;
-      lowStockPayload.emptyThreshold = formValue.emptyThreshold;
+      lowStockPayload.filledCylinderThreshold = formValue.filledThreshold;
+      lowStockPayload.emptyCylinderThreshold = formValue.emptyThreshold;
     }
 
     this.alertSettingsService.updateAlertConfig('LOW_STOCK_WAREHOUSE', lowStockPayload).subscribe(
       () => {
-        const pendingReturnPayload: any = {
+        const pendingReturnPayload: Partial<AlertConfig> = {
           enabled: formValue.pendingReturnEnabled
         };
         if (formValue.pendingReturnEnabled) {
@@ -404,18 +401,16 @@ export class SettingsComponent implements OnInit, OnDestroy {
             this.toastr.success('Alert settings saved successfully', 'Success');
             this.cdr.markForCheck();
           },
-          (error: any) => {
+          (error: unknown) => {
             this.alertSaving = false;
             this.toastr.error('Failed to save pending returns alert settings', 'Error');
-            console.error('Error:', error);
             this.cdr.markForCheck();
           }
         );
       },
-      (error: any) => {
+      (error: unknown) => {
         this.alertSaving = false;
         this.toastr.error('Failed to save low stock alert settings', 'Error');
-        console.error('Error:', error);
         this.cdr.markForCheck();
       }
     );

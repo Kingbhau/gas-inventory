@@ -1,6 +1,6 @@
 package com.gasagency.validation;
 
-import com.gasagency.dto.CustomerVariantPriceDTO;
+import com.gasagency.dto.response.CustomerVariantPriceDTO;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.math.BigDecimal;
@@ -37,3 +37,4 @@ public class PriceValidator implements ConstraintValidator<ValidPrices, Customer
         return true;
     }
 }
+

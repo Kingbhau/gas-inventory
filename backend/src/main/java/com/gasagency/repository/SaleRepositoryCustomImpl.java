@@ -139,3 +139,4 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
         return new PageImpl<>(resultList, pageable, total);
     }
 }
+

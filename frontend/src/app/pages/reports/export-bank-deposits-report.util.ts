@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { BankDeposit } from '../../models/bank-deposit.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -30,7 +31,7 @@ export function exportBankDepositsReportToPDF({
   depositCount,
   businessName
 }: {
-  deposits: any[],
+  deposits: BankDeposit[],
   fromDate?: string,
   toDate?: string,
   bankAccountName?: string,
@@ -131,7 +132,7 @@ export function exportBankDepositsReportToPDF({
   const tableData = deposits.map(deposit => [
     deposit.depositDate ? formatDateInIST(new Date(deposit.depositDate)) : '-',
     deposit.referenceNumber || '-',
-    deposit.bankAccountName || '-',
+    deposit.bankName || '-',
     `Rs. ${Number(deposit.depositAmount).toLocaleString()}`,
     deposit.paymentMode || 'N/A',
     deposit.notes || '-'

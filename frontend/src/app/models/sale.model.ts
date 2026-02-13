@@ -9,6 +9,7 @@ export interface Sale {
   totalAmount: number;
   amountReceived: number;
   paymentMode: string;
+  bankAccountId?: number;
   bankAccountName?: string;
   saleItems: SaleItem[];
   createdBy?: string;

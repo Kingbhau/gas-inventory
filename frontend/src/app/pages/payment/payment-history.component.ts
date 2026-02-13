@@ -14,9 +14,14 @@ import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { LoadingService } from '../../services/loading.service';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { BankAccount } from '../../models/bank-account.model';
+import { Customer } from '../../models/customer.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { PageResponse } from '../../models/page-response';
+import { PaymentsSummary } from '../../models/payments-summary.model';
 
 @Component({
   selector: 'app-payment-history',
@@ -46,18 +51,18 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   pageSizeOptions = [5, 10, 20, 50, 100];
 
   // Data
-  customersList: any[] = [];
+  customersList: Customer[] = [];
   paymentModes: PaymentMode[] = [];
   bankAccounts: BankAccount[] = [];
-  payments: any[] = [];
-  paginatedPayments: any[] = [];
+  payments: CustomerCylinderLedger[] = [];
+  paginatedPayments: CustomerCylinderLedger[] = [];
   users: User[] = [];
 
   // Summary
   totalAmount = 0;
 
   // View modal
-  selectedPayment: any = null;
+  selectedPayment: CustomerCylinderLedger | null = null;
 
   constructor(
     private ledgerService: CustomerCylinderLedgerService,
@@ -96,16 +101,17 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     )
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (response: any) => {
-          this.payments = response?.content || [];
-          this.totalElements = response?.totalElements || 0;
-          this.totalPages = response?.totalPages || 1;
+        next: (response: PageResponse<CustomerCylinderLedger>) => {
+          this.payments = response?.items || [];
+          this.totalElements = response?.totalElements ?? 0;
+          this.totalPages = response?.totalPages ?? 1;
           this.updatePaginatedPayments();
           this.loadPaymentsSummary();
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Failed to load payments';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Failed to load payments';
           this.toastr.error(errorMessage, 'Error');
           this.payments = [];
           this.totalElements = 0;
@@ -126,7 +132,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       this.filterCreatedBy || undefined
     )
       .subscribe({
-        next: (summary: any) => {
+        next: (summary: PaymentsSummary) => {
           this.totalAmount = summary?.totalAmount || 0;
           this.cdr.markForCheck();
         },
@@ -176,7 +182,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  viewPayment(payment: any) {
+  viewPayment(payment: CustomerCylinderLedger) {
     this.selectedPayment = payment;
   }
 
@@ -187,7 +193,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   loadCustomers() {
     this.customerService.getAllCustomersAll()
       .subscribe({
-        next: (data) => {
+        next: (data: Customer[]) => {
           this.customersList = data || [];
           this.cdr.markForCheck();
         },
@@ -198,7 +204,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadPaymentModes() {
-    this.paymentModeService.getActivePaymentModes()
+    this.paymentModeService.getAllPaymentModesAll()
       .subscribe({
         next: (response: PaymentMode[]) => {
           this.paymentModes = response || [];
@@ -211,9 +217,9 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   }
 
   loadBankAccounts() {
-    this.bankAccountService.getActiveBankAccounts()
+    this.bankAccountService.getAllBankAccountsAll()
       .subscribe({
-        next: (response: any) => {
+        next: (response: BankAccount[]) => {
           this.bankAccounts = response || [];
           this.cdr.markForCheck();
         },
@@ -236,12 +242,19 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       });
   }
 
-  getBankAccountName(accountId: number | null): string {
-    if (!accountId) {
-      return 'N/A';
+  getBankAccountDisplayName(accountId: number | null, fallbackName?: string | null): string {
+    if (accountId) {
+      const account = this.bankAccounts.find(ba => ba.id === accountId);
+      if (account) {
+        return this.formatBankAccount(account);
+      }
     }
-    const account = this.bankAccounts.find(ba => ba.id === accountId);
-    return account ? `${account.bankName} - ${account.accountNumber}` : 'N/A';
+    return fallbackName || 'N/A';
+  }
+
+  private formatBankAccount(account: BankAccount): string {
+    const accountLabel = account.accountNumber;
+    return accountLabel ? `${account.bankName} - ${accountLabel}` : account.bankName;
   }
 
   getCreatedByName(createdBy?: string | null): string {
@@ -252,7 +265,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     return user?.name || createdBy;
   }
 
-  onBankAccountChange(value: any) {
+  onBankAccountChange(value: string | number | null) {
     if (value === null || value === '' || value === undefined) {
       this.filterBankAccountId = null;
     } else {

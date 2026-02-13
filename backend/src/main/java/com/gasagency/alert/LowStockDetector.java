@@ -1,6 +1,6 @@
 package com.gasagency.alert;
 
-import com.gasagency.dto.InventoryStockDTO;
+import com.gasagency.dto.response.InventoryStockDTO;
 import com.gasagency.service.AlertConfigurationService;
 import com.gasagency.service.AlertNotificationService;
 import com.gasagency.service.InventoryStockService;
@@ -104,3 +104,4 @@ public class LowStockDetector implements AlertDetector {
         }
     }
 }
+

@@ -24,7 +24,7 @@
         <label class="filter-label">Supplier</label>
         <select [(ngModel)]="selectedSupplier" class="filter-input">
           <option value="">All Suppliers</option>
-          <option *ngFor="let supplier of suppliers" [value]="supplier.id?.toString()">{{ supplier.name }}</option>
+          <option *ngFor="let supplier of suppliers" [value]="supplier.id ?? ''">{{ supplier.name }}</option>
         </select>
       </div>
     </div>
@@ -34,14 +34,14 @@
         <label class="filter-label">Warehouse</label>
         <select [(ngModel)]="selectedWarehouse" class="filter-input">
           <option value="">All Warehouses</option>
-          <option *ngFor="let warehouse of warehouses" [value]="warehouse.id?.toString()">{{ warehouse.name }}</option>
+          <option *ngFor="let warehouse of warehouses" [value]="warehouse.id ?? ''">{{ warehouse.name }}</option>
         </select>
       </div>
       <div class="filter-group">
         <label class="filter-label">Variant</label>
         <select [(ngModel)]="filterVariantId" class="filter-input">
           <option value="">All Variants</option>
-          <option *ngFor="let variant of variants" [value]="variant.id?.toString()">{{ variant.name }}</option>
+          <option *ngFor="let variant of variants" [value]="variant.id ?? ''">{{ variant.name }}</option>
         </select>
       </div>
       <div class="filter-group">
@@ -162,7 +162,7 @@
             <!-- Editable warehouse select for new transaction -->
             <select formControlName="warehouseId" class="form-control" [compareWith]="warehouseCompare" (change)="loadCurrentEmpty()">
               <option [ngValue]="null">Select a warehouse</option>
-              <option *ngFor="let warehouse of warehouses" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
+              <option *ngFor="let warehouse of warehousesActive" [ngValue]="warehouse.id">{{ warehouse.name }}</option>
             </select>
           </ng-template>
           <div *ngIf="transactionForm.get('warehouseId')?.invalid && transactionForm.get('warehouseId')?.touched" class="error-message">
@@ -185,7 +185,7 @@
           <label class="form-label">Variant <span class="required">*</span></label>
           <select formControlName="variantId" class="form-control" (change)="loadCurrentEmpty()">
             <option value="">Select variant</option>
-            <option *ngFor="let variant of variants" [value]="variant.id">{{ variant.name }}</option>
+            <option *ngFor="let variant of getVariantOptions()" [value]="variant.id">{{ variant.name }}</option>
           </select>
           <div *ngIf="transactionForm.get('variantId')?.invalid && transactionForm.get('variantId')?.touched" class="error-message">
             Variant is required

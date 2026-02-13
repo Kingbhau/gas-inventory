@@ -33,7 +33,6 @@ export const RefreshInterceptor: HttpInterceptorFn = (req, next) => {
           }),
           catchError(refreshError => {
             // If refresh fails or times out, clear auth and redirect to login
-            console.error('Token refresh failed:', refreshError);
             localStorage.removeItem('user_info');
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_name');

@@ -17,6 +17,7 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { Warehouse } from '../../models/warehouse.model';
 import { WarehouseTransfer } from '../../models/warehouse-transfer.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-warehouse-transfer',
@@ -90,12 +91,12 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
     this.warehouseService.getActiveWarehouses()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (data: any) => {
+        (data: Warehouse[]) => {
           // Filter to ensure only active warehouses are shown (status = 'ACTIVE')
-          this.warehouses = (data || []).filter((w: any) => w.status === 'ACTIVE');
+          this.warehouses = (data || []).filter((w) => w.status === 'ACTIVE');
           this.isLoading = false;
         },
-        (error: any) => {
+        (error: unknown) => {
           this.toastr.error('Error loading warehouses');
           this.isLoading = false;
         }
@@ -109,12 +110,12 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
     this.variantService.getActiveVariants()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          if (response.success) {
-            this.variants = response.data;
+        (response: CylinderVariant[]) => {
+          if (response) {
+            this.variants = response;
           }
         },
-        (error: any) => {
+        (error: unknown) => {
           this.toastr.error('Error loading variants');
         }
       );
@@ -127,15 +128,11 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
     this.warehouseTransferService.getAllTransfers()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          if (response?.success && response?.data) {
-            this.transfers = response.data;
-            return;
-          }
-          const content = response?.content ?? response?.data ?? response ?? [];
+        (response: PageResponse<WarehouseTransfer>) => {
+          const content = response?.items ?? response ?? [];
           this.transfers = content;
         },
-        (error: any) => {
+        (error: unknown) => {
           this.toastr.error('Error loading transfer history');
         }
       );
@@ -167,19 +164,16 @@ export class WarehouseTransferComponent implements OnInit, OnDestroy {
     this.warehouseTransferService.transferCylinders(transfer)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          if (response.success) {
-            this.toastr.success('Warehouse transfer completed successfully');
-            this.resetForm();
-            this.loadTransfers(); // Refresh transfer history
-          } else {
-            this.toastr.error(response.message || 'Transfer failed');
-          }
+        () => {
+          this.toastr.success('Warehouse transfer completed successfully');
+          this.resetForm();
+          this.loadTransfers(); // Refresh transfer history
           this.isTransferring = false;
         },
-        (error: any) => {
-          if (error.error && error.error.message) {
-            this.toastr.error(error.error.message);
+        (error: unknown) => {
+          const err = error as { error?: { message?: string } };
+          if (err.error && err.error.message) {
+            this.toastr.error(err.error.message);
           } else {
             this.toastr.error('Error completing transfer');
           }

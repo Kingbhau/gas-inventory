@@ -1,9 +1,14 @@
 
 package com.gasagency.controller;
 
-import com.gasagency.dto.CreateSaleRequestDTO;
-import com.gasagency.dto.SaleDTO;
+import com.gasagency.dto.request.CreateSaleRequestDTO;
+import com.gasagency.dto.response.SaleDTO;
+import com.gasagency.dto.response.SaleSummaryDTO;
+import com.gasagency.dto.response.PaymentModeSummaryDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.SaleService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,12 +30,13 @@ public class SaleController {
     }
 
     @GetMapping("/recent")
-    public ResponseEntity<List<SaleDTO>> getRecentSales() {
-        return ResponseEntity.ok(service.getRecentSales());
+    public ResponseEntity<ApiResponse<List<SaleDTO>>> getRecentSales() {
+        List<SaleDTO> sales = service.getRecentSales();
+        return ResponseEntity.ok(ApiResponseUtil.success("Recent sales retrieved successfully", sales));
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<com.gasagency.dto.SaleSummaryDTO> getSalesSummary(
+    public ResponseEntity<ApiResponse<SaleSummaryDTO>> getSalesSummary(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
@@ -39,13 +45,13 @@ public class SaleController {
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String referenceNumber,
             @RequestParam(required = false) String createdBy) {
-        return ResponseEntity
-                .ok(service.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount,
-                        referenceNumber, createdBy));
+        SaleSummaryDTO summary = service.getSalesSummary(fromDate, toDate, customerId, variantId,
+                minAmount, maxAmount, referenceNumber, createdBy);
+        return ResponseEntity.ok(ApiResponseUtil.success("Sales summary retrieved successfully", summary));
     }
 
     @GetMapping("/payment-mode-summary")
-    public ResponseEntity<com.gasagency.dto.PaymentModeSummaryDTO> getPaymentModeSummary(
+    public ResponseEntity<ApiResponse<PaymentModeSummaryDTO>> getPaymentModeSummary(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
@@ -55,22 +61,26 @@ public class SaleController {
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) Integer minTransactionCount) {
-        return ResponseEntity.ok(service.getPaymentModeSummary(fromDate, toDate, customerId, paymentMode,
-                variantId, bankAccountId, minAmount, maxAmount, minTransactionCount));
+        PaymentModeSummaryDTO summary = service.getPaymentModeSummary(fromDate, toDate, customerId,
+                paymentMode, variantId, bankAccountId, minAmount, maxAmount, minTransactionCount);
+        return ResponseEntity.ok(ApiResponseUtil.success("Payment mode summary retrieved successfully", summary));
     }
 
     @PostMapping
-    public ResponseEntity<SaleDTO> createSale(@Valid @RequestBody CreateSaleRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createSale(request));
+    public ResponseEntity<ApiResponse<SaleDTO>> createSale(@Valid @RequestBody CreateSaleRequestDTO request) {
+        SaleDTO created = service.createSale(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseUtil.success("Sale created successfully", created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SaleDTO> getSale(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getSaleById(id));
+    public ResponseEntity<ApiResponse<SaleDTO>> getSale(@PathVariable Long id) {
+        SaleDTO sale = service.getSaleById(id);
+        return ResponseEntity.ok(ApiResponseUtil.success("Sale retrieved successfully", sale));
     }
 
     @GetMapping
-    public ResponseEntity<Page<SaleDTO>> getAllSales(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<SaleDTO>>> getAllSales(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "saleDate") String sortBy,
@@ -84,17 +94,19 @@ public class SaleController {
             @RequestParam(required = false) String referenceNumber,
             @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        return ResponseEntity
-                .ok(service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount, maxAmount,
-                        referenceNumber, createdBy));
+        Page<SaleDTO> sales = service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount,
+                maxAmount, referenceNumber, createdBy);
+        return ResponseEntity.ok(ApiResponseUtil.success("Sales retrieved successfully", sales));
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<Page<SaleDTO>> getSalesByCustomer(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<SaleDTO>>> getSalesByCustomer(
             @PathVariable Long customerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("saleDate").descending());
-        return ResponseEntity.ok(service.getSalesByCustomer(customerId, pageable));
+        Page<SaleDTO> sales = service.getSalesByCustomer(customerId, pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Sales retrieved successfully", sales));
     }
 }
+

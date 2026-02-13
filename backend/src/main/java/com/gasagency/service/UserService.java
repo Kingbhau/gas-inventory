@@ -4,7 +4,8 @@ package com.gasagency.service;
 import com.gasagency.entity.User;
 import com.gasagency.repository.UserRepository;
 import com.gasagency.repository.BusinessInfoRepository;
-import com.gasagency.dto.UserDTO;
+import com.gasagency.dto.response.UserDTO;
+import com.gasagency.dto.request.UserUpdateRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class UserService {
     private BusinessInfoRepository businessInfoRepository;
 
     @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
-    public User createUser(UserDTO userDTO) {
+    public UserDTO createUser(UserDTO userDTO) {
         User newUser = new User();
         newUser.setUsername(userDTO.getUsername());
         // Set default password if not provided
@@ -48,7 +49,8 @@ public class UserService {
         newUser.setName(userDTO.getName());
         newUser.setMobileNo(userDTO.getMobileNo());
         newUser.setActive(true);
-        return userRepository.save(newUser);
+        User saved = userRepository.save(newUser);
+        return convertToDTO(saved);
     }
 
     public boolean changePassword(Long userId, String currentPassword, String newPassword) {
@@ -65,7 +67,7 @@ public class UserService {
     }
 
     @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
-    public Optional<User> updateUser(Long id, User updatedUser) {
+    public Optional<UserDTO> updateUser(Long id, UserUpdateRequestDTO updatedUser) {
         return userRepository.findById(id).map(user -> {
             if (updatedUser.getUsername() != null && !updatedUser.getUsername().isEmpty()) {
                 user.setUsername(updatedUser.getUsername());
@@ -74,10 +76,15 @@ public class UserService {
                 user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
             }
             if (updatedUser.getRole() != null) {
-                user.setRole(updatedUser.getRole());
+                try {
+                    user.setRole(User.Role.valueOf(updatedUser.getRole()));
+                } catch (Exception e) {
+                    // Ignore invalid role updates
+                }
             }
-            if (updatedUser.getBusiness() != null) {
-                user.setBusiness(updatedUser.getBusiness());
+            if (updatedUser.getBusinessId() != null) {
+                businessInfoRepository.findById(updatedUser.getBusinessId())
+                        .ifPresent(user::setBusiness);
             }
             if (updatedUser.getName() != null && !updatedUser.getName().isEmpty()) {
                 user.setName(updatedUser.getName());
@@ -89,7 +96,7 @@ public class UserService {
                 user.setActive(updatedUser.getActive());
             }
             return userRepository.save(user);
-        });
+        }).map(this::convertToDTO);
     }
 
     @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
@@ -102,17 +109,23 @@ public class UserService {
     }
 
     @Cacheable("usersActive")
-    public List<User> getAllActiveUsers() {
-        return userRepository.findByActiveTrue();
+    public List<UserDTO> getAllActiveUsers() {
+        return userRepository.findByActiveTrue().stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
     @Cacheable("usersAll")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id).filter(User::isActive);
+    public Optional<UserDTO> getUserById(Long id) {
+        return userRepository.findById(id)
+                .filter(User::isActive)
+                .map(this::convertToDTO);
     }
 
     @CacheEvict(value = { "usersActive", "usersAll" }, allEntries = true)
@@ -150,3 +163,4 @@ public class UserService {
         return dto;
     }
 }
+

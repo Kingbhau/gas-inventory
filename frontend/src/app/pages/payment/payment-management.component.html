@@ -96,7 +96,7 @@
       <div class="modal-header">
         <div>
           <h2 class="modal-title">Record Payment</h2>
-          <p class="modal-subtitle">{{ selectedCustomer?.name }}</p>
+          <p class="modal-subtitle">{{ selectedCustomer.name }}</p>
         </div>
         <button (click)="closePaymentForm()" class="modal-close">
           <fa-icon [icon]="faTimes"></fa-icon>
@@ -109,11 +109,11 @@
         <div class="info-section">
           <div class="info-row">
             <span class="info-label">Customer Name</span>
-            <span class="info-value">{{ selectedCustomer?.name }}</span>
+            <span class="info-value">{{ selectedCustomer.name }}</span>
           </div>
           <div class="info-row">
             <span class="info-label">Phone</span>
-            <span class="info-value">{{ selectedCustomer?.mobile }}</span>
+            <span class="info-value">{{ selectedCustomer.mobile }}</span>
           </div>
           <div class="info-row highlight">
             <span class="info-label">Current Due Amount</span>

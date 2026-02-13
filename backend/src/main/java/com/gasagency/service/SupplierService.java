@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.SupplierDTO;
+import com.gasagency.dto.response.SupplierDTO;
 import com.gasagency.entity.Supplier;
 import com.gasagency.entity.BusinessInfo;
 import com.gasagency.repository.SupplierRepository;
@@ -143,3 +143,4 @@ public class SupplierService {
         return dto;
     }
 }
+

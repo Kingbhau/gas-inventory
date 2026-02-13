@@ -86,3 +86,4 @@ public class MonthlyPrice extends Auditable {
         this.createdAt = createdAt;
     }
 }
+

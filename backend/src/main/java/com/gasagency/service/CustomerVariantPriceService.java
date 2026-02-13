@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.CustomerVariantPriceDTO;
+import com.gasagency.dto.response.CustomerVariantPriceDTO;
 import com.gasagency.entity.CustomerVariantPrice;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
@@ -155,3 +155,4 @@ public class CustomerVariantPriceService {
         return dto;
     }
 }
+

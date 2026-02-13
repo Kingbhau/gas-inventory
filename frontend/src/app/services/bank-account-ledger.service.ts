@@ -3,26 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
-
-export interface PageResponse<T> {
-  content: T[];
-  totalPages: number;
-  totalElements: number;
-  currentPage: number;
-  pageSize: number;
-}
-
-export interface BankAccountLedgerDTO {
-  id: number;
-  bankAccountId: number;
-  bankAccountName: string;
-  transactionType: string;
-  amount: number;
-  saleId: number;
-  referenceNumber: string;
-  description: string;
-  transactionDate: string;
-}
+import { unwrapApiResponse } from '../utils/api-response.util';
+import { PageResponse } from '../models/page-response';
+import { BankAccountLedger, BankAccountLedgerSummary } from '../models/bank-account-ledger.model';
 
 @Injectable({
   providedIn: 'root'
@@ -42,7 +25,7 @@ export class BankAccountLedgerService {
     bankAccountId?: string,
     transactionType?: string,
     referenceNumber?: string
-  ): Observable<PageResponse<BankAccountLedgerDTO>> {
+  ): Observable<PageResponse<BankAccountLedger>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
@@ -55,13 +38,13 @@ export class BankAccountLedgerService {
     if (transactionType) params = params.set('transactionType', transactionType);
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
 
-    return this.http.get<PageResponse<BankAccountLedgerDTO>>(this.apiUrl, { params, withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<PageResponse<BankAccountLedger>>());
   }
 
-  getBankTransactionById(id: number): Observable<BankAccountLedgerDTO> {
-    return this.http.get<BankAccountLedgerDTO>(`${this.apiUrl}/${id}`, { withCredentials: true })
-      .pipe(applyTimeout());
+  getBankTransactionById(id: number): Observable<BankAccountLedger> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<BankAccountLedger>());
   }
 
   getBankTransactionsSummary(
@@ -70,7 +53,7 @@ export class BankAccountLedgerService {
     bankAccountId?: string,
     transactionType?: string,
     referenceNumber?: string
-  ): Observable<any> {
+  ): Observable<BankAccountLedgerSummary> {
     let params = new HttpParams();
 
     if (fromDate) params = params.set('fromDate', fromDate);
@@ -80,6 +63,6 @@ export class BankAccountLedgerService {
     if (referenceNumber) params = params.set('referenceNumber', referenceNumber);
 
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<BankAccountLedgerSummary>());
   }
 }

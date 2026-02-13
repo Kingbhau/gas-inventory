@@ -17,6 +17,12 @@ import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { SharedModule } from '../../shared/shared.module';
+import { Customer } from '../../models/customer.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { Warehouse } from '../../models/warehouse.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { InventoryStock } from '../../models/inventory-stock.model';
+import { EmptyReturnRequest } from '../../models/empty-return-request.model';
 
 @Component({
     selector: 'app-empty-return',
@@ -32,10 +38,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
     emptyReturnForm: FormGroup;
     submitting = false;
-    customers: any[] = [];
-    variants: any[] = [];
-    filteredVariants: any[] = [];
-    warehouses: any[] = [];
+    customers: Customer[] = [];
+    variants: CylinderVariant[] = [];
+    filteredVariants: CylinderVariant[] = [];
+    warehouses: Warehouse[] = [];
     bankAccounts: BankAccount[] = [];
     paymentModes: PaymentMode[] = [];
     successMessage = '';
@@ -107,11 +113,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     loadBankAccounts() {
         this.bankAccountService.getActiveBankAccounts()
             .subscribe({
-                next: (response: any) => {
+                next: (response: BankAccount[]) => {
                     this.bankAccounts = response || [];
                 },
-                error: (error: any) => {
-                    console.error('Error loading bank accounts:', error);
+                error: (error: unknown) => {
                     this.bankAccounts = [];
                 }
             });
@@ -124,8 +129,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     this.paymentModes = response || [];
                     this.cdr.markForCheck();
                 },
-                error: (error: any) => {
-                    console.error('Error loading payment modes:', error);
+                error: (error: unknown) => {
                     this.paymentModes = [];
                     this.cdr.markForCheck();
                 }
@@ -141,27 +145,29 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.loadPaymentModes();
         const customerSub = this.customerService.getActiveCustomers()
             .pipe(
-                catchError((err: any) => {
-                    const errorMessage = err?.error?.message || err?.message || 'Failed to load customers';
+                catchError((err: unknown) => {
+                    const errorObj = err as { error?: { message?: string }; message?: string };
+                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load customers';
                     this.toastr.error(errorMessage, 'Error');
-                    return of([]);
+                    return of([] as Customer[]);
                 })
             )
-            .subscribe((data: any) => {
-                this.customers = data as any[];
+            .subscribe((data: Customer[]) => {
+                this.customers = data || [];
                 this.cdr.markForCheck();
             });
         const variantSub = this.variantService.getActiveVariants()
             .pipe(
                 finalize(() => this.loadingService.hide()),
-                catchError((err: any) => {
-                    const errorMessage = err?.error?.message || err?.message || 'Failed to load variants';
+                catchError((err: unknown) => {
+                    const errorObj = err as { error?: { message?: string }; message?: string };
+                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load variants';
                     this.toastr.error(errorMessage, 'Error');
-                    return of([]);
+                    return of([] as CylinderVariant[]);
                 })
             )
-            .subscribe((data: any) => {
-                this.variants = data as any[];
+            .subscribe((data: CylinderVariant[]) => {
+                this.variants = data || [];
                 this.filteredVariants = this.variants;
                 this.cdr.markForCheck();
             });
@@ -169,13 +175,14 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         // Load warehouses
         this.warehouseService.getActiveWarehouses()
             .pipe(
-                catchError((err: any) => {
-                    const errorMessage = err?.error?.message || err?.message || 'Failed to load warehouses';
+                catchError((err: unknown) => {
+                    const errorObj = err as { error?: { message?: string }; message?: string };
+                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load warehouses';
                     this.toastr.error(errorMessage, 'Error');
-                    return of([]);
+                    return of([] as Warehouse[]);
                 })
             )
-            .subscribe((data: any) => {
+            .subscribe((data: Warehouse[]) => {
                 this.warehouses = data || [];
                 this.cdr.markForCheck();
             });
@@ -237,7 +244,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     /**
      * Handle warehouse selection from autocomplete
      */
-    onWarehouseSelected(warehouse: any): void {
+    onWarehouseSelected(warehouse: Warehouse | null): void {
         if (warehouse && warehouse.id) {
             this.emptyReturnForm.get('warehouseId')?.setValue(warehouse.id);
         } else {
@@ -248,7 +255,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     /**
      * Handle customer selection from autocomplete
      */
-    onCustomerSelected(customer: any): void {
+    onCustomerSelected(customer: Customer | null): void {
         if (customer && customer.id) {
             this.emptyReturnForm.get('customerId')?.setValue(customer.id);
             this.emptyReturnForm.get('customerId')?.markAsTouched();
@@ -275,7 +282,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     /**
      * Handle variant selection from autocomplete
      */
-    onVariantSelected(variant: any): void {
+    onVariantSelected(variant: CylinderVariant | null): void {
         if (variant && variant.id) {
             this.emptyReturnForm.get('variantId')?.setValue(variant.id);
             this.emptyReturnForm.get('variantId')?.markAsTouched();
@@ -301,10 +308,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.balanceError = '';
         this.ledgerService.getBalance(customerId, variantId)
             .pipe(
-                catchError((err: any) => {
-                    console.error('Error loading customer balance:', err);
+                catchError((err: unknown) => {
                     this.balanceError = 'Current balance unavailable';
-                    return of(null);
+                    return of(null as number | null);
                 }),
                 finalize(() => {
                     this.balanceLoading = false;
@@ -312,7 +318,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                 }),
                 takeUntil(this.destroy$)
             )
-            .subscribe(balance => {
+            .subscribe((balance: number | null) => {
                 if (balance !== null && balance !== undefined) {
                     this.currentBalance = balance;
                 } else {
@@ -333,10 +339,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.dueError = '';
         this.ledgerService.getCustomerDueAmounts([customerId])
             .pipe(
-                catchError((err: any) => {
-                    console.error('Error loading customer due amount:', err);
+                catchError((err: unknown) => {
                     this.dueError = 'Current due unavailable';
-                    return of(null);
+                    return of(null as Record<number, number> | null);
                 }),
                 finalize(() => {
                     this.dueLoading = false;
@@ -344,7 +349,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                 }),
                 takeUntil(this.destroy$)
             )
-            .subscribe(dueMap => {
+            .subscribe((dueMap: Record<number, number> | null) => {
                 if (dueMap && typeof dueMap[customerId] !== 'undefined') {
                     this.currentDue = dueMap[customerId];
                 } else {
@@ -370,7 +375,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         }
         
         // Parse configuredVariants if it's a JSON string, otherwise treat as array
-        let configuredVariantIds: any[] = [];
+        let configuredVariantIds: number[] = [];
         try {
             if (typeof customer.configuredVariants === 'string') {
                 configuredVariantIds = JSON.parse(customer.configuredVariants);
@@ -378,7 +383,6 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                 configuredVariantIds = customer.configuredVariants;
             }
         } catch (e) {
-            console.error('Error parsing configuredVariants:', e);
             this.filteredVariants = this.variants;
             return;
         }
@@ -393,9 +397,12 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         
         // Filter variants: must be configured for this customer
         // If variant has status property, check if ACTIVE, otherwise assume it's active (came from getActiveVariants)
-        const filteredMap = new Map();
-        this.variants.forEach(v => {
-            const isActive = v.status ? v.status === 'ACTIVE' : true; // Assume active if no status property
+        const filteredMap = new Map<number, CylinderVariant>();
+        this.variants.forEach((v) => {
+            if (typeof v.id !== 'number') {
+                return;
+            }
+            const isActive = v.active !== false;
             if (isActive && uniqueVariantIds.includes(v.id)) {
                 if (!filteredMap.has(v.id)) {
                     filteredMap.set(v.id, v);
@@ -432,8 +439,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         const bankAccountId = formData.bankAccountId;
         
         // Add bankAccountId to request if required by payment mode configuration
-        const request: any = {
-            ...formData
+        const request: EmptyReturnRequest = {
+            ...formData,
+            transactionDate: formData.transactionDate || this.dateUtility.getTodayInIST()
         };
         
         const selectedMode = this.getSelectedPaymentMode(paymentMode);
@@ -449,14 +457,15 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
                     this.submitting = false;
                     this.cdr.markForCheck();
                 }),
-                catchError((err: any) => {
-                    const errorMessage = err?.error?.message || err?.message || 'Failed to record return';
+                catchError((err: unknown) => {
+                    const errorObj = err as { error?: { message?: string }; message?: string };
+                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to record return';
                     this.toastr.error(errorMessage, 'Error');
-                    return of(null);
+                    return of(null as CustomerCylinderLedger | null);
                 })
             )
             .subscribe({
-                next: (result: any) => {
+                next: (result: CustomerCylinderLedger | null) => {
                     if (result) {
                         const reference = result?.transactionReference || 'N/A';
                         this.toastr.success(`Empty cylinder return recorded - Reference: ${reference}`, 'Success');

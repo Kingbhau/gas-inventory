@@ -24,4 +24,4 @@ bootstrapApplication(AppComponent, {
       progressAnimation: 'increasing'
     })
   ]
-}).catch(err => console.error(err));
+}).catch(() => undefined);

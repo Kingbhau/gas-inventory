@@ -1,12 +1,16 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.DayBookDTO;
-import com.gasagency.dto.DayBookSummaryDTO;
+import com.gasagency.dto.response.DayBookDTO;
+import com.gasagency.dto.response.DayBookSummaryDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.DayBookService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
@@ -27,7 +31,7 @@ public class DayBookController {
      * pagination
      */
     @GetMapping
-    public ResponseEntity<Page<DayBookDTO>> getCurrentDayTransactions(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<DayBookDTO>>> getCurrentDayTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
@@ -35,7 +39,8 @@ public class DayBookController {
             @RequestParam(required = false) String createdBy,
             @RequestParam(required = false) String transactionType) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        return ResponseEntity.ok(dayBookService.getCurrentDayTransactions(pageable, createdBy, transactionType));
+        Page<DayBookDTO> transactions = dayBookService.getCurrentDayTransactions(pageable, createdBy, transactionType);
+        return ResponseEntity.ok(ApiResponseUtil.success("Daybook transactions retrieved successfully", transactions));
     }
 
     /**
@@ -44,7 +49,7 @@ public class DayBookController {
      * /api/daybook/by-date?date=2026-02-02&page=0&size=10)
      */
     @GetMapping("/by-date")
-    public ResponseEntity<Page<DayBookDTO>> getTransactionsByDate(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<DayBookDTO>>> getTransactionsByDate(
             @RequestParam(required = false) String date,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -62,19 +67,22 @@ public class DayBookController {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 transactionDate = LocalDate.parse(date, formatter);
             } catch (Exception e) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponseUtil.error("Invalid date format. Use yyyy-MM-dd", "INVALID_DATE"));
             }
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        return ResponseEntity.ok(dayBookService.getTransactionsByDate(transactionDate, pageable, createdBy, transactionType));
+        Page<DayBookDTO> transactions = dayBookService.getTransactionsByDate(transactionDate, pageable, createdBy,
+                transactionType);
+        return ResponseEntity.ok(ApiResponseUtil.success("Daybook transactions retrieved successfully", transactions));
     }
 
     /**
      * Get summary for a specific date (all transactions, no pagination)
      */
     @GetMapping("/summary")
-    public ResponseEntity<DayBookSummaryDTO> getSummaryByDate(
+    public ResponseEntity<ApiResponse<DayBookSummaryDTO>> getSummaryByDate(
             @RequestParam(required = false) String date,
             @RequestParam(required = false) String createdBy,
             @RequestParam(required = false) String transactionType) {
@@ -88,10 +96,14 @@ public class DayBookController {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 transactionDate = LocalDate.parse(date, formatter);
             } catch (Exception e) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponseUtil.error("Invalid date format. Use yyyy-MM-dd", "INVALID_DATE"));
             }
         }
 
-        return ResponseEntity.ok(dayBookService.getTransactionsByDateSummary(transactionDate, createdBy, transactionType));
+        DayBookSummaryDTO summary = dayBookService.getTransactionsByDateSummary(transactionDate, createdBy,
+                transactionType);
+        return ResponseEntity.ok(ApiResponseUtil.success("Daybook summary retrieved successfully", summary));
     }
 }
+

@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.MonthlyPriceDTO;
+import com.gasagency.dto.response.MonthlyPriceDTO;
 import com.gasagency.entity.MonthlyPrice;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.repository.MonthlyPriceRepository;
@@ -197,8 +197,7 @@ public class MonthlyPriceService {
                                 });
 
                 // Prevent duplicate price for same variant and month (except self)
-                if (repository.findByVariantAndMonthYear(price.getVariant(), dto.getMonthYear())
-                                .filter(existing -> !existing.getId().equals(id)).isPresent()) {
+                if (repository.existsByVariantAndMonthYearAndIdNot(price.getVariant(), dto.getMonthYear(), id)) {
                         LoggerUtil.logBusinessError(logger, "UPDATE_PRICE", "Duplicate price for variant/month",
                                         "variantId", price.getVariant().getId(), "monthYear", dto.getMonthYear());
                         throw new IllegalArgumentException("A price for this variant and month already exists.");
@@ -237,3 +236,4 @@ public class MonthlyPriceService {
                                 price.getCreatedAt());
         }
 }
+

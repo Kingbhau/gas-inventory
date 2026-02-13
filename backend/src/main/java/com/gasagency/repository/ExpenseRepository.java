@@ -17,6 +17,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
         Page<Expense> findByExpenseDateBetween(LocalDate fromDate, LocalDate toDate, Pageable pageable);
 
+        @Query("SELECT e FROM Expense e WHERE e.expenseDate BETWEEN :fromDate AND :toDate " +
+                        "AND (:createdBy IS NULL OR :createdBy = '' OR e.createdBy = :createdBy) " +
+                        "ORDER BY e.expenseDate DESC")
+        List<Expense> findByExpenseDateBetweenAndCreatedBy(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("createdBy") String createdBy);
+
         Page<Expense> findByCategory(ExpenseCategory category, Pageable pageable);
 
         @Query("SELECT e FROM Expense e WHERE e.expenseDate BETWEEN :fromDate AND :toDate " +
@@ -63,8 +71,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
         List<Object[]> sumAmountByCategoryAll();
 
         @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e WHERE " +
-                        "(:fromDate IS NULL OR e.expenseDate >= :fromDate) AND " +
-                        "(:toDate IS NULL OR e.expenseDate <= :toDate) AND " +
+                        "e.expenseDate >= COALESCE(:fromDate, e.expenseDate) AND " +
+                        "e.expenseDate <= COALESCE(:toDate, e.expenseDate) AND " +
                         "(:categoryId IS NULL OR e.category.id = :categoryId) AND " +
                         "(:paymentMode IS NULL OR e.paymentMode = :paymentMode) AND " +
                         "(:bankAccountId IS NULL OR e.bankAccount.id = :bankAccountId) AND " +
@@ -82,8 +90,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                         @Param("createdBy") String createdBy);
 
         @Query("SELECT COUNT(e) FROM Expense e WHERE " +
-                        "(:fromDate IS NULL OR e.expenseDate >= :fromDate) AND " +
-                        "(:toDate IS NULL OR e.expenseDate <= :toDate) AND " +
+                        "e.expenseDate >= COALESCE(:fromDate, e.expenseDate) AND " +
+                        "e.expenseDate <= COALESCE(:toDate, e.expenseDate) AND " +
                         "(:categoryId IS NULL OR e.category.id = :categoryId) AND " +
                         "(:paymentMode IS NULL OR e.paymentMode = :paymentMode) AND " +
                         "(:bankAccountId IS NULL OR e.bankAccount.id = :bankAccountId) AND " +
@@ -101,8 +109,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                         @Param("createdBy") String createdBy);
 
         @Query("SELECT e.category.name, COALESCE(SUM(e.amount), 0) FROM Expense e WHERE " +
-                        "(:fromDate IS NULL OR e.expenseDate >= :fromDate) AND " +
-                        "(:toDate IS NULL OR e.expenseDate <= :toDate) AND " +
+                        "e.expenseDate >= COALESCE(:fromDate, e.expenseDate) AND " +
+                        "e.expenseDate <= COALESCE(:toDate, e.expenseDate) AND " +
                         "(:categoryId IS NULL OR e.category.id = :categoryId) AND " +
                         "(:paymentMode IS NULL OR e.paymentMode = :paymentMode) AND " +
                         "(:bankAccountId IS NULL OR e.bankAccount.id = :bankAccountId) AND " +
@@ -137,8 +145,8 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                         @Param("category") ExpenseCategory category);
 
         @Query("SELECT e FROM Expense e WHERE " +
-                        "(:fromDate IS NULL OR e.expenseDate >= :fromDate) AND " +
-                        "(:toDate IS NULL OR e.expenseDate <= :toDate) AND " +
+                        "e.expenseDate >= COALESCE(:fromDate, e.expenseDate) AND " +
+                        "e.expenseDate <= COALESCE(:toDate, e.expenseDate) AND " +
                         "(:categoryId IS NULL OR e.category.id = :categoryId) AND " +
                         "(:paymentMode IS NULL OR e.paymentMode = :paymentMode) AND " +
                         "(:bankAccountId IS NULL OR e.bankAccount.id = :bankAccountId) AND " +
@@ -156,3 +164,4 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                         @Param("createdBy") String createdBy,
                         Pageable pageable);
 }
+

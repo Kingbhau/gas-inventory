@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Expense } from '../../models/expense.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -33,7 +34,7 @@ export function exportExpenseReportToPDF({
   paymentMode,
   bankAccountName
 }: {
-  expenseData: any[],
+  expenseData: Expense[],
   fromDate?: string,
   toDate?: string,
   totalExpenseAmount: number,
@@ -135,13 +136,13 @@ export function exportExpenseReportToPDF({
   y += 2;
 
   // Table Data
-  const tableData = expenseData.map((expense: any) => [
+  const tableData = expenseData.map((expense) => [
     expense.expenseDate ? formatDateInIST(new Date(expense.expenseDate)) : '',
     expense.description,
     expense.category || 'Uncategorized',
     `Rs. ${Number(expense.amount).toLocaleString()}`,
     expense.paymentMode || '-',
-    expense.bankDetails || expense.bankAccountNumber || '-',
+    (expense as { bankDetails?: string }).bankDetails || expense.bankAccountNumber || '-',
     expense.notes || '-'
   ]);
 

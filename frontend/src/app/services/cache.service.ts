@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-
-export interface CacheConfig {
-  ttl?: number; // Time to live in milliseconds (0 = session-only)
-  strategy?: 'memory' | 'session' | 'local'; // Default: memory
-}
+import { CacheConfig } from '../models/cache-config.model';
 
 interface CacheEntry<T> {
   data: T;
@@ -46,7 +42,6 @@ export class CacheService {
         });
       }
     } catch (e) {
-      console.warn('Failed to load session cache:', e);
     }
   }
 
@@ -179,7 +174,6 @@ export class CacheService {
       });
       sessionStorage.setItem('_app_cache', JSON.stringify(cacheObj));
     } catch (e) {
-      console.warn('Failed to persist cache:', e);
     }
   }
 }

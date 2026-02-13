@@ -29,3 +29,4 @@ public class WebConfig implements WebMvcConfigurer {
                         "/v3/api-docs/**");
     }
 }
+

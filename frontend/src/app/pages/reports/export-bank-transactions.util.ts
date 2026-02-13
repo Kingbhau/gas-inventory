@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { BankAccountLedgerDTO } from '../../models/bank-account-ledger.model';
 
 // Helper function for IST date
 function formatDateInIST(date: Date): string {
@@ -22,7 +23,7 @@ export function exportBankTransactionsReportToPDF({
   transactionCount,
   businessName
 }: {
-  transactions: any[],
+  transactions: BankAccountLedgerDTO[],
   fromDate?: string,
   toDate?: string,
   bankAccountName?: string,
@@ -165,7 +166,7 @@ export function exportBankTransactionsReportToPDF({
       4: { halign: 'right', cellWidth: 32 },
       5: { halign: 'center', cellWidth: 45 }
     },
-    didDrawPage: (data: any) => {
+    didDrawPage: (_data: unknown) => {
       // Professional footer: left "Confidential", right page number
       const pageCount = doc.getNumberOfPages();
       const pageNumber = doc.getCurrentPageInfo().pageNumber;

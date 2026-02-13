@@ -219,3 +219,4 @@ public class Sale extends Auditable {
         return Objects.hash(id);
     }
 }
+

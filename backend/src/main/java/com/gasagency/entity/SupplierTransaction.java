@@ -155,3 +155,4 @@ public class SupplierTransaction extends Auditable {
         this.reference = reference;
     }
 }
+

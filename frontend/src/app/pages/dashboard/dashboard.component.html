@@ -228,7 +228,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let customer of dashboardData.customersDue | slice:0:5">
+            <tr *ngFor="let customer of topDueCustomers">
               <td class="font-medium">{{ customer.customerName }}</td>
               <td class="text-danger font-semibold">₹{{ customer.dueAmount | number: '1.0-0' }}</td>
               <td class="text-center">

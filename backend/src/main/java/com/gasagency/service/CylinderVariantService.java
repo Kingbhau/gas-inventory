@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.CylinderVariantDTO;
+import com.gasagency.dto.response.CylinderVariantDTO;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.MonthlyPrice;
 import com.gasagency.entity.SaleItem;
@@ -258,3 +258,4 @@ public class CylinderVariantService {
         return toDTO(repository.save(variant));
     }
 }
+

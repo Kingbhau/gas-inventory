@@ -20,3 +20,4 @@ public interface PaymentModeRepository extends JpaRepository<PaymentMode, Long> 
     @Query("SELECT p.name FROM PaymentMode p WHERE p.isActive = true ORDER BY p.name")
     List<String> findActiveNames();
 }
+

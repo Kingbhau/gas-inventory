@@ -1,6 +1,7 @@
+import { environment } from '../../environments/environment';
+
 export const API_CONFIG = {
-  // Use same-origin API in production (nginx proxies /api to backend).
-  baseUrl: '/api',
+  baseUrl: environment.apiBaseUrl,
   endpoints: {
     suppliers: '/suppliers',
     customers: '/customers',

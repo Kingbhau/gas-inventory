@@ -1,31 +1,23 @@
 package com.gasagency.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Generic API Response wrapper for all REST endpoints
- * Provides a consistent response format with success status, message, and data
+ * Provides a consistent response format with message, data, error, timestamp, and requestId
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    private boolean success;
     private String message;
     private T data;
+    private ApiError error;
+    private String timestamp;
+    private String requestId;
 
     /**
      * Default constructor
      */
     public ApiResponse() {
-    }
-
-    /**
-     * Constructor with all fields
-     *
-     * @param success Whether the operation was successful
-     * @param message Message describing the operation result
-     * @param data    The actual response data payload
-     */
-    public ApiResponse(boolean success, String message, T data) {
-        this.success = success;
-        this.message = message;
-        this.data = data;
     }
 
     /**
@@ -35,7 +27,6 @@ public class ApiResponse<T> {
      * @param data    The actual response data payload
      */
     public ApiResponse(String message, T data) {
-        this.success = true;
         this.message = message;
         this.data = data;
     }
@@ -46,20 +37,11 @@ public class ApiResponse<T> {
      * @param message Message describing the operation result
      */
     public ApiResponse(String message) {
-        this.success = true;
         this.message = message;
         this.data = null;
     }
 
     // Getters and Setters
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
     public String getMessage() {
         return message;
     }
@@ -76,33 +58,39 @@ public class ApiResponse<T> {
         this.data = data;
     }
 
+    public ApiError getError() {
+        return error;
+    }
+
+    public void setError(ApiError error) {
+        this.error = error;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getRequestId() {
+        return requestId;
+    }
+
+    public void setRequestId(String requestId) {
+        this.requestId = requestId;
+    }
+
     @Override
     public String toString() {
         return "ApiResponse{" +
-                "success=" + success +
-                ", message='" + message + '\'' +
+                "message='" + message + '\'' +
                 ", data=" + data +
+                ", error=" + error +
+                ", timestamp='" + timestamp + '\'' +
+                ", requestId='" + requestId + '\'' +
                 '}';
     }
-
-    /**
-     * Static factory method for successful responses with data
-     */
-    public static <T> ApiResponse<T> success(T data, String message) {
-        return new ApiResponse<>(true, message, data);
-    }
-
-    /**
-     * Static factory method for successful responses with message only
-     */
-    public static <T> ApiResponse<T> success(String message) {
-        return new ApiResponse<>(true, message, null);
-    }
-
-    /**
-     * Static factory method for error responses
-     */
-    public static <T> ApiResponse<T> error(int code, String message) {
-        return new ApiResponse<>(false, message, null);
-    }
 }
+

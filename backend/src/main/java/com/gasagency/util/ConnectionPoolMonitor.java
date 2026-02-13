@@ -77,3 +77,4 @@ public class ConnectionPoolMonitor {
         transactionTypeCounter.clear();
     }
 }
+

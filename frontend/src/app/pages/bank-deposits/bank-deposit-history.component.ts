@@ -13,11 +13,15 @@ import { PaymentModeService } from '../../services/payment-mode.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { LoadingService } from '../../services/loading.service';
 import { AuthService } from '../../services/auth.service';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import { SharedModule } from '../../shared/shared.module';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
-import { BankDeposit, BankAccount } from '../../models/index';
+import { BankDeposit } from '../../models/bank-deposit.model';
+import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { BankDepositSummary } from '../../models/bank-deposit-summary.model';
+import { PageResponse } from '../../models/page-response';
 import { exportBankDepositsReportToPDF } from '../reports/export-bank-deposits-report.util';
 
 @Component({
@@ -29,7 +33,7 @@ import { exportBankDepositsReportToPDF } from '../reports/export-bank-deposits-r
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BankDepositHistoryComponent implements OnInit, OnDestroy {
-  @ViewChild('editModal') editModal!: TemplateRef<any>;
+  @ViewChild('editModal') editModal!: TemplateRef<unknown>;
   
   faEye = faEye;
   faEdit = faEdit;
@@ -110,15 +114,14 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
    * Load all bank accounts
    */
   loadBankAccounts() {
-    this.bankAccountService.getActiveBankAccounts()
+    this.bankAccountService.getAllBankAccountsAll()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
+        next: (response: BankAccount[]) => {
           this.bankAccounts = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading bank accounts:', error);
+        error: (error: unknown) => {
           this.bankAccounts = [];
         }
       });
@@ -128,15 +131,14 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
    * Load payment modes
    */
   loadPaymentModes() {
-    this.paymentModeService.getActivePaymentModes()
+    this.paymentModeService.getAllPaymentModesAll()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: PaymentMode[]) => {
           this.paymentModes = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading payment modes:', error);
+        error: (error: unknown) => {
           this.paymentModes = [];
         }
       });
@@ -162,16 +164,15 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          this.deposits = response.content || [];
-          this.totalElements = response.totalElements || 0;
-          this.totalPages = response.totalPages || 1;
+        next: (response: PageResponse<BankDeposit>) => {
+          this.deposits = response.items || [];
+          this.totalElements = response.totalElements ?? 0;
+          this.totalPages = response.totalPages ?? 1;
           this.updatePaginatedDeposits();
           this.loadingService.hide();
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading deposits:', error);
+        error: (error: unknown) => {
           this.toastr.error('Failed to load bank deposits');
           this.deposits = [];
           this.loadingService.hide();
@@ -196,12 +197,11 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (summary: any) => {
+        next: (summary: BankDepositSummary) => {
           this.totalAmount = summary.totalAmount || 0;
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading deposit summary:', error);
+        error: (error: unknown) => {
           this.totalAmount = 0;
         }
       });
@@ -304,7 +304,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
   /**
    * Handle bank account filter change
    */
-  onBankAccountChange(value: any) {
+  onBankAccountChange(value: string | number | null) {
     // Ensure the value is a number or null
     if (value === null || value === '' || value === undefined) {
       this.filterBankAccountId = null;
@@ -418,7 +418,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
       notes: formData.notes || ''
     };
 
-    this.bankDepositService.updateDeposit(this.editingDeposit.id, updatedDeposit)
+    this.bankDepositService.updateDeposit(String(this.editingDeposit.id), updatedDeposit)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
@@ -428,10 +428,11 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
           this.closeEditModal();
           this.loadDeposits();
         },
-        error: (error: any) => {
+        error: (error: unknown) => {
           this.isEditSubmitting = false;
           this.loadingService.hide();
-          const errorMsg = error?.error?.message || 'Failed to update bank deposit';
+          const err = error as { error?: { message?: string } };
+          const errorMsg = err?.error?.message || 'Failed to update bank deposit';
           this.toastr.error(errorMsg);
           this.cdr.markForCheck();
         }
@@ -447,7 +448,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
     if (confirm('Are you sure you want to delete this deposit record?')) {
       this.loadingService.show('Deleting deposit...');
       
-      this.bankDepositService.deleteDeposit(deposit.id)
+      this.bankDepositService.deleteDeposit(String(deposit.id))
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
@@ -455,7 +456,7 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
             this.loadingService.hide();
             this.loadDeposits();
           },
-          error: (error: any) => {
+          error: (error: unknown) => {
             this.toastr.error('Failed to delete deposit');
             this.loadingService.hide();
           }
@@ -529,7 +530,6 @@ export class BankDepositHistoryComponent implements OnInit, OnDestroy {
 
       this.toastr.success('PDF exported successfully');
     } catch (error) {
-      console.error('Error exporting PDF:', error);
       this.toastr.error('Failed to export PDF');
     }
   }

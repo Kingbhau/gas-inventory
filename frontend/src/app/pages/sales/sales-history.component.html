@@ -191,15 +191,19 @@
           </div>
           <div class="invoice-row">
             <span class="label">Amount Received:</span>
-            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.amountReceived || 0) | indianCurrency }}</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0].amountReceived || 0) | indianCurrency }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Due Amount:</span>
-            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.dueAmount || 0) | indianCurrency }}</span>
+            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0].dueAmount || 0) | indianCurrency }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Payment Mode:</span>
-            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode || 'N/A') }}</span>
+            <span class="value">{{ selectedSale.paymentMode || 'N/A' }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
+            <span class="label">Bank Name:</span>
+            <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Created By:</span>
@@ -212,10 +216,6 @@
           <div class="invoice-row">
             <span class="label">Last Modified Date:</span>
             <span class="value">{{ selectedSale.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</span>
-          </div>
-          <div class="invoice-row" *ngIf="selectedSale.saleItems && selectedSale.saleItems[0]?.paymentMode && selectedSale.saleItems[0]?.paymentMode !== 'Cash'">
-            <span class="label">Bank Name:</span>
-            <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>
         </div>
       </div>

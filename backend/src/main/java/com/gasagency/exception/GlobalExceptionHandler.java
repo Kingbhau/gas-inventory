@@ -15,11 +15,13 @@ import org.springframework.transaction.TransactionSystemException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.gasagency.util.ApiError;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import com.gasagency.util.LoggerUtil;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
-import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -28,99 +30,66 @@ public class GlobalExceptionHandler {
         private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
         @ExceptionHandler(UsernameNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleUsernameNotFound(
+        public ResponseEntity<ApiResponse<ApiError>> handleUsernameNotFound(
                         UsernameNotFoundException ex, WebRequest request) {
                 logger.warn("AUTHENTICATION_FAILED | message={}", ex.getMessage());
                 LoggerUtil.logBusinessError(logger, "AUTHENTICATION", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.UNAUTHORIZED.value(),
-                                "AUTHENTICATION_FAILED",
-                                ex.getMessage(),
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+                return buildErrorResponse(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_FAILED", ex.getMessage());
         }
 
         @ExceptionHandler(ResourceNotFoundException.class)
-        public ResponseEntity<ErrorResponse> handleResourceNotFound(
+        public ResponseEntity<ApiResponse<ApiError>> handleResourceNotFound(
                         ResourceNotFoundException ex, WebRequest request) {
                 logger.warn("RESOURCE_NOT_FOUND | message={}", ex.getMessage());
                 LoggerUtil.logBusinessError(logger, "RESOURCE_LOOKUP", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.NOT_FOUND.value(),
-                                "RESOURCE_NOT_FOUND",
-                                ex.getMessage(),
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+                return buildErrorResponse(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", ex.getMessage());
         }
 
         @ExceptionHandler(ConcurrencyConflictException.class)
-        public ResponseEntity<ErrorResponse> handleConcurrencyConflict(
+        public ResponseEntity<ApiResponse<ApiError>> handleConcurrencyConflict(
                         ConcurrencyConflictException ex, WebRequest request) {
                 logger.warn("CONCURRENCY_CONFLICT | message={}", ex.getMessage());
                 LoggerUtil.logConcurrencyIssue(logger, "CONCURRENCY_CONFLICT", "reason", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                "CONCURRENCY_CONFLICT",
-                                ex.getMessage(),
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+                return buildErrorResponse(HttpStatus.CONFLICT, "CONCURRENCY_CONFLICT", ex.getMessage());
         }
 
         @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-        public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(
+        public ResponseEntity<ApiResponse<ApiError>> handleOptimisticLockingFailure(
                         ObjectOptimisticLockingFailureException ex, WebRequest request) {
                 logger.warn("OPTIMISTIC_LOCK_FAILURE | message={}", ex.getMessage());
                 LoggerUtil.logConcurrencyIssue(logger, "OPTIMISTIC_LOCKING",
                                 "reason", "concurrent_modification", "exception", ex.getClass().getSimpleName());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                "CONCURRENCY_CONFLICT",
-                                "The data was modified by another request. Please refresh and try again.",
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+                return buildErrorResponse(HttpStatus.CONFLICT, "CONCURRENCY_CONFLICT",
+                                "The data was modified by another request. Please refresh and try again.");
         }
 
         @ExceptionHandler(jakarta.persistence.LockTimeoutException.class)
-        public ResponseEntity<ErrorResponse> handleLockTimeout(
+        public ResponseEntity<ApiResponse<ApiError>> handleLockTimeout(
                         jakarta.persistence.LockTimeoutException ex, WebRequest request) {
                 logger.warn("LOCK_TIMEOUT | message={}", ex.getMessage());
                 LoggerUtil.logConcurrencyIssue(logger, "LOCK_TIMEOUT", "reason", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.SERVICE_UNAVAILABLE.value(),
-                                "LOCK_TIMEOUT",
-                                "System is busy. Please try again in a moment.",
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+                return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "LOCK_TIMEOUT",
+                                "System is busy. Please try again in a moment.");
         }
 
         @ExceptionHandler(InvalidOperationException.class)
-        public ResponseEntity<ErrorResponse> handleInvalidOperation(
+        public ResponseEntity<ApiResponse<ApiError>> handleInvalidOperation(
                         InvalidOperationException ex, WebRequest request) {
                 logger.warn("INVALID_OPERATION | message={}", ex.getMessage());
                 LoggerUtil.logBusinessError(logger, "INVALID_OPERATION", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.BAD_REQUEST.value(),
-                                "INVALID_OPERATION",
-                                ex.getMessage(),
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "INVALID_OPERATION", ex.getMessage());
         }
 
         @ExceptionHandler(IllegalArgumentException.class)
-        public ResponseEntity<ErrorResponse> handleIllegalArgument(
+        public ResponseEntity<ApiResponse<ApiError>> handleIllegalArgument(
                         IllegalArgumentException ex, WebRequest request) {
                 logger.warn("ILLEGAL_ARGUMENT | message={}", ex.getMessage());
                 LoggerUtil.logBusinessError(logger, "ILLEGAL_ARGUMENT", ex.getMessage());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.BAD_REQUEST.value(),
-                                "INVALID_ARGUMENT",
-                                ex.getMessage(),
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", ex.getMessage());
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
-        public ResponseEntity<ErrorResponse> handleValidationException(
+        public ResponseEntity<ApiResponse<ApiError>> handleValidationException(
                         MethodArgumentNotValidException ex, WebRequest request) {
                 String message = ex.getBindingResult().getFieldErrors().stream()
                                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
@@ -128,16 +97,11 @@ public class GlobalExceptionHandler {
 
                 logger.warn("VALIDATION_ERROR | fields={}", message);
                 LoggerUtil.logValidationFailure(logger, "multiple_fields", "N/A", message);
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.BAD_REQUEST.value(),
-                                "VALIDATION_ERROR",
-                                message,
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
         }
 
         @ExceptionHandler(ConstraintViolationException.class)
-        public ResponseEntity<ErrorResponse> handleConstraintViolation(
+        public ResponseEntity<ApiResponse<ApiError>> handleConstraintViolation(
                         ConstraintViolationException ex, WebRequest request) {
                 String message = ex.getConstraintViolations().stream()
                                 .map(ConstraintViolation::getMessage)
@@ -145,16 +109,11 @@ public class GlobalExceptionHandler {
 
                 logger.warn("CONSTRAINT_VIOLATION | violations={}", message);
                 LoggerUtil.logValidationFailure(logger, "constraint", "N/A", message);
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.BAD_REQUEST.value(),
-                                "VALIDATION_ERROR",
-                                message,
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
         }
 
         @ExceptionHandler(TransactionSystemException.class)
-        public ResponseEntity<ErrorResponse> handleTransactionSystemException(
+        public ResponseEntity<ApiResponse<ApiError>> handleTransactionSystemException(
                         TransactionSystemException ex, WebRequest request) {
                 String message = "An error occurred while processing the transaction.";
 
@@ -178,16 +137,11 @@ public class GlobalExceptionHandler {
                                 "rootCause",
                                 ex.getRootCause() != null ? ex.getRootCause().getClass().getSimpleName() : "UNKNOWN");
 
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.BAD_REQUEST.value(),
-                                "VALIDATION_ERROR",
-                                message,
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
         }
 
         @ExceptionHandler(DataIntegrityViolationException.class)
-        public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+        public ResponseEntity<ApiResponse<ApiError>> handleDataIntegrityViolation(
                         DataIntegrityViolationException ex, WebRequest request) {
                 String message = "Data integrity violation: ";
                 String cause = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : "";
@@ -206,54 +160,37 @@ public class GlobalExceptionHandler {
                 }
                 logger.error("DATA_INTEGRITY_VIOLATION | message={} | cause={}", message, cause, ex);
                 LoggerUtil.logBusinessError(logger, "DATA_INTEGRITY", message, "cause", cause);
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.CONFLICT.value(),
-                                "DATA_INTEGRITY_VIOLATION",
-                                message,
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+                return buildErrorResponse(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", message);
         }
 
         @ExceptionHandler(JpaSystemException.class)
-        public ResponseEntity<ErrorResponse> handleJpaSystemException(
+        public ResponseEntity<ApiResponse<ApiError>> handleJpaSystemException(
                         JpaSystemException ex, WebRequest request) {
                 logger.error("DATABASE_ERROR | message={}", ex.getMessage(), ex);
                 LoggerUtil.logException(logger, "Database error", ex, "type", "JpaSystemException");
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                "DATABASE_ERROR",
-                                "A database error occurred. Please contact support.",
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+                return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "DATABASE_ERROR",
+                                "A database error occurred. Please contact support.");
         }
 
         @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-        public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+        public ResponseEntity<ApiResponse<ApiError>> handleMediaTypeNotSupported(
                         HttpMediaTypeNotSupportedException ex, WebRequest request) {
                 logger.warn("UNSUPPORTED_MEDIA_TYPE | contentType={}", ex.getContentType());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
-                                "UNSUPPORTED_MEDIA_TYPE",
-                                "Content type not supported. Use application/json",
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                return buildErrorResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED_MEDIA_TYPE",
+                                "Content type not supported. Use application/json");
         }
 
         @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-        public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+        public ResponseEntity<ApiResponse<ApiError>> handleMethodNotSupported(
                         HttpRequestMethodNotSupportedException ex, WebRequest request) {
                 logger.warn("METHOD_NOT_ALLOWED | method={} | supportedMethods={}",
                                 ex.getMethod(), ex.getSupportedHttpMethods());
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.METHOD_NOT_ALLOWED.value(),
-                                "METHOD_NOT_ALLOWED",
-                                "HTTP method " + ex.getMethod() + " is not supported for this endpoint",
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.METHOD_NOT_ALLOWED);
+                return buildErrorResponse(HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED",
+                                "HTTP method " + ex.getMethod() + " is not supported for this endpoint");
         }
 
         @ExceptionHandler(Exception.class)
-        public ResponseEntity<ErrorResponse> handleGlobalException(
+        public ResponseEntity<ApiResponse<ApiError>> handleGlobalException(
                         Exception ex, WebRequest request) {
                 logger.error("UNEXPECTED_ERROR | exception={} | message={} | cause={}",
                                 ex.getClass().getSimpleName(), ex.getMessage(),
@@ -271,11 +208,13 @@ public class GlobalExceptionHandler {
                         }
                 }
 
-                ErrorResponse error = new ErrorResponse(
-                                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                                "INTERNAL_SERVER_ERROR",
-                                errorMessage,
-                                LocalDateTime.now());
-                return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+                return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", errorMessage);
+        }
+
+        private ResponseEntity<ApiResponse<ApiError>> buildErrorResponse(HttpStatus status, String code,
+                        String message) {
+                ApiResponse<ApiError> response = ApiResponseUtil.error(message, code);
+                return ResponseEntity.status(status).body(response);
         }
 }
+

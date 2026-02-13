@@ -28,3 +28,4 @@ public interface CustomerVariantPriceRepository extends JpaRepository<CustomerVa
     // Delete all prices for a customer (when customer is deleted)
     void deleteByCustomerId(Long customerId);
 }
+

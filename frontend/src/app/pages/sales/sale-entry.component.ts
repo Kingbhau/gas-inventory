@@ -26,6 +26,12 @@ import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { Customer } from '../../models/customer.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { Warehouse } from '../../models/warehouse.model';
+import { CreateSaleRequest, SaleItemRequest } from '../../models/create-sale-request.model';
+import { CustomerVariantPrice } from '../../models/customer-variant-price.model';
+import { Sale } from '../../models/sale.model';
 
 @Component({
   selector: 'app-sale-entry',
@@ -52,7 +58,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
 
   customerIdControl = new FormControl(null, Validators.required);
   variantIdControl = new FormControl(null, Validators.required);
-  customerDropdownConfig: any = {
+  customerDropdownConfig: Record<string, string | number | boolean | undefined | null> = {
     displayKey: 'name',
     search: true,
     placeholder: 'Select a customer',
@@ -62,7 +68,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     customComparator: undefined,
     limitTo: 100
   };
-  variantDropdownConfig: any = {
+  variantDropdownConfig: Record<string, string | number | boolean | undefined | null> = {
     displayKey: 'name',
     search: true,
     placeholder: 'Select variant',
@@ -78,13 +84,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   // Font Awesome Icons
   faCheckCircle = faCheckCircle;
 
-  customers: any[] = [];
-  variants: any[] = [];
-  warehouses: any[] = [];
+  customers: Customer[] = [];
+  variants: CylinderVariant[] = [];
+  warehouses: Warehouse[] = [];
   bankAccounts: BankAccount[] = [];
   paymentModes: PaymentMode[] = [];
-  filteredCustomers: any[] = [];
-  filteredVariants: any[] = [];
+  filteredCustomers: Customer[] = [];
+  filteredVariants: CylinderVariant[] = [];
   customerSearch: string = '';
   variantSearch: string = '';
   // filteredCustomers: any[] = [];
@@ -121,7 +127,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.dataRefreshService.customerUpdated$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        console.log('Customer updated detected, reloading customers...');
         this.customerService.getActiveCustomers()
           .pipe(takeUntil(this.destroy$))
           .subscribe({
@@ -147,7 +152,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
                   if (currentVariantId && this.filteredVariants && this.filteredVariants.length > 0) {
                     const variantStillAvailable = this.filteredVariants.some(v => v.id === currentVariantId);
                     if (!variantStillAvailable) {
-                      console.log('Previously selected variant no longer available, clearing selection');
                       this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
                     }
                   } else if (!currentVariantId || !this.filteredVariants || this.filteredVariants.length === 0) {
@@ -160,7 +164,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
               this.cdr.markForCheck();
             },
             error: (err) => {
-              console.error('Error reloading customers:', err);
             }
           });
       });
@@ -201,7 +204,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error loading reference data:', err);
         this.toastr.error('Failed to load form data');
       }
     });
@@ -275,11 +277,11 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       });
   }
 
-  displayCustomerName(customer: any): string {
+  displayCustomerName(customer: Customer | null): string {
     return customer && typeof customer === 'object' ? customer.name : '';
   }
 
-  displayVariantName(variant: any): string {
+  displayVariantName(variant: CylinderVariant | null): string {
     return variant && typeof variant === 'object' ? variant.name : '';
   }
 
@@ -288,7 +290,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
    */
   filterVariantsByCustomerConfig(customerId: number | null) {
     if (!customerId) {
-      console.log('No customer selected, showing all variants');
       this.filteredVariants = this.variants;
       return;
     }
@@ -296,19 +297,17 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     // Find the customer and get their configured variants
     const customer = this.customers.find(c => c.id === customerId);
     if (!customer) {
-      console.warn('Customer not found:', customerId);
       this.filteredVariants = this.variants;
       return;
     }
 
     if (!customer.configuredVariants) {
-      console.warn('Customer has no configuredVariants:', customer);
       this.filteredVariants = this.variants;
       return;
     }
     
     // Parse configuredVariants if it's a JSON string, otherwise treat as array
-    let configuredVariantIds: any[] = [];
+    let configuredVariantIds: number[] = [];
     try {
       if (typeof customer.configuredVariants === 'string') {
         configuredVariantIds = JSON.parse(customer.configuredVariants);
@@ -316,28 +315,25 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         configuredVariantIds = customer.configuredVariants;
       }
     } catch (e) {
-      console.error('Error parsing configuredVariants:', e);
       this.filteredVariants = this.variants;
       return;
     }
     
     if (!configuredVariantIds || configuredVariantIds.length === 0) {
-      console.warn('Customer has no configured variant IDs:', customerId);
       this.filteredVariants = this.variants;
       return;
     }
     
-    console.log('Customer configured variant IDs:', configuredVariantIds);
-    console.log('All variants available:', this.variants);
-    
     // Remove duplicate IDs from configuredVariantIds
     const uniqueVariantIds = [...new Set(configuredVariantIds)];
     
-    // Filter variants: must be configured for this customer
-    // If variant has status property, check if ACTIVE, otherwise assume it's active (came from getActiveVariants)
-    const filteredMap = new Map();
-    this.variants.forEach(v => {
-      const isActive = v.status ? v.status === 'ACTIVE' : true; // Assume active if no status property
+    // Filter variants: must be configured for this customer and active
+    const filteredMap = new Map<number, CylinderVariant>();
+    this.variants.forEach((v) => {
+      if (typeof v.id !== 'number') {
+        return;
+      }
+      const isActive = v.active !== false;
       if (isActive && uniqueVariantIds.includes(v.id)) {
         if (!filteredMap.has(v.id)) {
           filteredMap.set(v.id, v);
@@ -346,7 +342,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     });
     
     this.filteredVariants = Array.from(filteredMap.values());
-    console.log('Filtered variants:', this.filteredVariants);
   }
 
   /**
@@ -362,14 +357,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
 
     // First try to get customer-specific variant pricing
     this.variantPriceService.getPriceByVariant(customerId, variantId).subscribe({
-      next: (response: any) => {
-        if (response && response.data) {
+      next: (response: CustomerVariantPrice | null) => {
+        if (response) {
           // Use customer-specific sale price and discount price
-          this.saleForm.get('basePrice')?.setValue(response.data.salePrice);
-          this.discountPrice = response.data.discountPrice || 0;
+          this.saleForm.get('basePrice')?.setValue(response.salePrice);
+          this.discountPrice = response.discountPrice || 0;
           this.saleForm.get('basePrice')?.disable();
           this.calculateTotal();
-          console.log('Using customer-specific pricing - Sale:', response.data.salePrice, 'Discount:', this.discountPrice);
         } else {
           // Fall back to monthly pricing
           this.prefillBasePrice(variantId);
@@ -377,7 +371,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       },
       error: () => {
         // Fall back to monthly pricing if customer pricing not found
-        console.log('Customer-specific pricing not found, using monthly pricing');
         this.discountPrice = 0;
         this.prefillBasePrice(variantId);
       }
@@ -514,7 +507,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   /**
    * Handle warehouse selection from autocomplete
    */
-  onWarehouseSelected(warehouse: any): void {
+  onWarehouseSelected(warehouse: Warehouse | null): void {
     if (warehouse && warehouse.id) {
       // Set the entire warehouse object for consistency
       this.saleForm.get('warehouseId')?.setValue(warehouse, { emitEvent: true });
@@ -523,7 +516,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     }
   }
 
-  onCustomerSelected(customer: any): void {
+  onCustomerSelected(customer: Customer | null): void {
     if (customer && customer.id) {
       // Set the entire customer object (not just ID) so valueChanges subscription receives the full object
       this.saleForm.get('customerId')?.setValue(customer, { emitEvent: true });
@@ -552,7 +545,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     }
   }
 
-  onVariantSelected(variant: any): void {
+  onVariantSelected(variant: CylinderVariant | null): void {
     if (variant && variant.id) {
       // Set the entire variant object (not just ID) so valueChanges subscription receives the full object
       this.saleForm.get('variantId')?.setValue(variant, { emitEvent: true });
@@ -587,10 +580,9 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.balanceError = '';
     this.customerCylinderLedgerService.getCustomerVariantBalance(customerId, variantId)
       .pipe(
-        catchError((err: any) => {
-          console.error('Error loading customer balance:', err);
+        catchError((err: unknown) => {
           this.balanceError = 'Current balance unavailable';
-          return of(null);
+          return of(null as number | null);
         }),
         finalize(() => {
           this.balanceLoading = false;
@@ -598,7 +590,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         }),
         takeUntil(this.destroy$)
       )
-      .subscribe(balance => {
+      .subscribe((balance: number | null) => {
         if (balance !== null && balance !== undefined) {
           this.currentBalance = balance;
         } else {
@@ -620,10 +612,9 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.dueError = '';
     this.customerCylinderLedgerService.getCustomerDueAmounts([customerId])
       .pipe(
-        catchError((err: any) => {
-          console.error('Error loading customer due amount:', err);
+        catchError((err: unknown) => {
           this.dueError = 'Current due unavailable';
-          return of(null);
+          return of(null as Record<number, number> | null);
         }),
         finalize(() => {
           this.dueLoading = false;
@@ -631,7 +622,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
         }),
         takeUntil(this.destroy$)
       )
-      .subscribe(dueMap => {
+      .subscribe((dueMap: Record<number, number> | null) => {
         if (dueMap && typeof dueMap[customerId] !== 'undefined') {
           this.currentDue = dueMap[customerId];
         } else {
@@ -681,13 +672,14 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     if (qtyEmptyReceived > 0) {
       const sub = this.customerCylinderLedgerService.getCustomerVariantBalance(customerId, variantId)
         .pipe(
-          catchError((err: any) => {
-            const errorMessage = err?.error?.message || err?.message || 'Could not validate customer balance. Please try again.';
+          catchError((err: unknown) => {
+            const errorObj = err as { error?: { message?: string }; message?: string };
+            const errorMessage = errorObj?.error?.message || errorObj?.message || 'Could not validate customer balance. Please try again.';
             this.toastr.error(errorMessage, 'Error');
-            return of(null);
+            return of(null as number | null);
           })
         )
-        .subscribe(balance => {
+        .subscribe((balance: number | null) => {
           const allowedEmpty = (balance ?? 0) + (isNaN(qtyIssued) ? 0 : qtyIssued);
           if (balance !== null && qtyEmptyReceived > allowedEmpty) {
             this.toastr.error('Cannot return more empty cylinders than the customer will hold after this sale.', 'Validation Error');
@@ -734,7 +726,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     // Calculate total discount (per-unit discount × quantity)
     const totalDiscount = (this.discountPrice || 0) * qtyIssued;
     
-    const saleRequest: any = {
+    const saleRequest: CreateSaleRequest = {
       warehouseId: warehouseId,
       customerId: customerId,
       amountReceived: this.saleForm.get('amountReceived')?.value || 0,
@@ -745,7 +737,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           qtyIssued: qtyIssued,
           qtyEmptyReceived: qtyEmptyReceived,
           discount: totalDiscount
-        }
+        } as SaleItemRequest
       ]
     };
 
@@ -756,15 +748,15 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     }
     const sub = this.saleService.createSale(saleRequest)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error recording sale. Please try again.';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error recording sale. Please try again.';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of(null);
+          return of(null as Sale | null);
         })
       )
       .subscribe({
-        next: (response) => {
+        next: (response: Sale | null) => {
           if (response) {
             this.toastr.success('Sale recorded successfully', 'Success');
             // Notify dashboard of the sale

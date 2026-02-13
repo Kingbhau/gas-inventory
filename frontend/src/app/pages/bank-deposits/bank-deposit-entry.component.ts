@@ -13,7 +13,8 @@ import { PaymentModeService } from '../../services/payment-mode.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { LoadingService } from '../../services/loading.service';
 import { SharedModule } from '../../shared/shared.module';
-import { BankDeposit, BankAccount } from '../../models/index';
+import { BankDeposit } from '../../models/bank-deposit.model';
+import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 
 @Component({
@@ -79,12 +80,11 @@ export class BankDepositEntryComponent implements OnInit, OnDestroy {
     this.bankAccountService.getActiveBankAccounts()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
+        next: (response: BankAccount[]) => {
           this.bankAccounts = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading bank accounts:', error);
+        error: (error: unknown) => {
           this.toastr.error('Failed to load bank accounts');
           this.bankAccounts = [];
         }
@@ -102,8 +102,7 @@ export class BankDepositEntryComponent implements OnInit, OnDestroy {
           this.paymentModes = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading payment modes:', error);
+        error: (error: unknown) => {
           this.toastr.error('Failed to load payment modes');
           this.paymentModes = [];
         }
@@ -154,10 +153,11 @@ export class BankDepositEntryComponent implements OnInit, OnDestroy {
           this.resetForm();
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
+        error: (error: unknown) => {
           this.isSubmitting = false;
           this.loadingService.hide();
-          const errorMsg = error?.error?.message || 'Failed to record bank deposit';
+          const err = error as { error?: { message?: string } };
+          const errorMsg = err?.error?.message || 'Failed to record bank deposit';
           this.toastr.error(errorMsg);
           this.cdr.markForCheck();
         }

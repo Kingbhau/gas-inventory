@@ -1,20 +1,28 @@
 
 package com.gasagency.controller;
 
-import com.gasagency.dto.CustomerCylinderLedgerDTO;
-import com.gasagency.entity.CustomerCylinderLedger;
+import com.gasagency.dto.response.CustomerBalanceDTO;
+import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
+import com.gasagency.dto.response.CustomerDueAmountDTO;
+import com.gasagency.dto.request.CustomerDueAmountsRequestDTO;
+import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
+import com.gasagency.dto.request.LedgerUpdateRequestDTO;
+import com.gasagency.dto.request.PaymentRequestDTO;
+import com.gasagency.dto.response.PaymentsSummaryDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
+import com.gasagency.dto.request.EmptyReturnRequestDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.CustomerCylinderLedgerService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.gasagency.dto.CustomerBalanceDTO;
-
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -22,84 +30,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/ledger")
 public class CustomerCylinderLedgerController {
 
-    public static class EmptyReturnRequest {
-        public Long customerId;
-        public Long warehouseId;
-        public Long variantId;
-        public LocalDate transactionDate;
-        public Long emptyIn;
-        public java.math.BigDecimal amountReceived;
-        public String paymentMode;
-        public Long bankAccountId;
-
-        public Long getCustomerId() {
-            return customerId;
-        }
-
-        public void setCustomerId(Long customerId) {
-            this.customerId = customerId;
-        }
-
-        public Long getWarehouseId() {
-            return warehouseId;
-        }
-
-        public void setWarehouseId(Long warehouseId) {
-            this.warehouseId = warehouseId;
-        }
-
-        public Long getVariantId() {
-            return variantId;
-        }
-
-        public void setVariantId(Long variantId) {
-            this.variantId = variantId;
-        }
-
-        public LocalDate getTransactionDate() {
-            return transactionDate;
-        }
-
-        public void setTransactionDate(LocalDate transactionDate) {
-            this.transactionDate = transactionDate;
-        }
-
-        public Long getEmptyIn() {
-            return emptyIn;
-        }
-
-        public void setEmptyIn(Long emptyIn) {
-            this.emptyIn = emptyIn;
-        }
-
-        public java.math.BigDecimal getAmountReceived() {
-            return amountReceived;
-        }
-
-        public void setAmountReceived(java.math.BigDecimal amountReceived) {
-            this.amountReceived = amountReceived;
-        }
-
-        public String getPaymentMode() {
-            return paymentMode;
-        }
-
-        public void setPaymentMode(String paymentMode) {
-            this.paymentMode = paymentMode;
-        }
-
-        public Long getBankAccountId() {
-            return bankAccountId;
-        }
-
-        public void setBankAccountId(Long bankAccountId) {
-            this.bankAccountId = bankAccountId;
-        }
-    }
-
     @GetMapping("/pending-summary")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getAllPendingBalances() {
-        return ResponseEntity.ok(service.getAllPendingBalances());
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getAllPendingBalances() {
+        return ResponseEntity.ok(ApiResponseUtil.success("Pending balances retrieved successfully",
+                service.getAllPendingBalances()));
     }
 
     private final CustomerCylinderLedgerService service;
@@ -109,82 +43,86 @@ public class CustomerCylinderLedgerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerCylinderLedgerDTO> getLedgerEntry(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getLedgerEntryById(id));
+    public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> getLedgerEntry(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Ledger entry retrieved successfully",
+                service.getLedgerEntryById(id)));
     }
 
     // Batch endpoint: Get balances for a page of customers (all variants)
     @GetMapping("/customer-balances")
-    public ResponseEntity<List<CustomerBalanceDTO>> getCustomerBalances(
+    public ResponseEntity<ApiResponse<List<CustomerBalanceDTO>>> getCustomerBalances(
             @RequestParam int page,
             @RequestParam int size) {
-        return ResponseEntity.ok(service.getCustomerBalancesForPage(page, size));
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer balances retrieved successfully",
+                service.getCustomerBalancesForPage(page, size)));
     }
 
     @GetMapping
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getAllLedger(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getAllLedger(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllLedger(pageable));
+        return ResponseEntity.ok(ApiResponseUtil.success("Ledger entries retrieved successfully",
+                service.getAllLedger(pageable)));
     }
 
     // Endpoint: Record empty cylinder return (without sale)
     @PostMapping("/empty-return")
-    public ResponseEntity<CustomerCylinderLedgerDTO> recordEmptyReturn(@RequestBody EmptyReturnRequest request) {
+    public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> recordEmptyReturn(
+            @RequestBody EmptyReturnRequestDTO request) {
         // Validate amountReceived does not exceed customer's due amount
-        if (request.amountReceived != null && request.amountReceived.compareTo(java.math.BigDecimal.ZERO) > 0) {
-            java.math.BigDecimal customerDueAmount = service.getCustomerPreviousDue(request.customerId);
-            if (request.amountReceived.compareTo(customerDueAmount) > 0) {
+        if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            java.math.BigDecimal customerDueAmount = service.getCustomerPreviousDue(request.getCustomerId());
+            if (request.getAmountReceived().compareTo(customerDueAmount) > 0) {
                 throw new com.gasagency.exception.InvalidOperationException(
-                        "Amount received (" + request.amountReceived.setScale(2, java.math.RoundingMode.HALF_UP) +
+                        "Amount received (" + request.getAmountReceived().setScale(2, java.math.RoundingMode.HALF_UP) +
                                 ") cannot exceed customer due amount ("
                                 + customerDueAmount.setScale(2, java.math.RoundingMode.HALF_UP) + ")");
             }
 
             // Validate paymentMode is provided when amountReceived > 0
-            if (request.paymentMode == null || request.paymentMode.trim().isEmpty()) {
+            if (request.getPaymentMode() == null || request.getPaymentMode().trim().isEmpty()) {
                 throw new com.gasagency.exception.InvalidOperationException(
                         "Payment mode is required when amount is received");
             }
 
             // Validate bankAccountId is provided when payment mode is not CASH
-            if (!request.paymentMode.equalsIgnoreCase("CASH") &&
-                    (request.bankAccountId == null || request.bankAccountId <= 0)) {
+            if (!request.getPaymentMode().equalsIgnoreCase("CASH") &&
+                    (request.getBankAccountId() == null || request.getBankAccountId() <= 0)) {
                 throw new com.gasagency.exception.InvalidOperationException(
-                        "Bank account is required for payment mode: " + request.paymentMode);
+                        "Bank account is required for payment mode: " + request.getPaymentMode());
             }
         }
 
         // For empty returns, set refId to 0L (not null) to satisfy DB constraint
         // Create ledger entry with amount received
         CustomerCylinderLedgerDTO dto = service.createLedgerEntry(
-                request.customerId,
-                request.warehouseId,
-                request.variantId,
-                request.transactionDate,
+                request.getCustomerId(),
+                request.getWarehouseId(),
+                request.getVariantId(),
+                request.getTransactionDate(),
                 "EMPTY_RETURN",
                 0L,
                 0L,
-                request.emptyIn,
+                request.getEmptyIn(),
                 java.math.BigDecimal.ZERO,
-                request.amountReceived != null ? request.amountReceived : java.math.BigDecimal.ZERO);
+                request.getAmountReceived() != null ? request.getAmountReceived() : java.math.BigDecimal.ZERO);
 
         // If payment mode is provided, update the ledger entry
-        if (request.paymentMode != null && !request.paymentMode.isEmpty()) {
-            service.updatePaymentMode(dto.getId(), request.paymentMode);
+        if (request.getPaymentMode() != null && !request.getPaymentMode().isEmpty()) {
+            service.updatePaymentMode(dto.getId(), request.getPaymentMode());
         }
 
         // Record bank account deposit if payment is via bank account
-        if (request.bankAccountId != null && request.paymentMode != null &&
-                !request.paymentMode.equalsIgnoreCase("CASH")) {
+        if (request.getBankAccountId() != null && request.getPaymentMode() != null &&
+                !request.getPaymentMode().equalsIgnoreCase("CASH")) {
             try {
                 service.recordBankAccountDeposit(
-                        request.bankAccountId,
-                        request.amountReceived != null ? request.amountReceived : java.math.BigDecimal.ZERO,
+                        request.getBankAccountId(),
+                        request.getAmountReceived() != null ? request.getAmountReceived() : java.math.BigDecimal.ZERO,
                         dto.getId(),
                         "Empty cylinder return refund");
             } catch (Exception e) {
@@ -192,30 +130,41 @@ public class CustomerCylinderLedgerController {
             }
         }
 
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(ApiResponseUtil.success("Empty return recorded successfully", dto));
     }
 
     @PostMapping("/customer-due-amounts")
-    public ResponseEntity<Map<Long, java.math.BigDecimal>> getCustomerDueAmounts(
-            @RequestBody Map<String, List<Number>> payload) {
-        List<Number> rawIds = payload != null ? payload.get("customerIds") : null;
+    public ResponseEntity<ApiResponse<List<CustomerDueAmountDTO>>> getCustomerDueAmounts(
+            @RequestBody CustomerDueAmountsRequestDTO payload) {
+        List<Long> rawIds = payload != null ? payload.getCustomerIds() : null;
         List<Long> customerIds = null;
         if (rawIds != null) {
             customerIds = rawIds.stream()
                     .filter(Objects::nonNull)
-                    .map(Number::longValue)
+                    .map(Long::longValue)
                     .collect(Collectors.toList());
         }
-        return ResponseEntity.ok(service.getLatestDueAmountsForCustomers(customerIds));
+        List<CustomerDueAmountDTO> response = service.getLatestDueAmountsForCustomers(customerIds).entrySet()
+                .stream()
+                .map(entry -> {
+                    CustomerDueAmountDTO dto = new CustomerDueAmountDTO();
+                    dto.setCustomerId(entry.getKey());
+                    dto.setDueAmount(entry.getValue());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer due amounts retrieved successfully", response));
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getLedgerByCustomer(@PathVariable Long customerId) {
-        return ResponseEntity.ok(service.getLedgerByCustomer(customerId));
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getLedgerByCustomer(
+            @PathVariable Long customerId) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer ledger retrieved successfully",
+                service.getLedgerByCustomer(customerId)));
     }
 
     @GetMapping("/customer/{customerId}/paginated")
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getLedgerByCustomerPaginated(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getLedgerByCustomerPaginated(
             @PathVariable Long customerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -223,19 +172,21 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "DESC") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getLedgerByCustomer(customerId, pageable));
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer ledger retrieved successfully",
+                service.getLedgerByCustomer(customerId, pageable)));
     }
 
     // Endpoint: Get all stock movements (ledger entries) for inventory movement
     // history
     @GetMapping("/movements")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getAllMovements() {
-        return ResponseEntity.ok(service.getAllMovements());
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getAllMovements() {
+        return ResponseEntity.ok(ApiResponseUtil.success("Stock movements retrieved successfully",
+                service.getAllMovements()));
     }
 
     // Paginated movements (optionally include transfers)
     @GetMapping("/movements/paged")
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getAllMovementsPaged(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getAllMovementsPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
@@ -245,20 +196,23 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "true") boolean includeTransfers) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
-        return ResponseEntity.ok(includeTransfers
-                ? service.getAllMovementsMerged(pageable, variantId, normalizeRefType(refType))
-                : service.getAllMovements(pageable, variantId, normalizeRefType(refType)));
+        Page<CustomerCylinderLedgerDTO> movements = includeTransfers
+                ? service.getAllMovementsMerged(pageable, variantId, refType)
+                : service.getAllMovements(pageable, variantId, refType);
+        return ResponseEntity.ok(ApiResponseUtil.success("Stock movements retrieved successfully", movements));
     }
 
     // Endpoint: Get stock movements for a specific warehouse
     @GetMapping("/movements/warehouse/{warehouseId}")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getMovementsByWarehouse(@PathVariable Long warehouseId) {
-        return ResponseEntity.ok(service.getMovementsByWarehouse(warehouseId));
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getMovementsByWarehouse(
+            @PathVariable Long warehouseId) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Warehouse movements retrieved successfully",
+                service.getMovementsByWarehouse(warehouseId)));
     }
 
     // Paginated warehouse movements (optionally include transfers)
     @GetMapping("/movements/warehouse/{warehouseId}/paged")
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getMovementsByWarehousePaged(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getMovementsByWarehousePaged(
             @PathVariable Long warehouseId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -269,54 +223,49 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "true") boolean includeTransfers) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy).and(Sort.by("id").descending()));
-        return ResponseEntity.ok(includeTransfers
-                ? service.getMovementsByWarehouseMerged(warehouseId, pageable, variantId, normalizeRefType(refType))
-                : service.getMovementsByWarehouse(warehouseId, pageable, variantId, normalizeRefType(refType)));
-    }
-
-    private CustomerCylinderLedger.TransactionType normalizeRefType(String refType) {
-        if (refType == null || refType.trim().isEmpty()) {
-            return null;
-        }
-        String normalized = refType.trim().toUpperCase();
-        if ("RETURN".equals(normalized)) {
-            return CustomerCylinderLedger.TransactionType.EMPTY_RETURN;
-        }
-        return CustomerCylinderLedger.TransactionType.valueOf(normalized);
+        Page<CustomerCylinderLedgerDTO> movements = includeTransfers
+                ? service.getMovementsByWarehouseMerged(warehouseId, pageable, variantId, refType)
+                : service.getMovementsByWarehouse(warehouseId, pageable, variantId, refType);
+        return ResponseEntity.ok(ApiResponseUtil.success("Warehouse movements retrieved successfully", movements));
     }
 
     @GetMapping("/customer/{customerId}/variant/{variantId}")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getLedgerByCustomerAndVariant(
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getLedgerByCustomerAndVariant(
             @PathVariable Long customerId, @PathVariable Long variantId) {
-        return ResponseEntity.ok(service.getLedgerByCustomerAndVariant(customerId, variantId));
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer ledger retrieved successfully",
+                service.getLedgerByCustomerAndVariant(customerId, variantId)));
     }
 
     @GetMapping("/variant/{variantId}")
-    public ResponseEntity<List<CustomerCylinderLedgerDTO>> getLedgerByVariant(@PathVariable Long variantId) {
-        return ResponseEntity.ok(service.getLedgerByVariant(variantId));
+    public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getLedgerByVariant(@PathVariable Long variantId) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Variant ledger retrieved successfully",
+                service.getLedgerByVariant(variantId)));
     }
 
     @GetMapping("/customer/{customerId}/variant/{variantId}/balance")
-    public ResponseEntity<Long> getBalance(@PathVariable Long customerId, @PathVariable Long variantId) {
-        return ResponseEntity.ok(service.getCurrentBalance(customerId, variantId));
+    public ResponseEntity<ApiResponse<Long>> getBalance(@PathVariable Long customerId, @PathVariable Long variantId) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer balance retrieved successfully",
+                service.getCurrentBalance(customerId, variantId)));
     }
 
     // Record a payment transaction
     @PostMapping("/payment")
-    public ResponseEntity<CustomerCylinderLedgerDTO> recordPayment(
-            @RequestBody CustomerCylinderLedgerService.PaymentRequest paymentRequest) {
-        return ResponseEntity.ok(service.recordPayment(paymentRequest));
+    public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> recordPayment(
+            @RequestBody PaymentRequestDTO paymentRequest) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Payment recorded successfully",
+                service.recordPayment(paymentRequest)));
     }
 
     // Get complete summary for a customer (across all ledger entries)
     @GetMapping("/customer/{customerId}/summary")
-    public ResponseEntity<Map<String, Object>> getCustomerSummary(@PathVariable Long customerId) {
-        return ResponseEntity.ok(service.getCustomerLedgerSummary(customerId));
+    public ResponseEntity<ApiResponse<CustomerLedgerSummaryDTO>> getCustomerSummary(@PathVariable Long customerId) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer ledger summary retrieved successfully",
+                service.getCustomerLedgerSummary(customerId)));
     }
 
     // Get empty returns with filtering
     @GetMapping("/empty-returns")
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getEmptyReturns(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getEmptyReturns(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
@@ -341,12 +290,13 @@ public class CustomerCylinderLedgerController {
             // Invalid date format, continue without filtering
         }
 
-        return ResponseEntity.ok(service.getEmptyReturns(from, to, customerId, variantId, createdBy, pageable));
+        return ResponseEntity.ok(ApiResponseUtil.success("Empty returns retrieved successfully",
+                service.getEmptyReturns(from, to, customerId, variantId, createdBy, pageable)));
     }
 
     // Get payment history with filtering
     @GetMapping("/payments")
-    public ResponseEntity<Page<CustomerCylinderLedgerDTO>> getPayments(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getPayments(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
@@ -372,12 +322,13 @@ public class CustomerCylinderLedgerController {
             throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
         }
 
-        return ResponseEntity.ok(service.getPayments(from, to, customerId, paymentMode, bankAccountId, createdBy, pageable));
+        return ResponseEntity.ok(ApiResponseUtil.success("Payments retrieved successfully",
+                service.getPayments(from, to, customerId, paymentMode, bankAccountId, createdBy, pageable)));
     }
 
     // Get payment summary for filters
     @GetMapping("/payments-summary")
-    public ResponseEntity<Map<String, Object>> getPaymentsSummary(
+    public ResponseEntity<ApiResponse<PaymentsSummaryDTO>> getPaymentsSummary(
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             @RequestParam(required = false) Long customerId,
@@ -397,23 +348,28 @@ public class CustomerCylinderLedgerController {
             throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
         }
 
-        java.math.BigDecimal totalAmount = service.getPaymentsSummary(from, to, customerId, paymentMode, bankAccountId, createdBy);
-        return ResponseEntity.ok(Map.of("totalAmount", totalAmount));
+        java.math.BigDecimal totalAmount = service.getPaymentsSummary(from, to, customerId, paymentMode, bankAccountId,
+                createdBy);
+        PaymentsSummaryDTO summary = new PaymentsSummaryDTO(totalAmount);
+        return ResponseEntity.ok(ApiResponseUtil.success("Payments summary retrieved successfully", summary));
     }
 
     // Update a ledger entry with full chain recalculation
     // Validates that no due amounts go negative anywhere in the chain
     @PutMapping("/{ledgerId}")
-    public ResponseEntity<CustomerCylinderLedgerDTO> updateLedgerEntry(
+    public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> updateLedgerEntry(
             @PathVariable Long ledgerId,
-            @RequestBody Map<String, Object> updateData) {
-        return ResponseEntity.ok(service.updateLedgerEntry(ledgerId, updateData));
+            @RequestBody LedgerUpdateRequestDTO updateData) {
+        return ResponseEntity.ok(ApiResponseUtil.success("Ledger entry updated successfully",
+                service.updateLedgerEntry(ledgerId, updateData)));
     }
 
     // Admin endpoint to repair/recalculate all balances with correct formula
     @PostMapping("/admin/repair-balances")
-    public ResponseEntity<Map<String, String>> repairAllBalances() {
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> repairAllBalances() {
         service.recalculateAllBalances();
-        return ResponseEntity.ok(Map.of("status", "success", "message", "All balances have been recalculated"));
+        return ResponseEntity.ok(ApiResponseUtil.success("All balances have been recalculated",
+                new SimpleStatusDTO("success")));
     }
 }
+

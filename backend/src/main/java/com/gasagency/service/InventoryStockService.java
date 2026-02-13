@@ -1,8 +1,9 @@
 // ...existing code...
 package com.gasagency.service;
 
-import com.gasagency.dto.InventoryStockDTO;
-import com.gasagency.dto.WarehouseTransferDTO;
+import com.gasagency.dto.response.InventoryStockDTO;
+import com.gasagency.dto.request.WarehouseInventoryItemDTO;
+import com.gasagency.dto.response.WarehouseTransferDTO;
 import com.gasagency.entity.InventoryStock;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.Warehouse;
@@ -19,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -540,6 +540,14 @@ public class InventoryStockService {
                                 .collect(Collectors.toList());
         }
 
+        @Transactional(readOnly = true)
+        public List<InventoryStockDTO> getStockDTOsByWarehouseId(Long warehouseId) {
+                Warehouse warehouse = warehouseRepository.findById(warehouseId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Warehouse not found with id: " + warehouseId));
+                return getStockDTOsByWarehouse(warehouse);
+        }
+
         /**
          * Update stock with optimistic locking (warehouse-aware)
          * Used during warehouse transfers
@@ -891,7 +899,7 @@ public class InventoryStockService {
         }
 
         @Transactional
-        public void setupWarehouseInventory(Long warehouseId, List<Map<String, Object>> inventoryItems) {
+        public void setupWarehouseInventory(Long warehouseId, List<WarehouseInventoryItemDTO> inventoryItems) {
                 LoggerUtil.logBusinessEntry(logger, "SETUP_WAREHOUSE_INVENTORY", "warehouseId", warehouseId,
                                 "itemsCount", inventoryItems.size());
 
@@ -899,10 +907,10 @@ public class InventoryStockService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Warehouse not found with id: " + warehouseId));
 
-                for (Map<String, Object> item : inventoryItems) {
-                        Long variantId = Long.valueOf(item.get("variantId").toString());
-                        Long filledQty = Long.valueOf(item.get("filledQty").toString());
-                        Long emptyQty = Long.valueOf(item.get("emptyQty").toString());
+                for (WarehouseInventoryItemDTO item : inventoryItems) {
+                        Long variantId = item.getVariantId();
+                        Long filledQty = item.getFilledQty() != null ? item.getFilledQty() : 0L;
+                        Long emptyQty = item.getEmptyQty() != null ? item.getEmptyQty() : 0L;
 
                         CylinderVariant variant = variantRepository.findById(variantId)
                                         .orElseThrow(() -> new ResourceNotFoundException(
@@ -937,3 +945,4 @@ public class InventoryStockService {
                 LoggerUtil.logBusinessSuccess(logger, "SETUP_WAREHOUSE_INVENTORY", "warehouseId", warehouseId);
         }
 }
+

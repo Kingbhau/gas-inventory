@@ -10,6 +10,7 @@ import { ExpenseService } from '../../services/expense.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { Expense } from '../../models/expense.model';
+import { ExpenseCategory } from '../../models/expense-category.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { BankAccount } from '../../models/bank-account.model';
 import { LoadingService } from '../../services/loading.service';
@@ -31,7 +32,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   
   expenseForm!: FormGroup;
   successMessage = '';
-  categories: any[] = [];
+  categories: ExpenseCategory[] = [];
   categoryMap: Map<string, number> = new Map();
   bankAccounts: BankAccount[] = [];
   paymentModes: PaymentMode[] = [];
@@ -76,11 +77,13 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     )
     .subscribe({
-      next: ([categoryResponse, paymentModes, bankAccounts]: any) => {
-        const categoryList = Array.isArray(categoryResponse) ? categoryResponse : (categoryResponse?.content || []);
-        this.categories = categoryList.filter((cat: any) => cat.isActive !== false);
-        this.categories.forEach((cat: any) => {
-          this.categoryMap.set(cat.name, cat.id);
+      next: ([categoryResponse, paymentModes, bankAccounts]: [ExpenseCategory[], PaymentMode[], BankAccount[]]) => {
+        const categoryList = Array.isArray(categoryResponse) ? categoryResponse : [];
+        this.categories = categoryList.filter((cat) => cat.isActive !== false);
+        this.categories.forEach((cat) => {
+          if (typeof cat.id === 'number') {
+            this.categoryMap.set(cat.name, cat.id);
+          }
         });
         this.paymentModes = paymentModes || [];
         this.bankAccounts = bankAccounts || [];
@@ -111,13 +114,8 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       category: ['', Validators.required],
       expenseDate: ['', Validators.required],
       notes: [''],
-      paymentMode: [''],
+      paymentMode: ['', Validators.required],
       bankAccountId: [null]
-    });
-
-    // Add conditional validation for paymentMode when amount changes
-    this.expenseForm.get('amount')?.valueChanges.subscribe(() => {
-      this.updatePaymentModeValidators();
     });
 
     // When paymentMode changes, show/hide bank account field
@@ -133,18 +131,6 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
       }
       bankAccountControl?.updateValueAndValidity();
     });
-  }
-
-  private updatePaymentModeValidators() {
-    const modeControl = this.expenseForm.get('paymentMode');
-    const amount = this.expenseForm.get('amount')?.value;
-    
-    if (amount && amount > 0) {
-      modeControl?.setValidators(Validators.required);
-    } else {
-      modeControl?.clearValidators();
-    }
-    modeControl?.updateValueAndValidity();
   }
 
   getSelectedPaymentMode(modeName: string): PaymentMode | undefined {

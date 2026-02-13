@@ -20,6 +20,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, SaleRepositor
 
         Page<Sale> findByCustomer(Customer customer, Pageable pageable);
 
+        Page<Sale> findByCustomerId(Long customerId, Pageable pageable);
+
         @Query("SELECT s FROM Sale s WHERE s.referenceNumber = :referenceNumber")
         Optional<Sale> findByReferenceNumber(@Param("referenceNumber") String referenceNumber);
 
@@ -36,3 +38,4 @@ public interface SaleRepository extends JpaRepository<Sale, Long>, SaleRepositor
                         @Param("toDate") LocalDate toDate);
 
 }
+

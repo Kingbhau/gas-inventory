@@ -18,3 +18,4 @@ public interface ReferenceSequenceRepository extends JpaRepository<ReferenceSequ
     @Query("SELECT r FROM ReferenceSequence r WHERE r.seqKey = :seqKey")
     Optional<ReferenceSequence> findBySeqKeyForUpdate(@Param("seqKey") String seqKey);
 }
+

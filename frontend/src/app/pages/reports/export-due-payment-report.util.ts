@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { CustomerDuePayment } from '../../models/customer-due-payment.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -32,7 +33,7 @@ export function exportDuePaymentReportToPDF({
   minAmount,
   maxAmount
 }: {
-  duePaymentData: any[],
+  duePaymentData: CustomerDuePayment[],
   fromDate?: string,
   toDate?: string,
   customerName?: string,

@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.WarehouseTransferDTO;
+import com.gasagency.dto.response.WarehouseTransferDTO;
 import com.gasagency.entity.WarehouseTransfer;
 import com.gasagency.entity.Warehouse;
 import com.gasagency.entity.CylinderVariant;
@@ -118,7 +118,8 @@ public class WarehouseTransferService {
             // 9. Create transfer record (storing total quantity for reference)
             Long totalQty = filledQty + emptyQty;
             WarehouseTransfer transfer = new WarehouseTransfer(fromWarehouse, toWarehouse, variant,
-                    totalQty);
+                    filledQty, emptyQty);
+            transfer.setQuantity(totalQty);
             if (transferDTO.getNotes() != null && !transferDTO.getNotes().trim().isEmpty()) {
                 transfer.setNotes(transferDTO.getNotes().trim());
             }
@@ -155,6 +156,16 @@ public class WarehouseTransferService {
     }
 
     @Transactional(readOnly = true)
+    public List<WarehouseTransferDTO> getAllTransfers(Long variantId) {
+        List<WarehouseTransfer> transfers = variantId != null
+                ? warehouseTransferRepository.findByVariantId(variantId)
+                : warehouseTransferRepository.findAll();
+        return transfers.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public Page<WarehouseTransferDTO> getAllTransfers(Pageable pageable) {
         return warehouseTransferRepository.findAll(pageable)
                 .map(this::convertToDTO);
@@ -168,6 +179,15 @@ public class WarehouseTransferService {
         Warehouse warehouse = warehouseService.getWarehouseEntity(warehouseId);
 
         return warehouseTransferRepository.findAllTransfersForWarehouse(warehouse)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<WarehouseTransferDTO> getTransfersForWarehouseAndVariant(Long warehouseId, Long variantId) {
+        Warehouse warehouse = warehouseService.getWarehouseEntity(warehouseId);
+        return warehouseTransferRepository.findAllTransfersForWarehouseAndVariant(warehouse, variantId)
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -271,10 +291,6 @@ public class WarehouseTransferService {
             throw new IllegalArgumentException("Quantities cannot be negative");
         }
 
-        if (filledQty == 0 && emptyQty == 0) {
-            throw new IllegalArgumentException("At least one quantity must be positive");
-        }
-
         if ((filledQty + emptyQty) > 10000) { // Sanity check
             throw new IllegalArgumentException("Transfer quantity exceeds maximum allowed");
         }
@@ -293,8 +309,8 @@ public class WarehouseTransferService {
         dto.setVariantId(transfer.getVariant().getId());
         dto.setVariantName(transfer.getVariant().getName());
         // Store the total quantity back for compatibility
-        dto.setFilledQty(transfer.getQuantity());
-        dto.setEmptyQty(0L);
+        dto.setFilledQty(transfer.getFilledQty());
+        dto.setEmptyQty(transfer.getEmptyQty());
         dto.setTransferDate(transfer.getTransferDate());
         dto.setCreatedAt(transfer.getCreatedDate());
         dto.setCreatedBy(transfer.getCreatedBy());
@@ -304,3 +320,4 @@ public class WarehouseTransferService {
         return dto;
     }
 }
+

@@ -6,6 +6,7 @@ import { Warehouse } from '../models/warehouse.model';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
 import { CacheService, CACHE_KEYS, CACHE_CONFIG } from './cache.service';
+import { unwrapApiResponse } from '../utils/api-response.util';
 
 @Injectable({
   providedIn: 'root'
@@ -19,9 +20,9 @@ export class WarehouseService {
   /**
    * Get all warehouses
    */
-  getAllWarehouses(): Observable<any> {
+  getAllWarehouses(): Observable<Warehouse[]> {
     return this.http.get<any>(this.apiUrl, { withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse[]>());
   }
 
   /**
@@ -41,11 +42,7 @@ export class WarehouseService {
       this.activeWarehousesCache$ = this.http.get<any>(`${this.apiUrl}/active`, { withCredentials: true })
         .pipe(
           applyTimeout(),
-          map(response => {
-            // Handle both wrapped response {data: [...]} and direct array response
-            let data = Array.isArray(response) ? response : (response?.data || []);
-            return data;
-          }),
+          unwrapApiResponse<Warehouse[]>(),
           tap(data => {
             // Cache the data for future use
             this.cacheService.set(CACHE_KEYS.WAREHOUSES, data, CACHE_CONFIG.REFERENCE_DATA);
@@ -59,17 +56,17 @@ export class WarehouseService {
   /**
    * Get warehouse by ID
    */
-  getWarehouseById(id: number): Observable<any> {
+  getWarehouseById(id: number): Observable<Warehouse> {
     return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 
   /**
    * Get warehouse by name
    */
-  getWarehouseByName(name: string): Observable<any> {
+  getWarehouseByName(name: string): Observable<Warehouse> {
     return this.http.get<any>(`${this.apiUrl}/name/${name}`, { withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 
   /**
@@ -83,28 +80,32 @@ export class WarehouseService {
   /**
    * Create new warehouse
    */
-  createWarehouse(name: string, businessId: number): Observable<any> {
-    return this.http.post<any>(this.apiUrl, { name, businessId }, { withCredentials: true });
+  createWarehouse(name: string, businessId: number): Observable<Warehouse> {
+    return this.http.post<any>(this.apiUrl, { name, businessId }, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 
   /**
    * Update warehouse
    */
-  updateWarehouse(id: number, warehouse: Warehouse): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, warehouse, { withCredentials: true });
+  updateWarehouse(id: number, warehouse: Warehouse): Observable<Warehouse> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, warehouse, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 
   /**
    * Activate warehouse
    */
-  activateWarehouse(id: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {}, { withCredentials: true });
+  activateWarehouse(id: number): Observable<Warehouse> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/activate`, {}, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 
   /**
    * Deactivate warehouse
    */
-  deactivateWarehouse(id: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {}, { withCredentials: true });
+  deactivateWarehouse(id: number): Observable<Warehouse> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/deactivate`, {}, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Warehouse>());
   }
 }

@@ -17,3 +17,4 @@ public interface ExpenseCategoryRepository extends JpaRepository<ExpenseCategory
     @Query("SELECT c.name FROM ExpenseCategory c WHERE c.isActive = true ORDER BY c.name")
     List<String> findActiveNames();
 }
+

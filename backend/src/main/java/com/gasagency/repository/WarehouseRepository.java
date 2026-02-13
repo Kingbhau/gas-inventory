@@ -21,3 +21,4 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, Long> {
 
     boolean existsByNameAndIdNot(String name, Long id);
 }
+

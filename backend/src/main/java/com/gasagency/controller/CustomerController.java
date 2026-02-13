@@ -1,7 +1,11 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.CustomerDTO;
+import com.gasagency.dto.response.CustomerDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.service.CustomerService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,33 +26,38 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomerDTO> createCustomer(@Valid @RequestBody CustomerDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createCustomer(dto));
+    public ResponseEntity<ApiResponse<CustomerDTO>> createCustomer(@Valid @RequestBody CustomerDTO dto) {
+        CustomerDTO created = service.createCustomer(dto);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseUtil.success("Customer created successfully", created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerDTO> getCustomer(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getCustomerById(id));
+    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomer(@PathVariable Long id) {
+        CustomerDTO customer = service.getCustomerById(id);
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer retrieved successfully", customer));
     }
 
     @GetMapping
-    public ResponseEntity<Page<CustomerDTO>> getAllCustomers(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerDTO>>> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllCustomers(pageable));
+        Page<CustomerDTO> customers = service.getAllCustomers(pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Customers retrieved successfully", customers));
     }
 
     @GetMapping("/active/list")
-    public ResponseEntity<List<CustomerDTO>> getActiveCustomers() {
-        return ResponseEntity.ok(service.getActiveCustomers());
+    public ResponseEntity<ApiResponse<List<CustomerDTO>>> getActiveCustomers() {
+        List<CustomerDTO> customers = service.getActiveCustomers();
+        return ResponseEntity.ok(ApiResponseUtil.success("Active customers retrieved successfully", customers));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<Page<CustomerDTO>> getActiveCustomersPaged(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerDTO>>> getActiveCustomersPaged(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -64,22 +73,28 @@ public class CustomerController {
             }
         }
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getActiveCustomers(pageable, search, minDueAmount));
+        Page<CustomerDTO> customers = service.getActiveCustomers(pageable, search, minDueAmount);
+        return ResponseEntity.ok(ApiResponseUtil.success("Active customers retrieved successfully", customers));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerDTO> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerDTO dto) {
-        return ResponseEntity.ok(service.updateCustomer(id, dto));
+    public ResponseEntity<ApiResponse<CustomerDTO>> updateCustomer(
+            @PathVariable Long id, @Valid @RequestBody CustomerDTO dto) {
+        CustomerDTO updated = service.updateCustomer(id, dto);
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer updated successfully", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> deleteCustomer(@PathVariable Long id) {
         service.deleteCustomer(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer deleted successfully",
+                new SimpleStatusDTO("SUCCESS")));
     }
 
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<CustomerDTO> reactivateCustomer(@PathVariable Long id) {
-        return ResponseEntity.ok(service.reactivateCustomer(id));
+    public ResponseEntity<ApiResponse<CustomerDTO>> reactivateCustomer(@PathVariable Long id) {
+        CustomerDTO customer = service.reactivateCustomer(id);
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer reactivated successfully", customer));
     }
 }
+

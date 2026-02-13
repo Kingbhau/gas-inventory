@@ -1,7 +1,12 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.SupplierDTO;
+import com.gasagency.dto.request.CreateSupplierRequestDTO;
+import com.gasagency.dto.response.SupplierDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.service.SupplierService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/suppliers")
@@ -22,50 +26,55 @@ public class SupplierController {
     }
 
     @PostMapping
-    public ResponseEntity<SupplierDTO> createSupplier(@Valid @RequestBody Map<String, Object> request) {
-        String name = (String) request.get("name");
-        String contact = (String) request.get("contact");
-        Long businessId = null;
-
-        if (request.get("businessId") instanceof Number) {
-            businessId = ((Number) request.get("businessId")).longValue();
-        }
-
+    public ResponseEntity<ApiResponse<SupplierDTO>> createSupplier(
+            @Valid @RequestBody CreateSupplierRequestDTO request) {
+        String name = request.getName();
+        String contact = request.getContact();
+        Long businessId = request.getBusinessId();
         if (businessId == null) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error("businessId is required", "INVALID_ARGUMENT"));
         }
 
         SupplierDTO dto = new SupplierDTO();
         dto.setName(name);
         dto.setContact(contact);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createSupplier(dto, businessId));
+        SupplierDTO created = service.createSupplier(dto, businessId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseUtil.success("Supplier created successfully", created));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SupplierDTO> getSupplier(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getSupplierById(id));
+    public ResponseEntity<ApiResponse<SupplierDTO>> getSupplier(@PathVariable Long id) {
+        SupplierDTO supplier = service.getSupplierById(id);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier retrieved successfully", supplier));
     }
 
     @GetMapping
-    public ResponseEntity<Page<SupplierDTO>> getAllSuppliers(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<SupplierDTO>>> getAllSuppliers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllSuppliers(pageable));
+        Page<SupplierDTO> suppliers = service.getAllSuppliers(pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Suppliers retrieved successfully", suppliers));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SupplierDTO> updateSupplier(@PathVariable Long id, @Valid @RequestBody SupplierDTO dto) {
-        return ResponseEntity.ok(service.updateSupplier(id, dto));
+    public ResponseEntity<ApiResponse<SupplierDTO>> updateSupplier(@PathVariable Long id,
+            @Valid @RequestBody SupplierDTO dto) {
+        SupplierDTO updated = service.updateSupplier(id, dto);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier updated successfully", updated));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSupplier(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> deleteSupplier(@PathVariable Long id) {
         service.deleteSupplier(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier deleted successfully",
+                new SimpleStatusDTO("SUCCESS")));
     }
 }
+

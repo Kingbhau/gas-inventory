@@ -8,6 +8,8 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
+import { User } from '../../models/user.model';
+import { AuthUserInfo } from '../../models/auth.model';
 
 @Component({
     selector: 'app-profile',
@@ -24,7 +26,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     faKey = faKey;
     profileForm!: FormGroup;
     passwordForm!: FormGroup;
-    user: any;
+    user: User | AuthUserInfo | null = null;
     showEdit = false;
     showPassword = false;
 
@@ -96,15 +98,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     updateProfile() {
         if (this.profileForm.valid) {
-            const updated = {
-                ...this.user,
+            const updated: Partial<User> = {
                 name: this.profileForm.get('name')?.value,
                 mobileNo: this.profileForm.get('mobileNo')?.value
             };
+            if (!this.user?.id) {
+                this.toastr.error('Invalid user', 'Error');
+                return;
+            }
             this.userService.updateUser(this.user.id, updated).subscribe({
                 next: (result) => {
                     // Only update user info (no token)
-                    this.authService.setUserInfo(result);
+                    const userInfo: AuthUserInfo = {
+                        id: result.id ?? this.user?.id ?? 0,
+                        username: result.username || this.user?.username || '',
+                        name: result.name,
+                        role: result.role,
+                        mobileNo: result.mobileNo,
+                        businessId: result.businessId ?? null
+                    };
+                    this.authService.setUserInfo(userInfo);
                     this.user = result;
                     this.showEdit = false;
                     this.toastr.success('Profile updated successfully.', 'Success');
@@ -122,20 +135,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
         if (this.passwordForm.valid && this.passwordForm.get('newPassword')?.value === this.passwordForm.get('confirmPassword')?.value) {
             const currentPassword = this.passwordForm.get('currentPassword')?.value;
             const newPassword = this.passwordForm.get('newPassword')?.value;
+            if (!this.user?.id) {
+                this.toastr.error('Invalid user', 'Error');
+                return;
+            }
             this.userService.changePassword(this.user.id, currentPassword, newPassword).subscribe({
-                next: (response: any) => {
-                    if (response?.success || response === true) {
-                        this.toastr.success('Password changed successfully.', 'Success');
-                        this.showPassword = false;
-                        this.passwordForm.reset();
-                    } else {
-                        const errorMsg = response?.message || 'Current password is incorrect.';
-                        this.toastr.error(errorMsg, 'Error');
-                    }
+                next: () => {
+                    this.toastr.success('Password changed successfully.', 'Success');
+                    this.showPassword = false;
+                    this.passwordForm.reset();
                     this.cdr.markForCheck();
                 },
-                error: (error: any) => {
-                    const errorMessage = error?.error?.message || error?.error?.error || error?.message || 'Failed to change password.';
+                error: (error: unknown) => {
+                    const err = error as { error?: { message?: string; error?: string }; message?: string };
+                    const errorMessage = err?.error?.message || err?.error?.error || err?.message || 'Failed to change password.';
                     this.toastr.error(errorMessage, 'Error');
                     this.cdr.markForCheck();
                 }

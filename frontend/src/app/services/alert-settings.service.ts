@@ -3,22 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
-
-export interface AlertConfig {
-  id: number;
-  alertType: string;
-  enabled: boolean;
-  filledCylinderThreshold?: number;
-  emptyCylinderThreshold?: number;
-  pendingReturnThreshold?: number;
-  description: string;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-}
+import { unwrapApiResponse } from '../utils/api-response.util';
+import { AlertConfig } from '../models/alert-config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -31,35 +17,35 @@ export class AlertSettingsService {
   /**
    * Get all alert configurations
    */
-  getAlertConfigurations(): Observable<ApiResponse<AlertConfig[]>> {
-    return this.http.get<ApiResponse<AlertConfig[]>>(this.apiUrl, { withCredentials: true })
-      .pipe(applyTimeout());
+  getAlertConfigurations(): Observable<AlertConfig[]> {
+    return this.http.get<any>(this.apiUrl, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<AlertConfig[]>());
   }
 
   /**
    * Get a specific alert configuration by type
    */
-  getAlertConfig(alertType: string): Observable<ApiResponse<AlertConfig>> {
-    return this.http.get<ApiResponse<AlertConfig>>(`${this.apiUrl}/${alertType}`, { withCredentials: true })
-      .pipe(applyTimeout());
+  getAlertConfig(alertType: string): Observable<AlertConfig> {
+    return this.http.get<any>(`${this.apiUrl}/${alertType}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<AlertConfig>());
   }
 
   /**
    * Update alert configuration
    */
-  updateAlertConfig(alertType: string, config: any): Observable<ApiResponse<AlertConfig>> {
-    return this.http.put<ApiResponse<AlertConfig>>(`${this.apiUrl}/${alertType}`, config, { withCredentials: true })
-      .pipe(applyTimeout());
+  updateAlertConfig(alertType: string, config: Partial<AlertConfig>): Observable<AlertConfig> {
+    return this.http.put<any>(`${this.apiUrl}/${alertType}`, config, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<AlertConfig>());
   }
 
   /**
    * Enable or disable an alert type
    */
-  toggleAlertConfig(alertType: string, enabled: boolean): Observable<ApiResponse<AlertConfig>> {
-    return this.http.patch<ApiResponse<AlertConfig>>(
+  toggleAlertConfig(alertType: string, enabled: boolean): Observable<AlertConfig> {
+    return this.http.patch<any>(
       `${this.apiUrl}/${alertType}/toggle`,
       { enabled },
       { withCredentials: true }
-    ).pipe(applyTimeout());
+    ).pipe(applyTimeout(), unwrapApiResponse<AlertConfig>());
   }
 }

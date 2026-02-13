@@ -8,7 +8,8 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faEdit, faTrash, faBook, faPlus, faTimes, faExclamation, faUsers, faEye, faEllipsisV, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CustomerService } from '../../services/customer.service';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { PaymentModeService } from '../../services/payment-mode.service';
@@ -24,6 +25,23 @@ import { PaymentMode } from '../../models/payment-mode.model';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { SharedModule } from '../../shared/shared.module';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { SimpleStatusDTO } from '../../models/simple-status';
+import { Customer } from '../../models/customer.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { CustomerLedgerVariantSummary } from '../../models/customer-ledger-summary.model';
+import { CustomerVariantPrice } from '../../models/customer-variant-price.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { LedgerUpdateRequest } from '../../models/ledger-update-request.model';
+import { PageResponse } from '../../models/page-response';
+import { PaymentsSummary } from '../../models/payments-summary.model';
+
+type CustomerRow = Customer & {
+  id: number;
+  showMenu?: boolean;
+  returnPendingUnits?: number;
+  filledUnits?: number;
+  dueAmount?: number;
+};
 
 @Component({
   selector: 'app-customer-management',
@@ -76,17 +94,17 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   isLoadingMoreLedger = false;
 
   // Store initial stock entries to maintain disabled state when rebuilding
-  initialStockEntriesMap: { [variantId: number]: any } = {};
+  initialStockEntriesMap: Record<number, CustomerCylinderLedger> = {};
 
 
 
-  isLastRow(customer: any): boolean {
+  isLastRow(customer: CustomerRow): boolean {
     const index = this.paginatedCustomers.indexOf(customer);
     return index === this.paginatedCustomers.length - 1;
   }
   get isAnyDropdownOpen(): boolean {
     return this.paginatedCustomers && Array.isArray(this.paginatedCustomers)
-      ? this.paginatedCustomers.some((c: any) => c && c.showMenu)
+      ? this.paginatedCustomers.some((c: CustomerRow) => c && c.showMenu)
       : false;
   }
 
@@ -132,7 +150,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   showForm = false;
   editingId: number | null = null;
   showLedger = false;
-  selectedCustomer: any = null;
+  selectedCustomer: CustomerRow | null = null;
   searchTerm = '';
 
   ledgerFilterVariant: string = '';
@@ -150,19 +168,19 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   faEllipsisV = faEllipsisV;
   faDownload = faDownload;
 
-  customers: any[] = [];
-  ledgerEntries: any[] = [];
-  variants: any[] = [];
-  existingCustomerPrices: { [key: number]: any } = {};
-  variantSummary: any[] = [];
+  customers: CustomerRow[] = [];
+  ledgerEntries: CustomerCylinderLedger[] = [];
+  variants: CylinderVariant[] = [];
+  existingCustomerPrices: Record<number, { basePrice?: number; discountPrice?: number }> = {};
+  variantSummary: CustomerLedgerVariantSummary[] = [];
 
   showDetailsModal = false;
-  detailsCustomer: any = null;
-  detailsVariantPrices: any[] = [];
+  detailsCustomer: CustomerRow | null = null;
+  detailsVariantPrices: CustomerVariantPrice[] = [];
   users: User[] = [];
 
   showReasonModal = false;
-  selectedReasonEntry: any = null;
+  selectedReasonEntry: CustomerCylinderLedger | null = null;
 
   // Rename all pendingUnits to returnPendingUnits for clarity
   // Add property to store filled units
@@ -184,8 +202,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   showUpdateForm = false;
   isSubmittingUpdate = false;
   updateError = '';
-  selectedLedgerEntry: any = null;
-  updateForm: any = {
+  selectedLedgerEntry: CustomerCylinderLedger | null = null;
+  updateForm: LedgerUpdateRequest = {
     filledOut: 0,
     emptyIn: 0,
     totalAmount: 0,
@@ -235,12 +253,11 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   loadBankAccounts() {
     this.bankAccountService.getActiveBankAccounts()
       .subscribe({
-        next: (response: any) => {
+        next: (response: BankAccount[]) => {
           this.bankAccounts = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading bank accounts:', error);
+        error: (error: unknown) => {
           this.bankAccounts = [];
         }
       });
@@ -253,8 +270,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.paymentModes = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading payment modes:', error);
+        error: (error: unknown) => {
           this.paymentModes = [];
         }
       });
@@ -273,6 +289,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return parseFloat(this.paymentForm.amount.replace(/,/g, '')) || 0;
     }
     return this.paymentForm.amount || 0;
+  }
+
+  onPaymentAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.paymentForm.amount = input.value;
+    this.cdr.markForCheck();
   }
   get defaultVariantFilter() {
     return { id: null, name: 'All' };
@@ -295,9 +317,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
    * Toggle action menu for a specific customer
    * Closes all other dropdowns and toggles the current one
    */
-  toggleCustomerMenu(customer: any) {
+  toggleCustomerMenu(customer: CustomerRow) {
     // Close all other menus
-    this.paginatedCustomers.forEach((c: any) => {
+    this.paginatedCustomers.forEach((c: CustomerRow) => {
       if (c !== customer) {
         c.showMenu = false;
       }
@@ -306,7 +328,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     customer.showMenu = !customer.showMenu;
   }
 
-  openDetailsModal(customer: any) {
+  openDetailsModal(customer: CustomerRow) {
     this.detailsCustomer = customer;
     this.detailsVariantPrices = [];
     this.showDetailsModal = true;
@@ -314,15 +336,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     // Load variant prices for this customer
     this.variantPriceService.getPricesByCustomer(customer.id)
       .subscribe({
-        next: (response: any) => {
-          // Response is ApiResponse<List<CustomerVariantPriceDTO>>
-          if (response && response.data) {
-            this.detailsVariantPrices = response.data;
+        next: (response: CustomerVariantPrice[]) => {
+          if (response) {
+            this.detailsVariantPrices = response;
           }
           this.cdr.markForCheck();
         },
-        error: (err) => {
-          console.error('Error loading variant prices:', err);
+        error: (err: unknown) => {
           this.detailsVariantPrices = [];
         }
       });
@@ -354,7 +374,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  openReasonModal(entry: any) {
+  openReasonModal(entry: CustomerCylinderLedger) {
     this.selectedReasonEntry = entry;
     this.showReasonModal = true;
   }
@@ -368,16 +388,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.loadingService.show('Loading variants...');
     const variantSub = this.variantService.getAllVariantsWithCache()
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading variants';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [] });
+          return of([]);
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any) => {
-        this.variants = data.content || data;
+      .subscribe((data: CylinderVariant[]) => {
+        this.variants = data || [];
         this.buildVariantPricingArray(); // Build form array with variants
         this.loadCustomersWithBalances();
         variantSub.unsubscribe();
@@ -400,23 +420,31 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     // Fetch both customers and their balances for the current page
     const customerSub = this.customerService.getAllCustomers(this.customerPage - 1, this.customerPageSize)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading customers';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: this.customerPage - 1,
+            size: this.customerPageSize
+          } as PageResponse<CustomerRow>);
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any) => {
-        const customers = (data.content || data).sort((a: any, b: any) => b.id - a.id);
-        this.totalCustomers = data.totalElements || customers.length;
-        this.totalPages = data.totalPages || 1;
+      .subscribe((data: PageResponse<Customer>) => {
+        const customers = (data.items || [])
+          .filter((customer): customer is CustomerRow => typeof customer.id === 'number')
+          .sort((a, b) => b.id - a.id);
+        this.totalCustomers = data.totalElements ?? customers.length;
+        this.totalPages = data.totalPages ?? 1;
         // Now fetch balances for these customers in one batch
         this.ledgerService.getCustomerBalances(this.customerPage - 1, this.customerPageSize).subscribe({
           next: (balances: CustomerBalance[]) => {
             // Merge balances into customers array
-            this.customers = customers.map((customer: any) => {
+            this.customers = customers.map((customer: CustomerRow) => {
               const balanceObj = balances.find(b => b.customerId === customer.id);
               let returnPendingUnits = 0;
               let filledUnits = 0;
@@ -449,8 +477,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             
             this.cdr.markForCheck();
           },
-          error: (err: any) => {
-            this.customers = customers.map((customer: any) => ({ ...customer, returnPendingUnits: 0, filledUnits: 0 }));
+          error: (err: unknown) => {
+            this.customers = customers.map((customer: CustomerRow) => ({ ...customer, returnPendingUnits: 0, filledUnits: 0 }));
             this.cdr.markForCheck();
           }
         });
@@ -474,7 +502,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       }
     }
     // Sort by transaction date (newest first) for display
-    entries = entries.sort((a: any, b: any) => {
+    entries = entries.sort((a: CustomerCylinderLedger, b: CustomerCylinderLedger) => {
       const dateA = new Date(a.transactionDate).getTime();
       const dateB = new Date(b.transactionDate).getTime();
       if (dateA === dateB) {
@@ -491,9 +519,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   showMoreLedger() {
-    if (this.canShowMoreLedger && this.selectedCustomer) {
+    const customerId = this.selectedCustomer?.id;
+    if (this.canShowMoreLedger && customerId) {
       this.ledgerPage++;
-      this.loadLedgerForCustomer(this.selectedCustomer.id, false); // false = don't reset page
+      this.loadLedgerForCustomer(customerId, false); // false = don't reset page
     }
   }
 
@@ -502,11 +531,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     if (!this.filteredLedgerEntries.length) return 0;
     const mostRecentByVariant: { [variant: string]: { id: number, balance: number } } = {};
     for (const entry of this.filteredLedgerEntries) {
+      const entryId = entry.id ?? 0;
       if (
         !mostRecentByVariant[entry.variantName] ||
-        entry.id > mostRecentByVariant[entry.variantName].id
+        entryId > mostRecentByVariant[entry.variantName].id
       ) {
-        mostRecentByVariant[entry.variantName] = { id: entry.id, balance: entry.balance };
+        mostRecentByVariant[entry.variantName] = { id: entryId, balance: entry.balance };
       }
     }
     return Object.values(mostRecentByVariant).reduce((sum, v) => sum + (typeof v.balance === 'number' ? v.balance : 0), 0);
@@ -547,7 +577,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
    * Build variant pricing form controls only for selected variants
    * Preserves existing prices when variants are added/removed
    */
-  buildVariantPricingArray(selectedVariantIds?: any[]) {
+  buildVariantPricingArray(selectedVariantIds?: number[]) {
     const pricesArray = this.customerForm.get('variantPrices') as FormArray;
     const variantIds = selectedVariantIds || this.customerForm.get('configuredVariants')?.value || [];
     
@@ -555,17 +585,19 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     pricesArray.clear();
     
     this.variants
-      .filter(variant => variantIds.includes(variant.id))
+      .filter((variant): variant is CylinderVariant & { id: number } =>
+        typeof variant.id === 'number' && variantIds.includes(variant.id))
       .forEach(variant => {
+        const variantId = variant.id;
         // Get existing prices from backend load (this.existingCustomerPrices)
-        const existingPrice = this.existingCustomerPrices[variant.id];
+        const existingPrice = this.existingCustomerPrices[variantId];
         // Use basePrice as default, or existing basePrice from backend
         const basePriceValue = existingPrice?.basePrice !== undefined ? existingPrice.basePrice : (variant.basePrice || '');
         // Use existing discountPrice from backend, or empty string
         const discountPriceValue = existingPrice?.discountPrice !== undefined ? existingPrice.discountPrice : '';
         
         const priceGroup = this.fb.group({
-          variantId: [variant.id, Validators.required],
+          variantId: [variantId, Validators.required],
           variantName: [variant.name],
           basePrice: [basePriceValue, { value: basePriceValue, disabled: true }], // Read-only basePrice
           discountPrice: [discountPriceValue, [Validators.required, Validators.min(0)]]
@@ -585,13 +617,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   /**
    * Build variant filled cylinders form controls for each selected variant
    */
-  buildVariantFilledCylindersArray(selectedVariantIds?: any[]) {
+  buildVariantFilledCylindersArray(selectedVariantIds?: number[]) {
     const filledCylArray = this.customerForm.get('variantFilledCylinders') as FormArray;
     const variantIds = selectedVariantIds || this.customerForm.get('configuredVariants')?.value || [];
     
     // Create a map of existing filled cylinders by variantId for quick lookup
-    const existingFilled: { [key: number]: any } = {};
-    filledCylArray.controls.forEach((control: any) => {
+    const existingFilled: Record<number, { filledCylinders?: number; variantName?: string }> = {};
+    filledCylArray.controls.forEach((control) => {
       const variantId = control.get('variantId')?.value;
       if (variantId) {
         existingFilled[variantId] = {
@@ -605,20 +637,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     filledCylArray.clear();
     
     this.variants
-      .filter(variant => variantIds.includes(variant.id))
+      .filter((variant): variant is CylinderVariant & { id: number } =>
+        typeof variant.id === 'number' && variantIds.includes(variant.id))
       .forEach(variant => {
+        const variantId = variant.id;
         // Get existing filled cylinders if available, otherwise empty
-        const existingFil = existingFilled[variant.id];
+        const existingFil = existingFilled[variantId];
         
         const filledCylGroup = this.fb.group({
-          variantId: [variant.id, Validators.required],
+          variantId: [variantId, Validators.required],
           variantName: [variant.name, Validators.required],
           filledCylinders: [existingFil?.filledCylinders || '', [Validators.required, Validators.min(0)]]
         });
         filledCylArray.push(filledCylGroup);
         
         // Disable the field if it has an initial stock entry (pre-filled data)
-        const initialStockEntry = this.initialStockEntriesMap[variant.id];
+        const initialStockEntry = this.initialStockEntriesMap[variantId];
         if (initialStockEntry) {
           filledCylGroup.get('filledCylinders')?.setValue(initialStockEntry.filledOut);
           filledCylGroup.get('filledCylinders')?.disable();
@@ -629,7 +663,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   /**
    * Check if a variant is selected in the configuration
    */
-  isVariantSelected(variantId: number): boolean {
+  isVariantSelected(variantId: number | undefined): boolean {
+    if (variantId === undefined || variantId === null) {
+      return false;
+    }
     const configuredVariants = this.customerForm.get('configuredVariants')?.value || [];
     return configuredVariants.includes(variantId);
   }
@@ -637,7 +674,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   /**
    * Toggle variant selection and rebuild pricing array
    */
-  toggleVariantSelection(variantId: number) {
+  toggleVariantSelection(variantId: number | undefined) {
+    if (variantId === undefined || variantId === null) {
+      return;
+    }
     const configuredVariantsControl = this.customerForm.get('configuredVariants');
     const currentValues = configuredVariantsControl?.value || [];
     
@@ -668,36 +708,41 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.existingCustomerPrices = {};
   }
 
-  editCustomer(customer: any) {
+  editCustomer(customer: CustomerRow) {
     this.showForm = true;
     this.editingId = customer.id;
     
     // Fetch fresh customer data from backend to ensure we have latest configured variants
     this.customerService.getCustomer(customer.id).subscribe({
-      next: (freshCustomer: any) => {
+      next: (freshCustomer: Customer) => {
+        if (typeof freshCustomer.id !== 'number') {
+          this.toastr.error('Customer data is missing an id', 'Error');
+          return;
+        }
+        const customerRow = freshCustomer as CustomerRow;
         this.customerForm.patchValue({
-          name: freshCustomer.name || '',
-          mobile: freshCustomer.mobile || '',
-          address: freshCustomer.address || '',
-          gstNo: freshCustomer.gstNo || '',
-          securityDeposit: freshCustomer.securityDeposit !== undefined ? freshCustomer.securityDeposit : 0,
-          dueAmount: freshCustomer.dueAmount !== undefined ? freshCustomer.dueAmount : 0,
-          active: freshCustomer.active !== undefined ? freshCustomer.active : true,
-          configuredVariants: freshCustomer.configuredVariants || []
+          name: customerRow.name || '',
+          mobile: customerRow.mobile || '',
+          address: customerRow.address || '',
+          gstNo: customerRow.gstNo || '',
+          securityDeposit: customerRow.securityDeposit !== undefined ? customerRow.securityDeposit : 0,
+          dueAmount: customerRow.dueAmount !== undefined ? customerRow.dueAmount : 0,
+          active: customerRow.active !== undefined ? customerRow.active : true,
+          configuredVariants: customerRow.configuredVariants || []
         });
 
         // Load existing variant prices from backend and initial filled cylinders
-        if (freshCustomer.id) {
+        if (customerRow.id) {
           // Load variant prices
-          this.variantPriceService.getPricesByCustomer(freshCustomer.id).subscribe({
-            next: (response: any) => {
-              if (response && response.data && response.data.length > 0) {
+          this.variantPriceService.getPricesByCustomer(customerRow.id).subscribe({
+            next: (response: CustomerVariantPrice[]) => {
+              if (response && response.length > 0) {
             // Convert API response to form array format
-            const prices = response.data;
+            const prices = response;
             
             // Create a map of existing prices by variantId
-            const existingPrices: { [key: number]: any } = {};
-            prices.forEach((price: any) => {
+            const existingPrices: Record<number, { basePrice?: number; discountPrice?: number }> = {};
+            prices.forEach((price: CustomerVariantPrice) => {
               existingPrices[price.variantId] = {
                 basePrice: price.salePrice,
                 discountPrice: price.discountPrice
@@ -708,23 +753,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             this.existingCustomerPrices = existingPrices;
             
             // Rebuild the array with existing prices
-            this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
+            this.buildVariantPricingArray(customerRow.configuredVariants || []);
           } else {
             // No existing prices, rebuild with empty
-            this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
+            this.buildVariantPricingArray(customerRow.configuredVariants || []);
           }
           this.cdr.markForCheck();
         },
-        error: (err) => {
-          console.error('Error loading variant prices:', err);
+        error: (err: unknown) => {
           // Still rebuild the array even if load fails
-          this.buildVariantPricingArray(freshCustomer.configuredVariants || []);
+          this.buildVariantPricingArray(customerRow.configuredVariants || []);
         }
       });
 
       // Load initial filled cylinders from customer ledger (INITIAL_STOCK entries)
-      this.ledgerService.getLedgerByCustomer(freshCustomer.id).subscribe({
-        next: (ledgerEntries: any[]) => {
+      this.ledgerService.getLedgerByCustomer(customerRow.id).subscribe({
+        next: (ledgerEntries: CustomerCylinderLedger[]) => {
           // Get INITIAL_STOCK entries to populate filled cylinders
           const initialStockEntries = ledgerEntries.filter(entry => entry.refType === 'INITIAL_STOCK');
           
@@ -735,12 +779,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           });
           
           // Rebuild to populate with initial values
-          this.buildVariantFilledCylindersArray(freshCustomer.configuredVariants || []);
+          this.buildVariantFilledCylindersArray(customerRow.configuredVariants || []);
           
           // Re-apply the initial stock filled values and disable the fields
           const filledCylArray = this.customerForm.get('variantFilledCylinders') as FormArray;
           
-          filledCylArray.controls.forEach((control: any) => {
+          filledCylArray.controls.forEach((control) => {
             const variantId = control.get('variantId')?.value;
             const initialStockEntry = this.initialStockEntriesMap[variantId];
             
@@ -754,7 +798,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (err) => {
-          console.error('Error loading ledger entries:', err);
           // Still rebuild the array even if ledger load fails
           this.buildVariantFilledCylindersArray(freshCustomer.configuredVariants || []);
         }
@@ -762,7 +805,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
       },
       error: (err) => {
-        console.error('Error loading customer for edit:', err);
         this.toastr.error('Failed to load customer details', 'Error');
       }
     });
@@ -802,21 +844,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       // Update customer
       const sub = this.customerService.updateCustomer(this.editingId, customerData)
         .pipe(
-          catchError((error: any) => {
-            const errorMessage = error?.error?.message || error?.message || 'Error updating customer';
+          catchError((error: unknown) => {
+            const err = error as { error?: { message?: string }; message?: string };
+            const errorMessage = err?.error?.message || err?.message || 'Error updating customer';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
-            return of(null);
+            return of(null as CustomerRow | null);
           })
         )
-        .subscribe((updatedCustomer: any) => {
-          if (updatedCustomer) {
+        .subscribe((updatedCustomer: Customer | null) => {
+          if (updatedCustomer && typeof updatedCustomer.id === 'number') {
+            const updatedRow = updatedCustomer as CustomerRow;
             // Update variant prices (existing customer)
-            this.updateVariantPrices(updatedCustomer.id, variantPrices, false);
+            this.updateVariantPrices(updatedRow.id, variantPrices, false);
 
             const index = this.customers.findIndex(c => c.id === this.editingId);
             if (index !== -1) {
-              this.customers[index] = updatedCustomer;
+              this.customers[index] = updatedRow;
             }
             this.customerService.invalidateCache();
             
@@ -833,17 +876,18 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       // Create customer
       const sub = this.customerService.createCustomer(customerData)
         .pipe(
-          catchError((error: any) => {
-            const errorMessage = error?.error?.message || error?.message || 'Error creating customer';
+          catchError((error: unknown) => {
+            const err = error as { error?: { message?: string }; message?: string };
+            const errorMessage = err?.error?.message || err?.message || 'Error creating customer';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
-            return of(null);
+            return of(null as CustomerRow | null);
           })
         )
-        .subscribe((newCustomer: any) => {
-          if (newCustomer) {
+        .subscribe((newCustomer: Customer | null) => {
+          if (newCustomer && typeof newCustomer.id === 'number') {
+            const newRow = newCustomer as CustomerRow;
             // Create variant prices for the new customer
-            this.updateVariantPrices(newCustomer.id, variantPrices, true);
+            this.updateVariantPrices(newRow.id, variantPrices, true);
 
             this.customerService.invalidateCache();
             this.toastr.success('Customer added successfully.', 'Success');
@@ -862,11 +906,11 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
    * For existing customers: try UPDATE first, then CREATE if not found
    * For new customers: CREATE directly
    */
-  private updateVariantPrices(customerId: number, variantPrices: any[], isNewCustomer: boolean = false) {
+  private updateVariantPrices(customerId: number, variantPrices: CustomerVariantPrice[], isNewCustomer: boolean = false) {
     // Get form array to access disabled controls
     const pricesArray = this.customerForm.get('variantPrices') as FormArray;
     
-    pricesArray.controls.forEach((control: any, index: number) => {
+    pricesArray.controls.forEach((control, index: number) => {
       const basePrice = control.get('basePrice')?.value ? parseFloat(control.get('basePrice')?.value) : null;
       const discountPrice = control.get('discountPrice')?.value ? parseFloat(control.get('discountPrice')?.value) : null;
       const variantId = control.get('variantId')?.value;
@@ -874,7 +918,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       
       // Use basePrice as salePrice and discountPrice is required
       if (basePrice !== null && discountPrice !== null) {
-        const payload: any = {
+        const payload: CustomerVariantPrice = {
           customerId: customerId,
           variantId: variantId,
           variantName: variantName,
@@ -882,43 +926,34 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           discountPrice: discountPrice
         };
 
-        console.log('Saving variant pricing:', payload);
-
         if (isNewCustomer) {
           // For new customers, directly create
           this.variantPriceService.createPrice(customerId, payload)
             .subscribe({
-              next: (response: any) => {
-                console.log('Variant pricing created successfully for variant', variantId);
+              next: (_response: CustomerVariantPrice) => {
               },
-              error: (error: any) => {
-                console.error('Error creating variant pricing:', error);
+              error: (error: unknown) => {
               }
             });
         } else {
           // For existing customers, try UPDATE first (more likely case), then CREATE
           this.variantPriceService.updatePrice(customerId, variantId, payload)
             .subscribe({
-              next: (response: any) => {
-                console.log('Variant pricing updated successfully for variant', variantId);
+              next: (_response: CustomerVariantPrice) => {
               },
-              error: (error: any) => {
-                console.log('Update failed with status:', error?.status);
+              error: (error: unknown) => {
+                const err = error as { status?: number };
                 
                 // If update fails (404 means not found), try to create
-                if (error?.status === 404) {
-                  console.log('Pricing not found, attempting to create for variant', variantId);
+                if (err?.status === 404) {
                   this.variantPriceService.createPrice(customerId, payload)
                     .subscribe({
-                      next: (response: any) => {
-                        console.log('Variant pricing created successfully for variant', variantId);
+                      next: (_response: CustomerVariantPrice) => {
                       },
-                      error: (createError: any) => {
-                        console.error('Error creating variant pricing:', createError);
+                      error: (createError: unknown) => {
                       }
                     });
                 } else {
-                  console.error('Error updating variant pricing:', error);
                 }
               }
             });
@@ -927,21 +962,21 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteCustomer(customer: any) {
+  deleteCustomer(customer: CustomerRow) {
     this.toastr.warning('This feature is not yet implemented.', 'Warning');
     return;
     const confirmDelete = confirm(`Are you sure you want to delete customer "${customer.name}"?`);
     if (confirmDelete) {
       const sub = this.customerService.deleteCustomer(customer.id)
         .pipe(
-          catchError((error: any) => {
-            const errorMessage = error?.error?.message || error?.message || 'Error deleting customer';
+          catchError((error: unknown) => {
+            const err = error as { error?: { message?: string }; message?: string };
+            const errorMessage = err?.error?.message || err?.message || 'Error deleting customer';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
-            return of(null);
+            return of(null as SimpleStatusDTO | null);
           })
         )
-        .subscribe((result) => {
+        .subscribe((result: SimpleStatusDTO | null) => {
           if (result) {
             this.customers = this.customers.filter(c => c.id !== customer.id);
             this.customerService.invalidateCache();
@@ -951,7 +986,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
   }
 
-  toggleLedger(customer: any) {
+  toggleLedger(customer: CustomerRow) {
     if (this.selectedCustomer && this.selectedCustomer.id === customer.id) {
       this.showLedger = !this.showLedger;
     } else {
@@ -977,20 +1012,26 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.isLoadingMoreLedger = true;
     const ledgerSub = this.ledgerService.getLedgerByCustomerPaginated(customerId, this.ledgerPage - 1, this.ledgerPageSize)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading ledger';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading ledger';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 0 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 0,
+            page: this.ledgerPage - 1,
+            size: this.ledgerPageSize
+          } as PageResponse<CustomerCylinderLedger>);
         }),
         finalize(() => {
           this.isLoadingMoreLedger = false;
           if (resetPage) this.loadingService.hide();
         })
       )
-      .subscribe((data: any) => {
+      .subscribe((data: PageResponse<CustomerCylinderLedger>) => {
         // Sort by transaction date (ascending - oldest first) for accurate running balance calculation
-        const newEntries = (data.content || data).sort((a: any, b: any) => {
+        const newEntries = (data.items || []).sort((a, b) => {
           const dateA = new Date(a.transactionDate).getTime();
           const dateB = new Date(b.transactionDate).getTime();
           return dateA - dateB; // Oldest first
@@ -1003,23 +1044,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           this.ledgerEntries = [...this.ledgerEntries, ...newEntries];
         }
         
-        this.totalLedgerItems = data.totalElements || 0;
-        this.totalLedgerPages = data.totalPages || 1;
+        this.totalLedgerItems = data.totalElements ?? 0;
+        this.totalLedgerPages = data.totalPages ?? 1;
         this.cdr.markForCheck();
         ledgerSub.unsubscribe();
         
         // Fetch and load the summary data for accurate per-variant summary
         if (resetPage) {
           this.ledgerService.getCustomerLedgerSummary(customerId).subscribe({
-            next: (summaryData: any) => {
+            next: (summaryData: { variants?: CustomerLedgerVariantSummary[] }) => {
               // Update variant summary with data from backend
               if (summaryData && summaryData.variants) {
                 this.variantSummary = summaryData.variants;
                 this.cdr.markForCheck();
               }
             },
-            error: (err) => {
-              console.error('Error loading ledger summary:', err);
+            error: (err: unknown) => {
             }
           });
         }
@@ -1059,69 +1099,82 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   exportLedgerToPDF() {
-    if (!this.selectedCustomer) {
+    const selectedCustomer = this.selectedCustomer;
+    if (!selectedCustomer) {
       this.toastr.warning('No customer selected', 'Warning');
       return;
     }
 
     // First, get the total count to know how many records exist
     this.loadingService.show('Preparing ledger export...');
-    this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, 1)
+    this.ledgerService.getLedgerByCustomerPaginated(selectedCustomer.id, 0, 1)
       .pipe(
-        catchError((error: any) => {
+        catchError((error: unknown) => {
           this.toastr.error('Failed to load ledger data', 'Error');
           this.loadingService.hide();
-          return of({ content: [], totalElements: 0 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 0,
+            page: 0,
+            size: 1
+          } as PageResponse<CustomerCylinderLedger>);
         })
       )
-      .subscribe((initialData: any) => {
+      .subscribe((initialData: PageResponse<CustomerCylinderLedger>) => {
         // Now fetch ALL records using the total count
-        const totalRecords = initialData.totalElements || 0;
+        const totalRecords = initialData.totalElements ?? 0;
         
         if (totalRecords === 0) {
-          this.toastr.warning('No ledger data to export', 'Warning');
+          this.toastr.info('No data to export');
           this.loadingService.hide();
           return;
         }
 
         // Fetch all records in one request
-        this.ledgerService.getLedgerByCustomerPaginated(this.selectedCustomer.id, 0, totalRecords)
+        this.ledgerService.getLedgerByCustomerPaginated(selectedCustomer.id, 0, totalRecords)
           .pipe(
-            catchError((error: any) => {
+            catchError((error: unknown) => {
               this.toastr.error('Failed to load ledger data', 'Error');
               this.loadingService.hide();
-              return of({ content: [], totalElements: 0 });
+              return of({
+                items: [],
+                totalElements: 0,
+                totalPages: 0,
+                page: 0,
+                size: totalRecords
+              } as PageResponse<CustomerCylinderLedger>);
             }),
             finalize(() => {
               this.loadingService.hide();
             })
           )
-          .subscribe((data: any) => {
-            const allLedgerEntries = (data.content || []).sort((a: any, b: any) => {
+          .subscribe((data: PageResponse<CustomerCylinderLedger>) => {
+            const allLedgerEntries = (data.items || []).sort((a, b) => {
               const dateA = new Date(a.transactionDate).getTime();
               const dateB = new Date(b.transactionDate).getTime();
               return dateA - dateB; // Oldest first
             });
 
             if (allLedgerEntries.length === 0) {
-              this.toastr.warning('No ledger data to export', 'Warning');
+              this.toastr.info('No data to export');
               return;
             }
 
             try {
-              const totalDebit = allLedgerEntries.reduce((sum: number, entry: any) => {
+              const totalDebit = allLedgerEntries.reduce((sum: number, entry) => {
                 return sum + (entry.totalAmount || 0);
               }, 0);
 
-              const totalCredit = allLedgerEntries.reduce((sum: number, entry: any) => {
+              const totalCredit = allLedgerEntries.reduce((sum: number, entry) => {
                 return sum + (entry.amountReceived || 0);
               }, 0);
 
               const balanceDue = totalDebit - totalCredit;
 
               exportCustomerLedgerToPDF({
-                customerName: this.selectedCustomer.name || 'Customer',
-                customerPhone: this.selectedCustomer.phone || this.selectedCustomer.mobile,
+                customerName: selectedCustomer.name || 'Customer',
+                customerPhone: selectedCustomer.mobile,
                 ledgerData: allLedgerEntries,
                 totalDebit: totalDebit,
                 totalCredit: totalCredit,
@@ -1133,7 +1186,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
               this.toastr.success('Ledger exported to PDF successfully', 'Success');
             } catch (error) {
-              console.error('Error exporting ledger to PDF:', error);
               this.toastr.error('Failed to export ledger to PDF', 'Error');
             }
           });
@@ -1259,7 +1311,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   // Get variant summary filtered by selected variant
-  getFilteredVariantSummary(): any[] {
+  getFilteredVariantSummary(): CustomerLedgerVariantSummary[] {
     if (!this.ledgerFilterVariant) {
       return this.variantSummary;
     }
@@ -1329,7 +1381,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showPaymentForm = true;
   }
 
-  openPaymentFormForCustomer(customer: any) {
+  openPaymentFormForCustomer(customer: CustomerRow) {
     this.selectedCustomer = customer;
     this.loadLedgerForCustomer(customer.id);
     this.openPaymentForm();
@@ -1342,6 +1394,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   submitPayment() {
+    if (!this.selectedCustomer) {
+      this.toastr.error('No customer selected', 'Error');
+      return;
+    }
     if (!this.paymentForm.amount) {
       this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;
@@ -1377,14 +1433,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Get the current due amount from the most recent ledger entry
-    const tableDue = this.selectedCustomer?.dueAmount;
-    const ledgerDue = this.ledgerEntries.length > 0
-      ? this.ledgerEntries[this.ledgerEntries.length - 1].dueAmount
-      : null;
-    const currentDue = typeof tableDue === 'number'
-      ? tableDue
-      : (ledgerDue ?? 0);
+    const currentDue = this.getCurrentDueAmount();
 
     // Validate payment amount doesn't exceed due amount
     if (amountValue > currentDue) {
@@ -1393,8 +1442,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
 
     this.isSubmittingPayment = true;
-    const paymentData: any = {
-      customerId: this.selectedCustomer.id,
+    const selectedCustomerId = this.selectedCustomer.id;
+    const paymentData: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number } = {
+      customerId: selectedCustomerId,
       amount: amountValue,
       paymentDate: this.paymentForm.paymentDate,
       paymentMode: this.paymentForm.paymentMode
@@ -1407,25 +1457,26 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
     this.ledgerService.recordPayment(paymentData)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error recording payment';
           this.toastr.error(errorMessage, 'Error');
           this.isSubmittingPayment = false;
-          return of(null);
+          return of(null as CustomerCylinderLedger | null);
         })
       )
-      .subscribe((response: any) => {
+      .subscribe((response: CustomerCylinderLedger | null) => {
         if (response) {
           this.toastr.success('Payment recorded successfully', 'Success');
           this.closePaymentForm();
           // Refresh ledger
-          this.loadLedgerForCustomer(this.selectedCustomer.id);
+          this.loadLedgerForCustomer(selectedCustomerId);
           // Update customer's due amount from ledger
-          this.ledgerService.getLedgerByCustomerAll(this.selectedCustomer.id).subscribe({
-            next: (allEntries: any[]) => {
+          this.ledgerService.getLedgerByCustomerAll(selectedCustomerId).subscribe({
+            next: (allEntries: CustomerCylinderLedger[]) => {
               if (allEntries.length > 0) {
                 // Sort chronologically (oldest first)
-                const chronoEntries = allEntries.sort((a: any, b: any) => {
+                const chronoEntries = allEntries.sort((a, b) => {
                   const dateA = new Date(a.transactionDate).getTime();
                   const dateB = new Date(b.transactionDate).getTime();
                   if (dateA === dateB) {
@@ -1436,7 +1487,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
                 
                 // Calculate cumulative balance
                 let cumulativeBalance = 0;
-                chronoEntries.forEach((entry: any) => {
+                chronoEntries.forEach((entry) => {
                   if (entry.refType === 'PAYMENT') {
                     cumulativeBalance -= (entry.amountReceived || 0);
                   } else {
@@ -1446,7 +1497,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
                 });
                 
                 // Update customer's due amount in the table
-                const customer = this.customers.find(c => c.id === this.selectedCustomer.id);
+                const selectedCustomerId = this.selectedCustomer?.id;
+                const customer = selectedCustomerId
+                  ? this.customers.find(c => c.id === selectedCustomerId)
+                  : undefined;
                 if (customer) {
                   customer.dueAmount = cumulativeBalance;
                   this.cdr.markForCheck();
@@ -1462,7 +1516,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       });
   }
 
-  canEditLedgerEntry(entry: any, allEntries: any[]): boolean {
+  canEditLedgerEntry(entry: CustomerCylinderLedger, allEntries: CustomerCylinderLedger[]): boolean {
     if (!allEntries || allEntries.length === 0) {
       return false;
     }
@@ -1484,9 +1538,42 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return modeLabels[mode] || mode;
   }
 
+  getCurrentDueAmount(): number {
+    const ledgerDue = this.calculateDueFromLedgerEntries(this.ledgerEntries);
+    if (ledgerDue !== null) {
+      return ledgerDue;
+    }
+    const tableDue = this.selectedCustomer?.dueAmount;
+    return typeof tableDue === 'number' ? tableDue : 0;
+  }
+
+  private calculateDueFromLedgerEntries(entries: CustomerCylinderLedger[]): number | null {
+    if (!entries || entries.length === 0) {
+      return null;
+    }
+    const sorted = [...entries].sort((a, b) => {
+      const dateA = new Date(a.transactionDate).getTime();
+      const dateB = new Date(b.transactionDate).getTime();
+      if (dateA === dateB) {
+        return (a.id || 0) - (b.id || 0);
+      }
+      return dateA - dateB;
+    });
+    let cumulative = 0;
+    sorted.forEach((entry) => {
+      if (entry.refType === 'PAYMENT' || entry.refType === 'CREDIT') {
+        cumulative -= (entry.amountReceived || 0);
+      } else {
+        const transactionDue = (entry.totalAmount || 0) - (entry.amountReceived || 0);
+        cumulative += transactionDue;
+      }
+    });
+    return cumulative;
+  }
+
   // ==================== UPDATE LEDGER ENTRY METHODS ====================
 
-  openUpdateForm(ledgerEntry: any) {
+  openUpdateForm(ledgerEntry: CustomerCylinderLedger) {
     this.selectedLedgerEntry = ledgerEntry;
     this.updateForm = {
       filledOut: ledgerEntry.filledOut || 0,
@@ -1494,8 +1581,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       totalAmount: ledgerEntry.totalAmount || 0,
       amountReceived: ledgerEntry.amountReceived || 0,
       updateReason: '',
-      paymentMode: ledgerEntry.paymentMode || null,
-      bankAccountId: ledgerEntry.bankAccountId || null
+      paymentMode: ledgerEntry.paymentMode || undefined,
+      bankAccountId: ledgerEntry.bankAccountId || undefined
     };
     
     // Store original values for calculations
@@ -1504,7 +1591,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     
     // For SALE entries, calculate price per unit for auto-calculation
     if (ledgerEntry.refType === 'SALE' && ledgerEntry.filledOut > 0) {
-      this.pricePerUnit = ledgerEntry.totalAmount / ledgerEntry.filledOut;
+      const totalAmount = ledgerEntry.totalAmount ?? 0;
+      this.pricePerUnit = totalAmount / ledgerEntry.filledOut;
     } else {
       this.pricePerUnit = 0;
     }
@@ -1518,7 +1606,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   onFilledOutChange() {
     if (this.selectedLedgerEntry?.refType === 'SALE' && this.pricePerUnit > 0) {
       // Recalculate totalAmount based on new filledOut and original price per unit
-      const newTotalAmount = this.updateForm.filledOut * this.pricePerUnit;
+      const newTotalAmount = (this.updateForm.filledOut ?? 0) * this.pricePerUnit;
       this.updateForm.totalAmount = Math.round(newTotalAmount * 100) / 100; // Round to 2 decimals
       
       // amountReceived stays as-is - user can edit it manually
@@ -1541,7 +1629,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   // Helper function to convert currency-formatted string to number
-  parseCurrencyToNumber(value: any): number {
+  parseCurrencyToNumber(value: string | number | null | undefined): number {
     if (typeof value === 'number') {
       return value;
     }
@@ -1584,7 +1672,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
 
     // Validate values
-    if (this.updateForm.filledOut < 0 || this.updateForm.emptyIn < 0) {
+    const filledOutVal = this.updateForm.filledOut ?? 0;
+    const emptyInVal = this.updateForm.emptyIn ?? 0;
+    if (filledOutVal < 0 || emptyInVal < 0) {
       this.updateError = 'Filled/Empty count cannot be negative';
       this.cdr.markForCheck();
       return;
@@ -1603,23 +1693,23 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.updateError = '';
 
     // Only send fields that were actually changed
-    const updateData: any = {};
-    if (this.updateForm.filledOut !== this.selectedLedgerEntry.filledOut) {
-      updateData.filledOut = this.updateForm.filledOut;
+    const updateData: Partial<LedgerUpdateRequest> = {};
+    if (filledOutVal !== (this.selectedLedgerEntry.filledOut ?? 0)) {
+      updateData.filledOut = filledOutVal;
     }
-    if (this.updateForm.emptyIn !== this.selectedLedgerEntry.emptyIn) {
-      updateData.emptyIn = this.updateForm.emptyIn;
+    if (emptyInVal !== (this.selectedLedgerEntry.emptyIn ?? 0)) {
+      updateData.emptyIn = emptyInVal;
     }
-    if (totalAmountNum !== this.selectedLedgerEntry.totalAmount) {
+    if (totalAmountNum !== (this.selectedLedgerEntry.totalAmount ?? 0)) {
       updateData.totalAmount = totalAmountNum;
     }
-    if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
+    if (amountReceivedNum !== (this.selectedLedgerEntry.amountReceived ?? 0)) {
       updateData.amountReceived = amountReceivedNum;
     }
-    if (this.updateForm.paymentMode !== this.selectedLedgerEntry.paymentMode) {
+    if (this.updateForm.paymentMode !== (this.selectedLedgerEntry.paymentMode ?? null)) {
       updateData.paymentMode = this.updateForm.paymentMode;
     }
-    if (this.updateForm.bankAccountId !== this.selectedLedgerEntry.bankAccountId) {
+    if (this.updateForm.bankAccountId !== (this.selectedLedgerEntry.bankAccountId ?? null)) {
       updateData.bankAccountId = this.updateForm.bankAccountId;
     }
     
@@ -1643,35 +1733,44 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Updating ledger entry:', this.selectedLedgerEntry.id, updateData);
-
-    this.ledgerService.updateLedgerEntry(this.selectedLedgerEntry.id, updateData)
+    const ledgerEntryId = this.selectedLedgerEntry.id;
+    if (!ledgerEntryId) {
+      this.updateError = 'Invalid ledger entry selected';
+      this.isSubmittingUpdate = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.ledgerService.updateLedgerEntry(ledgerEntryId, updateData)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error updating ledger entry';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error updating ledger entry';
           this.updateError = errorMessage;
           this.toastr.error(errorMessage, 'Update Failed');
-          console.error('Update error:', error);
           this.isSubmittingUpdate = false;
           this.cdr.markForCheck();
-          return of(null);
+          return of(null as CustomerCylinderLedger | null);
         })
       )
-      .subscribe((response: any) => {
+      .subscribe((response: CustomerCylinderLedger | null) => {
         if (response) {
           this.toastr.success('Ledger entry updated successfully. All subsequent entries recalculated.', 'Success');
           this.closeUpdateForm();
           // Refresh ledger to show updated values
-          this.loadLedgerForCustomer(this.selectedCustomer.id);
+          const selectedCustomerId = this.selectedCustomer?.id;
+          if (selectedCustomerId) {
+            this.loadLedgerForCustomer(selectedCustomerId);
+          }
           // Refresh customer list balances in table
           this.loadCustomersWithBalances();
           // Update customer's due amount
-          this.ledgerService.getLedgerByCustomerAll(this.selectedCustomer.id).subscribe({
-            next: (allEntries: any[]) => {
+          if (selectedCustomerId) {
+            this.ledgerService.getLedgerByCustomerAll(selectedCustomerId).subscribe({
+            next: (allEntries: CustomerCylinderLedger[]) => {
               if (allEntries.length > 0) {
                 // Get latest due from the most recent entry
                 const latestEntry = allEntries[allEntries.length - 1];
-                const customer = this.customers.find(c => c.id === this.selectedCustomer.id);
+                const customer = this.customers.find(c => c.id === selectedCustomerId);
                 if (customer && latestEntry) {
                   customer.dueAmount = latestEntry.dueAmount || 0;
                   this.cdr.markForCheck();
@@ -1682,6 +1781,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
               // Silently fail on error
             }
           });
+          }
         }
         this.isSubmittingUpdate = false;
         this.cdr.markForCheck();

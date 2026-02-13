@@ -1,8 +1,12 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.ExpenseDTO;
-import com.gasagency.dto.ExpenseSummaryDTO;
+import com.gasagency.dto.response.ExpenseDTO;
+import com.gasagency.dto.response.ExpenseSummaryDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.service.ExpenseService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +30,7 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ExpenseDTO>> getAllExpenses(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<ExpenseDTO>>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -38,22 +42,24 @@ public class ExpenseController {
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String createdBy) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.getAllExpenses(pageable, fromDate, toDate, categoryId, paymentMode,
-                bankAccountId, minAmount, maxAmount, createdBy));
+        Page<ExpenseDTO> expenses = service.getAllExpenses(pageable, fromDate, toDate, categoryId, paymentMode,
+                bankAccountId, minAmount, maxAmount, createdBy);
+        return ResponseEntity.ok(ApiResponseUtil.success("Expenses retrieved successfully", expenses));
     }
 
     @GetMapping("/range")
-    public ResponseEntity<Page<ExpenseDTO>> getExpensesByDateRange(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<ExpenseDTO>>> getExpensesByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.getExpensesByDateRange(fromDate, toDate, pageable));
+        Page<ExpenseDTO> expenses = service.getExpensesByDateRange(fromDate, toDate, pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Expenses retrieved successfully", expenses));
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<ExpenseSummaryDTO> getExpensesSummary(
+    public ResponseEntity<ApiResponse<ExpenseSummaryDTO>> getExpensesSummary(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(required = false) Long categoryId,
@@ -62,59 +68,71 @@ public class ExpenseController {
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String createdBy) {
-        return ResponseEntity.ok(service.getExpensesSummary(fromDate, toDate, categoryId, paymentMode, bankAccountId,
-                minAmount, maxAmount, createdBy));
+        ExpenseSummaryDTO summary = service.getExpensesSummary(fromDate, toDate, categoryId, paymentMode, bankAccountId,
+                minAmount, maxAmount, createdBy);
+        return ResponseEntity.ok(ApiResponseUtil.success("Expenses summary retrieved successfully", summary));
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<Page<ExpenseDTO>> getExpensesByCategory(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<ExpenseDTO>>> getExpensesByCategory(
             @PathVariable Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         try {
-            return ResponseEntity.ok(service.getExpensesByCategory(categoryId, pageable));
+            Page<ExpenseDTO> expenses = service.getExpensesByCategory(categoryId, pageable);
+            return ResponseEntity.ok(ApiResponseUtil.success("Expenses retrieved successfully", expenses));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error("Invalid category", "INVALID_ARGUMENT"));
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ExpenseDTO> getExpenseById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ExpenseDTO>> getExpenseById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(service.getExpenseById(id));
+            ExpenseDTO expense = service.getExpenseById(id);
+            return ResponseEntity.ok(ApiResponseUtil.success("Expense retrieved successfully", expense));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Expense not found", "RESOURCE_NOT_FOUND"));
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> createExpense(@Valid @RequestBody ExpenseDTO dto) {
+    public ResponseEntity<ApiResponse<ExpenseDTO>> createExpense(@Valid @RequestBody ExpenseDTO dto) {
         try {
             ExpenseDTO created = service.createExpense(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponseUtil.success("Expense created successfully", created));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error(e.getMessage(), "EXPENSE_CREATE_FAILED"));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateExpense(@PathVariable Long id, @RequestBody ExpenseDTO dto) {
+    public ResponseEntity<ApiResponse<ExpenseDTO>> updateExpense(@PathVariable Long id,
+            @RequestBody ExpenseDTO dto) {
         try {
             ExpenseDTO updated = service.updateExpense(id, dto);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(ApiResponseUtil.success("Expense updated successfully", updated));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error(e.getMessage(), "EXPENSE_UPDATE_FAILED"));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteExpense(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> deleteExpense(@PathVariable Long id) {
         try {
             service.deleteExpense(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(ApiResponseUtil.success("Expense deleted successfully",
+                    new SimpleStatusDTO("SUCCESS")));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Expense not found", "RESOURCE_NOT_FOUND"));
         }
     }
 }
+

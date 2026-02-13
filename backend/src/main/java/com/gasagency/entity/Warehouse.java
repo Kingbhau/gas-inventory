@@ -239,3 +239,4 @@ public class Warehouse extends Auditable {
         return Objects.hash(id, name);
     }
 }
+

@@ -11,6 +11,16 @@ export interface CustomerCylinderLedger {
   emptyIn: number;
   balance: number;
   transactionReference?: string;
+  paymentMode?: string;
+  totalAmount?: number;
+  amountReceived?: number;
+  dueAmount?: number;
+  updateReason?: string;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  fromWarehouseName?: string;
+  toWarehouseName?: string;
   createdAt?: string;
   updatedDate?: string;
   createdBy?: string;

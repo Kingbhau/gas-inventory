@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, timeout } from 'rxjs';
-import { BankDeposit } from '../models/index';
+import { BankDeposit } from '../models/bank-deposit.model';
+import { BankDepositSummary } from '../models/bank-deposit-summary.model';
+import { PageResponse } from '../models/page-response';
+import { SimpleStatusDTO } from '../models/simple-status';
 import { getApiUrl } from '../config/api.config';
+import { unwrapApiResponse } from '../utils/api-response.util';
 
 @Injectable({
   providedIn: 'root'
@@ -16,32 +20,32 @@ export class BankDepositService {
    * Create a new bank deposit record
    */
   createDeposit(deposit: BankDeposit): Observable<BankDeposit> {
-    return this.http.post<BankDeposit>(this.apiUrl, deposit, { withCredentials: true })
-      .pipe(timeout(30000));
+    return this.http.post<any>(this.apiUrl, deposit, { withCredentials: true })
+      .pipe(timeout(30000), unwrapApiResponse<BankDeposit>());
   }
 
   /**
    * Get deposit by ID
    */
   getDepositById(id: string): Observable<BankDeposit> {
-    return this.http.get<BankDeposit>(`${this.apiUrl}/${id}`, { withCredentials: true })
-      .pipe(timeout(30000));
+    return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(timeout(30000), unwrapApiResponse<BankDeposit>());
   }
 
   /**
    * Update an existing bank deposit
    */
   updateDeposit(id: string, deposit: BankDeposit): Observable<BankDeposit> {
-    return this.http.put<BankDeposit>(`${this.apiUrl}/${id}`, deposit, { withCredentials: true })
-      .pipe(timeout(30000));
+    return this.http.put<any>(`${this.apiUrl}/${id}`, deposit, { withCredentials: true })
+      .pipe(timeout(30000), unwrapApiResponse<BankDeposit>());
   }
 
   /**
    * Delete a bank deposit
    */
-  deleteDeposit(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true })
-      .pipe(timeout(30000));
+  deleteDeposit(id: string): Observable<SimpleStatusDTO> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(timeout(30000), unwrapApiResponse<SimpleStatusDTO>());
   }
 
   /**
@@ -58,7 +62,7 @@ export class BankDepositService {
     paymentMode?: string,
     referenceNumber?: string,
     createdBy?: string
-  ): Observable<any> {
+  ): Observable<PageResponse<BankDeposit>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
@@ -73,7 +77,7 @@ export class BankDepositService {
     if (createdBy) params = params.set('createdBy', createdBy);
 
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
-      .pipe(timeout(30000));
+      .pipe(timeout(30000), unwrapApiResponse<PageResponse<BankDeposit>>());
   }
 
   /**
@@ -86,7 +90,7 @@ export class BankDepositService {
     paymentMode?: string,
     referenceNumber?: string,
     createdBy?: string
-  ): Observable<any> {
+  ): Observable<BankDepositSummary> {
     let params = new HttpParams();
     
     if (fromDate && fromDate.trim()) {
@@ -109,6 +113,6 @@ export class BankDepositService {
     }
 
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
-      .pipe(timeout(30000));
+      .pipe(timeout(30000), unwrapApiResponse<BankDepositSummary>());
   }
 }

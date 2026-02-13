@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
 
 // Helper function for IST date
 function formatDateInIST(date: Date): string {
@@ -22,7 +23,7 @@ export function exportCustomerLedgerToPDF({
 }: {
   customerName: string,
   customerPhone?: string,
-  ledgerData: any[],
+  ledgerData: CustomerCylinderLedger[],
   totalDebit: number,
   totalCredit: number,
   balanceDue: number,
@@ -30,9 +31,9 @@ export function exportCustomerLedgerToPDF({
   fromDate?: string,
   toDate?: string
 }) {
-  const toNumber = (value: any): number => {
+  const toNumber = (value: unknown): number => {
     if (value === null || value === undefined) return 0;
-    const num = typeof value === 'string' ? Number(value) : value;
+    const num = typeof value === 'number' || typeof value === 'string' ? Number(value) : NaN;
     return Number.isFinite(num) ? num : 0;
   };
 
@@ -122,7 +123,7 @@ export function exportCustomerLedgerToPDF({
   y += 2;
 
   // Ledger Table
-  const tableData = ledgerData.map((entry: any, index: number) => {
+  const tableData = ledgerData.map((entry, index: number) => {
     // Use backend-calculated dueAmount for running balance when available
     let runningBalance = toNumber(entry?.dueAmount);
     if (runningBalance === 0 && entry?.dueAmount !== 0) {

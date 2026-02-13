@@ -96,3 +96,4 @@ public class PaymentMode extends Auditable {
         this.isBankAccountRequired = isBankAccountRequired;
     }
 }
+

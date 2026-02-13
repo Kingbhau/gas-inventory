@@ -1,9 +1,9 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.*;
-import com.gasagency.dto.DashboardSummaryDTO.InventoryHealthDTO;
-import com.gasagency.dto.DashboardSummaryDTO.DashboardAlertDTO;
-import com.gasagency.dto.DashboardSummaryDTO.BusinessInsightsDTO;
+import com.gasagency.dto.response.*;
+import com.gasagency.dto.response.DashboardSummaryDTO.InventoryHealthDTO;
+import com.gasagency.dto.response.DashboardSummaryDTO.DashboardAlertDTO;
+import com.gasagency.dto.response.DashboardSummaryDTO.BusinessInsightsDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.*;
@@ -681,3 +681,4 @@ public class DashboardService {
         }
     }
 }
+

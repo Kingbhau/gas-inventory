@@ -1,7 +1,11 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.PaymentModeDTO;
+import com.gasagency.dto.response.PaymentModeDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.service.PaymentModeService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -23,69 +27,83 @@ public class PaymentModeController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<PaymentModeDTO>> getAllPaymentModes(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<PaymentModeDTO>>> getAllPaymentModes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(service.getAllPaymentModes(pageable));
+        Page<PaymentModeDTO> modes = service.getAllPaymentModes(pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Payment modes retrieved successfully", modes));
     }
 
     @GetMapping("/active")
-    public ResponseEntity<List<PaymentModeDTO>> getActivePaymentModes() {
-        return ResponseEntity.ok(service.getActivePaymentModes());
+    public ResponseEntity<ApiResponse<List<PaymentModeDTO>>> getActivePaymentModes() {
+        List<PaymentModeDTO> modes = service.getActivePaymentModes();
+        return ResponseEntity.ok(ApiResponseUtil.success("Active payment modes retrieved successfully", modes));
     }
 
     @GetMapping("/names")
-    public ResponseEntity<List<String>> getActivePaymentModeNames() {
-        return ResponseEntity.ok(service.getActivePaymentModeNames());
+    public ResponseEntity<ApiResponse<List<String>>> getActivePaymentModeNames() {
+        List<String> names = service.getActivePaymentModeNames();
+        return ResponseEntity.ok(ApiResponseUtil.success("Payment mode names retrieved successfully", names));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PaymentModeDTO> getPaymentModeById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<PaymentModeDTO>> getPaymentModeById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(service.getPaymentModeById(id));
+            return ResponseEntity.ok(ApiResponseUtil.success("Payment mode retrieved successfully",
+                    service.getPaymentModeById(id)));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Payment mode not found", "RESOURCE_NOT_FOUND"));
         }
     }
 
     @PostMapping
-    public ResponseEntity<?> createPaymentMode(@RequestBody PaymentModeDTO dto) {
+    public ResponseEntity<ApiResponse<PaymentModeDTO>> createPaymentMode(@RequestBody PaymentModeDTO dto) {
         try {
             PaymentModeDTO created = service.createPaymentMode(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponseUtil.success("Payment mode created successfully", created));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error(e.getMessage(), "PAYMENT_MODE_CREATE_FAILED"));
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePaymentMode(@PathVariable Long id, @RequestBody PaymentModeDTO dto) {
+    public ResponseEntity<ApiResponse<PaymentModeDTO>> updatePaymentMode(@PathVariable Long id,
+            @RequestBody PaymentModeDTO dto) {
         try {
             PaymentModeDTO updated = service.updatePaymentMode(id, dto);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(ApiResponseUtil.success("Payment mode updated successfully", updated));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponseUtil.error(e.getMessage(), "PAYMENT_MODE_UPDATE_FAILED"));
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePaymentMode(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> deletePaymentMode(@PathVariable Long id) {
         try {
             service.deletePaymentMode(id);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(ApiResponseUtil.success("Payment mode deleted successfully",
+                    new SimpleStatusDTO("SUCCESS")));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Payment mode not found", "RESOURCE_NOT_FOUND"));
         }
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> togglePaymentModeStatus(@PathVariable Long id, @RequestParam Boolean isActive) {
+    public ResponseEntity<ApiResponse<PaymentModeDTO>> togglePaymentModeStatus(@PathVariable Long id,
+            @RequestParam Boolean isActive) {
         try {
             PaymentModeDTO updated = service.togglePaymentModeStatus(id, isActive);
-            return ResponseEntity.ok(updated);
+            return ResponseEntity.ok(ApiResponseUtil.success("Payment mode status updated successfully", updated));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Payment mode not found", "RESOURCE_NOT_FOUND"));
         }
     }
 }
+

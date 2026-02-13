@@ -15,3 +15,4 @@ public @interface ValidPrices {
 
     Class<? extends Payload>[] payload() default {};
 }
+

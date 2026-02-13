@@ -1,9 +1,12 @@
 
 package com.gasagency.controller;
 
-import com.gasagency.dto.CreateSupplierTransactionRequestDTO;
-import com.gasagency.dto.SupplierTransactionDTO;
+import com.gasagency.dto.request.CreateSupplierTransactionRequestDTO;
+import com.gasagency.dto.response.SupplierTransactionDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.SupplierTransactionService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,24 +27,28 @@ public class SupplierTransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<SupplierTransactionDTO> recordTransaction(
+    public ResponseEntity<ApiResponse<SupplierTransactionDTO>> recordTransaction(
             @Valid @RequestBody CreateSupplierTransactionRequestDTO request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.recordTransaction(request));
+        SupplierTransactionDTO created = service.recordTransaction(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseUtil.success("Supplier transaction recorded successfully", created));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SupplierTransactionDTO> updateTransaction(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<SupplierTransactionDTO>> updateTransaction(@PathVariable Long id,
             @Valid @RequestBody CreateSupplierTransactionRequestDTO request) {
-        return ResponseEntity.ok(service.updateTransaction(id, request));
+        SupplierTransactionDTO updated = service.updateTransaction(id, request);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier transaction updated successfully", updated));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SupplierTransactionDTO> getTransaction(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getTransactionById(id));
+    public ResponseEntity<ApiResponse<SupplierTransactionDTO>> getTransaction(@PathVariable Long id) {
+        SupplierTransactionDTO transaction = service.getTransactionById(id);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier transaction retrieved successfully", transaction));
     }
 
     @GetMapping
-    public ResponseEntity<Page<SupplierTransactionDTO>> getAllTransactions(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<SupplierTransactionDTO>>> getAllTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -50,16 +57,22 @@ public class SupplierTransactionController {
             @RequestParam(required = false) String createdBy) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return ResponseEntity.ok(service.getAllTransactions(pageable, referenceNumber, createdBy));
+        Page<SupplierTransactionDTO> transactions = service.getAllTransactions(pageable, referenceNumber, createdBy);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier transactions retrieved successfully", transactions));
     }
 
     @GetMapping("/supplier/{supplierId}")
-    public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsBySupplier(@PathVariable Long supplierId) {
-        return ResponseEntity.ok(service.getTransactionsBySupplier(supplierId));
+    public ResponseEntity<ApiResponse<List<SupplierTransactionDTO>>> getTransactionsBySupplier(
+            @PathVariable Long supplierId) {
+        List<SupplierTransactionDTO> transactions = service.getTransactionsBySupplier(supplierId);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier transactions retrieved successfully", transactions));
     }
 
     @GetMapping("/warehouse/{warehouseId}")
-    public ResponseEntity<List<SupplierTransactionDTO>> getTransactionsByWarehouse(@PathVariable Long warehouseId) {
-        return ResponseEntity.ok(service.getTransactionsByWarehouse(warehouseId));
+    public ResponseEntity<ApiResponse<List<SupplierTransactionDTO>>> getTransactionsByWarehouse(
+            @PathVariable Long warehouseId) {
+        List<SupplierTransactionDTO> transactions = service.getTransactionsByWarehouse(warehouseId);
+        return ResponseEntity.ok(ApiResponseUtil.success("Supplier transactions retrieved successfully", transactions));
     }
 }
+

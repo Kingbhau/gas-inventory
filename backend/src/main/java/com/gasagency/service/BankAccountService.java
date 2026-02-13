@@ -1,8 +1,8 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.BankAccountDTO;
-import com.gasagency.dto.BankAccountLedgerDTO;
-import com.gasagency.dto.CreateBankAccountRequestDTO;
+import com.gasagency.dto.response.BankAccountDTO;
+import com.gasagency.dto.response.BankAccountLedgerDTO;
+import com.gasagency.dto.request.CreateBankAccountRequestDTO;
 import com.gasagency.entity.BankAccount;
 import com.gasagency.entity.BankAccountLedger;
 import com.gasagency.entity.Sale;
@@ -294,3 +294,4 @@ public class BankAccountService {
                                 ledger.getCreatedDate());
         }
 }
+

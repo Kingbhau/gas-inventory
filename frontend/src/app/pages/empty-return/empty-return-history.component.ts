@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,21 @@ import { LoadingService } from '../../services/loading.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { Customer } from '../../models/customer.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { PageResponse } from '../../models/page-response';
+
+type EmptyReturnRow = CustomerCylinderLedger & {
+  id: number;
+  variantId: number;
+  refType: string;
+  refId: number;
+  filledOut: number;
+  balance: number;
+};
 
 @Component({
   selector: 'app-empty-return-history',
@@ -23,12 +37,13 @@ import { UserService, User } from '../../services/user.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
+  @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
   filterFromDate = '';
   filterToDate = '';
   selectedCustomer = '';
   filterVariantId: string = '';
   filterCreatedBy = '';
-  variantsList: any[] = [];
+  variantsList: CylinderVariant[] = [];
   currentPage = 1;
   pageSize = 10;
   totalPages = 1;
@@ -45,12 +60,12 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
   faEye = faEye;
   faClipboard = faClipboard;
 
-  allEmptyReturns: any[] = [];
-  filteredEmptyReturns: any[] = [];
-  selectedEmptyReturn: any = null;
-  customersList: any[] = [];
+  allEmptyReturns: EmptyReturnRow[] = [];
+  filteredEmptyReturns: EmptyReturnRow[] = [];
+  selectedEmptyReturn: EmptyReturnRow | null = null;
+  customersList: Customer[] = [];
   users: User[] = [];
-  originalEmptyReturnsMap: Map<number, any> = new Map();
+  originalEmptyReturnsMap: Map<number, EmptyReturnRow> = new Map();
 
   constructor(
     private ledgerService: CustomerCylinderLedgerService,
@@ -68,11 +83,11 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     this.loadUsers();
     // Load all variants (including inactive) for filtering historical empty returns
     this.variantService.getAllVariantsAll().subscribe({
-      next: (data: any) => {
+      next: (data: CylinderVariant[]) => {
         this.variantsList = data || [];
         this.cdr.markForCheck();
       },
-      error: (error: any) => {
+      error: (_error: unknown) => {
         this.variantsList = [];
       }
     });
@@ -90,11 +105,14 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     this.ledgerService.getEmptyReturns(this.currentPage - 1, this.pageSize, 'transactionDate', 'DESC', fromDate, toDate, customerId, variantId, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
-          const emptyReturns: any[] = [];
-          let emptyReturnsArray = data.content || data;
+        next: (data: PageResponse<CustomerCylinderLedger>) => {
+          const emptyReturns: EmptyReturnRow[] = [];
+          const emptyReturnsArray = data.items || [];
           
-          emptyReturnsArray.forEach((entry: any) => {
+          emptyReturnsArray.forEach((entry) => {
+            if (entry.id === undefined) {
+              return;
+            }
             emptyReturns.push({
               id: entry.id,
               transactionReference: entry.transactionReference,
@@ -102,7 +120,12 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
               customerName: entry.customerName,
               transactionDate: entry.transactionDate,
               variantName: entry.variantName,
+              variantId: entry.variantId ?? 0,
+              refType: entry.refType ?? 'EMPTY_RETURN',
+              refId: entry.refId ?? 0,
+              filledOut: entry.filledOut ?? 0,
               emptyIn: entry.emptyIn,
+              balance: entry.balance ?? 0,
               amountReceived: entry.amountReceived,
               paymentMode: entry.paymentMode,
               dueAmount: entry.dueAmount,
@@ -112,22 +135,24 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
             });
           });
 
-          this.allEmptyReturns = emptyReturns.sort((a: any, b: any) => b.id - a.id);
+          this.allEmptyReturns = emptyReturns.sort((a, b) => b.id - a.id);
           this.filteredEmptyReturns = [...this.allEmptyReturns];
-          this.totalElements = data.totalElements || this.filteredEmptyReturns.length;
-          this.totalPages = data.totalPages || 1;
+          this.totalElements = data.totalElements ?? this.filteredEmptyReturns.length;
+          this.totalPages = data.totalPages ?? 1;
           
           // Store original empty returns for modal display
           this.originalEmptyReturnsMap.clear();
-          emptyReturnsArray.forEach((entry: any) => {
-            this.originalEmptyReturnsMap.set(entry.id, entry);
+          emptyReturnsArray.forEach((entry) => {
+            if (entry.id !== undefined) {
+              this.originalEmptyReturnsMap.set(entry.id, entry as EmptyReturnRow);
+            }
           });
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading empty returns';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading empty returns';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
@@ -137,14 +162,14 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     this.customerService.getAllCustomersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
+        next: (data: Customer[]) => {
           this.customersList = data;
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading customers';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
@@ -160,6 +185,9 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     this.selectedCustomer = '';
     this.filterVariantId = '';
     this.filterCreatedBy = '';
+    if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+      this.autocompleteInputs.forEach(input => input.resetInput());
+    }
     this.currentPage = 1;
     this.loadEmptyReturns();
   }
@@ -182,9 +210,10 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  viewDetails(emptyReturnId: string) {
-    const numericId = Number(emptyReturnId);
-    this.selectedEmptyReturn = this.originalEmptyReturnsMap.get(numericId) || this.filteredEmptyReturns.find(e => e.id === emptyReturnId);
+  viewDetails(emptyReturnId: number) {
+    this.selectedEmptyReturn = this.originalEmptyReturnsMap.get(emptyReturnId)
+      || this.filteredEmptyReturns.find(e => e.id === emptyReturnId)
+      || null;
   }
 
   closeDetails() {

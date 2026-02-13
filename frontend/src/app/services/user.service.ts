@@ -4,20 +4,9 @@ import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
 import { CacheService, CACHE_KEYS } from './cache.service';
-
-export interface User {
-  id?: number;
-  name: string;
-  username?: string;
-  mobileNo: string;
-  role: string;
-  active: boolean;
-  businessId?: number;
-  createdBy?: string;
-  createdDate?: string;
-  updatedBy?: string;
-  updatedDate?: string;
-}
+import { unwrapApiResponse } from '../utils/api-response.util';
+import { SimpleStatusDTO } from '../models/simple-status';
+import { User } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -26,13 +15,13 @@ export class UserService {
   constructor(private http: HttpClient, private cacheService: CacheService) {}
 
   getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.get<any>(this.apiUrl, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<User[]>());
   }
 
   getUser(id: number): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${id}`, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<User>());
   }
 
   invalidateCache(): void {
@@ -40,27 +29,29 @@ export class UserService {
   }
 
   addUser(user: Partial<User>): Observable<User> {
-    return this.http.post<User>(this.apiUrl, user, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.post<any>(this.apiUrl, user, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<User>());
   }
 
   updateUser(id: number, user: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/${id}`, user, { withCredentials: true });
+    return this.http.put<any>(`${this.apiUrl}/${id}`, user, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<User>());
   }
 
-  deleteUser(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
+  deleteUser(id: number): Observable<SimpleStatusDTO> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
   }
 
-  changePassword(id: number, currentPassword: string, newPassword: string): Observable<boolean> {
-    return this.http.post<boolean>(`${this.apiUrl}/${id}/change-password`, {
+  changePassword(id: number, currentPassword: string, newPassword: string): Observable<SimpleStatusDTO> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/change-password`, {
       currentPassword,
       newPassword
-    }, { withCredentials: true });
+    }, { withCredentials: true }).pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
   }
 
   reactivateUser(id: number): Observable<User> {
-    return this.http.post<User>(`${this.apiUrl}/${id}/reactivate`, {}, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.post<any>(`${this.apiUrl}/${id}/reactivate`, {}, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<User>());
   }
 }

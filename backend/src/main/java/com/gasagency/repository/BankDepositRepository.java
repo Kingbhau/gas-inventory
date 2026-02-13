@@ -81,6 +81,12 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
     @Query("SELECT bd FROM BankDeposit bd WHERE bd.depositDate = :date ORDER BY bd.depositDate DESC")
     List<BankDeposit> findByDepositDate(@Param("date") LocalDate date);
 
+    @Query("SELECT bd FROM BankDeposit bd WHERE bd.depositDate = :date " +
+            "AND (:createdBy IS NULL OR :createdBy = '' OR bd.createdBy = :createdBy) " +
+            "ORDER BY bd.depositDate DESC")
+    List<BankDeposit> findByDepositDateAndCreatedBy(@Param("date") LocalDate date,
+            @Param("createdBy") String createdBy);
+
     /**
      * Check if deposit exists for a reference number
      */
@@ -125,3 +131,4 @@ public interface BankDepositRepository extends JpaRepository<BankDeposit, Long> 
             @Param("createdBy") String createdBy,
             Pageable pageable);
 }
+

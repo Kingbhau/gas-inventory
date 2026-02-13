@@ -18,6 +18,12 @@ import { catchError, finalize, of } from 'rxjs';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { SharedModule } from '../../shared/shared.module';
+import { Customer } from '../../models/customer.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { PageResponse } from '../../models/page-response';
+import { PaymentRequest } from '../../models/payment-request.model';
+
+type PaymentCustomer = Customer & { showMenu?: boolean; dueAmount?: number };
 
 @Component({
   selector: 'app-payment-management',
@@ -41,10 +47,10 @@ export class PaymentManagementComponent implements OnInit {
 
   userName: string = '';
 
-  customers: any[] = [];
-  filteredCustomers: any[] = [];
+  customers: PaymentCustomer[] = [];
+  filteredCustomers: PaymentCustomer[] = [];
   searchTerm = '';
-  selectedCustomer: any = null;
+  selectedCustomer: PaymentCustomer | null = null;
   paymentPage = 1;
   paymentPageSize = 10;
   paymentTotalPages = 1;
@@ -61,7 +67,7 @@ export class PaymentManagementComponent implements OnInit {
   isSubmittingPayment = false;
   paymentModes: PaymentMode[] = [];
   bankAccounts: BankAccount[] = [];
-  ledgerEntries: any[] = [];
+  ledgerEntries: CustomerCylinderLedger[] = [];
 
   constructor(
     private customerService: CustomerService,
@@ -91,12 +97,11 @@ export class PaymentManagementComponent implements OnInit {
     this.bankAccountService.getActiveBankAccounts()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (response: any) => {
+        next: (response: BankAccount[]) => {
           this.bankAccounts = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading bank accounts:', error);
+        error: (error: unknown) => {
           this.bankAccounts = [];
         }
       });
@@ -111,8 +116,7 @@ export class PaymentManagementComponent implements OnInit {
           this.paymentModes = response || [];
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading payment modes:', error);
+        error: (error: unknown) => {
           this.paymentModes = [];
         }
       });
@@ -139,12 +143,12 @@ export class PaymentManagementComponent implements OnInit {
       .getActiveCustomersPaged(this.paymentPage - 1, this.paymentPageSize, 'name', 'ASC', search, 0.01)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data: any) => {
-          const content = data.content || data || [];
+        next: (data: PageResponse<Customer>) => {
+          const content = data.items || [];
           this.customers = content;
           this.filteredCustomers = content;
-          this.paymentTotalElements = data.totalElements || content.length;
-          this.paymentTotalPages = data.totalPages || 1;
+          this.paymentTotalElements = data.totalElements ?? content.length;
+          this.paymentTotalPages = data.totalPages ?? 1;
           this.cdr.markForCheck();
         },
         error: () => {
@@ -182,7 +186,11 @@ export class PaymentManagementComponent implements OnInit {
     }
   }
 
-  selectCustomer(customer: any) {
+  selectCustomer(customer: PaymentCustomer) {
+    if (!customer.id) {
+      this.toastr.error('Invalid customer selected', 'Error');
+      return;
+    }
     this.selectedCustomer = customer;
     this.loadLedgerForCustomer(customer.id);
     this.cdr.markForCheck();
@@ -193,11 +201,11 @@ export class PaymentManagementComponent implements OnInit {
     this.ledgerService.getLedgerByCustomer(customerId)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe(
-        (data: any[]) => {
+        (data: CustomerCylinderLedger[]) => {
           this.ledgerEntries = data;
           this.cdr.markForCheck();
         },
-        (error: any) => {
+        (error: unknown) => {
           this.toastr.error('Failed to load ledger', 'Error');
         }
       );
@@ -271,7 +279,12 @@ export class PaymentManagementComponent implements OnInit {
 
     this.isSubmittingPayment = true;
     this.loadingService.show('Recording payment...');
-    const paymentData: any = {
+    if (!this.selectedCustomer?.id) {
+      this.toastr.error('No customer selected', 'Error');
+      this.isSubmittingPayment = false;
+      return;
+    }
+    const paymentData: PaymentRequest = {
       customerId: this.selectedCustomer.id,
       amount: amountValue,
       paymentDate: this.paymentForm.paymentDate,
@@ -286,22 +299,25 @@ export class PaymentManagementComponent implements OnInit {
     this.ledgerService.recordPayment(paymentData)
       .pipe(
         finalize(() => this.loadingService.hide()),
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error recording payment';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error recording payment';
           this.toastr.error(errorMessage, 'Error');
           this.isSubmittingPayment = false;
           this.cdr.markForCheck();
           return of(null);
         })
       )
-      .subscribe((response: any) => {
+      .subscribe((response: CustomerCylinderLedger | null) => {
         if (response) {
           this.toastr.success('Payment recorded successfully', 'Success');
           // Notify dashboard of the payment
           this.dataRefreshService.notifyPaymentReceived(response);
           this.closePaymentForm();
           // Refresh ledger
-          this.loadLedgerForCustomer(this.selectedCustomer.id);
+          if (this.selectedCustomer?.id) {
+            this.loadLedgerForCustomer(this.selectedCustomer.id);
+          }
           // Refresh customers to update due amounts
           this.loadCustomers();
         }
@@ -357,7 +373,7 @@ export class PaymentManagementComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  selectAndPayment(customer: any) {
+  selectAndPayment(customer: PaymentCustomer) {
     this.selectCustomer(customer);
     setTimeout(() => {
       this.openPaymentForm();
