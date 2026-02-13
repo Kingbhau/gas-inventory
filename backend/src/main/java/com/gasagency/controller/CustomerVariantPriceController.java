@@ -1,8 +1,10 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.CustomerVariantPriceDTO;
+import com.gasagency.dto.response.CustomerVariantPriceDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.service.CustomerVariantPriceService;
 import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +28,7 @@ public class CustomerVariantPriceController {
         dto.setCustomerId(customerId);
         CustomerVariantPriceDTO created = service.createPrice(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(true, "Pricing created successfully", created));
+                .body(ApiResponseUtil.success("Pricing created successfully", created));
     }
 
     @GetMapping("/{variantId}")
@@ -34,14 +36,14 @@ public class CustomerVariantPriceController {
             @PathVariable Long customerId,
             @PathVariable Long variantId) {
         CustomerVariantPriceDTO price = service.getPriceByCustomerAndVariant(customerId, variantId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Pricing retrieved successfully", price));
+        return ResponseEntity.ok(ApiResponseUtil.success("Pricing retrieved successfully", price));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<CustomerVariantPriceDTO>>> getPricesByCustomer(
             @PathVariable Long customerId) {
         List<CustomerVariantPriceDTO> prices = service.getPricesByCustomer(customerId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Pricing list retrieved successfully", prices));
+        return ResponseEntity.ok(ApiResponseUtil.success("Pricing list retrieved successfully", prices));
     }
 
     @PutMapping("/{variantId}")
@@ -57,14 +59,16 @@ public class CustomerVariantPriceController {
         dto.setVariantId(variantId);
         CustomerVariantPriceDTO updated = service.updatePrice(existing.getId(), dto);
 
-        return ResponseEntity.ok(new ApiResponse<>(true, "Pricing updated successfully", updated));
+        return ResponseEntity.ok(ApiResponseUtil.success("Pricing updated successfully", updated));
     }
 
     @DeleteMapping("/{variantId}")
-    public ResponseEntity<ApiResponse<Void>> deletePrice(
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> deletePrice(
             @PathVariable Long customerId,
             @PathVariable Long variantId) {
         service.deletePriceByCustomerAndVariant(customerId, variantId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Pricing deleted successfully", null));
+        return ResponseEntity.ok(ApiResponseUtil.success("Pricing deleted successfully",
+                new SimpleStatusDTO("SUCCESS")));
     }
 }
+

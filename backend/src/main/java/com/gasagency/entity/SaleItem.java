@@ -205,3 +205,4 @@ public class SaleItem extends Auditable {
         return Objects.hash(id);
     }
 }
+

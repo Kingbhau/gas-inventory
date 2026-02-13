@@ -82,3 +82,4 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
                         "FROM InventoryStock i GROUP BY i.warehouse.id, i.warehouse.name")
         List<Object[]> sumByWarehouse();
 }
+

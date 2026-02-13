@@ -29,6 +29,12 @@ public interface SupplierTransactionRepository extends JpaRepository<SupplierTra
     @Query("SELECT st FROM SupplierTransaction st WHERE st.transactionDate = :date ORDER BY st.transactionDate DESC")
     List<SupplierTransaction> findByTransactionDate(@Param("date") LocalDate date);
 
+    @Query("SELECT st FROM SupplierTransaction st WHERE st.transactionDate = :date " +
+            "AND (:createdBy IS NULL OR :createdBy = '' OR st.createdBy = :createdBy) " +
+            "ORDER BY st.transactionDate DESC")
+    List<SupplierTransaction> findByTransactionDateAndCreatedBy(@Param("date") LocalDate date,
+            @Param("createdBy") String createdBy);
+
     @Query("SELECT st FROM SupplierTransaction st " +
             "WHERE (:referenceNumber IS NULL OR :referenceNumber = '' OR LOWER(st.reference) LIKE LOWER(CONCAT('%', :referenceNumber, '%'))) " +
             "AND (:createdBy IS NULL OR :createdBy = '' OR st.createdBy = :createdBy)")
@@ -37,3 +43,4 @@ public interface SupplierTransactionRepository extends JpaRepository<SupplierTra
             @Param("createdBy") String createdBy,
             org.springframework.data.domain.Pageable pageable);
 }
+

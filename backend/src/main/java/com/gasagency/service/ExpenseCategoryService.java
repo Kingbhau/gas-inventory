@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.ExpenseCategoryDTO;
+import com.gasagency.dto.response.ExpenseCategoryDTO;
 import com.gasagency.entity.ExpenseCategory;
 import com.gasagency.repository.ExpenseCategoryRepository;
 import org.modelmapper.ModelMapper;
@@ -101,3 +101,4 @@ public class ExpenseCategoryService {
         return modelMapper.map(updated, ExpenseCategoryDTO.class);
     }
 }
+

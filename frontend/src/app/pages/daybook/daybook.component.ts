@@ -10,9 +10,12 @@ import { LoadingService } from '../../services/loading.service';
 import { SharedModule } from '../../shared/shared.module';
 import { finalize } from 'rxjs';
 import { exportDayBookReportToPDF } from './export-daybook-report.util';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
+import { DayBook, DayBookSummary } from '../../models/daybook.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-daybook',
@@ -30,8 +33,8 @@ export class DayBookComponent implements OnInit, OnDestroy {
   faDownload = faDownload;
 
   // Data
-  dayBookTransactions: any[] = [];
-  dayBookSummary: any = null;
+  dayBookTransactions: DayBook[] = [];
+  dayBookSummary: DayBookSummary | null = null;
   dayBookTypeSummaries: Array<{
     type: string;
     label: string;
@@ -78,7 +81,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
   dayBookTotalElements = 0;
   daybookSortBy = 'transactionDate';
   daybookDirection = 'DESC';
-  paginatedDayBookTransactions: any[] = [];
+  paginatedDayBookTransactions: DayBook[] = [];
 
   constructor(
     private dayBookService: DayBookService,
@@ -141,17 +144,17 @@ export class DayBookComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: any) => {
+        next: (response: PageResponse<DayBook>) => {
           // Response is a Page object with content, totalElements, totalPages, etc.
           if (this.isManager) {
-            const filteredPage = this.filterOutBankDeposits(response.content || []);
+            const filteredPage = this.filterOutBankDeposits(response.items || []);
             this.paginatedDayBookTransactions = filteredPage;
             this.dayBookTotalElements = filteredPage.length;
             this.dayBookTotalPages = Math.max(1, Math.ceil(this.dayBookTotalElements / this.dayBookPageSize));
           } else {
-            this.paginatedDayBookTransactions = response.content || [];
-            this.dayBookTotalElements = response.totalElements || 0;
-            this.dayBookTotalPages = response.totalPages || 1;
+            this.paginatedDayBookTransactions = response.items || [];
+            this.dayBookTotalElements = response.totalElements ?? 0;
+            this.dayBookTotalPages = response.totalPages ?? 1;
           }
           
           // Also fetch summary
@@ -161,7 +164,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
             this.filterTransactionType || undefined
           )
             .subscribe({
-              next: (summaryResponse: any) => {
+              next: (summaryResponse: DayBookSummary) => {
                 if (this.isManager) {
                   const filteredTransactions = this.filterOutBankDeposits(summaryResponse?.transactions || []);
                   this.dayBookTransactions = filteredTransactions;
@@ -177,8 +180,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                 }
                 this.cdr.markForCheck();
               },
-              error: (error: any) => {
-                console.error('Error loading day book summary:', error);
+              error: (error: unknown) => {
                 if (this.isManager) {
                   this.dayBookSummary = this.buildSummaryFromTransactions(this.paginatedDayBookTransactions);
                   this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
@@ -189,8 +191,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
           
           this.cdr.markForCheck();
         },
-        error: (error: any) => {
-          console.error('Error loading day book data:', error);
+        error: (error: unknown) => {
           this.toastr.error('Failed to load day book data', 'Error');
           this.paginatedDayBookTransactions = [];
           this.dayBookSummary = null;
@@ -222,20 +223,19 @@ export class DayBookComponent implements OnInit, OnDestroy {
    */
   printDayBook() {
     if (this.dayBookTransactions.length === 0) {
-      this.toastr.error('No data to export', 'Error');
+      this.toastr.info('No data to export');
       return;
     }
 
     try {
       exportDayBookReportToPDF({
         transactions: this.dayBookTransactions,
-        summary: this.dayBookSummary,
+        summary: this.dayBookSummary ?? this.buildSummaryFromTransactions(this.dayBookTransactions),
         selectedDate: this.selectedDate,
         businessName: 'GAS AGENCY SYSTEM'
       });
       this.toastr.success('PDF exported successfully!', 'Success');
     } catch (error) {
-      console.error('Error generating PDF:', error);
       this.toastr.error('Failed to generate PDF', 'Error');
     }
   }
@@ -260,9 +260,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
   /**
    * Format amount with proper decimal places
    */
-  formatAmount(amount: any): string {
-    if (!amount) return '0.00';
-    const num = parseFloat(amount);
+  formatAmount(amount: string | number | null | undefined): string {
+    if (amount === null || amount === undefined || amount === '') return '0.00';
+    const num = typeof amount === 'number' ? amount : parseFloat(String(amount));
     if (isNaN(num)) return '0.00';
     return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -303,11 +303,11 @@ export class DayBookComponent implements OnInit, OnDestroy {
     return this.currentUserRole === 'MANAGER';
   }
 
-  private filterOutBankDeposits(transactions: any[]): any[] {
+  private filterOutBankDeposits(transactions: DayBook[]): DayBook[] {
     return (transactions || []).filter(tx => tx?.transactionType !== 'BANK_DEPOSIT');
   }
 
-  private applyPaginationFromTransactions(transactions: any[]): void {
+  private applyPaginationFromTransactions(transactions: DayBook[]): void {
     const total = transactions.length;
     this.dayBookTotalElements = total;
     this.dayBookTotalPages = Math.max(1, Math.ceil(total / this.dayBookPageSize));
@@ -318,13 +318,13 @@ export class DayBookComponent implements OnInit, OnDestroy {
     this.paginatedDayBookTransactions = transactions.slice(start, start + this.dayBookPageSize);
   }
 
-  private buildSummaryFromTransactions(transactions: any[]): any {
+  private buildSummaryFromTransactions(transactions: DayBook[]): DayBookSummary {
     const totalFilledCount = transactions.reduce((sum, tx) => sum + (Number(tx?.filledCount) || 0), 0);
     const totalEmptyCount = transactions.reduce((sum, tx) => sum + (Number(tx?.emptyCount) || 0), 0);
     const totalAmount = transactions.reduce((sum, tx) => sum + (Number(tx?.totalAmount) || 0), 0);
     const totalAmountReceived = transactions.reduce((sum, tx) => sum + (Number(tx?.amountReceived) || 0), 0);
 
-    const latestPerCustomer = new Map<number, any>();
+    const latestPerCustomer = new Map<number, DayBook>();
     transactions.forEach(tx => {
       const customerId = tx?.customerId;
       if (customerId != null && !latestPerCustomer.has(customerId)) {
@@ -345,7 +345,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     };
   }
 
-  private buildTypeSummaries(transactions: any[]): Array<{
+  private buildTypeSummaries(transactions: DayBook[]): Array<{
     type: string;
     label: string;
     count: number;
@@ -416,7 +416,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     return Array.from(summaryMap.values());
   }
 
-  private buildVariantSummaries(transactions: any[]): Array<{
+  private buildVariantSummaries(transactions: DayBook[]): Array<{
     variantName: string;
     filledCount: number;
     emptyCount: number;
@@ -441,7 +441,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     return Array.from(summaryMap.values()).sort((a, b) => a.variantName.localeCompare(b.variantName));
   }
 
-  private setVariantSummaries(transactions: any[]): void {
+  private setVariantSummaries(transactions: DayBook[]): void {
     this.variantSummaries = this.buildVariantSummaries(transactions);
     this.filledVariantSummaries = this.variantSummaries
       .filter(summary => summary.filledCount > 0)

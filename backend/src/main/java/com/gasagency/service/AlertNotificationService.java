@@ -1,5 +1,7 @@
 package com.gasagency.service;
 
+import com.gasagency.dto.response.AlertNotificationDTO;
+import com.gasagency.dto.response.AlertSummaryDTO;
 import com.gasagency.entity.AlertNotification;
 import com.gasagency.repository.AlertNotificationRepository;
 import org.slf4j.Logger;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for managing alert notifications
@@ -77,6 +80,17 @@ public class AlertNotificationService {
         return repository.findByIsDismissedFalseAndExpiresAtGreaterThan(now);
     }
 
+    @Transactional(readOnly = true)
+    public AlertSummaryDTO getActiveAlertSummary() {
+        List<AlertNotificationDTO> alerts = getActiveAlerts().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+        AlertSummaryDTO summary = new AlertSummaryDTO();
+        summary.setCount(alerts.size());
+        summary.setAlerts(alerts);
+        return summary;
+    }
+
     /**
      * Get all active alerts count
      */
@@ -127,4 +141,22 @@ public class AlertNotificationService {
             logger.error("Error cleaning up expired alerts", e);
         }
     }
+
+    private AlertNotificationDTO toDTO(AlertNotification alert) {
+        AlertNotificationDTO dto = new AlertNotificationDTO();
+        dto.setId(alert.getId());
+        dto.setAlertType(alert.getAlertType());
+        dto.setAlertKey(alert.getAlertKey());
+        dto.setWarehouseId(alert.getWarehouseId());
+        dto.setCustomerId(alert.getCustomerId());
+        dto.setMessage(alert.getMessage());
+        dto.setSeverity(alert.getSeverity());
+        dto.setIsDismissed(alert.getIsDismissed());
+        dto.setDismissedAt(alert.getDismissedAt());
+        dto.setDismissedByUserId(alert.getDismissedByUserId());
+        dto.setCreatedAt(alert.getCreatedAt());
+        dto.setExpiresAt(alert.getExpiresAt());
+        return dto;
+    }
 }
+

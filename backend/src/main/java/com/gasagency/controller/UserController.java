@@ -1,9 +1,13 @@
 
 package com.gasagency.controller;
 
-import com.gasagency.entity.User;
-import com.gasagency.dto.UserDTO;
+import com.gasagency.dto.request.ChangePasswordRequestDTO;
+import com.gasagency.dto.response.UserDTO;
+import com.gasagency.dto.response.SimpleStatusDTO;
+import com.gasagency.dto.request.UserUpdateRequestDTO;
 import com.gasagency.service.UserService;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -24,7 +27,7 @@ public class UserController {
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity<ApiResponse<UserDTO>> createUser(@RequestBody UserDTO userDTO) {
         // Get current user's role
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isOwner = authentication.getAuthorities().stream()
@@ -32,109 +35,88 @@ public class UserController {
 
         // Manager cannot create Owner role users
         if (!isOwner && "OWNER".equals(userDTO.getRole())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                    Map.of("error", "Manager cannot create Owner users"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponseUtil.error("Manager cannot create Owner users", "FORBIDDEN_OPERATION"));
         }
 
-        User createdUser = userService.createUser(userDTO);
-        return new ResponseEntity<>(toDTO(createdUser), HttpStatus.CREATED);
+        UserDTO createdUser = userService.createUser(userDTO);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseUtil.success("User created successfully", createdUser));
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {
-        Optional<User> updatedUser = userService.updateUser(id, user);
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Long id,
+            @RequestBody UserUpdateRequestDTO user) {
+        Optional<UserDTO> updatedUser = userService.updateUser(id, user);
         if (updatedUser.isPresent()) {
-            return new ResponseEntity<>(toDTO(updatedUser.get()), HttpStatus.OK);
+            return ResponseEntity.ok(ApiResponseUtil.success("User updated successfully", updatedUser.get()));
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponseUtil.error("User not found", "RESOURCE_NOT_FOUND"));
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> softDeleteUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Boolean>> softDeleteUser(@PathVariable Long id) {
         boolean deleted = userService.softDeleteUser(id);
-        return new ResponseEntity<>(deleted, deleted ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("User not found", "RESOURCE_NOT_FOUND"));
+        }
+        return ResponseEntity.ok(ApiResponseUtil.success("User deleted successfully", true));
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<UserDTO> users = userService.getAllUsers().stream().map(this::toDTO).toList();
-        return new ResponseEntity<>(users, HttpStatus.OK);
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(ApiResponseUtil.success("Users retrieved successfully", users));
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        Optional<User> user = userService.getUserById(id);
+    public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Long id) {
+        Optional<UserDTO> user = userService.getUserById(id);
         if (user.isPresent()) {
-            return new ResponseEntity<>(toDTO(user.get()), HttpStatus.OK);
+            return ResponseEntity.ok(ApiResponseUtil.success("User retrieved successfully", user.get()));
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponseUtil.error("User not found", "RESOURCE_NOT_FOUND"));
     }
 
     @PostMapping("/{id}/change-password")
-    public ResponseEntity<?> changePassword(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        String currentPassword = payload.get("currentPassword");
-        String newPassword = payload.get("newPassword");
+    public ResponseEntity<ApiResponse<SimpleStatusDTO>> changePassword(@PathVariable Long id,
+            @RequestBody ChangePasswordRequestDTO payload) {
+        String currentPassword = payload.getCurrentPassword();
+        String newPassword = payload.getNewPassword();
 
         try {
             boolean changed = userService.changePassword(id, currentPassword, newPassword);
             if (changed) {
-                return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
-                    {
-                        put("success", true);
-                        put("message", "Password changed successfully");
-                    }
-                }, HttpStatus.OK);
+                return ResponseEntity.ok(ApiResponseUtil.success("Password changed successfully",
+                        new SimpleStatusDTO("SUCCESS")));
             } else {
-                return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
-                    {
-                        put("success", false);
-                        put("message", "Current password is incorrect");
-                        put("error", "Invalid current password");
-                    }
-                }, HttpStatus.BAD_REQUEST);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponseUtil.error("Current password is incorrect", "INVALID_CREDENTIALS"));
             }
         } catch (Exception e) {
-            return new ResponseEntity<>(new java.util.HashMap<String, Object>() {
-                {
-                    put("success", false);
-                    put("message", e.getMessage() != null ? e.getMessage() : "Failed to change password");
-                    put("error", e.getClass().getSimpleName());
-                }
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponseUtil.error(
+                            e.getMessage() != null ? e.getMessage() : "Failed to change password",
+                            "PASSWORD_CHANGE_FAILED"));
         }
-    }
-
-    private UserDTO toDTO(User user) {
-        if (user == null)
-            return null;
-        UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
-        dto.setName(user.getName());
-        dto.setMobileNo(user.getMobileNo());
-        dto.setRole(user.getRole() != null ? user.getRole().name() : null);
-        dto.setActive(user.isActive());
-        dto.setCreatedBy(user.getCreatedBy());
-        dto.setCreatedDate(user.getCreatedDate());
-        dto.setUpdatedBy(user.getUpdatedBy());
-        dto.setUpdatedDate(user.getUpdatedDate());
-        if (user.getBusiness() != null) {
-            dto.setBusinessId(user.getBusiness().getId());
-        }
-        return dto;
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     @PostMapping("/{id}/reactivate")
-    public ResponseEntity<UserDTO> reactivateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserDTO>> reactivateUser(@PathVariable Long id) {
         var userOpt = userService.reactivateUser(id);
         if (userOpt.isPresent()) {
-            return new ResponseEntity<>(userOpt.get(), HttpStatus.OK);
+            return ResponseEntity.ok(ApiResponseUtil.success("User reactivated successfully", userOpt.get()));
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponseUtil.error("User not found", "RESOURCE_NOT_FOUND"));
     }
 }
+

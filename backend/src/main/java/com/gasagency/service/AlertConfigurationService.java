@@ -1,5 +1,6 @@
 package com.gasagency.service;
 
+import com.gasagency.dto.response.AlertConfigurationDTO;
 import com.gasagency.entity.AlertConfiguration;
 import com.gasagency.repository.AlertConfigurationRepository;
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service for managing alert configurations
@@ -46,6 +48,11 @@ public class AlertConfigurationService {
         return repository.findByAlertType(alertType);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<AlertConfigurationDTO> getConfigDTOOptional(String alertType) {
+        return repository.findByAlertType(alertType).map(this::toDTO);
+    }
+
     /**
      * Get all enabled alert configurations
      */
@@ -60,6 +67,13 @@ public class AlertConfigurationService {
     @Transactional(readOnly = true)
     public List<AlertConfiguration> getAllConfigs() {
         return repository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlertConfigurationDTO> getAllConfigDTOs() {
+        return getAllConfigs().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -124,6 +138,16 @@ public class AlertConfigurationService {
         return saved;
     }
 
+    @CacheEvict(value = "alertConfigCache", key = "#alertType")
+    @Transactional
+    public AlertConfigurationDTO updateAlertConfigDTO(String alertType, Boolean enabled,
+            Integer filledThreshold, Integer emptyThreshold,
+            Integer pendingReturnThreshold) {
+        AlertConfiguration saved = updateAlertConfig(alertType, enabled, filledThreshold, emptyThreshold,
+                pendingReturnThreshold);
+        return toDTO(saved);
+    }
+
     /**
      * Toggle alert enabled status
      */
@@ -140,4 +164,26 @@ public class AlertConfigurationService {
         logger.info("Alert {} toggled to {}", alertType, config.getEnabled());
         return repository.save(config);
     }
+
+    @CacheEvict(value = "alertConfigCache", key = "#alertType")
+    @Transactional
+    public AlertConfigurationDTO toggleAlertDTO(String alertType) {
+        AlertConfiguration saved = toggleAlert(alertType);
+        return toDTO(saved);
+    }
+
+    private AlertConfigurationDTO toDTO(AlertConfiguration config) {
+        AlertConfigurationDTO dto = new AlertConfigurationDTO();
+        dto.setId(config.getId());
+        dto.setAlertType(config.getAlertType());
+        dto.setEnabled(config.getEnabled());
+        dto.setFilledThreshold(config.getFilledCylinderThreshold());
+        dto.setEmptyThreshold(config.getEmptyCylinderThreshold());
+        dto.setPendingReturnThreshold(config.getPendingReturnThreshold());
+        dto.setDescription(config.getDescription());
+        dto.setCreatedAt(config.getCreatedAt());
+        dto.setUpdatedAt(config.getUpdatedAt());
+        return dto;
+    }
 }
+

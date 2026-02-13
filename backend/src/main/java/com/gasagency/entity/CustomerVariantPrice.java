@@ -92,3 +92,4 @@ public class CustomerVariantPrice extends Auditable {
         this.discountPrice = discountPrice;
     }
 }
+

@@ -1,8 +1,8 @@
 
 package com.gasagency.service;
 
-import com.gasagency.dto.CreateSupplierTransactionRequestDTO;
-import com.gasagency.dto.SupplierTransactionDTO;
+import com.gasagency.dto.request.CreateSupplierTransactionRequestDTO;
+import com.gasagency.dto.response.SupplierTransactionDTO;
 import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
@@ -306,3 +306,4 @@ public class SupplierTransactionService {
                 return dto;
         }
 }
+

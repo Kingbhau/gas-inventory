@@ -8,6 +8,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faEdit, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { BankAccountService } from '../../services/bank-account.service';
 import { BankAccount } from '../../models/bank-account.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-bank-account-management',
@@ -79,13 +80,12 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
     this.bankAccountService.getAllBankAccounts()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          this.bankAccounts = response.content || response || [];
+        (response: PageResponse<BankAccount>) => {
+          this.bankAccounts = response.items || [];
           this.isLoading = false;
           this.cdr.markForCheck();
         },
-        (error) => {
-          console.error('Error loading bank accounts:', error);
+        (error: unknown) => {
           this.toastr.error('Failed to load bank accounts');
           this.isLoading = false;
           this.cdr.markForCheck();
@@ -158,7 +158,6 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
           },
           (error) => {
-            console.error('Error updating bank account:', error);
             this.toastr.error(error.error?.message || 'Failed to update bank account');
             this.isSubmitting = false;
             this.cdr.markForCheck();
@@ -177,7 +176,6 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
           },
           (error) => {
-            console.error('Error creating bank account:', error);
             this.toastr.error(error.error?.message || 'Failed to create bank account');
             this.isSubmitting = false;
             this.cdr.markForCheck();
@@ -205,7 +203,6 @@ export class BankAccountManagementComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         (error) => {
-          console.error('Error deleting bank account:', error);
           this.toastr.error('Failed to delete bank account');
           this.cdr.markForCheck();
         }

@@ -205,11 +205,15 @@
 
           <!-- Empty Qty -->
           <div class="form-group">
-            <label class="form-label">Empty Cylinders</label>
+            <label class="form-label">Empty Cylinders <span class="required">*</span></label>
             <div class="input-with-hint">
               <input type="number" formControlName="emptyQty" class="form-control" min="0" 
                 [max]="availableStock?.emptyQty || 0" />
               <span class="input-hint" *ngIf="availableStock">Available: {{ availableStock.emptyQty }}</span>
+            </div>
+            <div *ngIf="stockTransferForm.get('emptyQty')?.invalid && stockTransferForm.get('emptyQty')?.touched" class="error-message">
+              <span *ngIf="stockTransferForm.get('emptyQty')?.errors?.['required']">Empty quantity is required</span>
+              <span *ngIf="stockTransferForm.get('emptyQty')?.errors?.['min']">Cannot be negative</span>
             </div>
             <div *ngIf="availableStock && (stockTransferForm.get('emptyQty')?.value > availableStock.emptyQty)" class="error-message">
               Insufficient empty cylinders. Max available: {{ availableStock.emptyQty }}

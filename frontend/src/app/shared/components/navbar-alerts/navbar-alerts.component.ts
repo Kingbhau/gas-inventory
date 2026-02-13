@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AlertService, Alert } from '../../../services/alert.service';
+import { AlertService } from '../../../services/alert.service';
+import { Alert } from '../../../models/alert.model';
 import { AuthService } from '../../../services/auth.service';
 import { Subscription, of } from 'rxjs';
 
@@ -19,30 +20,20 @@ export class NavbarAlertsComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   constructor(private alertService: AlertService, private authService: AuthService) {
-    console.log('🔔 NavbarAlertsComponent constructor called');
   }
 
   ngOnInit(): void {
-    console.log('🔔 NavbarAlertsComponent initialized');
-    
     // Only initialize alerts if user is logged in
     const userInfo = this.authService.getUserInfo();
     if (userInfo) {
-      console.log('✅ User is logged in, initializing alerts');
       this.alertService.initialize();
     } else {
-      console.log('⚠️ User not logged in, skipping alert initialization');
     }
     
     try {
       this.alerts$ = this.alertService.getAlerts$();
       this.alertCount$ = this.alertService.getAlertCount$();
-      
-      this.alertCount$.subscribe(count => {
-        console.log('🔔 Alert count changed:', count);
-      });
     } catch (e) {
-      console.error('🔔 Error in ngOnInit:', e);
       this.alerts$ = of([]);
       this.alertCount$ = of(0);
     }
@@ -60,10 +51,8 @@ export class NavbarAlertsComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.alertService.dismissAlert(alertId).subscribe(
       () => {
-        console.log('Alert dismissed:', alertId);
       },
       (error: any) => {
-        console.error('Error dismissing alert:', error);
       }
     );
   }

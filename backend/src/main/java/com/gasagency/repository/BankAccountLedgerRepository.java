@@ -101,4 +101,34 @@ public interface BankAccountLedgerRepository extends JpaRepository<BankAccountLe
                         "WHERE EXTRACT(MONTH FROM bal.transactionDate) = EXTRACT(MONTH FROM CAST(:date AS DATE)) " +
                         "AND EXTRACT(YEAR FROM bal.transactionDate) = EXTRACT(YEAR FROM CAST(:date AS DATE))")
         long countByCreatedAtMonthYear(@Param("date") LocalDate date);
+
+        @Query("SELECT bal FROM BankAccountLedger bal WHERE " +
+                        "(:bankAccountId IS NULL OR bal.bankAccount.id = :bankAccountId) " +
+                        "AND (:transactionType IS NULL OR :transactionType = '' OR bal.transactionType = :transactionType) " +
+                        "AND (:startDate IS NULL OR bal.transactionDate >= :startDate) " +
+                        "AND (:endDate IS NULL OR bal.transactionDate <= :endDate) " +
+                        "AND (:referenceNumber IS NULL OR :referenceNumber = '' OR LOWER(bal.referenceNumber) LIKE LOWER(CONCAT('%', :referenceNumber, '%'))) " +
+                        "ORDER BY bal.transactionDate DESC")
+        Page<BankAccountLedger> findByFilters(
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("transactionType") String transactionType,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("referenceNumber") String referenceNumber,
+                        Pageable pageable);
+
+        @Query("SELECT bal FROM BankAccountLedger bal WHERE " +
+                        "(:bankAccountId IS NULL OR bal.bankAccount.id = :bankAccountId) " +
+                        "AND (:transactionType IS NULL OR :transactionType = '' OR bal.transactionType = :transactionType) " +
+                        "AND (:startDate IS NULL OR bal.transactionDate >= :startDate) " +
+                        "AND (:endDate IS NULL OR bal.transactionDate <= :endDate) " +
+                        "AND (:referenceNumber IS NULL OR :referenceNumber = '' OR LOWER(bal.referenceNumber) LIKE LOWER(CONCAT('%', :referenceNumber, '%'))) " +
+                        "ORDER BY bal.transactionDate DESC")
+        List<BankAccountLedger> findByFilters(
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("transactionType") String transactionType,
+                        @Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate,
+                        @Param("referenceNumber") String referenceNumber);
 }
+

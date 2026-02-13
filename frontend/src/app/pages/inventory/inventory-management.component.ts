@@ -16,6 +16,37 @@ import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { SharedModule } from 'src/app/shared/shared.module';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { WarehouseService } from '../../services/warehouse.service';
+import { Warehouse } from '../../models/warehouse.model';
+import { InventoryStock } from '../../models/inventory-stock.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { PageResponse } from '../../models/page-response';
+import { WarehouseTransferDTO } from '../../models/warehouse-transfer.model';
+
+type StockSummaryRow = {
+  variantId: number;
+  variantName: string;
+  filledQty: number;
+  emptyQty: number;
+  warehouseId?: number;
+  warehouseName?: string;
+};
+
+type MovementRow = {
+  id: number;
+  variantId?: number;
+  date?: string;
+  timestamp: number;
+  customer?: string;
+  variant?: string;
+  type: string;
+  filledQty?: number;
+  emptyQty?: number;
+  balance?: number;
+  reference?: string;
+  fromWarehouse?: string;
+  toWarehouse?: string;
+  paymentMode?: string;
+};
 
 @Component({
   selector: 'app-inventory-management',
@@ -45,8 +76,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   activeTab = 'summary';
   filterVariant = '';
   filterVariantId: number | null = null;
-  selectedWarehouse: any = null;
-  warehouses: any[] = [];
+  selectedWarehouse: Warehouse | null = null;
+  warehouses: Warehouse[] = [];
 
   // Format movement type for display (e.g., INITIAL_STOCK -> Purchase, EMPTY_RETURN -> Empty Return)
   formatMovementType(type: string): string {
@@ -105,15 +136,15 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   faArrowUp = faArrowUp;
   faArrowDown = faArrowDown;
 
-  stockSummary: any[] = [];
-  totalStockSummary: any[] = []; // Total across all warehouses
-  movements: any[] = [];
+  stockSummary: StockSummaryRow[] = [];
+  totalStockSummary: StockSummaryRow[] = []; // Total across all warehouses
+  movements: MovementRow[] = [];
   variants: CylinderVariant[] = [];
 
   // Stock Transfer Modal
   showTransferModal = false;
   stockTransferForm!: FormGroup;
-  availableStock: any = null; // Track available stock for selected variant/warehouse
+  availableStock: { filledQty: number; emptyQty: number; variantName?: string } | null = null; // Track available stock for selected variant/warehouse
 
   constructor(
     private inventoryService: InventoryStockService,
@@ -138,12 +169,11 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   loadWarehouses() {
     this.warehouseService.getAllWarehouses().subscribe({
-      next: (response: any) => {
-        // Handle both wrapped response {data: [...]} and direct array response
-        this.warehouses = Array.isArray(response) ? response : (response?.data || []);
+      next: (response: Warehouse[]) => {
+        this.warehouses = Array.isArray(response) ? response : [];
         this.cdr.markForCheck();
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.toastr.error('Failed to load warehouses', 'Error');
         this.warehouses = [];
         this.cdr.markForCheck();
@@ -171,11 +201,11 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   loadVariants() {
     this.variantService.getAllVariantsAll().subscribe({
-      next: (data) => {
-        this.variants = data;
+      next: (data: CylinderVariant[]) => {
+        this.variants = data || [];
         this.cdr.markForCheck();
       },
-      error: (err) => {
+      error: (err: unknown) => {
         this.toastr.error('Failed to load variants', 'Error');
         this.variants = [];
         this.cdr.markForCheck();
@@ -184,7 +214,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   get activeVariantsList() {
-    return this.variants.filter((v: any) => v?.active !== false);
+    return this.variants.filter((v) => v?.active !== false);
   }
 
   loadMovements() {
@@ -216,40 +246,50 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
     const sub = movementSource
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading stock movements';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading stock movements';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 0,
+            page: page,
+            size: size
+          } as PageResponse<CustomerCylinderLedger>);
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any) => {
+      .subscribe((data: PageResponse<CustomerCylinderLedger> | CustomerCylinderLedger[]) => {
         const content = Array.isArray(data)
           ? data
-          : (data?.content ?? data?.data ?? []);
+          : (data?.items ?? []);
         this.totalMovementsCount = this.isServerPagedMovements
-          ? (data?.totalElements ?? content.length ?? 0)
+          ? (Array.isArray(data) ? content.length : (data?.totalElements ?? content.length ?? 0))
           : content.length;
         this.movements = (content || [])
-          .filter((entry: any) => entry.refType !== 'PAYMENT')
-          .map((entry: any) => ({
-            id: entry.id,
-            variantId: entry.variantId,
-            date: entry.transactionDate,
-            timestamp: new Date(entry.createdAt).getTime(),
-            customer: entry.customerName,
-            variant: entry.variantName,
-            type: entry.refType === 'SALE' ? 'Sale' : (entry.refType === 'EMPTY_RETURN' ? 'Return' : entry.refType),
-            filledQty: entry.filledOut,
-            emptyQty: entry.emptyIn,
-            balance: entry.balance,
-            reference: entry.refId,
-            fromWarehouse: entry.fromWarehouseName,
-            toWarehouse: entry.toWarehouseName,
-            paymentMode: entry.paymentMode
-          }))
-          .sort((a: any, b: any) => {
+          .filter((entry) => entry.refType !== 'PAYMENT' && entry.id !== undefined)
+          .map((entry) => {
+            const entryId = entry.id ?? 0;
+            const createdAt = entry.createdAt ?? entry.transactionDate;
+            return {
+              id: entryId,
+              variantId: entry.variantId,
+              date: entry.transactionDate,
+              timestamp: new Date(createdAt).getTime(),
+              customer: entry.customerName,
+              variant: entry.variantName,
+              type: entry.refType === 'SALE' ? 'Sale' : (entry.refType === 'EMPTY_RETURN' ? 'Return' : entry.refType),
+              filledQty: entry.filledOut,
+              emptyQty: entry.emptyIn,
+              balance: entry.balance,
+              reference: String(entry.refId ?? ''),
+              fromWarehouse: entry.fromWarehouseName,
+              toWarehouse: entry.toWarehouseName,
+              paymentMode: entry.paymentMode
+            } as MovementRow;
+          })
+          .sort((a, b) => {
             // Sort by timestamp descending (latest first)
             // Using createdAt gives us the exact time with millisecond precision
             const timestampDiff = b.timestamp - a.timestamp;
@@ -295,24 +335,24 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
     // Load total inventory (all warehouses)
     const sub = this.inventoryService.getAllStockAll()
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading inventory';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading inventory';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of([]);
+          return of([] as InventoryStock[]);
         })
       )
-      .subscribe((data: any) => {
-        const allStockData = data?.content || data || [];
+      .subscribe((data: InventoryStock[] | PageResponse<InventoryStock>) => {
+        const allStockData = Array.isArray(data) ? data : (data?.items || []);
         
         // If a warehouse is selected, load warehouse-specific inventory
         if (this.selectedWarehouse?.id) {
           this.inventoryService.getStockByWarehouse(this.selectedWarehouse.id).subscribe({
-            next: (warehouseData: any) => {
-              this.stockSummary = warehouseData?.content || warehouseData || [];
+            next: (warehouseData: InventoryStock[] | PageResponse<InventoryStock>) => {
+              this.stockSummary = Array.isArray(warehouseData) ? warehouseData : (warehouseData?.items || []);
               this.cdr.markForCheck();
             },
-            error: (error) => {
+            error: (error: unknown) => {
               this.toastr.error('Error loading warehouse inventory', 'Error');
               this.stockSummary = [];
               this.cdr.markForCheck();
@@ -320,20 +360,23 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
           });
         } else {
           // Aggregate stock by variant when showing all warehouses
-          const aggregatedStock = new Map<string, any>();
+          const aggregatedStock = new Map<string, StockSummaryRow>();
           
-          allStockData.forEach((stock: any) => {
+          allStockData.forEach((stock) => {
             const variantName = stock.variantName || 'Unknown';
             if (!aggregatedStock.has(variantName)) {
               aggregatedStock.set(variantName, {
+                variantId: stock.variantId,
                 variantName: variantName,
                 filledQty: 0,
                 emptyQty: 0
               });
             }
             const existing = aggregatedStock.get(variantName);
-            existing.filledQty += stock.filledQty || 0;
-            existing.emptyQty += stock.emptyQty || 0;
+            if (existing) {
+              existing.filledQty += stock.filledQty || 0;
+              existing.emptyQty += stock.emptyQty || 0;
+            }
           });
           
           this.stockSummary = Array.from(aggregatedStock.values());
@@ -360,7 +403,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
         filtered = filtered.filter(m => m.type === this.filterType);
       }
       // Ensure latest transactions are first after filtering - sort by timestamp
-      return filtered.sort((a: any, b: any) => {
+      return filtered.sort((a: MovementRow, b: MovementRow) => {
         // Sort by timestamp descending (latest first)
         const timestampDiff = b.timestamp - a.timestamp;
         if (timestampDiff !== 0) {
@@ -432,7 +475,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       toWarehouseId: [null, Validators.required],
       variantId: [null, Validators.required],
       filledQty: [null, [Validators.required, Validators.min(0)]],
-      emptyQty: [null, Validators.min(0)]
+      emptyQty: [null, [Validators.required, Validators.min(0)]]
     });
   }
 
@@ -472,8 +515,8 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       } else if (warehouse) {
         // Otherwise load for this specific warehouse
         this.inventoryService.getStockByWarehouse(fromWarehouseId).subscribe({
-          next: (stocks) => {
-            const stock = stocks.find((s: any) => s.variantId === variantId);
+          next: (stocks: InventoryStock[]) => {
+            const stock = stocks.find((s) => s.variantId === variantId);
             if (stock) {
               this.availableStock = {
                 filledQty: stock.filledQty || 0,
@@ -516,12 +559,6 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Validate that at least one quantity is being transferred
-    if (formValue.filledQty === 0 && formValue.emptyQty === 0) {
-      this.toastr.error('Please enter at least one cylinder quantity to transfer', 'Empty Transfer');
-      return;
-    }
-
     // Validate sufficient stock
     if (this.availableStock) {
       if (formValue.filledQty > this.availableStock.filledQty) {
@@ -540,12 +577,15 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
       }
     }
 
-    const transferRequest = {
+    const filledQty = Number(formValue.filledQty || 0);
+    const emptyQty = Number(formValue.emptyQty || 0);
+    const transferRequest: WarehouseTransferDTO = {
       fromWarehouseId: formValue.fromWarehouseId,
       toWarehouseId: formValue.toWarehouseId,
       variantId: formValue.variantId,
-      filledQty: formValue.filledQty || 0,
-      emptyQty: formValue.emptyQty || 0
+      filledQty,
+      emptyQty,
+      quantity: filledQty + emptyQty
     };
 
     this.inventoryService.transferStock(transferRequest).subscribe({

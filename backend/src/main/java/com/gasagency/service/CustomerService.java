@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.CustomerDTO;
+import com.gasagency.dto.response.CustomerDTO;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.Sale;
@@ -276,15 +276,11 @@ public class CustomerService {
                 if (configuredVariantIds.contains(variantId)) {
                     CylinderVariant variant = cylinderVariantRepository.findById(variantId).orElse(null);
                     if (variant != null) {
-                        // Check if INITIAL_STOCK entry already exists for this variant
-                        List<CustomerCylinderLedger> existingInitialStock = ledgerRepository.findByCustomer(customer)
-                                .stream()
-                                .filter(e -> e.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK &&
-                                        e.getVariant().getId().equals(variantId))
-                                .collect(Collectors.toList());
+                        boolean hasInitialStock = ledgerRepository.existsByCustomerIdAndVariantIdAndRefType(
+                                customer.getId(), variantId, CustomerCylinderLedger.TransactionType.INITIAL_STOCK);
 
                         // Only create if no INITIAL_STOCK entry exists for this variant
-                        if (existingInitialStock.isEmpty() && filledOut > 0) {
+                        if (!hasInitialStock && filledOut > 0) {
                             ledgerService.createLedgerEntry(
                                     customer.getId(),
                                     null,
@@ -475,3 +471,4 @@ public class CustomerService {
         return toDTO(repository.save(customer));
     }
 }
+

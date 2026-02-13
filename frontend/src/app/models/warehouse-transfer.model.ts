@@ -7,7 +7,9 @@ export interface WarehouseTransfer {
   toWarehouseName?: string;
   variantId: number;
   variantName?: string;
-  quantity: number;
+  quantity?: number;
+  filledQty?: number;
+  emptyQty?: number;
   transferDate?: string;
   notes?: string;
   version?: number;

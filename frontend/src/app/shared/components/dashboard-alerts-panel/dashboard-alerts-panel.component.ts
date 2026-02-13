@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AlertService, Alert } from '../../../services/alert.service';
+import { AlertService } from '../../../services/alert.service';
+import { Alert } from '../../../models/alert.model';
 
 @Component({
   selector: 'app-dashboard-alerts-panel',
@@ -26,10 +27,8 @@ export class DashboardAlertsPanelComponent implements OnInit {
   dismissAlert(alertId: number): void {
     this.alertService.dismissAlert(alertId).subscribe(
       () => {
-        console.log('Alert dismissed:', alertId);
       },
       (error: any) => {
-        console.error('Error dismissing alert:', error);
       }
     );
   }

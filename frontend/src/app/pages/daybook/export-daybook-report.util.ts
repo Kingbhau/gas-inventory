@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { DayBook, DayBookSummary } from '../../models/daybook.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -24,8 +25,8 @@ export function exportDayBookReportToPDF({
   selectedDate,
   businessName
 }: {
-  transactions: any[],
-  summary: any,
+  transactions: DayBook[],
+  summary: DayBookSummary,
   selectedDate: string,
   businessName?: string
 }) {
@@ -101,7 +102,7 @@ export function exportDayBookReportToPDF({
   y += 2;
 
   // Table Data
-  const tableData = transactions.map((transaction: any) => [
+  const tableData = transactions.map((transaction) => [
     transaction.transactionDate,
     (transaction.transactionType || '').replace(/_/g, ' ') || 'Transaction',
     transaction.partyName || '-',

@@ -40,11 +40,27 @@ public interface WarehouseTransferRepository extends JpaRepository<WarehouseTran
         List<WarehouseTransfer> findByDateRange(@Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
 
+        @Query("SELECT wt FROM WarehouseTransfer wt WHERE wt.transferDate BETWEEN :startDate AND :endDate " +
+                        "AND (:createdBy IS NULL OR :createdBy = '' OR wt.createdBy = :createdBy) " +
+                        "ORDER BY wt.transferDate DESC")
+        List<WarehouseTransfer> findByDateRangeAndCreatedBy(@Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate,
+                        @Param("createdBy") String createdBy);
+
         @Query("SELECT wt FROM WarehouseTransfer wt WHERE (wt.fromWarehouse = :warehouse OR wt.toWarehouse = :warehouse) ORDER BY wt.transferDate DESC")
         List<WarehouseTransfer> findAllTransfersForWarehouse(@Param("warehouse") Warehouse warehouse);
 
         @Query("SELECT wt FROM WarehouseTransfer wt WHERE (wt.fromWarehouse = :warehouse OR wt.toWarehouse = :warehouse) ORDER BY wt.transferDate DESC")
         Page<WarehouseTransfer> findAllTransfersForWarehouse(@Param("warehouse") Warehouse warehouse, Pageable pageable);
+
+        @Query("SELECT wt FROM WarehouseTransfer wt WHERE (wt.fromWarehouse = :warehouse OR wt.toWarehouse = :warehouse) " +
+                        "AND (:variantId IS NULL OR wt.variant.id = :variantId) ORDER BY wt.transferDate DESC")
+        List<WarehouseTransfer> findAllTransfersForWarehouseAndVariant(@Param("warehouse") Warehouse warehouse,
+                        @Param("variantId") Long variantId);
+
+        @Query("SELECT wt FROM WarehouseTransfer wt WHERE (:variantId IS NULL OR wt.variant.id = :variantId) " +
+                        "ORDER BY wt.transferDate DESC")
+        List<WarehouseTransfer> findByVariantId(@Param("variantId") Long variantId);
 
         @Query("SELECT wt FROM WarehouseTransfer wt WHERE wt.referenceNumber = :referenceNumber")
         Optional<WarehouseTransfer> findByReferenceNumber(@Param("referenceNumber") String referenceNumber);
@@ -54,3 +70,4 @@ public interface WarehouseTransferRepository extends JpaRepository<WarehouseTran
                         "AND EXTRACT(YEAR FROM wt.transferDate) = EXTRACT(YEAR FROM CAST(:date AS DATE))")
         long countByCreatedAtMonthYear(@Param("date") LocalDate date);
 }
+

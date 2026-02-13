@@ -24,3 +24,4 @@ public interface SaleItemRepository extends JpaRepository<SaleItem, Long> {
                     @Param("fromDate") LocalDate fromDate,
                     @Param("toDate") LocalDate toDate);
 }
+

@@ -26,3 +26,4 @@ public interface BankAccountRepository extends JpaRepository<BankAccount, Long> 
     @Query("SELECT COUNT(ba) > 0 FROM BankAccount ba WHERE ba.isActive = true")
     boolean hasActiveAccounts();
 }
+

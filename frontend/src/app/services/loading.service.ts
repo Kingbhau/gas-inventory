@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { LoadingState } from '../models/loading-state.model';
 
-export interface LoadingState {
-  isLoading: boolean;
-  message?: string;
-}
+export { LoadingState };
 
 @Injectable({
   providedIn: 'root'

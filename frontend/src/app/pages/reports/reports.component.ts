@@ -2,17 +2,23 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'variantReturnPendingFilter', standalone: true })
 export class VariantReturnPendingFilterPipe implements PipeTransform {
-  transform(items: any[], variantName: string): any[] {
+  transform(items: ReturnPendingRow[], variantName: string): ReturnPendingRow[] {
     if (!variantName) return items;
     return items.filter(item => item.variant === variantName);
   }
 }
 
+type SaleItemRow = { sale: Sale; item: SaleItem };
+type ReturnPendingRow = { customer: string; variant: string; returnPending: number };
+type InventoryReportRow = { warehouse: string; variant: string; filled: number; empty: number; id?: number; warehouseId?: number };
+type SupplierReportRow = { id?: number; name: string; filled: number; empty: number };
+type PaymentModeReportRow = { paymentMode: string; paymentModeCode?: string; totalAmount: number; transactionCount: number };
+
 
 import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { catchError, of, finalize } from 'rxjs';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
+import { catchError, of, finalize, Observable } from 'rxjs';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,14 +42,30 @@ import { LoadingService } from '../../services/loading.service';
 import { ExpenseReportComponent } from '../expenses/expense-report.component';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { AlertSettingsService } from '../../services/alert-settings.service';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { Customer } from '../../models/customer.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { Warehouse } from '../../models/warehouse.model';
+import { BankAccount } from '../../models/bank-account.model';
+import { PaymentMode } from '../../models/payment-mode.model';
+import { Sale } from '../../models/sale.model';
+import { SaleItem } from '../../models/sale-item.model';
+import { SupplierTransaction } from '../../models/supplier-transaction.model';
+import { InventoryStock } from '../../models/inventory-stock.model';
+import { CustomerDuePayment, CustomerDuePaymentSummary } from '../../models/customer-due-payment.model';
+import { PaymentModeSummary, PaymentModeStats } from '../../models/payment-mode-summary.model';
+import { PageResponse } from '../../models/page-response';
+import { AlertConfig } from '../../models/alert-config.model';
+import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
 
 
 
 interface ReportOption {
   id: string;
   name: string;
-  icon: any;
+  icon: IconDefinition;
 }
 
 
@@ -56,6 +78,9 @@ interface ReportOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReportsComponent implements OnInit, OnDestroy {
+  @ViewChildren('salesFilterAutocomplete') salesFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
+  @ViewChildren('duePaymentFilterAutocomplete') duePaymentFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
+  @ViewChildren('paymentModeFilterAutocomplete') paymentModeFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
   agencyName: string = '';
         private filtersEverApplied = false;
       // Helper methods for pagination (Angular templates can't use Math)
@@ -89,29 +114,29 @@ export class ReportsComponent implements OnInit, OnDestroy {
       const filteredSales = (this.salesData || []).filter(sale => sale && sale.totalAmount != null);
       let minAmount = typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount) ? this.filterMinAmount : null;
       let maxAmount = typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount) ? this.filterMaxAmount : null;
-      let items: any[] = [];
+      let items: SaleItemRow[] = [];
       if (this.filterVariantId) {
         const variantIdNum = Number(this.filterVariantId);
         items = filteredSales.flatMap(sale =>
           (sale.saleItems || [])
-            .filter((item: any) => {
+            .filter((item: SaleItem) => {
               let match = item.variantId === variantIdNum;
               if (minAmount !== null) match = match && item.finalPrice >= minAmount;
               if (maxAmount !== null) match = match && item.finalPrice <= maxAmount;
               return match;
             })
-            .map((item: any) => ({ sale, item }))
+            .map((item: SaleItem) => ({ sale, item }))
         );
       } else {
         items = filteredSales.flatMap(sale =>
           (sale.saleItems || [])
-            .filter((item: any) => {
+            .filter((item: SaleItem) => {
               let match = true;
               if (minAmount !== null) match = match && item.finalPrice >= minAmount;
               if (maxAmount !== null) match = match && item.finalPrice <= maxAmount;
               return match;
             })
-            .map((item: any) => ({ sale, item }))
+            .map((item: SaleItem) => ({ sale, item }))
         );
       }
       // Sort by sale date descending (latest first), then by ID descending for same-day records
@@ -130,7 +155,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       // We need to flatten them for display: { sale, item } format
       const sales = this.salesData || [];
       const flattened = sales.flatMap(sale =>
-        (sale.saleItems || []).map((item: any) => ({ sale, item }))
+        (sale.saleItems || []).map((item: SaleItem) => ({ sale, item }))
       );
       return flattened;
     }
@@ -147,7 +172,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     }
     get paginatedDuePaymentData() {
       // Data is already paginated from backend, but sort by ID descending as backup
-      return (this.duePaymentData || []).sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+      return (this.duePaymentData || []).sort((a: CustomerDuePayment, b: CustomerDuePayment) => (b.dueAmount || 0) - (a.dueAmount || 0));
     }
   // Sales filters
   filterCustomerId: string = '';
@@ -168,11 +193,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterPaymentModeMinAmount: number | null = null;
   filterPaymentModeMaxAmount: number | null = null;
   filterPaymentModeMinTransactions: number | null = null;
-  customersList: any[] = [];
-  variantsList: any[] = [];
-  warehousesList: any[] = [];
-  bankAccountsList: any[] = [];
-  paymentModesList: any[] = [];
+  customersList: Customer[] = [];
+  variantsList: CylinderVariant[] = [];
+  warehousesList: Warehouse[] = [];
+  bankAccountsList: BankAccount[] = [];
+  paymentModesList: PaymentMode[] = [];
   users: User[] = [];
   selectedReport = 'sales';
   filterFromDate = '';
@@ -204,29 +229,29 @@ export class ReportsComponent implements OnInit, OnDestroy {
   ];
 
   // Sales Data
-  salesData: any[] = [];
+  salesData: Sale[] = [];
 
   // Return Pending Data
-  returnPendingData: any[] = [];
+  returnPendingData: ReturnPendingRow[] = [];
   pendingReturnThreshold: number | null = null; // null means not configured, fallback to 10 for calculations
 
   // Inventory Data
-  inventoryData: any[] = [];
+  inventoryData: InventoryReportRow[] = [];
 
   // Supplier Data
-  supplierData: any[] = [];
+  supplierData: SupplierReportRow[] = [];
 
   // Payment Mode Data
-  paymentModesData: any[] = [];
-  paymentModesSummary: any = {
+  paymentModesData: PaymentModeReportRow[] = [];
+  paymentModesSummary: PaymentModeSummary = {
     paymentModeStats: {},
     totalAmount: 0,
     totalTransactions: 0
   };
 
   // Customer Due Payment Data
-  duePaymentData: any[] = [];
-  duePaymentSummary: any = {
+  duePaymentData: CustomerDuePayment[] = [];
+  duePaymentSummary: CustomerDuePaymentSummary = {
     totalDueAmount: 0,
     totalSalesAmount: 0,
     totalAmountReceived: 0,
@@ -241,8 +266,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
   summaryTopCustomer: string = 'N/A';
 
   // Invoice modal properties
-  selectedSale: any = null;
-  originalSalesMap: Map<number, any> = new Map();
+  selectedSale: Sale | null = null;
+  originalSalesMap: Map<number, Sale> = new Map();
 
   constructor(
     private saleService: SaleService,
@@ -293,24 +318,28 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       error: () => { this.variantsList = []; }
     });
-    this.warehouseService.getActiveWarehouses().subscribe({
-      next: (data: any) => {
+    this.warehouseService.getAllWarehouses().subscribe({
+      next: (data: Warehouse[]) => {
         this.warehousesList = data || [];
       },
       error: () => { this.warehousesList = []; }
     });
     
-    // Load bank accounts for filtering
-    this.bankAccountService.getActiveBankAccounts().subscribe({
-      next: (data: any) => {
-        this.bankAccountsList = data || [];
+    // Load all bank accounts for historical filtering
+    this.bankAccountService.getAllBankAccountsAll().subscribe({
+      next: (data: BankAccount[]) => {
+        const accounts = data || [];
+        this.bankAccountsList = accounts.map(account => ({
+          ...account,
+          displayName: `${account.bankName} - ${account.accountNumber}`
+        }));
       },
       error: () => { this.bankAccountsList = []; }
     });
     
     // Load all payment modes (active and inactive) for historical filtering
     this.paymentModeService.getAllPaymentModesAll().subscribe({
-      next: (data: any) => {
+      next: (data: PaymentMode[]) => {
         this.paymentModesList = data || [];
       },
       error: () => { this.paymentModesList = []; }
@@ -359,22 +388,17 @@ export class ReportsComponent implements OnInit, OnDestroy {
   private loadPendingReturnThreshold(): void {
     this.alertSettingsService.getAlertConfig('PENDING_RETURN_CYLINDERS')
       .subscribe({
-        next: (response: any) => {
-          console.log('Alert config response:', response);
-          if (response?.data && response.data.pendingReturnThreshold !== undefined && response.data.pendingReturnThreshold !== null) {
-            this.pendingReturnThreshold = response.data.pendingReturnThreshold;
-            console.log('Pending return threshold loaded:', this.pendingReturnThreshold);
+        next: (response: AlertConfig) => {
+          if (response && response.pendingReturnThreshold !== undefined && response.pendingReturnThreshold !== null) {
+            this.pendingReturnThreshold = response.pendingReturnThreshold;
             this.cdr.markForCheck();
-          } else if (response?.data) {
-            console.warn('Pending return threshold not found in config data:', response.data);
+          } else if (response) {
             this.pendingReturnThreshold = null;
           } else {
-            console.warn('No valid data in alert config response:', response);
             this.pendingReturnThreshold = null;
           }
         },
         error: (err) => {
-          console.warn('Could not load pending return threshold:', err);
           this.pendingReturnThreshold = null;
         }
       });
@@ -390,11 +414,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
           return of([]);
         })
       )
-      .subscribe((data: any) => {
+      .subscribe((data: CustomerCylinderLedger[]) => {
         // Store the full transformed data
         this.returnPendingData = data
-          .sort((a: any, b: any) => (b.id || 0) - (a.id || 0))
-          .map((ledger: any) => ({
+          .filter((ledger) => ledger != null)
+          .map((ledger) => ({
             customer: ledger.customerName || 'Unknown',
             variant: ledger.variantName || 'Unknown',
             returnPending: ledger.balance || 0
@@ -411,44 +435,48 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadingService.show('Loading inventory data...');
     
     // Use different API endpoints based on filter
-    const apiCall = this.filterInventoryWarehouseId 
-      ? this.inventoryService.getStockByWarehouse(parseInt(this.filterInventoryWarehouseId))
+    const apiCall: Observable<InventoryStock[] | PageResponse<InventoryStock>> = this.filterInventoryWarehouseId 
+      ? this.inventoryService.getStockByWarehouse(Number(this.filterInventoryWarehouseId))
       : this.inventoryService.getAllStock(this.inventoryPage - 1, this.inventoryPageSize);
     
     const sub = apiCall
       .pipe(
         finalize(() => this.loadingService.hide()),
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading inventory data';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading inventory data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: this.inventoryPage - 1,
+            size: this.inventoryPageSize
+          } as PageResponse<InventoryStock>);
         })
       )
-      .subscribe((data: any) => {
-        let stockArray = Array.isArray(data) ? data : (data.content || data);
-        console.log('Loaded stock array:', stockArray);
-        console.log('Filter warehouse ID:', this.filterInventoryWarehouseId);
+      .subscribe((data: InventoryStock[] | PageResponse<InventoryStock>) => {
+        const stockArray = Array.isArray(data) ? data : (data.items || []);
         
         if (this.filterInventoryWarehouseId) {
           // Get warehouse name from selected warehouse
-          const selectedWarehouse = this.warehousesList.find(w => w.id === parseInt(this.filterInventoryWarehouseId));
+          const selectedWarehouse = this.warehousesList.find(w => w.id === Number(this.filterInventoryWarehouseId));
           const warehouseName = selectedWarehouse ? selectedWarehouse.name : 'Unknown';
           
           // Show individual warehouse items sorted by ID descending
           this.inventoryData = stockArray
-            .sort((a: any, b: any) => (b.id || 0) - (a.id || 0))
-            .map((stock: any) => ({
+            .map((stock) => ({
               warehouseId: stock.warehouseId,
               warehouse: warehouseName,
               variant: stock.variantName || 'Unknown',
               filled: stock.filledQty || 0,
-              empty: stock.emptyQty || 0
+              empty: stock.emptyQty || 0,
+              id: stock.id
             }));
         } else {
           // Group by variant and sum quantities when showing all warehouses, then sort by ID descending
-          const groupedByVariant = new Map<string, any>();
-          stockArray.forEach((stock: any) => {
+          const groupedByVariant = new Map<string, InventoryReportRow>();
+          stockArray.forEach((stock) => {
             const variantName = stock.variantName || 'Unknown';
             if (!groupedByVariant.has(variantName)) {
               groupedByVariant.set(variantName, {
@@ -460,14 +488,15 @@ export class ReportsComponent implements OnInit, OnDestroy {
               });
             }
             const item = groupedByVariant.get(variantName);
-            item.filled += stock.filledQty || 0;
-            item.empty += stock.emptyQty || 0;
+            if (item) {
+              item.filled += stock.filledQty || 0;
+              item.empty += stock.emptyQty || 0;
+            }
           });
           this.inventoryData = Array.from(groupedByVariant.values())
-            .sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
+            .sort((a, b) => (b.id || 0) - (a.id || 0));
         }
         
-        console.log('Final inventory data:', this.inventoryData);
         this.inventoryTotalElements = this.inventoryData.length;
         this.cdr.markForCheck();
         this.inventoryTotalPages = Math.ceil(this.inventoryData.length / this.inventoryPageSize) || 1;
@@ -491,17 +520,23 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const sub = this.supplierTransactionService.getAllTransactions(this.supplierPage - 1, this.supplierPageSize)
       .pipe(
         finalize(() => this.loadingService.hide()),
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading supplier data';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading supplier data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: this.supplierPage - 1,
+            size: this.supplierPageSize
+          } as PageResponse<SupplierTransaction>);
         })
       )
-      .subscribe((data: any) => {
-        const transactionArray = data.content || data;
-        const supplierMap = new Map();
-        transactionArray.forEach((transaction: any) => {
+      .subscribe((data: PageResponse<SupplierTransaction>) => {
+        const transactionArray = data.items || [];
+        const supplierMap = new Map<number, SupplierReportRow>();
+        transactionArray.forEach((transaction) => {
           if (!supplierMap.has(transaction.supplierId)) {
             supplierMap.set(transaction.supplierId, { 
               filled: 0, 
@@ -511,14 +546,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
             });
           }
           const supplier = supplierMap.get(transaction.supplierId);
-          supplier.filled += transaction.filledReceived || 0;
-          supplier.empty += transaction.emptySent || 0;
+          if (supplier) {
+            supplier.filled += transaction.filledReceived || 0;
+            supplier.empty += transaction.emptySent || 0;
+          }
         });
         this.supplierData = Array.from(supplierMap.values())
-          .sort((a: any, b: any) => (b.id || 0) - (a.id || 0));
-        this.supplierTotalElements = data.totalElements || this.supplierData.length;
+          .sort((a, b) => (b.id || 0) - (a.id || 0));
+        this.supplierTotalElements = data.totalElements ?? this.supplierData.length;
         this.cdr.markForCheck();
-        this.supplierTotalPages = data.totalPages || 1;
+        this.supplierTotalPages = data.totalPages ?? 1;
         sub.unsubscribe();
       });
   }
@@ -647,12 +684,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({ items: [], totalElements: 0, totalPages: 1 });
         })
       )
       .subscribe((data: any) => {
-        this.salesData = data.content || data;
+        this.salesData = data.items || data;
         
         // Store original sales by ID for modal display
         this.originalSalesMap.clear();
@@ -664,9 +700,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
         this.salesTotalElements = data.totalElements || 0;
         this.salesTotalPages = data.totalPages || Math.ceil(this.salesTotalElements / this.salesPageSize) || 1;
         
-        if (showToastr) {
-          this.toastr.info('Filters applied', 'Info');
-        }
+        // No toast on search
         this.cdr.markForCheck();
         sub.unsubscribe();
       });
@@ -697,6 +731,23 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.applyFilters(true);
   }
 
+  resetSalesFilters() {
+    this.filterFromDate = '';
+    this.filterToDate = '';
+    this.filterCustomerId = '';
+    this.filterVariantId = '';
+    this.filterMinAmount = null;
+    this.filterMaxAmount = null;
+    this.filterSalesReference = '';
+    this.filterSalesCreatedBy = '';
+    if (this.salesFilterAutocompletes && this.salesFilterAutocompletes.length > 0) {
+      this.salesFilterAutocompletes.forEach(input => input.resetInput());
+    }
+    this.salesPage = 1;
+    this.filtersEverApplied = false;
+    this.applyFilters(false);
+  }
+
   exportReport() {
     if (this.selectedReport === 'sales') {
       const fromDate = this.filterFromDate ? this.filterFromDate : undefined;
@@ -705,8 +756,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
       const variantId = this.filterVariantId ? Number(this.filterVariantId) : undefined;
       const minAmount = (typeof this.filterMinAmount === 'number' && !isNaN(this.filterMinAmount)) ? this.filterMinAmount : undefined;
       const maxAmount = (typeof this.filterMaxAmount === 'number' && !isNaN(this.filterMaxAmount)) ? this.filterMaxAmount : undefined;
-      const customerName = this.filterCustomerId ? (this.customersList.find(c => c.id == this.filterCustomerId)?.name || '') : undefined;
-      const variantName = this.filterVariantId ? (this.variantsList.find(v => v.id == this.filterVariantId)?.name || '') : undefined;
+      const customerIdNum = this.filterCustomerId ? Number(this.filterCustomerId) : null;
+      const variantIdNum = this.filterVariantId ? Number(this.filterVariantId) : null;
+      const customerName = customerIdNum ? (this.customersList.find(c => c.id === customerIdNum)?.name || '') : undefined;
+      const variantName = variantIdNum ? (this.variantsList.find(v => v.id === variantIdNum)?.name || '') : undefined;
       const pageSize = 500;
       let allSales: any[] = [];
       let page = 0;
@@ -720,18 +773,21 @@ export class ReportsComponent implements OnInit, OnDestroy {
             catchError((error: any) => {
               const errorMessage = error?.error?.message || error?.message || 'Error loading sales data';
               this.toastr.error(errorMessage, 'Error');
-              console.error('Full error:', error);
-              return of({ content: [], totalPages: 0 });
+              return of({ items: [], totalPages: 0 });
             })
           )
           .subscribe((data: any) => {
-            const content = data.content || data;
+            const content = data.items || data;
             allSales = allSales.concat(content);
             totalPages = data.totalPages || 1;
             page++;
             if (page < totalPages) {
               fetchPage();
             } else {
+              if (allSales.length === 0) {
+                this.toastr.info('No data to export');
+                return;
+              }
               // Fetch backend summary for perfect consistency
               this.saleService.getSalesSummary(fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterSalesCreatedBy || undefined)
                 .pipe(
@@ -763,7 +819,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
       // Export Customer Due Payment Report to PDF
       const fromDate = this.filterDuePaymentFromDate ? this.filterDuePaymentFromDate : undefined;
       const toDate = this.filterDuePaymentToDate ? this.filterDuePaymentToDate : undefined;
-      const customerId = this.filterDuePaymentCustomerId ? this.filterDuePaymentCustomerId : undefined;      const customerName = this.filterDuePaymentCustomerId ? (this.customersList.find(c => c.id == this.filterDuePaymentCustomerId)?.name || '') : undefined;      const minAmount = (typeof this.filterDuePaymentMinAmount === 'number' && !isNaN(this.filterDuePaymentMinAmount)) ? this.filterDuePaymentMinAmount : undefined;
+      const customerId = this.filterDuePaymentCustomerId ? this.filterDuePaymentCustomerId : undefined;
+      const customerIdNum = this.filterDuePaymentCustomerId ? Number(this.filterDuePaymentCustomerId) : null;
+      const customerName = customerIdNum ? (this.customersList.find(c => c.id === customerIdNum)?.name || '') : undefined;
+      const minAmount = (typeof this.filterDuePaymentMinAmount === 'number' && !isNaN(this.filterDuePaymentMinAmount)) ? this.filterDuePaymentMinAmount : undefined;
       const maxAmount = (typeof this.filterDuePaymentMaxAmount === 'number' && !isNaN(this.filterDuePaymentMaxAmount)) ? this.filterDuePaymentMaxAmount : undefined;
       const pageSize = 1000;
       let allDuePayments: any[] = [];
@@ -777,18 +836,21 @@ export class ReportsComponent implements OnInit, OnDestroy {
             catchError((error: any) => {
               const errorMessage = error?.error?.message || error?.message || 'Error loading due payment data';
               this.toastr.error(errorMessage, 'Error');
-              console.error('Full error:', error);
-              return of({ content: [], totalPages: 0 });
+              return of({ items: [], totalPages: 0 });
             })
           )
           .subscribe((data: any) => {
-            const content = data.content || data;
+            const content = data.items || data;
             allDuePayments = allDuePayments.concat(content);
             totalPages = data.totalPages || 1;
             page++;
             if (page < totalPages) {
               fetchDuePaymentPage();
             } else {
+              if (allDuePayments.length === 0) {
+                this.toastr.info('No data to export');
+                return;
+              }
               // Fetch backend summary for perfect consistency
               this.duePaymentService.getDuePaymentReportSummary(fromDate, toDate, customerId, minAmount, maxAmount)
                 .pipe(
@@ -844,12 +906,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading due payment data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({ items: [], totalElements: 0, totalPages: 1 });
         })
       )
       .subscribe((data: any) => {
-        const content = data.content || data;
+        const content = data.items || data;
         this.duePaymentData = content;
         this.duePaymentTotalElements = data.totalElements || content.length;
         this.duePaymentTotalPages = data.totalPages || Math.ceil(this.duePaymentTotalElements / this.duePaymentPageSize) || 1;
@@ -896,9 +957,25 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  viewInvoice(saleId: number) {
+  resetDuePaymentFilters() {
+    this.filterDuePaymentCustomerId = '';
+    this.filterDuePaymentFromDate = '';
+    this.filterDuePaymentToDate = '';
+    this.filterDuePaymentMinAmount = null;
+    this.filterDuePaymentMaxAmount = null;
+    if (this.duePaymentFilterAutocompletes && this.duePaymentFilterAutocompletes.length > 0) {
+      this.duePaymentFilterAutocompletes.forEach(input => input.resetInput());
+    }
+    this.duePaymentPage = 1;
+    this.loadDuePaymentData();
+  }
+
+  viewInvoice(saleId?: number) {
+    if (!saleId) {
+      return;
+    }
     const numericId = Number(saleId);
-    this.selectedSale = this.originalSalesMap.get(numericId);
+    this.selectedSale = this.originalSalesMap.get(numericId) || null;
   }
 
   closeInvoice() {
@@ -926,12 +1003,14 @@ export class ReportsComponent implements OnInit, OnDestroy {
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any) => {
+      .subscribe((data: PaymentModeSummary) => {
         // Convert payment mode stats object to array for display
         this.paymentModesSummary = data;
-        this.paymentModesData = Object.entries(data.paymentModeStats || {}).map(([key, value]: [string, any]) => ({
+        this.paymentModesData = Object.entries(data.paymentModeStats || {}).map(([key, value]) => ({
           paymentMode: key,
-          ...value
+          paymentModeCode: value.paymentModeCode,
+          totalAmount: value.totalAmount,
+          transactionCount: value.transactionCount
         }));
         this.cdr.markForCheck();
       });
@@ -955,6 +1034,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.filterPaymentModeMinAmount = null;
     this.filterPaymentModeMaxAmount = null;
     this.filterPaymentModeMinTransactions = null;
+    if (this.paymentModeFilterAutocompletes && this.paymentModeFilterAutocompletes.length > 0) {
+      this.paymentModeFilterAutocompletes.forEach(input => input.resetInput());
+    }
     this.loadPaymentModesData();
   }
 

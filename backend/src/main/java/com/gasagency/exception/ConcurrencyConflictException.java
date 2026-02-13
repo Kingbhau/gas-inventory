@@ -35,3 +35,4 @@ public class ConcurrencyConflictException extends RuntimeException {
         return entityId;
     }
 }
+

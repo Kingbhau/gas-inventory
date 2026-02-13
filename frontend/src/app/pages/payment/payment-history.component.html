@@ -104,7 +104,7 @@
               <td>{{ payment.customerName || 'N/A' }}</td>
               <td class="amount">₹{{ payment.amountReceived | number: '1.2-2' }}</td>
               <td>{{ payment.paymentMode || 'N/A' }}</td>
-              <td>{{ payment.bankAccountName || getBankAccountName(payment.bankAccountId) }}</td>
+              <td>{{ getBankAccountDisplayName(payment.bankAccountId ?? null, payment.bankAccountName) }}</td>
               <td>
                 <button class="btn-action" (click)="viewPayment(payment)" title="View Details">
                   <fa-icon [icon]="faEye"></fa-icon>
@@ -175,7 +175,7 @@
           </div>
           <div class="detail-row">
             <span class="label">Bank Account:</span>
-            <span class="value">{{ selectedPayment.bankAccountName || getBankAccountName(selectedPayment.bankAccountId) }}</span>
+            <span class="value">{{ getBankAccountDisplayName(selectedPayment.bankAccountId ?? null, selectedPayment.bankAccountName) }}</span>
           </div>
           <div class="detail-row">
             <span class="label">Created By:</span>

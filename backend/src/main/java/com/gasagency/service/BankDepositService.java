@@ -1,6 +1,7 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.BankDepositDTO;
+import com.gasagency.dto.response.BankDepositDTO;
+import com.gasagency.dto.response.BankDepositSummaryDTO;
 import com.gasagency.entity.BankDeposit;
 import com.gasagency.entity.BankAccount;
 import com.gasagency.repository.BankDepositRepository;
@@ -162,7 +163,7 @@ public class BankDepositService {
      * Get deposit summary with all filters
      */
     @Transactional(readOnly = true)
-    public DepositSummaryDTO getDepositSummary(String fromDate, String toDate, Long bankAccountId,
+    public BankDepositSummaryDTO getDepositSummary(String fromDate, String toDate, Long bankAccountId,
             String paymentMode, String referenceNumber, String createdBy) {
         LocalDate startDate = null;
         LocalDate endDate = null;
@@ -176,14 +177,14 @@ public class BankDepositService {
             }
         } catch (DateTimeParseException e) {
             // Handle parse error - return zero summary
-            return new DepositSummaryDTO(java.math.BigDecimal.ZERO);
+            return new BankDepositSummaryDTO(java.math.BigDecimal.ZERO);
         }
 
         var totalAmount = bankDepositRepository.getTotalDepositAmountWithAllFilters(
                 startDate, endDate, bankAccountId, paymentMode, referenceNumber,
                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
 
-        return new DepositSummaryDTO(totalAmount);
+        return new BankDepositSummaryDTO(totalAmount);
     }
 
     /**
@@ -227,18 +228,5 @@ public class BankDepositService {
                 Sort.by(direction, validSortField));
     }
 
-    /**
-     * Summary DTO
-     */
-    public static class DepositSummaryDTO {
-        private java.math.BigDecimal totalAmount;
-
-        public DepositSummaryDTO(java.math.BigDecimal totalAmount) {
-            this.totalAmount = totalAmount;
-        }
-
-        public java.math.BigDecimal getTotalAmount() {
-            return totalAmount;
-        }
-    }
 }
+

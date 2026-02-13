@@ -1,7 +1,7 @@
 package com.gasagency.config;
 
-import com.gasagency.dto.ExpenseCategoryDTO;
-import com.gasagency.dto.ExpenseDTO;
+import com.gasagency.dto.response.ExpenseCategoryDTO;
+import com.gasagency.dto.response.ExpenseDTO;
 import com.gasagency.entity.ExpenseCategory;
 import com.gasagency.entity.Expense;
 import org.modelmapper.ModelMapper;
@@ -54,3 +54,4 @@ public class ModelMapperConfig {
         return mapper;
     }
 }
+

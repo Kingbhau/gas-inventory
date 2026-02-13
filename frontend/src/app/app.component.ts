@@ -99,8 +99,6 @@ export class AppComponent implements OnInit, OnDestroy {
   faBook = faBook;
 
   ngOnInit() {
-    console.log('AppComponent ngOnInit - isAuthenticated:', this.isAuthenticated);
-    
     // Initialize alerts if user is authenticated (handles page refresh)
     if (this.isAuthenticated) {
       this.alertService.initialize();
@@ -337,30 +335,22 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   private initializeAlerts(): void {
-    console.log('📢 Initializing alerts subscription in app.component');
-    
     this.alertService.getAlertCount$()
       .pipe(takeUntil(this.destroy$))
       .subscribe(count => {
         this.ngZone.run(() => {
-          console.log('📊 Alert count updated:', count);
           this.alertCount = count;
           this.cdr.markForCheck();
         });
-      }, error => {
-        console.error('❌ Error in alert count subscription:', error);
       });
 
     this.alertService.getAlerts$()
       .pipe(takeUntil(this.destroy$))
       .subscribe(alerts => {
         this.ngZone.run(() => {
-          console.log('📋 Alerts updated:', alerts);
           this.alerts = alerts;
           this.cdr.markForCheck();
         });
-      }, error => {
-        console.error('❌ Error in alerts subscription:', error);
       });
   }
 
@@ -371,8 +361,8 @@ export class AppComponent implements OnInit, OnDestroy {
         this.alerts = this.alerts.filter(a => a.id !== alertId);
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error dismissing alert:', err);
+      error: () => {
+        this.cdr.markForCheck();
       }
     });
   }

@@ -13,3 +13,4 @@ public interface CylinderVariantRepository extends JpaRepository<CylinderVariant
 
     List<CylinderVariant> findAllByActive(Boolean active);
 }
+

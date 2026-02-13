@@ -10,6 +10,10 @@ import { WarehouseService } from '../../services/warehouse.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { InventoryStockService } from '../../services/inventory-stock.service';
 import { Warehouse } from '../../models/warehouse.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { InventoryStock } from '../../models/inventory-stock.model';
+import { WarehouseInventorySetupRequest } from '../../models/warehouse-inventory.model';
+import { SimpleStatusDTO } from '../../models/simple-status';
 
 interface VariantRow {
   variantId: number;
@@ -30,7 +34,7 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
   faSync = faSync;
 
   warehouses: Warehouse[] = [];
-  variants: any[] = [];
+  variants: CylinderVariant[] = [];
   selectedWarehouseId: number | null = null;
   inventoryRows: VariantRow[] = [];
 
@@ -61,13 +65,12 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
     this.warehouseService.getActiveWarehouses()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data: any) => {
+        next: (data: Warehouse[]) => {
           this.warehouses = data || [];
           this.cdr.markForCheck();
         },
-        error: (err: any) => {
+        error: (err: unknown) => {
           this.toastr.error('Failed to load warehouses');
-          console.error(err);
         }
       });
   }
@@ -76,16 +79,15 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
     this.variantService.getAllVariantsWithCache()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          this.variants = Array.isArray(response) ? response : (response?.content || response?.data || []);
+        next: (response: CylinderVariant[]) => {
+          this.variants = Array.isArray(response) ? response : [];
           if (this.selectedWarehouseId) {
             this.loadInventoryForWarehouse(this.selectedWarehouseId);
           }
           this.cdr.markForCheck();
         },
-        error: (err: any) => {
+        error: (err: unknown) => {
           this.toastr.error('Failed to load variants');
-          console.error(err);
         }
       });
   }
@@ -103,12 +105,14 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
     this.inventoryStockService.getInventoryByWarehouse(warehouseId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
-          const existingInventory = response.data || response || [];
+        next: (response: InventoryStock[]) => {
+          const existingInventory = response || [];
           
           // Create rows for all variants, populate with existing data if available
-          this.inventoryRows = this.variants.map(variant => {
-            const existing = existingInventory.find((inv: any) => inv.variantId === variant.id);
+          this.inventoryRows = this.variants
+            .filter((variant): variant is CylinderVariant & { id: number } => typeof variant.id === 'number')
+            .map((variant) => {
+            const existing = existingInventory.find((inv) => inv.variantId === variant.id);
             return {
               variantId: variant.id,
               variantName: variant.name,
@@ -119,9 +123,8 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           this.cdr.markForCheck();
         },
-        error: (err: any) => {
+        error: (err: unknown) => {
           this.toastr.error('Failed to load inventory');
-          console.error(err);
           this.isLoading = false;
         }
       });
@@ -149,9 +152,9 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
-    const payload = {
+    const payload: WarehouseInventorySetupRequest = {
       warehouseId: this.selectedWarehouseId,
-      inventoryItems: this.inventoryRows.map(row => ({
+      inventoryItems: this.inventoryRows.map((row) => ({
         variantId: row.variantId,
         filledQty: row.filledQty,
         emptyQty: row.emptyQty
@@ -161,16 +164,16 @@ export class WarehouseInventorySetupComponent implements OnInit, OnDestroy {
     this.inventoryStockService.setupWarehouseInventory(payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: any) => {
+        next: (_response: SimpleStatusDTO) => {
           this.toastr.success('Inventory setup saved successfully');
           this.selectedWarehouseId = null;
           this.inventoryRows = [];
           this.isSaving = false;
           this.cdr.markForCheck();
         },
-        error: (err: any) => {
-          this.toastr.error(err.error?.message || 'Failed to save inventory setup');
-          console.error(err);
+        error: (err: unknown) => {
+          const errorObj = err as { error?: { message?: string } };
+          this.toastr.error(errorObj?.error?.message || 'Failed to save inventory setup');
           this.isSaving = false;
         }
       });

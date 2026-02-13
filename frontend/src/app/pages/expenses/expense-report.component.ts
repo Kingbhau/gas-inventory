@@ -11,13 +11,17 @@ import { BankAccountService } from '../../services/bank-account.service';
 import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { Expense } from '../../models/expense.model';
+import { ExpenseCategory } from '../../models/expense-category.model';
+import { ExpenseFilters } from '../../models/expense-filters.model';
+import { ExpenseSummary } from '../../models/expense-summary.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { BankAccount } from '../../models/bank-account.model';
 import { exportExpenseReportToPDF } from '../reports/export-expense-report.util';
 import { finalize } from 'rxjs/operators';
 import { forkJoin } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-expense-report',
@@ -90,17 +94,19 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
   private loadFilterData() {
     forkJoin([
       this.expenseService.getCategories(),
-      this.paymentModeService.getActivePaymentModes(),
+      this.paymentModeService.getAllPaymentModesAll(),
       this.bankAccountService.getActiveBankAccounts()
     ])
     .pipe(finalize(() => {}))
     .subscribe({
-      next: ([categoryResponse, paymentModes, bankAccounts]: any) => {
-        const categoryList = Array.isArray(categoryResponse) ? categoryResponse : (categoryResponse?.content || []);
-        this.categories = categoryList.map((cat: any) => cat.name || cat);
+      next: ([categoryResponse, paymentModes, bankAccounts]: [ExpenseCategory[], PaymentMode[], BankAccount[]]) => {
+        const categoryList = Array.isArray(categoryResponse) ? categoryResponse : [];
+        this.categories = categoryList.map((cat) => cat.name);
         // Build category map
-        categoryList.forEach((cat: any) => {
-          this.categoryMap.set(cat.name, cat.id);
+        categoryList.forEach((cat) => {
+          if (typeof cat.id === 'number') {
+            this.categoryMap.set(cat.name, cat.id);
+          }
         });
         this.paymentModes = paymentModes || [];
         this.bankAccounts = bankAccounts || [];
@@ -118,7 +124,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     
     // Build filters object
-    const filters: any = {};
+    const filters: ExpenseFilters = {};
     if (this.filterFromDate) filters.fromDate = this.filterFromDate;
     if (this.filterToDate) filters.toDate = this.filterToDate;
     if (this.filterCategory) filters.categoryId = this.getCategoryId(this.filterCategory);
@@ -135,10 +141,10 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (response) => {
-        this.expenses = response.content || response;
+        this.expenses = response.items || [];
         this.filteredExpenses = this.expenses; // Backend already filtered
-        this.totalExpenses = response.totalElements || response.length;
-        this.totalPages = response.totalPages || Math.ceil(this.totalExpenses / pageSize);
+        this.totalExpenses = response.totalElements ?? response.items.length;
+        this.totalPages = response.totalPages ?? Math.ceil(this.totalExpenses / pageSize);
         this.loadSummary();
         this.cdr.markForCheck();
       },
@@ -153,14 +159,14 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     this.expenseService.getExpensesSummary(
       this.filterFromDate || undefined,
       this.filterToDate || undefined,
-      undefined,
+      this.filterCategory ? this.getCategoryId(this.filterCategory) : undefined,
       this.filterPaymentMode || undefined,
       this.filterBankAccountId ? Number(this.filterBankAccountId) : undefined,
       this.filterMinAmount || undefined,
       this.filterMaxAmount || undefined,
       this.filterCreatedBy || undefined
     ).subscribe({
-      next: (summary: any) => {
+      next: (summary: ExpenseSummary) => {
         this.totalAmount = summary.totalAmount || 0;
         this.transactionCount = summary.transactionCount || 0;
         this.avgExpenseValue = summary.avgExpenseValue || 0;
@@ -168,7 +174,6 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Failed to load summary', error);
         // Fallback to empty values
         this.totalAmount = 0;
         this.transactionCount = 0;
@@ -241,14 +246,14 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  onCategorySelect(event: any): void {
+  onCategorySelect(event: string | null): void {
     this.filterCategory = typeof event === 'string' ? event : '';
     this.cdr.markForCheck();
   }
 
   exportPDF() {
     if (this.filteredExpenses.length === 0) {
-      this.toastr.warning('No data to export');
+      this.toastr.info('No data to export');
       return;
     }
 
@@ -258,7 +263,7 @@ export class ExpenseReportComponent implements OnInit, OnDestroy {
       `${selectedBank.bankName} - ${selectedBank.accountNumber}` : undefined;
 
     // Enrich expense data with bank names for each expense
-    const enrichedExpenses = this.filteredExpenses.map((expense: any) => ({
+    const enrichedExpenses: Array<Expense & { bankDetails: string }> = this.filteredExpenses.map((expense) => ({
       ...expense,
       bankDetails: expense.bankAccountId ? 
         (() => {

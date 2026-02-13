@@ -13,3 +13,4 @@ public interface AlertConfigurationRepository extends JpaRepository<AlertConfigu
 
     List<AlertConfiguration> findByEnabled(Boolean enabled);
 }
+

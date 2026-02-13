@@ -160,3 +160,4 @@ public class InventoryStock extends Auditable {
         return Objects.hash(id, warehouse, variant);
     }
 }
+

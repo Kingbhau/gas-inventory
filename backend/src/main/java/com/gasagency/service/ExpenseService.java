@@ -1,12 +1,13 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.ExpenseDTO;
-import com.gasagency.dto.ExpenseSummaryDTO;
+import com.gasagency.dto.response.ExpenseDTO;
+import com.gasagency.dto.response.ExpenseSummaryDTO;
 import com.gasagency.entity.Expense;
 import com.gasagency.entity.ExpenseCategory;
 import com.gasagency.repository.ExpenseRepository;
 import com.gasagency.repository.ExpenseCategoryRepository;
 import com.gasagency.repository.BankAccountRepository;
+import com.gasagency.repository.PaymentModeRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -28,13 +29,16 @@ public class ExpenseService {
         private final ExpenseRepository repository;
         private final ExpenseCategoryRepository categoryRepository;
         private final BankAccountRepository bankAccountRepository;
+        private final PaymentModeRepository paymentModeRepository;
         private final ModelMapper modelMapper;
 
         public ExpenseService(ExpenseRepository repository, ExpenseCategoryRepository categoryRepository,
-                        BankAccountRepository bankAccountRepository, ModelMapper modelMapper) {
+                        BankAccountRepository bankAccountRepository, PaymentModeRepository paymentModeRepository,
+                        ModelMapper modelMapper) {
                 this.repository = repository;
                 this.categoryRepository = categoryRepository;
                 this.bankAccountRepository = bankAccountRepository;
+                this.paymentModeRepository = paymentModeRepository;
                 this.modelMapper = modelMapper;
         }
 
@@ -52,6 +56,8 @@ public class ExpenseService {
         public Page<ExpenseDTO> getAllExpenses(Pageable pageable, LocalDate fromDate, LocalDate toDate,
                         Long categoryId, String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount,
                         String createdBy) {
+                LocalDate effectiveFromDate = fromDate != null ? fromDate : LocalDate.of(1970, 1, 1);
+                LocalDate effectiveToDate = toDate != null ? toDate : LocalDate.of(2100, 12, 31);
                 Pageable pageableWithSort = PageRequest.of(
                                 pageable.getPageNumber(),
                                 pageable.getPageSize(),
@@ -60,7 +66,7 @@ public class ExpenseService {
                 BigDecimal minAmountBD = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
                 BigDecimal maxAmountBD = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-                return repository.findByFilters(fromDate, toDate, categoryId, paymentMode, bankAccountId,
+                return repository.findByFilters(effectiveFromDate, effectiveToDate, categoryId, paymentMode, bankAccountId,
                                 minAmountBD, maxAmountBD,
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null,
                                 pageableWithSort)
@@ -137,6 +143,13 @@ public class ExpenseService {
         }
 
         public ExpenseDTO createExpense(ExpenseDTO dto) {
+                String paymentMode = dto.getPaymentMode() != null ? dto.getPaymentMode().trim() : null;
+                if (paymentMode == null || paymentMode.isEmpty()) {
+                        throw new RuntimeException("Payment mode is required");
+                }
+                boolean requiresBankAccount = paymentModeRepository.findByName(paymentMode)
+                                .map(pm -> Boolean.TRUE.equals(pm.getIsBankAccountRequired()))
+                                .orElseThrow(() -> new RuntimeException("Invalid payment mode"));
                 ExpenseCategory category = categoryRepository.findById(dto.getCategoryId())
                                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
@@ -146,11 +159,15 @@ public class ExpenseService {
                 expense.setCategory(category);
                 expense.setExpenseDate(dto.getExpenseDate());
                 expense.setNotes(dto.getNotes());
-                expense.setPaymentMode(dto.getPaymentMode());
-
-                if (dto.getBankAccountId() != null && !"Cash".equalsIgnoreCase(dto.getPaymentMode())) {
+                expense.setPaymentMode(paymentMode);
+                if (requiresBankAccount) {
+                        if (dto.getBankAccountId() == null) {
+                                throw new RuntimeException("Bank account is required for selected payment mode");
+                        }
                         expense.setBankAccount(bankAccountRepository.findById(dto.getBankAccountId())
                                         .orElseThrow(() -> new RuntimeException("Bank account not found")));
+                } else {
+                        expense.setBankAccount(null);
                 }
 
                 Expense saved = repository.save(expense);
@@ -165,6 +182,13 @@ public class ExpenseService {
         }
 
         public ExpenseDTO updateExpense(Long id, ExpenseDTO dto) {
+                String paymentMode = dto.getPaymentMode() != null ? dto.getPaymentMode().trim() : null;
+                if (paymentMode == null || paymentMode.isEmpty()) {
+                        throw new RuntimeException("Payment mode is required");
+                }
+                boolean requiresBankAccount = paymentModeRepository.findByName(paymentMode)
+                                .map(pm -> Boolean.TRUE.equals(pm.getIsBankAccountRequired()))
+                                .orElseThrow(() -> new RuntimeException("Invalid payment mode"));
                 Expense expense = repository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Expense not found with id: " + id));
 
@@ -176,9 +200,11 @@ public class ExpenseService {
                 expense.setCategory(category);
                 expense.setExpenseDate(dto.getExpenseDate());
                 expense.setNotes(dto.getNotes());
-                expense.setPaymentMode(dto.getPaymentMode());
-
-                if (dto.getBankAccountId() != null && !"Cash".equalsIgnoreCase(dto.getPaymentMode())) {
+                expense.setPaymentMode(paymentMode);
+                if (requiresBankAccount) {
+                        if (dto.getBankAccountId() == null) {
+                                throw new RuntimeException("Bank account is required for selected payment mode");
+                        }
                         expense.setBankAccount(bankAccountRepository.findById(dto.getBankAccountId())
                                         .orElseThrow(() -> new RuntimeException("Bank account not found")));
                 } else {
@@ -202,13 +228,15 @@ public class ExpenseService {
         @Transactional(readOnly = true)
         public ExpenseSummaryDTO getExpensesSummary(LocalDate fromDate, LocalDate toDate, Long categoryId,
                         String paymentMode, Long bankAccountId, Double minAmount, Double maxAmount, String createdBy) {
+                LocalDate effectiveFromDate = fromDate != null ? fromDate : LocalDate.of(1970, 1, 1);
+                LocalDate effectiveToDate = toDate != null ? toDate : LocalDate.of(2100, 12, 31);
                 BigDecimal minAmountBD = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
                 BigDecimal maxAmountBD = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-                BigDecimal totalAmount = repository.sumAmountByFilters(fromDate, toDate, categoryId, paymentMode,
+                BigDecimal totalAmount = repository.sumAmountByFilters(effectiveFromDate, effectiveToDate, categoryId, paymentMode,
                                 bankAccountId, minAmountBD, maxAmountBD,
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
-                Long transactionCount = repository.countByFilters(fromDate, toDate, categoryId, paymentMode,
+                Long transactionCount = repository.countByFilters(effectiveFromDate, effectiveToDate, categoryId, paymentMode,
                                 bankAccountId, minAmountBD, maxAmountBD,
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
 
@@ -218,7 +246,7 @@ public class ExpenseService {
                                 : BigDecimal.ZERO;
 
                 String topCategory = "N/A";
-                List<Object[]> categorySums = repository.sumAmountByCategoryFilters(fromDate, toDate, categoryId,
+                List<Object[]> categorySums = repository.sumAmountByCategoryFilters(effectiveFromDate, effectiveToDate, categoryId,
                                 paymentMode, bankAccountId, minAmountBD, maxAmountBD,
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
                 if (categorySums != null && !categorySums.isEmpty()) {
@@ -256,3 +284,4 @@ public class ExpenseService {
                 return dto;
         }
 }
+

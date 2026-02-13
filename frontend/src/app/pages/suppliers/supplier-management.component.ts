@@ -10,6 +10,8 @@ import { AuthService } from '../../services/auth.service';
 import { LoadingService } from '../../services/loading.service';
 import { of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { Supplier } from '../../models/supplier.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-supplier-management',
@@ -52,7 +54,7 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
   faTimes = faTimes;
   faExclamation = faExclamation;
   faBuilding = faBuilding;
-  suppliers: any[] = [];
+  suppliers: Supplier[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -75,18 +77,26 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
     this.loadingService.show('Loading suppliers...');
     const sub = this.supplierService.getAllSuppliers(this.supplierPage - 1, this.supplierPageSize)
       .pipe(
-        catchError((error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading suppliers';
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading suppliers';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
-          return of({ content: [], totalElements: 0, totalPages: 1 });
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: this.supplierPage - 1,
+            size: this.supplierPageSize
+          } as PageResponse<Supplier>);
         }),
         finalize(() => this.loadingService.hide())
       )
-      .subscribe((data: any) => {
-        this.suppliers = (data.content || data).sort((a: any, b: any) => b.id - a.id);
-        this.totalSuppliers = data.totalElements || this.suppliers.length;
-        this.totalPages = data.totalPages || 1;
+      .subscribe((data: PageResponse<Supplier>) => {
+        this.suppliers = (data.items || [])
+          .filter((supplier): supplier is Supplier & { id: number } => typeof supplier.id === 'number')
+          .sort((a, b) => b.id - a.id);
+        this.totalSuppliers = data.totalElements ?? this.suppliers.length;
+        this.totalPages = data.totalPages ?? 1;
         this.cdr.markForCheck();
         sub.unsubscribe();
       });
@@ -124,9 +134,9 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
     this.supplierForm.reset();
   }
 
-  editSupplier(supplier: any) {
+  editSupplier(supplier: Supplier) {
     this.showForm = true;
-    this.editingId = supplier.id;
+    this.editingId = supplier.id ?? null;
     this.supplierForm.patchValue(supplier);
   }
 
@@ -146,14 +156,14 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
     if (this.editingId) {
       const sub = this.supplierService.updateSupplier(this.editingId, this.supplierForm.value)
         .pipe(
-          catchError((error: any) => {
-            const errorMessage = error?.error?.message || error?.message || 'Error updating supplier';
+          catchError((error: unknown) => {
+            const err = error as { error?: { message?: string }; message?: string };
+            const errorMessage = err?.error?.message || err?.message || 'Error updating supplier';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
-            return of(null);
+            return of(null as Supplier | null);
           })
         )
-        .subscribe(updatedSupplier => {
+        .subscribe((updatedSupplier: Supplier | null) => {
           if (updatedSupplier) {
             const index = this.suppliers.findIndex(s => s.id === this.editingId);
             if (index > -1) {
@@ -178,14 +188,14 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
 
       const sub = this.supplierService.createSupplier(this.supplierForm.value, businessId)
         .pipe(
-          catchError((error: any) => {
-            const errorMessage = error?.error?.message || error?.message || 'Error creating supplier';
+          catchError((error: unknown) => {
+            const err = error as { error?: { message?: string }; message?: string };
+            const errorMessage = err?.error?.message || err?.message || 'Error creating supplier';
             this.toastr.error(errorMessage, 'Error');
-            console.error('Full error:', error);
-            return of(null);
+            return of(null as Supplier | null);
           })
         )
-        .subscribe(newSupplier => {
+        .subscribe((newSupplier: Supplier | null) => {
           if (newSupplier) {
             this.suppliers.push(newSupplier);
             this.supplierService.invalidateCache();
@@ -210,7 +220,6 @@ export class SupplierManagementComponent implements OnInit, OnDestroy {
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error deleting supplier';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
     }

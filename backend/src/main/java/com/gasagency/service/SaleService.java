@@ -1,10 +1,12 @@
 
 package com.gasagency.service;
 
-import com.gasagency.dto.CreateSaleRequestDTO;
-import com.gasagency.dto.SaleDTO;
-import com.gasagency.dto.SaleItemDTO;
-import com.gasagency.dto.SaleSummaryDTO;
+import com.gasagency.dto.request.CreateSaleRequestDTO;
+import com.gasagency.dto.response.SaleDTO;
+import com.gasagency.dto.response.SaleItemDTO;
+import com.gasagency.dto.response.SaleSummaryDTO;
+import com.gasagency.dto.response.PaymentModeSummaryDTO;
+import com.gasagency.dto.response.InventoryStockDTO;
 import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
@@ -578,7 +580,7 @@ public class SaleService {
                         logger.debug("Alert thresholds - Filled: {}, Empty: {}", filledThreshold, emptyThreshold);
 
                         // Get current stock for this warehouse
-                        java.util.List<com.gasagency.dto.InventoryStockDTO> warehouseStocks = inventoryStockService
+                        java.util.List<InventoryStockDTO> warehouseStocks = inventoryStockService
                                         .getStockDTOsByWarehouse(warehouse);
 
                         if (warehouseStocks == null || warehouseStocks.isEmpty()) {
@@ -590,7 +592,7 @@ public class SaleService {
                         String warehouseName = warehouse.getName();
 
                         // Check EACH variant individually (per-variant checking, not warehouse totals)
-                        for (com.gasagency.dto.InventoryStockDTO stock : warehouseStocks) {
+                        for (InventoryStockDTO stock : warehouseStocks) {
                                 String variantName = stock.getVariantName() != null ? stock.getVariantName()
                                                 : "Variant " + stock.getVariantId();
                                 long filledQty = stock.getFilledQty() != null ? stock.getFilledQty() : 0;
@@ -680,13 +682,7 @@ public class SaleService {
 
         public Page<SaleDTO> getSalesByCustomer(Long customerId, Pageable pageable) {
                 logger.debug("Fetching sales for customer: {} with pagination", customerId);
-                Customer customer = customerRepository.findById(customerId)
-                                .orElseThrow(() -> {
-                                        logger.error("Customer not found with id: {}", customerId);
-                                        return new ResourceNotFoundException(
-                                                        "Customer not found with id: " + customerId);
-                                });
-                return saleRepository.findByCustomer(customer, pageable)
+                return saleRepository.findByCustomerId(customerId, pageable)
                                 .map(this::toDTO);
         }
 
@@ -697,7 +693,7 @@ public class SaleService {
                                 .map(this::toDTO);
         }
 
-        public com.gasagency.dto.PaymentModeSummaryDTO getPaymentModeSummary(String fromDate, String toDate,
+        public PaymentModeSummaryDTO getPaymentModeSummary(String fromDate, String toDate,
                         Long customerId,
                         String paymentMode, Long variantId, Long bankAccountId, Double minAmount, Double maxAmount,
                         Integer minTransactionCount) {
@@ -716,53 +712,22 @@ public class SaleService {
 
                 final LocalDate finalFrom = from;
                 final LocalDate finalTo = to;
+                BigDecimal minAmountValue = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
+                BigDecimal maxAmountValue = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-                // Get all ledger entries (using CustomerCylinderLedger instead of Sale)
-                List<CustomerCylinderLedger> ledgers = ledgerRepository.findAll().stream()
-                                .filter(ledger -> {
-                                        // Skip INITIAL_STOCK transactions
-                                        if (ledger.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK) {
-                                                return false;
-                                        }
-                                        if (finalFrom != null && ledger.getTransactionDate().isBefore(finalFrom)) {
-                                                return false;
-                                        }
-                                        if (finalTo != null && ledger.getTransactionDate().isAfter(finalTo)) {
-                                                return false;
-                                        }
-                                        if (customerId != null && (ledger.getCustomer() == null
-                                                        || !customerId.equals(ledger.getCustomer().getId()))) {
-                                                return false;
-                                        }
-                                        // Filter by payment mode
-                                        if (paymentMode != null && !paymentMode.isEmpty()) {
-                                                String ledgerPaymentMode = ledger.getPaymentMode() != null
-                                                                ? ledger.getPaymentMode().trim()
-                                                                : "";
-                                                if (!ledgerPaymentMode.equalsIgnoreCase(paymentMode.trim())) {
-                                                        return false;
-                                                }
-                                        }
-                                        // Filter by bank account
-                                        if (bankAccountId != null) {
-                                                if (ledger.getBankAccount() == null || !bankAccountId
-                                                                .equals(ledger.getBankAccount().getId())) {
-                                                        return false;
-                                                }
-                                        }
-                                        // Filter by variant
-                                        if (variantId != null) {
-                                                if (ledger.getVariant() == null
-                                                                || !variantId.equals(ledger.getVariant().getId())) {
-                                                        return false;
-                                                }
-                                        }
-                                        return true;
-                                })
-                                .collect(Collectors.toList());
+                // Get ledger entries filtered in DB
+                List<CustomerCylinderLedger> ledgers = ledgerRepository.findForPaymentModeSummary(
+                                finalFrom,
+                                finalTo,
+                                customerId,
+                                paymentMode,
+                                bankAccountId,
+                                variantId,
+                                minAmountValue,
+                                maxAmountValue);
 
-                com.gasagency.dto.PaymentModeSummaryDTO summary = new com.gasagency.dto.PaymentModeSummaryDTO();
-                Map<String, com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats> stats = new java.util.HashMap<>();
+                PaymentModeSummaryDTO summary = new PaymentModeSummaryDTO();
+                Map<String, PaymentModeSummaryDTO.PaymentModeStats> stats = new java.util.HashMap<>();
                 double totalAmount = 0;
                 int totalTransactions = 0;
 
@@ -778,16 +743,8 @@ public class SaleService {
                                         ? ledger.getAmountReceived().doubleValue()
                                         : 0.0;
 
-                        // Apply min/max amount filter to individual ledger entries
-                        if (minAmount != null && ledgerAmount < minAmount) {
-                                continue;
-                        }
-                        if (maxAmount != null && ledgerAmount > maxAmount) {
-                                continue;
-                        }
-
                         stats.computeIfAbsent(ledgerPaymentMode,
-                                        key -> new com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats(key, key, 0,
+                                        key -> new PaymentModeSummaryDTO.PaymentModeStats(key, key, 0,
                                                         0))
                                         .setTotalAmount(stats.get(ledgerPaymentMode).getTotalAmount() + ledgerAmount);
 
@@ -805,7 +762,7 @@ public class SaleService {
                         // Recalculate totals
                         totalAmount = 0;
                         totalTransactions = 0;
-                        for (com.gasagency.dto.PaymentModeSummaryDTO.PaymentModeStats stat : stats.values()) {
+                        for (PaymentModeSummaryDTO.PaymentModeStats stat : stats.values()) {
                                 totalAmount += stat.getTotalAmount();
                                 totalTransactions += stat.getTransactionCount();
                         }
@@ -957,3 +914,5 @@ public class SaleService {
                 // This method is called whenever data changes to invalidate dashboard cache
         }
 }
+
+

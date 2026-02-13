@@ -71,62 +71,29 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
    */
   private loadWarehouses(): void {
     this.isLoading = true;
-    console.log('🔵 Starting loadWarehouses...');
-    
+
     const subscription = this.warehouseService.getAllWarehouses()
       .pipe(takeUntil(this.destroy$))
       .subscribe(
-        (response: any) => {
-          console.log('🟢 Received response from API');
-          console.log('🔹 Full warehouse response:', response);
-          console.log('🔹 Response type:', typeof response);
-          console.log('🔹 Response is array?', Array.isArray(response));
-          
+        (response: Warehouse[]) => {
           // Run inside Angular zone to ensure change detection
           this.ngZone.run(() => {
             if (response && Array.isArray(response)) {
-              // Backend returns array directly
-              console.log('✅ Backend returned array directly');
               this.warehouses = response;
-            } else if (response && response.success && response.data) {
-              // Standard wrapper format
-              console.log('✅ Standard wrapper format with success=true');
-              this.warehouses = Array.isArray(response.data) ? response.data : [response.data];
-            } else if (response && response.data) {
-              // Has data property but no success flag
-              console.log('✅ Data property exists (no success flag)');
-              this.warehouses = Array.isArray(response.data) ? response.data : [response.data];
-            } else if (response) {
-              // Response exists but structure unclear
-              console.log('⚠️ Response exists but structure unclear:', Object.keys(response));
-              this.warehouses = [];
-              this.toastr.error('Failed to parse warehouse response');
             } else {
-              console.warn('⚠️ No response received');
               this.warehouses = [];
             }
-            
-            console.log(`✅ Warehouses loaded: ${this.warehouses.length} items`);
-            console.log('📋 Warehouses array:', this.warehouses);
-            console.log('📋 Array is still array?:', Array.isArray(this.warehouses));
-            
-            if (this.warehouses.length > 0) {
-              console.log('First warehouse object:', this.warehouses[0]);
-              console.log('First warehouse keys:', Object.keys(this.warehouses[0]));
-            }
-            
+
             // Set loading to false first
             this.isLoading = false;
-            console.log('✅ isLoading set to false');
-            
+
             // Then manually trigger change detection to update the view
             this.cdr.detectChanges();
-            console.log('✅ Change detection triggered');
           });
         },
-        (error: any) => {
-          console.error('❌ Error loading warehouses:', error);
-          this.toastr.error(error?.error?.message || 'Error loading warehouses');
+        (error: unknown) => {
+          const err = error as { error?: { message?: string } };
+          this.toastr.error(err?.error?.message || 'Error loading warehouses');
           this.isLoading = false;
         }
       );
@@ -134,7 +101,6 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
     // Safety timeout - set loading to false after 10 seconds
     setTimeout(() => {
       if (this.isLoading) {
-        console.warn('⚠️ Timeout: isLoading still true after 10 seconds');
         this.isLoading = false;
         this.cdr.detectChanges();
       }
@@ -161,20 +127,17 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
       this.warehouseService.updateWarehouse(this.editingWarehouseId, warehouseData)
         .pipe(takeUntil(this.destroy$))
         .subscribe(
-          (response: any) => {
-            if (response.success) {
-              this.toastr.success('Warehouse updated successfully');
-              this.warehouseService.invalidateCache();
-              this.closeModal();
-              this.loadWarehouses();
-            } else {
-              this.toastr.error(response.message || 'Update failed');
-            }
+          () => {
+            this.toastr.success('Warehouse updated successfully');
+            this.warehouseService.invalidateCache();
+            this.closeModal();
+            this.loadWarehouses();
             this.isSubmitting = false;
           },
-          (error: any) => {
-            if (error.error && error.error.message) {
-              this.toastr.error(error.error.message);
+          (error: unknown) => {
+            const err = error as { error?: { message?: string } };
+            if (err.error && err.error.message) {
+              this.toastr.error(err.error.message);
             } else {
               this.toastr.error('Error updating warehouse');
             }
@@ -195,20 +158,17 @@ export class WarehouseManagementComponent implements OnInit, OnDestroy {
       this.warehouseService.createWarehouse(this.warehouseForm.value.name, businessId)
         .pipe(takeUntil(this.destroy$))
         .subscribe(
-          (response: any) => {
-            if (response.success) {
-              this.toastr.success('Warehouse created successfully');
-              this.warehouseService.invalidateCache();
-              this.closeModal();
-              this.loadWarehouses();
-            } else {
-              this.toastr.error(response.message || 'Creation failed');
-            }
+          () => {
+            this.toastr.success('Warehouse created successfully');
+            this.warehouseService.invalidateCache();
+            this.closeModal();
+            this.loadWarehouses();
             this.isSubmitting = false;
           },
-          (error: any) => {
-            if (error.error && error.error.message) {
-              this.toastr.error(error.error.message);
+          (error: unknown) => {
+            const err = error as { error?: { message?: string } };
+            if (err.error && err.error.message) {
+              this.toastr.error(err.error.message);
             } else {
               this.toastr.error('Error creating warehouse');
             }

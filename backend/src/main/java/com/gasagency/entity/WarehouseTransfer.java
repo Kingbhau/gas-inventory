@@ -49,9 +49,19 @@ public class WarehouseTransfer extends Auditable {
     private CylinderVariant variant;
 
     @NotNull(message = "Quantity is required.")
-    @Min(value = 1, message = "Quantity must be at least 1.")
+    @Min(value = 0, message = "Quantity cannot be negative.")
     @Column(nullable = false)
     private Long quantity;
+
+    @NotNull(message = "Filled quantity is required.")
+    @Min(value = 0, message = "Filled quantity cannot be negative.")
+    @Column(name = "filled_qty", nullable = false)
+    private Long filledQty = 0L;
+
+    @NotNull(message = "Empty quantity is required.")
+    @Min(value = 0, message = "Empty quantity cannot be negative.")
+    @Column(name = "empty_qty", nullable = false)
+    private Long emptyQty = 0L;
 
     @NotNull(message = "Transfer date is required.")
     @Column(nullable = false)
@@ -76,10 +86,18 @@ public class WarehouseTransfer extends Auditable {
             throw new IllegalArgumentException("Source and destination warehouses cannot be the same");
         }
 
-        // Validate positive quantity
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be positive");
+        // Validate non-negative quantity
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
         }
+    }
+
+    public WarehouseTransfer(Warehouse fromWarehouse, Warehouse toWarehouse,
+            CylinderVariant variant, Long filledQty, Long emptyQty) {
+        this(fromWarehouse, toWarehouse, variant,
+                (filledQty != null ? filledQty : 0L) + (emptyQty != null ? emptyQty : 0L));
+        this.filledQty = filledQty != null ? filledQty : 0L;
+        this.emptyQty = emptyQty != null ? emptyQty : 0L;
     }
 
     // Getters and Setters
@@ -139,6 +157,22 @@ public class WarehouseTransfer extends Auditable {
         this.quantity = quantity;
     }
 
+    public Long getFilledQty() {
+        return filledQty;
+    }
+
+    public void setFilledQty(Long filledQty) {
+        this.filledQty = filledQty;
+    }
+
+    public Long getEmptyQty() {
+        return emptyQty;
+    }
+
+    public void setEmptyQty(Long emptyQty) {
+        this.emptyQty = emptyQty;
+    }
+
     public LocalDate getTransferDate() {
         return transferDate;
     }
@@ -182,3 +216,4 @@ public class WarehouseTransfer extends Auditable {
         return Objects.hash(id);
     }
 }
+

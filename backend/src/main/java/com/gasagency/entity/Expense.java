@@ -125,3 +125,4 @@ public class Expense extends Auditable {
         this.bankAccount = bankAccount;
     }
 }
+

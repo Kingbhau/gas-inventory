@@ -1,6 +1,11 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.CustomerCylinderLedgerDTO;
+import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
+import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
+import com.gasagency.dto.response.CustomerLedgerVariantSummaryDTO;
+import com.gasagency.dto.request.LedgerUpdateRequestDTO;
+import com.gasagency.dto.request.PaymentRequestDTO;
+import com.gasagency.dto.response.WarehouseTransferDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
@@ -33,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
-import com.gasagency.dto.CustomerBalanceDTO;
+import com.gasagency.dto.response.CustomerBalanceDTO;
 import java.util.ArrayList;
 import java.math.BigDecimal;
 
@@ -92,7 +97,7 @@ public class CustomerCylinderLedgerService {
 
                 // Get all warehouse transfers
                 try {
-                        List<com.gasagency.dto.WarehouseTransferDTO> allTransfers = warehouseTransferService
+                        List<WarehouseTransferDTO> allTransfers = warehouseTransferService
                                         .getAllTransfers();
                         if (allTransfers != null && !allTransfers.isEmpty()) {
                                 List<CustomerCylinderLedgerDTO> transferMovements = allTransfers.stream()
@@ -146,6 +151,10 @@ public class CustomerCylinderLedgerService {
                                 .map(this::toDTO);
         }
 
+        public Page<CustomerCylinderLedgerDTO> getAllMovements(Pageable pageable, Long variantId, String refType) {
+                return getAllMovements(pageable, variantId, parseRefType(refType));
+        }
+
         /**
          * Paginated movements including warehouse transfers (merged in memory)
          * Use when Transfer entries must be shown alongside ledger entries.
@@ -170,13 +179,8 @@ public class CustomerCylinderLedgerService {
                 }
 
                 if (includeTransfers) {
-                        List<com.gasagency.dto.WarehouseTransferDTO> transfers = warehouseTransferService
-                                        .getAllTransfers();
-                        if (variantId != null) {
-                                transfers = transfers.stream()
-                                                .filter(t -> variantId.equals(t.getVariantId()))
-                                                .collect(Collectors.toList());
-                        }
+                        List<WarehouseTransferDTO> transfers = warehouseTransferService
+                                        .getAllTransfers(variantId);
                         List<CustomerCylinderLedgerDTO> transferMovements = transfers.stream()
                                         .map(this::transferToLedgerDTO)
                                         .collect(Collectors.toList());
@@ -205,6 +209,10 @@ public class CustomerCylinderLedgerService {
                 return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, combined.size());
         }
 
+        public Page<CustomerCylinderLedgerDTO> getAllMovementsMerged(Pageable pageable, Long variantId, String refType) {
+                return getAllMovementsMerged(pageable, variantId, parseRefType(refType));
+        }
+
         // Get ledger entries for a specific warehouse sorted by date descending
         public List<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId) {
                 // Get customer ledger movements for this warehouse
@@ -215,15 +223,10 @@ public class CustomerCylinderLedgerService {
 
                 // Get warehouse transfers involving this warehouse
                 try {
-                        List<com.gasagency.dto.WarehouseTransferDTO> allTransfers = warehouseTransferService
-                                        .getAllTransfers();
+                        List<WarehouseTransferDTO> allTransfers = warehouseTransferService
+                                        .getTransfersForWarehouseAndVariant(warehouseId, null);
                         if (allTransfers != null && !allTransfers.isEmpty()) {
                                 List<CustomerCylinderLedgerDTO> transferMovements = allTransfers.stream()
-                                                .filter(t -> t.getFromWarehouseId() != null
-                                                                && t.getToWarehouseId() != null &&
-                                                                (t.getFromWarehouseId().equals(warehouseId)
-                                                                                || t.getToWarehouseId()
-                                                                                                .equals(warehouseId)))
                                                 .map(this::transferToLedgerDTO)
                                                 .collect(Collectors.toList());
 
@@ -274,6 +277,11 @@ public class CustomerCylinderLedgerService {
                                 .map(this::toDTO);
         }
 
+        public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId, Pageable pageable,
+                        Long variantId, String refType) {
+                return getMovementsByWarehouse(warehouseId, pageable, variantId, parseRefType(refType));
+        }
+
         /**
          * Paginated movements including transfers for a warehouse (merged in memory)
          */
@@ -298,13 +306,8 @@ public class CustomerCylinderLedgerService {
                 }
 
                 if (includeTransfers) {
-                        List<com.gasagency.dto.WarehouseTransferDTO> transfers = warehouseTransferService
-                                        .getTransfersForWarehouse(warehouseId);
-                        if (variantId != null) {
-                                transfers = transfers.stream()
-                                                .filter(t -> variantId.equals(t.getVariantId()))
-                                                .collect(Collectors.toList());
-                        }
+                        List<WarehouseTransferDTO> transfers = warehouseTransferService
+                                        .getTransfersForWarehouseAndVariant(warehouseId, variantId);
                         List<CustomerCylinderLedgerDTO> transferMovements = transfers.stream()
                                         .map(this::transferToLedgerDTO)
                                         .collect(Collectors.toList());
@@ -331,6 +334,22 @@ public class CustomerCylinderLedgerService {
                                 ? java.util.Collections.emptyList()
                                 : combined.subList(start, end);
                 return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, combined.size());
+        }
+
+        public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouseMerged(Long warehouseId, Pageable pageable,
+                        Long variantId, String refType) {
+                return getMovementsByWarehouseMerged(warehouseId, pageable, variantId, parseRefType(refType));
+        }
+
+        private CustomerCylinderLedger.TransactionType parseRefType(String refType) {
+                if (refType == null || refType.trim().isEmpty()) {
+                        return null;
+                }
+                String normalized = refType.trim().toUpperCase();
+                if ("RETURN".equals(normalized)) {
+                        return CustomerCylinderLedger.TransactionType.EMPTY_RETURN;
+                }
+                return CustomerCylinderLedger.TransactionType.valueOf(normalized);
         }
 
         /**
@@ -596,12 +615,10 @@ public class CustomerCylinderLedgerService {
                                 final Long ledgerId = ledger.getId();
                                 // Get previous running balance from latest entry
                                 List<CustomerCylinderLedger> previousEntries = repository
-                                                .findByCustomer(ledger.getCustomer())
-                                                .stream()
-                                                .filter(e -> !e.getId().equals(ledgerId))
-                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
-                                                .limit(1)
-                                                .collect(Collectors.toList());
+                                                .findLatestByCustomerIdExcludingId(
+                                                                ledger.getCustomer().getId(),
+                                                                ledgerId,
+                                                                PageRequest.of(0, 1));
 
                                 BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
@@ -627,12 +644,10 @@ public class CustomerCylinderLedgerService {
                                 final Long ledgerId = ledger.getId();
                                 // Get previous running balance from latest entry
                                 List<CustomerCylinderLedger> previousEntries = repository
-                                                .findByCustomer(ledger.getCustomer())
-                                                .stream()
-                                                .filter(e -> !e.getId().equals(ledgerId))
-                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
-                                                .limit(1)
-                                                .collect(Collectors.toList());
+                                                .findLatestByCustomerIdExcludingId(
+                                                                ledger.getCustomer().getId(),
+                                                                ledgerId,
+                                                                PageRequest.of(0, 1));
 
                                 BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
@@ -654,12 +669,10 @@ public class CustomerCylinderLedgerService {
                                 final Long ledgerId = ledger.getId();
                                 // No payment received in this transaction
                                 List<CustomerCylinderLedger> previousEntries = repository
-                                                .findByCustomer(ledger.getCustomer())
-                                                .stream()
-                                                .filter(e -> !e.getId().equals(ledgerId))
-                                                .sorted((a, b) -> b.getId().compareTo(a.getId()))
-                                                .limit(1)
-                                                .collect(Collectors.toList());
+                                                .findLatestByCustomerIdExcludingId(
+                                                                ledger.getCustomer().getId(),
+                                                                ledgerId,
+                                                                PageRequest.of(0, 1));
 
                                 BigDecimal previousBalance = BigDecimal.ZERO;
                                 if (!previousEntries.isEmpty()) {
@@ -976,11 +989,7 @@ public class CustomerCylinderLedgerService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Customer not found with id: " + customerId));
 
-                List<CustomerCylinderLedger> ledgers = repository.findByCustomer(customer);
-                return ledgers.stream()
-                                .filter(l -> l.getEmptyIn() != null && l.getEmptyIn() > 0)
-                                .mapToLong(l -> l.getEmptyIn() != null ? l.getEmptyIn() : 0)
-                                .sum();
+                return repository.sumPositiveEmptyInByCustomer(customer.getId());
         }
 
         private CustomerCylinderLedgerDTO toDTO(CustomerCylinderLedger ledger) {
@@ -1018,7 +1027,7 @@ public class CustomerCylinderLedgerService {
                 return dto;
         }
 
-        private CustomerCylinderLedgerDTO transferToLedgerDTO(com.gasagency.dto.WarehouseTransferDTO transfer) {
+        private CustomerCylinderLedgerDTO transferToLedgerDTO(WarehouseTransferDTO transfer) {
                 // Convert transfer to ledger DTO format for display
                 CustomerCylinderLedgerDTO dto = new CustomerCylinderLedgerDTO(
                                 transfer.getId(),
@@ -1039,6 +1048,20 @@ public class CustomerCylinderLedgerService {
                 dto.setCreatedAt(transfer.getCreatedAt());
                 dto.setCreatedBy(transfer.getCreatedBy());
                 return dto;
+        }
+
+        /**
+         * Record a payment transaction
+         */
+        @Transactional
+        public CustomerCylinderLedgerDTO recordPayment(PaymentRequestDTO paymentRequest) {
+                PaymentRequest request = new PaymentRequest();
+                request.setCustomerId(paymentRequest.getCustomerId());
+                request.setAmount(paymentRequest.getAmount());
+                request.setPaymentDate(paymentRequest.getPaymentDate());
+                request.setPaymentMode(paymentRequest.getPaymentMode());
+                request.setBankAccountId(paymentRequest.getBankAccountId());
+                return recordPayment(request);
         }
 
         /**
@@ -1095,8 +1118,8 @@ public class CustomerCylinderLedgerService {
                                         "customerId", customer.getId(), "paymentAmount", paymentRequest.amount,
                                         "dueAmount", currentDue);
                         throw new IllegalArgumentException(
-                                        "Payment amount ₹" + paymentRequest.amount
-                                                        + " cannot exceed due amount ₹" + currentDue);
+                                        "Payment amount â‚¹" + paymentRequest.amount
+                                                        + " cannot exceed due amount â‚¹" + currentDue);
                 }
 
                 // Calculate running balance (remaining customer debt) AFTER this payment
@@ -1251,14 +1274,13 @@ public class CustomerCylinderLedgerService {
         }
 
         // Get complete summary for a customer (across all ledger entries)
-        public Map<String, Object> getCustomerLedgerSummary(Long customerId) {
+        public CustomerLedgerSummaryDTO getCustomerLedgerSummary(Long customerId) {
                 Customer customer = customerRepository.findById(customerId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Customer not found with id: " + customerId));
 
                 List<CustomerCylinderLedger> allEntries = repository.findByCustomer(customer);
-                Map<String, Object> summary = new HashMap<>();
-                Map<Long, Map<String, Object>> variantSummary = new HashMap<>();
+                Map<Long, CustomerLedgerVariantSummaryDTO> variantSummary = new HashMap<>();
 
                 // Get the latest balance for each variant (most recent entry per variant)
                 Map<Long, CustomerCylinderLedger> latestByVariant = new HashMap<>();
@@ -1286,22 +1308,23 @@ public class CustomerCylinderLedgerService {
                                 Long variantId = ledger.getVariant().getId();
                                 String variantName = ledger.getVariant().getName();
 
-                                java.util.Map<String, Object> vSummary = new java.util.HashMap<>();
-                                vSummary.put("variantName", variantName);
+                                CustomerLedgerVariantSummaryDTO vSummary = new CustomerLedgerVariantSummaryDTO();
+                                vSummary.setVariantName(variantName);
                                 // Use the balance field which represents filled cylinders with customer
                                 Long filledCount = ledger.getBalance() != null && ledger.getBalance() > 0
                                                 ? ledger.getBalance()
                                                 : 0L;
-                                vSummary.put("filledCount", filledCount);
+                                vSummary.setFilledCount(filledCount);
                                 // Return pending = cylinders with customer that need to be returned (same as
                                 // filledCount)
-                                vSummary.put("returnPending", filledCount);
+                                vSummary.setReturnPending(filledCount);
 
                                 variantSummary.put(variantId, vSummary);
                         }
                 }
 
-                summary.put("variants", new ArrayList<>(variantSummary.values()));
+                CustomerLedgerSummaryDTO summary = new CustomerLedgerSummaryDTO();
+                summary.setVariants(new ArrayList<>(variantSummary.values()));
                 return summary;
         }
 
@@ -1460,9 +1483,9 @@ public class CustomerCylinderLedgerService {
          * 5. Shows detailed error messages if validation fails
          */
         @Transactional
-        public CustomerCylinderLedgerDTO updateLedgerEntry(Long ledgerId, Map<String, Object> updateData) {
+        public CustomerCylinderLedgerDTO updateLedgerEntry(Long ledgerId, LedgerUpdateRequestDTO updateData) {
                 LoggerUtil.logBusinessEntry(logger, "UPDATE_LEDGER", "ledgerId", ledgerId,
-                                "updateData", updateData.toString());
+                                "updateData", updateData != null ? updateData.toString() : "null");
 
                 // ==================== VALIDATION ====================
 
@@ -1483,11 +1506,12 @@ public class CustomerCylinderLedgerService {
                 boolean isEmptyReturn = entry.getRefType() == CustomerCylinderLedger.TransactionType.EMPTY_RETURN;
                 boolean isPayment = entry.getRefType() == CustomerCylinderLedger.TransactionType.PAYMENT;
 
-                if (isEmptyReturn && updateData.containsKey("filledOut")) {
+                if (isEmptyReturn && updateData != null && updateData.getFilledOut() != null) {
                         throw new InvalidOperationException("Cannot edit filled count for EMPTY_RETURN transactions");
                 }
-                if (isPayment && (updateData.containsKey("filledOut") || updateData.containsKey("emptyIn")
-                                || updateData.containsKey("totalAmount"))) {
+                if (isPayment && updateData != null && (updateData.getFilledOut() != null
+                                || updateData.getEmptyIn() != null
+                                || updateData.getTotalAmount() != null)) {
                         throw new InvalidOperationException("Can only edit amount received for PAYMENT transactions");
                 }
 
@@ -1502,16 +1526,17 @@ public class CustomerCylinderLedgerService {
                 BigDecimal oldAmountReceived = entry.getAmountReceived();
 
                 // 3. Extract new values (if provided)
-                Long newFilledOut = updateData.containsKey("filledOut")
-                                ? ((Number) updateData.get("filledOut")).longValue()
+                Long newFilledOut = updateData != null && updateData.getFilledOut() != null
+                                ? updateData.getFilledOut()
                                 : oldFilledOut;
-                Long newEmptyIn = updateData.containsKey("emptyIn") ? ((Number) updateData.get("emptyIn")).longValue()
+                Long newEmptyIn = updateData != null && updateData.getEmptyIn() != null
+                                ? updateData.getEmptyIn()
                                 : oldEmptyIn;
-                BigDecimal newTotalAmount = updateData.containsKey("totalAmount")
-                                ? new BigDecimal(updateData.get("totalAmount").toString())
+                BigDecimal newTotalAmount = updateData != null && updateData.getTotalAmount() != null
+                                ? updateData.getTotalAmount()
                                 : oldTotalAmount;
-                BigDecimal newAmountReceived = updateData.containsKey("amountReceived")
-                                ? new BigDecimal(updateData.get("amountReceived").toString())
+                BigDecimal newAmountReceived = updateData != null && updateData.getAmountReceived() != null
+                                ? updateData.getAmountReceived()
                                 : oldAmountReceived;
 
                 // 4. Validate new values are non-negative
@@ -1528,25 +1553,11 @@ public class CustomerCylinderLedgerService {
                 // SALE/EMPTY_RETURN)
                 List<CustomerCylinderLedger> variantEntries = new ArrayList<>();
                 if (variant != null) {
-                        variantEntries = repository.findByCustomer(customer).stream()
-                                        .filter(e -> e.getVariant() != null
-                                                        && e.getVariant().getId().equals(variant.getId()))
-                                        .sorted((a, b) -> {
-                                                int dateCompare = a.getTransactionDate()
-                                                                .compareTo(b.getTransactionDate());
-                                                return dateCompare != 0 ? dateCompare
-                                                                : Long.compare(a.getId(), b.getId());
-                                        })
-                                        .collect(Collectors.toList());
+                        variantEntries = repository.findByCustomerAndVariantOrdered(customer, variant);
                 }
 
                 // Get entries for ALL VARIANTS for due amount calculation (cumulative debt)
-                List<CustomerCylinderLedger> allEntries = repository.findByCustomer(customer).stream()
-                                .sorted((a, b) -> {
-                                        int dateCompare = a.getTransactionDate().compareTo(b.getTransactionDate());
-                                        return dateCompare != 0 ? dateCompare : Long.compare(a.getId(), b.getId());
-                                })
-                                .collect(Collectors.toList());
+                List<CustomerCylinderLedger> allEntries = repository.findByCustomerOrdered(customer);
 
                 // Check if entry is within the latest 15 records (per variant)
                 if (variantEntries.size() > 15) {
@@ -1599,9 +1610,9 @@ public class CustomerCylinderLedgerService {
                 // VALIDATION: amountReceived should not exceed the total cumulative due
                 if (newAmountReceived.compareTo(latestDueAmount) > 0) {
                         throw new InvalidOperationException(
-                                        "Amount received (₹" + newAmountReceived +
-                                                        ") cannot exceed total amount owed (₹" + latestDueAmount +
-                                                        "). Maximum allowed: ₹" + latestDueAmount);
+                                        "Amount received (â‚¹" + newAmountReceived +
+                                                        ") cannot exceed total amount owed (â‚¹" + latestDueAmount +
+                                                        "). Maximum allowed: â‚¹" + latestDueAmount);
                 }
 
                 // Calculate balance change for this entry (PER VARIANT) - only if variant
@@ -1699,7 +1710,7 @@ public class CustomerCylinderLedgerService {
                         if (nextCumulativeDue.compareTo(BigDecimal.ZERO) < 0) {
                                 validationErrors.append("Entry ").append(nextEntry.getId())
                                                 .append(" (dated ").append(nextEntry.getTransactionDate())
-                                                .append(") would have negative due: ₹").append(nextCumulativeDue)
+                                                .append(") would have negative due: â‚¹").append(nextCumulativeDue)
                                                 .append(". ");
                         }
 
@@ -1794,36 +1805,22 @@ public class CustomerCylinderLedgerService {
                 entry.setBalance(newBalance);
 
                 // Set update reason if provided
-                if (updateData.containsKey("updateReason")) {
-                        String updateReason = updateData.get("updateReason") != null
-                                        ? updateData.get("updateReason").toString()
-                                        : null;
-                        entry.setUpdateReason(updateReason);
+                if (updateData != null && updateData.getUpdateReason() != null) {
+                        entry.setUpdateReason(updateData.getUpdateReason());
                 }
 
                 // Set payment mode if provided
-                if (updateData.containsKey("paymentMode")) {
-                        String paymentMode = updateData.get("paymentMode") != null
-                                        ? updateData.get("paymentMode").toString()
-                                        : null;
-                        entry.setPaymentMode(paymentMode);
+                if (updateData != null && updateData.getPaymentMode() != null) {
+                        entry.setPaymentMode(updateData.getPaymentMode());
                 }
 
                 // Set bank account if provided
-                if (updateData.containsKey("bankAccountId")) {
-                        Object bankAccountIdObj = updateData.get("bankAccountId");
-                        if (bankAccountIdObj != null) {
-                                Long bankAccountId;
-                                if (bankAccountIdObj instanceof String) {
-                                        bankAccountId = Long.parseLong((String) bankAccountIdObj);
-                                } else {
-                                        bankAccountId = ((Number) bankAccountIdObj).longValue();
-                                }
+                if (updateData != null && updateData.getBankAccountId() != null) {
+                        Long bankAccountId = updateData.getBankAccountId();
                                 BankAccount bankAccount = bankAccountRepository.findById(bankAccountId).orElse(null);
                                 entry.setBankAccount(bankAccount);
-                        } else {
-                                entry.setBankAccount(null);
-                        }
+                } else if (updateData != null && updateData.getBankAccountId() == null) {
+                        entry.setBankAccount(null);
                 }
 
                 repository.save(entry);
@@ -1974,3 +1971,5 @@ public class CustomerCylinderLedgerService {
                 logger.info("BALANCE_REPAIR_COMPLETE: Total entries recalculated: {}", totalUpdated);
         }
 }
+
+

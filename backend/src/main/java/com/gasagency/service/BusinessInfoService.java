@@ -1,7 +1,7 @@
 
 package com.gasagency.service;
 
-import com.gasagency.dto.BusinessInfoDto;
+import com.gasagency.dto.response.BusinessInfoDto;
 import com.gasagency.entity.BusinessInfo;
 import com.gasagency.repository.BusinessInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,5 +73,6 @@ public class BusinessInfoService {
     }
 
 }
+
 
 

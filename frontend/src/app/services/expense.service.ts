@@ -2,9 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Expense } from '../models/expense.model';
+import { ExpenseCategory } from '../models/expense-category.model';
+import { ExpenseFilters } from '../models/expense-filters.model';
+import { ExpenseSummary } from '../models/expense-summary.model';
+import { PageResponse } from '../models/page-response';
+import { SimpleStatusDTO } from '../models/simple-status';
 import { ExpenseCategoryService } from './expense-category.service';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
+import { unwrapApiResponse } from '../utils/api-response.util';
 
 @Injectable({
   providedIn: 'root'
@@ -19,21 +25,12 @@ export class ExpenseService {
 
   // Create a new expense
   createExpense(expense: Expense): Observable<Expense> {
-    return this.http.post<Expense>(`${this.apiUrl}`, expense, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.post<any>(`${this.apiUrl}`, expense, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Expense>());
   }
 
   // Get all expenses with pagination and filters
-  getAllExpenses(page: number = 0, pageSize: number = 10, filters?: {
-    fromDate?: string;
-    toDate?: string;
-    categoryId?: number;
-    paymentMode?: string;
-    bankAccountId?: number;
-    minAmount?: number;
-    maxAmount?: number;
-    createdBy?: string;
-  }): Observable<any> {
+  getAllExpenses(page: number = 0, pageSize: number = 10, filters?: ExpenseFilters): Observable<PageResponse<Expense>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', pageSize.toString());
@@ -50,51 +47,56 @@ export class ExpenseService {
     }
     
     return this.http.get<any>(`${this.apiUrl}`, { params, withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<PageResponse<Expense>>());
   }
 
   // Get expense by ID
   getExpenseById(id: number): Observable<Expense> {
-    return this.http.get<Expense>(`${this.apiUrl}/${id}`, { withCredentials: true });
+    return this.http.get<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Expense>());
   }
 
   // Get expenses by date range
-  getExpensesByDateRange(fromDate: string, toDate: string, page: number = 0, pageSize: number = 10): Observable<any> {
+  getExpensesByDateRange(fromDate: string, toDate: string, page: number = 0, pageSize: number = 10): Observable<PageResponse<Expense>> {
     const params = new HttpParams()
       .set('fromDate', fromDate)
       .set('toDate', toDate)
       .set('page', page.toString())
       .set('size', pageSize.toString());
-    return this.http.get<any>(`${this.apiUrl}/range`, { params, withCredentials: true });
+    return this.http.get<any>(`${this.apiUrl}/range`, { params, withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<PageResponse<Expense>>());
   }
 
   // Get expenses by category
-  getExpensesByCategory(category: string, page: number = 0, pageSize: number = 10): Observable<any> {
+  getExpensesByCategory(category: string, page: number = 0, pageSize: number = 10): Observable<PageResponse<Expense>> {
     const params = new HttpParams()
       .set('category', category)
       .set('page', page.toString())
       .set('size', pageSize.toString());
-    return this.http.get<any>(`${this.apiUrl}/category`, { params, withCredentials: true });
+    return this.http.get<any>(`${this.apiUrl}/category`, { params, withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<PageResponse<Expense>>());
   }
 
   // Update expense
   updateExpense(id: number, expense: Expense): Observable<Expense> {
-    return this.http.put<Expense>(`${this.apiUrl}/${id}`, expense, { withCredentials: true });
+    return this.http.put<any>(`${this.apiUrl}/${id}`, expense, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<Expense>());
   }
 
   // Delete expense
-  deleteExpense(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true });
+  deleteExpense(id: number): Observable<SimpleStatusDTO> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
   }
 
   // Get expense categories with IDs
-  getCategories(): Observable<any[]> {
+  getCategories(): Observable<ExpenseCategory[]> {
     return this.categoryService.getAllCategoriesAll();
   }
 
   // Get expenses summary (ALL matching records)
   getExpensesSummary(fromDate?: string, toDate?: string, categoryId?: number, paymentMode?: string, 
-                     bankAccountId?: number, minAmount?: number, maxAmount?: number, createdBy?: string): Observable<any> {
+                     bankAccountId?: number, minAmount?: number, maxAmount?: number, createdBy?: string): Observable<ExpenseSummary> {
     let params = new HttpParams();
     if (fromDate) params = params.set('fromDate', fromDate);
     if (toDate) params = params.set('toDate', toDate);
@@ -106,6 +108,6 @@ export class ExpenseService {
     if (createdBy) params = params.set('createdBy', createdBy);
     
     return this.http.get<any>(`${this.apiUrl}/summary`, { params, withCredentials: true })
-      .pipe(applyTimeout());
+      .pipe(applyTimeout(), unwrapApiResponse<ExpenseSummary>());
   }
 }

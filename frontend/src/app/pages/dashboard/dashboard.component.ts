@@ -19,6 +19,7 @@ import { finalize, Subject, debounceTime } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { DashboardService, DashboardSummary } from '../../services/dashboard.service';
+import { CustomerDue, CustomerDueDetail, InventoryHealth, VariantSales } from '../../models/dashboard.model';
 
 interface KPICard {
   icon: any;
@@ -79,6 +80,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   todayKpiCards: KPICard[] = [];
   monthlyKpiCards: KPICard[] = [];
 
+  get topDueCustomers(): CustomerDueDetail[] {
+    return this.dashboardData?.customersDue?.slice(0, 5) ?? [];
+  }
+
 
   // Charts
   salesVsExpensesChart: ChartConfiguration<'doughnut'> | null = null;
@@ -128,7 +133,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        console.log('[Dashboard] Refresh triggered from data-refresh service');
         this.refreshDashboardData(false); // false = don't show toast
       });
   }
@@ -238,7 +242,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data) => {
-          console.log('[Dashboard] Dashboard data loaded:', data);
           this.dashboardData = data;
           this.processDashboardData(data);
           this.cdr.markForCheck();
@@ -246,7 +249,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         error: (error) => {
           const errorMessage = error?.message || 'Error loading dashboard data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('[Dashboard] Error loading dashboard:', error);
           this.cdr.markForCheck();
         }
       });
@@ -276,12 +278,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
           if (showToast) {
             this.toastr.success('Dashboard refreshed', 'Success');
           }
-          console.log('[Dashboard] Data refreshed successfully', data);
         },
         error: (error) => {
           const errorMessage = error?.message || 'Error loading dashboard data';
           this.toastr.error(errorMessage, 'Error');
-          console.error('[Dashboard] Error loading data:', error);
         }
       });
   }
@@ -314,7 +314,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // Trigger change detection to update charts
       this.cdr.markForCheck();
     } catch (error) {
-      console.error('Error processing dashboard data:', error);
       this.toastr.error('Error processing dashboard data', 'Error');
     }
   }
@@ -478,9 +477,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // 2. Inventory Status Bar Chart
       if (data.inventoryByWarehouse && data.inventoryByWarehouse.length > 0) {
-        const warehouseNames = data.inventoryByWarehouse.map(w => w.warehouseName);
-        const filledData = data.inventoryByWarehouse.map(w => w.filledCount);
-        const emptyData = data.inventoryByWarehouse.map(w => w.emptyCount);
+        const warehouseNames = data.inventoryByWarehouse.map((w: InventoryHealth) => w.warehouseName);
+        const filledData = data.inventoryByWarehouse.map((w: InventoryHealth) => w.filledCount);
+        const emptyData = data.inventoryByWarehouse.map((w: InventoryHealth) => w.emptyCount);
 
         this.inventoryStatusChart = {
           type: 'bar',
@@ -541,7 +540,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       // 3. Expense Category Pie Chart
       if (data.expenseCategoryBreakdown && Object.keys(data.expenseCategoryBreakdown).length > 0) {
         const categories = Object.keys(data.expenseCategoryBreakdown);
-        const amounts = Object.values(data.expenseCategoryBreakdown);
+        const amounts = Object.values(data.expenseCategoryBreakdown) as number[];
 
         this.expenseCategoryChart = {
           type: 'pie',
@@ -580,8 +579,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // 4. Top Debtors Bar Chart
       if (data.topDebtors && data.topDebtors.length > 0) {
-        const debtorNames = data.topDebtors.map(d => d.customerName);
-        const dueAmounts = data.topDebtors.map(d => d.dueAmount);
+        const debtorNames = data.topDebtors.map((d: CustomerDue) => d.customerName);
+        const dueAmounts = data.topDebtors.map((d: CustomerDue) => d.dueAmount);
 
         this.topDebtorsChart = {
           type: 'bar',
@@ -626,8 +625,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // 5. Variant Sales Chart (if data available, else show placeholder)
       if (data.variantSalesBreakdown && data.variantSalesBreakdown.length > 0) {
-        const variants = data.variantSalesBreakdown.map((v: any) => v.variantName);
-        const sales = data.variantSalesBreakdown.map((v: any) => v.quantity || v.salesAmount);
+        const variants = data.variantSalesBreakdown.map((v: VariantSales) => v.variantName);
+        const sales = data.variantSalesBreakdown.map((v: VariantSales) => v.quantity || v.amount);
 
         this.variantSalesChart = {
           type: 'bar',
@@ -764,7 +763,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
 
     } catch (error) {
-      console.error('Error building charts:', error);
     }
   }
 
@@ -841,6 +839,5 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   onChartClick(event: any) {
     // Handle chart click events if needed
-    console.log('Chart clicked:', event);
   }
 }

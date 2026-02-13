@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,33 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
+import { Customer } from '../../models/customer.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { PageResponse } from '../../models/page-response';
+import { Sale } from '../../models/sale.model';
+import { SaleItem } from '../../models/sale-item.model';
+
+type FlattenedSaleRow = {
+  id: number;
+  referenceNumber: string;
+  customerId: number;
+  customerName: string;
+  saleDate: string;
+  totalAmount: number;
+  paymentMode: string;
+  bankAccountId?: number;
+  amountReceived: number;
+  bankAccountName?: string;
+  variantName?: string;
+  filledIssuedQty?: number;
+  qtyEmptyReceived?: number;
+  basePrice?: number;
+  discount?: number;
+  finalPrice?: number;
+  createdBy?: string;
+};
 
 @Component({
   selector: 'app-sales-history',
@@ -23,6 +49,7 @@ import { UserService, User } from '../../services/user.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SalesHistoryComponent implements OnInit, OnDestroy {
+  @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
   filterFromDate = '';
   filterToDate = '';
   selectedCustomer = '';
@@ -31,7 +58,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   filterMaxAmount: number | null = null;
   filterReference: string = '';
   filterCreatedBy = '';
-  variantsList: any[] = [];
+  variantsList: CylinderVariant[] = [];
   currentPage = 1;
   pageSize = 10;
   totalPages = 1;
@@ -48,12 +75,12 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   faEye = faEye;
   faClipboard = faClipboard;
 
-  allSales: any[] = [];
-  filteredSales: any[] = [];
-  selectedSale: any = null;
-  customersList: any[] = [];
+  allSales: FlattenedSaleRow[] = [];
+  filteredSales: FlattenedSaleRow[] = [];
+  selectedSale: Sale | null = null;
+  customersList: Customer[] = [];
   users: User[] = [];
-  originalSalesMap: Map<number, any> = new Map();
+  originalSalesMap: Map<number, Sale> = new Map();
 
   constructor(
     private saleService: SaleService,
@@ -71,11 +98,11 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.loadUsers();
     // Load all variants (including inactive) for filtering historical sales
     this.variantService.getAllVariantsAll().subscribe({
-      next: (data: any) => {
+      next: (data: CylinderVariant[]) => {
         this.variantsList = data || [];
         this.cdr.markForCheck();
       },
-      error: (error: any) => {
+      error: (_error: unknown) => {
         this.variantsList = [];
       }
     });
@@ -96,16 +123,20 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.saleService.getAllSales(this.currentPage - 1, this.pageSize, 'saleDate', 'DESC', fromDate, toDate, customerId, variantId, minAmount, maxAmount, referenceNumber, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
+        next: (data: PageResponse<Sale>) => {
           // Flatten sales with items into single rows
-          const flattenedSales: any[] = [];
-          let salesArray = data.content || data;
+          const flattenedSales: FlattenedSaleRow[] = [];
+          let salesArray: Sale[] = data.items || [];
           if (customerId) {
-            salesArray = salesArray.filter((sale: any) => sale.customerId?.toString() === customerId?.toString());
+            salesArray = salesArray.filter((sale) => sale.customerId?.toString() === customerId?.toString());
           }
-          salesArray.forEach((sale: any) => {
+          salesArray.forEach((sale) => {
+            const saleId = sale.id ?? 0;
+            if (!saleId) {
+              return;
+            }
             if (sale.saleItems && sale.saleItems.length > 0) {
-              sale.saleItems.forEach((item: any) => {
+              sale.saleItems.forEach((item) => {
                 const finalPrice = typeof item.finalPrice === 'number' ? item.finalPrice : Number(item.finalPrice);
                 if (
                   (variantId !== undefined && variantId !== null && item.variantId !== variantId) ||
@@ -115,7 +146,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                   return;
                 }
                 flattenedSales.push({
-                  id: sale.id,
+                  id: saleId,
                   referenceNumber: sale.referenceNumber,
                   customerId: sale.customerId,
                   customerName: sale.customerName,
@@ -130,13 +161,14 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                   basePrice: item.basePrice,
                   discount: item.discount,
                   finalPrice: finalPrice,
+                  amountReceived: sale.amountReceived,
                   createdBy: sale.createdBy
                 });
               });
             } else {
               // Handle sales without items
               flattenedSales.push({
-                id: sale.id,
+                id: saleId,
                 referenceNumber: sale.referenceNumber,
                 customerId: sale.customerId,
                 customerName: sale.customerName,
@@ -147,25 +179,28 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
                 bankAccountName: sale.bankAccountName,
                 variantName: 'N/A',
                 filledIssuedQty: 0,
+                amountReceived: sale.amountReceived,
                 createdBy: sale.createdBy
               });
             }
           });
-          this.allSales = flattenedSales.sort((a: any, b: any) => b.id - a.id);
+          this.allSales = flattenedSales.sort((a, b) => b.id - a.id);
           this.filteredSales = [...this.allSales];
-          this.totalElements = data.totalElements || this.filteredSales.length;
-          this.totalPages = data.totalPages || 1;
+          this.totalElements = data.totalElements ?? this.filteredSales.length;
+          this.totalPages = data.totalPages ?? 1;
           // Store original sales for modal display
           this.originalSalesMap.clear();
-          salesArray.forEach((sale: any) => {
-            this.originalSalesMap.set(sale.id, sale);
+          salesArray.forEach((sale) => {
+            if (sale.id) {
+              this.originalSalesMap.set(sale.id, sale);
+            }
           });
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading sales';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading sales';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
@@ -175,14 +210,14 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.customerService.getAllCustomersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
+        next: (data: Customer[]) => {
           this.customersList = data;
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading customers';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading customers';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
@@ -201,6 +236,9 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     this.filterMaxAmount = null;
     this.filterReference = '';
     this.filterCreatedBy = '';
+    if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
+      this.autocompleteInputs.forEach(input => input.resetInput());
+    }
     this.currentPage = 1;
     this.loadSales();
   }
@@ -224,9 +262,9 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  viewInvoice(saleId: string) {
+  viewInvoice(saleId: number) {
     const numericId = Number(saleId);
-    this.selectedSale = this.originalSalesMap.get(numericId) || this.filteredSales.find(s => s.id === saleId);
+    this.selectedSale = this.originalSalesMap.get(numericId) || null;
   }
 
   closeInvoice() {

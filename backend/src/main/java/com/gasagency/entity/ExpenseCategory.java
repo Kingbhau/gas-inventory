@@ -78,3 +78,4 @@ public class ExpenseCategory extends Auditable {
         this.expenses = expenses;
     }
 }
+

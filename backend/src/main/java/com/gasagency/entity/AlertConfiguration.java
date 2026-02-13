@@ -120,3 +120,4 @@ public class AlertConfiguration {
         this.updatedAt = updatedAt;
     }
 }
+

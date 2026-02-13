@@ -1,9 +1,7 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.CustomerDuePaymentDTO;
-import com.gasagency.entity.Customer;
+import com.gasagency.dto.response.CustomerDuePaymentDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
-import com.gasagency.repository.CustomerRepository;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.util.LoggerUtil;
 import org.springframework.data.domain.Page;
@@ -17,19 +15,19 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class CustomerDuePaymentService {
     private static final Logger logger = LoggerFactory.getLogger(CustomerDuePaymentService.class);
 
-    private final CustomerRepository customerRepository;
     private final CustomerCylinderLedgerRepository ledgerRepository;
 
-    public CustomerDuePaymentService(CustomerRepository customerRepository,
-            CustomerCylinderLedgerRepository ledgerRepository) {
-        this.customerRepository = customerRepository;
+    public CustomerDuePaymentService(CustomerCylinderLedgerRepository ledgerRepository) {
         this.ledgerRepository = ledgerRepository;
     }
 
@@ -93,21 +91,40 @@ public class CustomerDuePaymentService {
                 return new PageImpl<>(data, pageable, page.getTotalElements());
             }
 
-            // Get customers with due amounts in a single optimized query
-            List<Customer> customersToCheck;
-            if (customerId != null) {
-                customersToCheck = customerRepository.findById(customerId).stream()
-                        .collect(Collectors.toList());
-            } else {
-                customersToCheck = customerRepository.findAll();
-            }
+            BigDecimal minDue = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
+            BigDecimal maxDue = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-            // Build due payment data with optimized aggregation
-            List<CustomerDuePaymentDTO> duePaymentData = customersToCheck.parallelStream()
-                    .map(customer -> buildCustomerDuePaymentDTO(customer, fromDate, toDate, minAmount, maxAmount))
-                    .filter(Objects::nonNull)
-                    .filter(dto -> dto.getDueAmount().compareTo(BigDecimal.ZERO) > 0)
-                    .sorted(Comparator.comparing(CustomerDuePaymentDTO::getDueAmount).reversed())
+            // Fetch aggregated due payment data with DB-side filters
+            List<Object[]> aggregates = ledgerRepository.findDuePaymentAggregates(
+                    fromDate, toDate, customerId, minDue, maxDue);
+
+            List<CustomerDuePaymentDTO> duePaymentData = aggregates.stream()
+                    .map(row -> {
+                        Long id = (Long) row[0];
+                        String name = (String) row[1];
+                        String mobile = (String) row[2];
+                        String address = (String) row[3];
+                        BigDecimal totalSalesAmount = (BigDecimal) row[4];
+                        BigDecimal amountReceived = (BigDecimal) row[5];
+                        LocalDate lastTransactionDate = (LocalDate) row[6];
+                        Long transactionCount = (Long) row[7];
+
+                        BigDecimal dueAmount = totalSalesAmount.subtract(amountReceived);
+                        if (dueAmount.signum() < 0) {
+                            dueAmount = BigDecimal.ZERO;
+                        }
+
+                        return new CustomerDuePaymentDTO(
+                                id,
+                                name,
+                                mobile,
+                                address,
+                                totalSalesAmount,
+                                amountReceived,
+                                dueAmount,
+                                lastTransactionDate,
+                                transactionCount);
+                    })
                     .collect(Collectors.toList());
 
             // Apply pagination at application level (since data is filtered)
@@ -178,19 +195,31 @@ public class CustomerDuePaymentService {
             Double maxAmount) {
 
         try {
-            // Get all due payment data
-            List<Customer> customers;
-            if (customerId != null) {
-                customers = customerRepository.findById(customerId).stream()
-                        .collect(Collectors.toList());
-            } else {
-                customers = customerRepository.findAll();
-            }
+            BigDecimal minDue = minAmount != null ? BigDecimal.valueOf(minAmount) : null;
+            BigDecimal maxDue = maxAmount != null ? BigDecimal.valueOf(maxAmount) : null;
 
-            List<CustomerDuePaymentDTO> duePaymentData = customers.parallelStream()
-                    .map(customer -> buildCustomerDuePaymentDTO(customer, fromDate, toDate, minAmount, maxAmount))
-                    .filter(Objects::nonNull)
-                    .filter(dto -> dto.getDueAmount().compareTo(BigDecimal.ZERO) > 0)
+            List<Object[]> aggregates = ledgerRepository.findDuePaymentAggregates(
+                    fromDate, toDate, customerId, minDue, maxDue);
+
+            List<CustomerDuePaymentDTO> duePaymentData = aggregates.stream()
+                    .map(row -> {
+                        BigDecimal totalSalesAmount = (BigDecimal) row[4];
+                        BigDecimal amountReceived = (BigDecimal) row[5];
+                        BigDecimal dueAmount = totalSalesAmount.subtract(amountReceived);
+                        if (dueAmount.signum() < 0) {
+                            dueAmount = BigDecimal.ZERO;
+                        }
+                        return new CustomerDuePaymentDTO(
+                                (Long) row[0],
+                                (String) row[1],
+                                (String) row[2],
+                                (String) row[3],
+                                totalSalesAmount,
+                                amountReceived,
+                                dueAmount,
+                                (LocalDate) row[6],
+                                (Long) row[7]);
+                    })
                     .collect(Collectors.toList());
 
             // Calculate summary
@@ -223,72 +252,6 @@ public class CustomerDuePaymentService {
                     "Error calculating summary", "error", e.getMessage());
             throw new RuntimeException("Error calculating due payment report summary: " + e.getMessage(), e);
         }
-    }
-
-    private CustomerDuePaymentDTO buildCustomerDuePaymentDTO(
-            Customer customer,
-            LocalDate fromDate,
-            LocalDate toDate,
-            Double minAmount,
-            Double maxAmount) {
-
-        // Fetch ledger entries for this customer with optimized date filtering at query
-        // level
-        List<CustomerCylinderLedger> ledgerEntries;
-
-        if (fromDate != null || toDate != null) {
-            ledgerEntries = ledgerRepository.findByCustomerAndDateRange(
-                    customer,
-                    fromDate != null ? fromDate : LocalDate.of(1900, 1, 1),
-                    toDate != null ? toDate : LocalDate.of(2999, 12, 31));
-        } else {
-            ledgerEntries = ledgerRepository.findByCustomer(customer);
-        }
-
-        if (ledgerEntries.isEmpty()) {
-            return null;
-        }
-
-        // Calculate totals
-        BigDecimal totalSalesAmount = ledgerEntries.stream()
-                .map(entry -> entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal amountReceived = ledgerEntries.stream()
-                .map(entry -> entry.getAmountReceived() != null ? entry.getAmountReceived() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Calculate due amount
-        BigDecimal dueAmount = totalSalesAmount.subtract(amountReceived);
-        if (dueAmount.signum() < 0) {
-            dueAmount = BigDecimal.ZERO;
-        }
-
-        // Apply amount filters
-        if (minAmount != null && dueAmount.doubleValue() < minAmount) {
-            return null;
-        }
-        if (maxAmount != null && dueAmount.doubleValue() > maxAmount) {
-            return null;
-        }
-
-        LocalDate lastTransactionDate = ledgerEntries.stream()
-                .map(CustomerCylinderLedger::getTransactionDate)
-                .max(LocalDate::compareTo)
-                .orElse(null);
-
-        Long transactionCount = (long) ledgerEntries.size();
-
-        return new CustomerDuePaymentDTO(
-                customer.getId(),
-                customer.getName(),
-                customer.getMobile(),
-                customer.getAddress(),
-                totalSalesAmount,
-                amountReceived,
-                dueAmount,
-                lastTransactionDate,
-                transactionCount);
     }
 
     // Summary DTO for report aggregation
@@ -349,3 +312,4 @@ public class CustomerDuePaymentService {
         }
     }
 }
+

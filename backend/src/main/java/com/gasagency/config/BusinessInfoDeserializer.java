@@ -34,3 +34,4 @@ public class BusinessInfoDeserializer extends JsonDeserializer<BusinessInfo> {
         return ctxt.readValue(p, BusinessInfo.class);
     }
 }
+

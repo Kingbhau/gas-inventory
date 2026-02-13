@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { SupplierTransaction } from '../../models/supplier-transaction.model';
 
 // Helper function for IST date
 function getTodayInIST(): string {
@@ -27,7 +28,7 @@ export function exportSupplierTransactionsToPDF({
   variantName,
   referenceNumber
 }: {
-  transactions: any[],
+  transactions: SupplierTransaction[],
   fromDate?: string,
   toDate?: string,
   businessName?: string,
@@ -121,13 +122,13 @@ export function exportSupplierTransactionsToPDF({
 
   // Table Data
   const tableData = filteredTransactions.map(t => [
-    t.transactionDate,
-    t.warehouseName,
-    t.supplierName,
-    t.variantName,
-    t.filledReceived,
-    t.emptySent,
-    `Rs. ${Number(t.amount).toLocaleString()}`
+    t.transactionDate ?? '',
+    t.warehouseName ?? '',
+    t.supplierName ?? '',
+    t.variantName ?? '',
+    t.filledReceived ?? 0,
+    t.emptySent ?? 0,
+    `Rs. ${Number(t.amount ?? 0).toLocaleString()}`
   ]);
 
   autoTable(doc, {

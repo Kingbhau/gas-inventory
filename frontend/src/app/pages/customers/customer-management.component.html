@@ -49,12 +49,12 @@
               <td class="font-semibold">{{ customer.name }}</td>
               <td>{{ customer.mobile }}</td>
               <td class="text-center">
-                <span *ngIf="customer.dueAmount > 0" class="badge badge-warning">₹{{ customer.dueAmount | number: '1.0-2' }}</span>
-                <span *ngIf="!customer.dueAmount || customer.dueAmount <= 0" class="text-muted">₹0</span>
+                <span *ngIf="(customer.dueAmount ?? 0) > 0" class="badge badge-warning">₹{{ customer.dueAmount | number: '1.0-2' }}</span>
+                <span *ngIf="(customer.dueAmount ?? 0) <= 0" class="text-muted">₹0</span>
               </td>
               <td class="text-center">
-                <span *ngIf="customer.totalPending > 0" class="badge badge-danger">{{ customer.totalPending }}</span>
-                <span *ngIf="!customer.totalPending || customer.totalPending <= 0" class="text-muted">0</span>
+                <span *ngIf="(customer.totalPending ?? 0) > 0" class="badge badge-danger">{{ customer.totalPending }}</span>
+                <span *ngIf="(customer.totalPending ?? 0) <= 0" class="text-muted">0</span>
               </td>
               <td class="text-center">
                 <span class="status-dot" [class.active]="customer.active" [class.inactive]="!customer.active"></span>
@@ -445,7 +445,7 @@
                   </div>
                 </td>
                 <td class="text-center">
-                  <span class="type-badge" [ngClass]="'type-' + entry.refType?.toLowerCase()">
+                  <span class="type-badge" [ngClass]="'type-' + entry.refType.toLowerCase()">
                     {{ entry.refType }}
                   </span>
                 </td>
@@ -520,7 +520,7 @@
   <div *ngIf="showPaymentForm && selectedCustomer" class="modal-overlay" (click)="$event.target === $event.currentTarget && closePaymentForm()">
     <div class="modal-content" style="max-width: 500px;" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>Record Payment - {{ selectedCustomer?.name }}</h2>
+        <h2>Record Payment - {{ selectedCustomer.name }}</h2>
         <button class="modal-close" (click)="closePaymentForm()">✕</button>
       </div>
       <div class="modal-body">
@@ -530,14 +530,14 @@
           <div class="info-box" style="background-color: #f0f7ff; border: 1px solid #d0e8ff; border-radius: 6px; padding: 12px; flex: 1;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: #666; font-weight: 500;">Current Due:</span>
-              <span style="font-size: 1.2rem; color: #d32f2f; font-weight: bold;">₹{{ selectedCustomer?.dueAmount | number: '1.0-2' }}</span>
+              <span style="font-size: 1.2rem; color: #d32f2f; font-weight: bold;">₹{{ getCurrentDueAmount() | number: '1.0-2' }}</span>
             </div>
           </div>
           <!-- Remaining Balance Display -->
           <div class="info-box" style="background-color: #f0f7f0; border: 1px solid #d0f0d0; border-radius: 6px; padding: 12px; flex: 1;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="color: #666; font-weight: 500;">Remaining:</span>
-              <span style="font-size: 1.2rem; color: #1976d2; font-weight: bold;">₹{{ (selectedCustomer?.dueAmount - getPaymentAmountAsNumber()) | number: '1.0-2' }}</span>
+              <span style="font-size: 1.2rem; color: #1976d2; font-weight: bold;">₹{{ (getCurrentDueAmount() - getPaymentAmountAsNumber()) | number: '1.0-2' }}</span>
             </div>
           </div>
         </div>
@@ -546,7 +546,9 @@
           <div class="input-with-prefix">
            
             <input 
-              [(ngModel)]="paymentForm.amount" 
+              [(ngModel)]="paymentForm.amount"
+              (ngModelChange)="paymentForm.amount = $event; cdr.markForCheck()"
+              (input)="onPaymentAmountInput($event)"
               type="text" 
               class="form-control" 
               placeholder="0.00"
@@ -610,7 +612,7 @@
             <div><strong>Last Modified Date:</strong> {{ selectedLedgerEntry.updatedDate | date: 'dd MMM yyyy, hh:mm a' }}</div>
             <div><strong>Total Amount:</strong> ₹{{ selectedLedgerEntry.totalAmount | number: '1.0-2' }}</div>
             <div><strong>Amount Received:</strong> ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }}</div>
-            <div><strong>Original Due:</strong> ₹{{ (selectedLedgerEntry.totalAmount - selectedLedgerEntry.amountReceived) | number: '1.0-2' }}</div>
+            <div><strong>Original Due:</strong> ₹{{ ((selectedLedgerEntry.totalAmount ?? 0) - (selectedLedgerEntry.amountReceived ?? 0)) | number: '1.0-2' }}</div>
           </div>
         </div>
 
@@ -798,7 +800,7 @@
             <div>
               <small style="color: #666; display: block; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Type</small>
               <div style="font-size: 1rem; font-weight: 600;">
-                <span class="type-badge" [ngClass]="'type-' + selectedReasonEntry.refType?.toLowerCase()" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                <span class="type-badge" [ngClass]="'type-' + selectedReasonEntry.refType.toLowerCase()" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
                   {{ selectedReasonEntry.refType }}
                 </span>
               </div>

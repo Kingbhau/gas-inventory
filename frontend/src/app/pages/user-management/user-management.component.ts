@@ -7,7 +7,8 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSearch, faEdit, faTrash, faPlus, faTimes, faEllipsisV, faExclamation, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { LoadingService } from '../../services/loading.service';
@@ -15,6 +16,8 @@ import { finalize, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 // import your UserService here
 // import { UserService } from '../../services/user.service';
+
+type UserRow = User & { showMenu?: boolean };
 
 @Component({
   selector: 'app-user-management',
@@ -29,7 +32,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   showForm = false;
   editingId: number | null = null;
   showDetailsModal = false;
-  detailsUser: any = null;
+  detailsUser: User | null = null;
   searchTerm = '';
   isSubmitting = false;
   private destroy$ = new Subject<void>();
@@ -44,14 +47,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   faUsers = faUsers;
   faEye = faEye;
 
-  users: any[] = [];
+  users: UserRow[] = [];
   userPage = 1;
   userPageSize = 10;
   totalUsers = 0;
   totalPages = 1;
 
   showDeleteModal = false;
-  deleteUserTarget: any = null;
+  deleteUserTarget: UserRow | null = null;
 
   currentUserId: number | null = null;
   currentUserRole: string | null = null;
@@ -62,7 +65,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     return this.currentUserRole === 'OWNER';
   }
 
-  canEditUser(user: any): boolean {
+  canEditUser(user: UserRow): boolean {
     // Owner can edit any user
     if (this.isOwner) {
       return true;
@@ -145,7 +148,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  openDeleteModal(user: any) {
+  openDeleteModal(user: UserRow) {
     this.deleteUserTarget = user;
     this.showDeleteModal = true;
     this.cdr.markForCheck();
@@ -160,6 +163,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   confirmDeleteUser() {
     if (!this.deleteUserTarget) return;
     const id = this.deleteUserTarget.id;
+    if (!id) {
+      this.toastr.error('Invalid user id', 'Error');
+      return;
+    }
     this.userService.deleteUser(id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -205,7 +212,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
       const term = this.searchTerm.trim().toLowerCase();
       filtered = filtered.filter(u =>
         (u.name && u.name.toLowerCase().includes(term)) ||
-        (u.mobile && u.mobile.toLowerCase().includes(term)) ||
+        (u.mobileNo && u.mobileNo.toLowerCase().includes(term)) ||
         (u.role && u.role.toLowerCase().includes(term))
       );
     }
@@ -238,14 +245,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     if (this.userPage > this.totalPages) this.userPage = this.totalPages;
   }
 
-  isLastRow(user: any): boolean {
+  isLastRow(user: UserRow): boolean {
     const index = this.paginatedUsers.indexOf(user);
     return index === this.paginatedUsers.length - 1;
   }
 
   get isAnyDropdownOpen(): boolean {
     return this.paginatedUsers && Array.isArray(this.paginatedUsers)
-      ? this.paginatedUsers.some((u: any) => u && u.showMenu)
+      ? this.paginatedUsers.some((u: UserRow) => u && u.showMenu)
       : false;
   }
 
@@ -261,9 +268,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  editUser(user: any) {
+  editUser(user: UserRow) {
     this.showForm = true;
-    this.editingId = user.id;
+    this.editingId = user.id ?? null;
     this.editingUserRole = user.role;
     this.updateAvailableRoles();
     this.userForm.patchValue({
@@ -278,7 +285,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  openDetailsModal(user: any) {
+  openDetailsModal(user: UserRow) {
     this.detailsUser = user;
     this.showDetailsModal = true;
     this.cdr.markForCheck();

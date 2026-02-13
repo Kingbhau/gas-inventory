@@ -123,3 +123,4 @@ public class BusinessInfo extends Auditable {
         this.suppliers = suppliers;
     }
 }
+

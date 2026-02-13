@@ -170,3 +170,4 @@ public class CylinderVariant extends Auditable {
         this.transfers = transfers;
     }
 }
+

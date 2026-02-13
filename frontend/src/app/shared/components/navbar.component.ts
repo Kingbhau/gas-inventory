@@ -4,7 +4,8 @@ import { RouterModule, Router } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faBars, faTimes, faSignOut } from '@fortawesome/free-solid-svg-icons';
 import { AuthService } from '../../services/auth.service';
-import { AlertService, Alert } from '../../services/alert.service';
+import { AlertService } from '../../services/alert.service';
+import { Alert } from '../../models/alert.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -62,7 +63,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   toggleAlertDropdown() {
     this.showAlertDropdown = !this.showAlertDropdown;
-    console.log('Bell clicked, dropdown:', this.showAlertDropdown);
   }
 
   closeAlertDropdown() {

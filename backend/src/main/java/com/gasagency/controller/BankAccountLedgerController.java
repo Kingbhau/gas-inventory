@@ -1,17 +1,20 @@
 package com.gasagency.controller;
 
-import com.gasagency.dto.BankAccountLedgerDTO;
+import com.gasagency.dto.response.BankAccountLedgerDTO;
+import com.gasagency.dto.response.BankAccountLedgerSummaryDTO;
+import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.BankAccountLedgerService;
-import org.springframework.data.domain.Page;
+import com.gasagency.util.ApiResponse;
+import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bank-account-ledgers")
@@ -24,7 +27,7 @@ public class BankAccountLedgerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BankAccountLedgerDTO>> getAllBankTransactions(
+    public ResponseEntity<ApiResponse<PagedResponseDTO<BankAccountLedgerDTO>>> getAllBankTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
@@ -36,32 +39,35 @@ public class BankAccountLedgerController {
             @RequestParam(required = false) String referenceNumber) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<BankAccountLedgerDTO> transactions = bankAccountLedgerService.getAllBankTransactions(
+        org.springframework.data.domain.Page<BankAccountLedgerDTO> transactions = bankAccountLedgerService.getAllBankTransactions(
                 page, size, pageable, bankAccountId, transactionType, fromDate, toDate, referenceNumber);
 
-        return ResponseEntity.ok(transactions);
+        return ResponseEntity.ok(ApiResponseUtil.success("Bank account transactions retrieved successfully", transactions));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BankAccountLedgerDTO> getBankTransactionById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<BankAccountLedgerDTO>> getBankTransactionById(@PathVariable Long id) {
         BankAccountLedgerDTO transaction = bankAccountLedgerService.getBankTransactionById(id);
         if (transaction == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponseUtil.error("Bank transaction not found", "RESOURCE_NOT_FOUND"));
         }
-        return ResponseEntity.ok(transaction);
+        return ResponseEntity.ok(ApiResponseUtil.success("Bank transaction retrieved successfully", transaction));
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<Map<String, Object>> getBankTransactionsSummary(
+    public ResponseEntity<ApiResponse<BankAccountLedgerSummaryDTO>> getBankTransactionsSummary(
             @RequestParam(required = false) Long bankAccountId,
             @RequestParam(required = false) String transactionType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(required = false) String referenceNumber) {
 
-        Map<String, Object> summary = bankAccountLedgerService.getSummary(bankAccountId, transactionType, fromDate,
+        BankAccountLedgerSummaryDTO summary = bankAccountLedgerService.getSummary(bankAccountId, transactionType,
+                fromDate,
                 toDate, referenceNumber);
 
-        return ResponseEntity.ok(summary);
+        return ResponseEntity.ok(ApiResponseUtil.success("Bank transactions summary retrieved successfully", summary));
     }
 }
+

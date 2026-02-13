@@ -18,7 +18,15 @@ import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
-import { UserService, User } from '../../services/user.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
+import { Supplier } from '../../models/supplier.model';
+import { CylinderVariant } from '../../models/cylinder-variant.model';
+import { Warehouse } from '../../models/warehouse.model';
+import { SupplierTransaction } from '../../models/supplier-transaction.model';
+import { InventoryStock } from '../../models/inventory-stock.model';
+import { PageResponse } from '../../models/page-response';
+import { CreateSupplierTransactionRequest } from '../../models/create-supplier-transaction-request.model';
 
 @Component({
   selector: 'app-supplier-transaction',
@@ -44,7 +52,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       return this.filteredTransactions;
     }
   showForm = false;
-  editingId: string | null = null;
+  editingId: number | null = null;
   selectedSupplier = '';
   selectedWarehouse = '';
   filterFromDate: string = '';
@@ -52,8 +60,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   filterVariantId: string = '';
   filterReference: string = '';
   filterCreatedBy = '';
-  selectedTransaction: any = null;
-  originalTransaction: any = null;
+  selectedTransaction: SupplierTransaction | null = null;
+  originalTransaction: SupplierTransaction | null = null;
   transactionForm!: FormGroup;
   currentEmpty: number | null = null;
   emptyLoading = false;
@@ -67,14 +75,16 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   faEye = faEye;
 
 
-  suppliers: any[] = [];
-  variants: any[] = [];
-  warehouses: any[] = [];
-  allTransactions: any[] = [];
-  filteredTransactions: any[] = [];
+  suppliers: Supplier[] = [];
+  variants: CylinderVariant[] = [];
+  variantsActive: CylinderVariant[] = [];
+  warehouses: Warehouse[] = [];
+  warehousesActive: Warehouse[] = [];
+  allTransactions: SupplierTransaction[] = [];
+  filteredTransactions: SupplierTransaction[] = [];
   users: User[] = [];
 
-  warehouseCompare = (w1: any, w2: any) => {
+  warehouseCompare = (w1: Warehouse | number | null, w2: Warehouse | number | null) => {
     if (!w1 || !w2) return w1 === w2;
     const id1 = typeof w1 === 'object' ? w1.id : w1;
     const id2 = typeof w2 === 'object' ? w2.id : w2;
@@ -127,8 +137,14 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   }
 
   exportSupplierTransactionsPDF() {
-    const supplierName = this.selectedSupplier ? (this.suppliers.find(s => s.id == this.selectedSupplier)?.name || '') : undefined;
-    const variantName = this.filterVariantId ? (this.variants.find(v => v.id == this.filterVariantId)?.name || '') : undefined;
+    if (this.filteredTransactions.length === 0) {
+      this.toastr.info('No data to export');
+      return;
+    }
+    const supplierId = this.selectedSupplier ? Number(this.selectedSupplier) : null;
+    const variantId = this.filterVariantId ? Number(this.filterVariantId) : null;
+    const supplierName = supplierId ? (this.suppliers.find(s => s.id === supplierId)?.name || '') : undefined;
+    const variantName = variantId ? (this.variants.find(v => v.id === variantId)?.name || '') : undefined;
     exportSupplierTransactionsToPDF({
       transactions: this.filteredTransactions,
       fromDate: this.filterFromDate,
@@ -143,17 +159,28 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadWarehouses() {
     this.loadingService.show('Loading warehouses...');
-    this.warehouseService.getActiveWarehouses()
+    this.warehouseService.getAllWarehouses()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data: any) => {
+        next: (data: Warehouse[]) => {
           this.warehouses = data || [];
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading warehouses';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading warehouses';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
+        }
+      });
+
+    this.warehouseService.getActiveWarehouses()
+      .subscribe({
+        next: (data: Warehouse[]) => {
+          this.warehousesActive = data || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.warehousesActive = [];
         }
       });
   }
@@ -163,33 +190,48 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.supplierService.getAllSuppliersAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data: any) => {
-          this.suppliers = Array.isArray(data) ? data : (data?.content || []);
+        next: (data: Supplier[]) => {
+          this.suppliers = Array.isArray(data) ? data : [];
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading suppliers';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading suppliers';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
 
   loadVariants() {
     this.loadingService.show('Loading variants...');
-    this.variantService.getActiveVariants()
+    this.variantService.getAllVariantsAll()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
-          this.variants = data;
+        next: (data: CylinderVariant[]) => {
+          this.variants = data || [];
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading variants';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading variants';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
+
+    this.variantService.getActiveVariants()
+      .subscribe({
+        next: (data: CylinderVariant[]) => {
+          this.variantsActive = data || [];
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.variantsActive = [];
+        }
+      });
+  }
+
+  getVariantOptions(): CylinderVariant[] {
+    return this.editingId ? this.variants : this.variantsActive;
   }
 
   loadTransactions() {
@@ -197,18 +239,19 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize, 'id', 'ASC', this.filterReference, this.filterCreatedBy || undefined)
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
-        next: (data) => {
-          this.allTransactions = (data.content || data).sort((a: any, b: any) => b.id - a.id);
-          console.log('Loaded transactions:', this.allTransactions); // Debug
+        next: (data: PageResponse<SupplierTransaction>) => {
+          this.allTransactions = (data.items || [])
+            .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
+            .sort((a, b) => b.id - a.id);
           this.filteredTransactions = this.applyCreatedByFilter([...this.allTransactions]);
-          this.totalTransactions = this.filterCreatedBy ? this.filteredTransactions.length : (data.totalElements || this.allTransactions.length);
-          this.totalPages = this.filterCreatedBy ? 1 : (data.totalPages || 1);
+          this.totalTransactions = this.filterCreatedBy ? this.filteredTransactions.length : (data.totalElements ?? this.allTransactions.length);
+          this.totalPages = this.filterCreatedBy ? 1 : (data.totalPages ?? 1);
           this.cdr.markForCheck();
         },
-        error: (error) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error loading transactions';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading transactions';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
   }
@@ -257,12 +300,10 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  editTransaction(transaction: any) {
-    this.editingId = transaction.id;
+  editTransaction(transaction: SupplierTransaction) {
+    this.editingId = transaction.id ?? null;
     this.originalTransaction = { ...transaction };
-    const warehouseId = transaction.warehouseId ? parseInt(transaction.warehouseId) : (this.warehouses.length > 0 ? this.warehouses[0].id : null);
-    console.log('Editing transaction:', transaction); // Debug
-    console.log('Setting warehouseId to:', warehouseId); // Debug
+    const warehouseId = transaction.warehouseId ?? (this.warehouses.length > 0 ? this.warehouses[0].id : null);
     this.transactionForm.patchValue({
       warehouseId: warehouseId,
       supplierId: transaction.supplierId,
@@ -280,13 +321,13 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   saveTransaction() {
     if (!this.transactionForm.valid) return;
-    const formData = { ...this.transactionForm.value };
-    formData.warehouseId = parseInt(formData.warehouseId);
-    formData.supplierId = parseInt(formData.supplierId);
-    formData.variantId = parseInt(formData.variantId);
+    const formData: CreateSupplierTransactionRequest = { ...this.transactionForm.value };
+    formData.warehouseId = Number(formData.warehouseId);
+    formData.supplierId = Number(formData.supplierId);
+    formData.variantId = Number(formData.variantId);
     formData.transactionDate = formData.transactionDate ? formData.transactionDate : this.dateUtility.getTodayInIST();
-    formData.filledReceived = parseInt(formData.filledReceived);
-    formData.emptySent = parseInt(formData.emptySent);
+    formData.filledReceived = Number(formData.filledReceived);
+    formData.emptySent = Number(formData.emptySent);
 
     // Prevent both fields being zero
     if (formData.filledReceived === 0 && formData.emptySent === 0) {
@@ -296,8 +337,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
     // Prevent sending more empty than available in inventory (warehouse-specific)
     if (formData.emptySent > 0) {
-      this.inventoryStockService.getStockByWarehouse(formData.warehouseId).subscribe(stocks => {
-        const stockForVariant = (stocks || []).find((s: any) => s.variantId === formData.variantId);
+      this.inventoryStockService.getStockByWarehouse(formData.warehouseId).subscribe((stocks: InventoryStock[]) => {
+        const stockForVariant = (stocks || []).find((s) => s.variantId === formData.variantId);
         const currentEmpty = stockForVariant?.emptyQty ?? 0;
         const originalEmptySent = this.editingId ? (this.originalTransaction?.emptySent ?? 0) : 0;
         // When editing, allow using the empties already accounted for in this transaction.
@@ -308,8 +349,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
         } else {
           this._submitTransaction(formData);
         }
-      }, err => {
-        const errorMessage = err?.error?.message || err?.message || 'Could not validate inventory. Please try again.';
+      }, (err: unknown) => {
+        const errorObj = err as { error?: { message?: string }; message?: string };
+        const errorMessage = errorObj?.error?.message || errorObj?.message || 'Could not validate inventory. Please try again.';
         this.toastr.error(errorMessage, 'Error');
       });
     } else {
@@ -329,8 +371,8 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.emptyLoading = true;
     this.emptyError = '';
     this.inventoryStockService.getStockByWarehouse(Number(warehouseId)).subscribe({
-      next: (stocks: any[]) => {
-        const stockForVariant = (stocks || []).find((s: any) => s.variantId === Number(variantId));
+      next: (stocks: InventoryStock[]) => {
+        const stockForVariant = (stocks || []).find((s) => s.variantId === Number(variantId));
         const currentEmpty = stockForVariant?.emptyQty ?? 0;
         const originalEmptySent = this.editingId ? (this.originalTransaction?.emptySent ?? 0) : 0;
         // Show available empties (include original sent when editing)
@@ -338,8 +380,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
         this.emptyLoading = false;
         this.cdr.markForCheck();
       },
-      error: (error: any) => {
-        console.error('Error loading current empty stock:', error);
+      error: (error: unknown) => {
         this.emptyError = 'Current empty unavailable';
         this.currentEmpty = null;
         this.emptyLoading = false;
@@ -348,7 +389,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     });
   }
 
-  _submitTransaction(formData: any) {
+  _submitTransaction(formData: CreateSupplierTransactionRequest & { supplierName?: string; variantName?: string }) {
     // Get supplier name from suppliers array
     const supplier = this.suppliers.find(s => s.id === formData.supplierId);
     if (supplier) {
@@ -360,17 +401,20 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       formData.variantName = variant.name;
     }
     if (this.editingId) {
-      const id = typeof this.editingId === 'string' ? parseInt(this.editingId, 10) : this.editingId;
+      const id = this.editingId;
+      if (id === null) {
+        return;
+      }
       this.transactionService.updateTransaction(id, formData).subscribe({
         next: () => {
           this.toastr.success('Transaction updated successfully', 'Success');
           this.loadTransactions();
           this.closeForm();
         },
-        error: (error: any) => {
-          const errorMessage = error?.error?.message || error?.message || 'Error updating transaction';
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error updating transaction';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
     } else {
@@ -383,7 +427,6 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
         error: (error) => {
           const errorMessage = error?.error?.message || error?.message || 'Error creating transaction';
           this.toastr.error(errorMessage, 'Error');
-          console.error('Full error:', error);
         }
       });
     }
@@ -423,7 +466,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     if (this.filterCreatedBy) {
       filtered = filtered.filter(t => t.createdBy === this.filterCreatedBy);
     }
-    this.filteredTransactions = filtered.sort((a: any, b: any) => b.id - a.id);
+    this.filteredTransactions = filtered
+      .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
+      .sort((a, b) => b.id - a.id);
     this.cdr.markForCheck();
   }
 
@@ -435,7 +480,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.filterVariantId = '';
     this.filterReference = '';
     this.filterCreatedBy = '';
-    this.filteredTransactions = [...this.allTransactions].sort((a: any, b: any) => b.id - a.id);
+    this.filteredTransactions = [...this.allTransactions]
+      .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
+      .sort((a, b) => b.id - a.id);
     this.cdr.markForCheck();
   }
 
@@ -445,7 +492,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  viewTransactionDetails(transaction: any) {
+  viewTransactionDetails(transaction: SupplierTransaction) {
     this.selectedTransaction = transaction;
     this.cdr.markForCheck();
   }
@@ -463,7 +510,7 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     return user?.name || createdBy;
   }
 
-  private applyCreatedByFilter(entries: any[]): any[] {
+  private applyCreatedByFilter(entries: SupplierTransaction[]): SupplierTransaction[] {
     if (!this.filterCreatedBy) {
       return entries;
     }

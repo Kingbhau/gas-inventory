@@ -17,4 +17,7 @@ public interface MonthlyPriceRepository extends JpaRepository<MonthlyPrice, Long
 
     Optional<MonthlyPrice> findTopByVariantAndMonthYearLessThanEqualOrderByMonthYearDesc(CylinderVariant variant,
             LocalDate monthYear);
+
+    boolean existsByVariantAndMonthYearAndIdNot(CylinderVariant variant, LocalDate monthYear, Long id);
 }
+

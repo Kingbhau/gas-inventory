@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.PaymentModeDTO;
+import com.gasagency.dto.response.PaymentModeDTO;
 import com.gasagency.entity.PaymentMode;
 import com.gasagency.repository.PaymentModeRepository;
 import org.modelmapper.ModelMapper;
@@ -120,3 +120,4 @@ public class PaymentModeService {
         return modelMapper.map(updated, PaymentModeDTO.class);
     }
 }
+

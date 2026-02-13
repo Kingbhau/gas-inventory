@@ -2,17 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AlertSettingsService } from 'src/app/services/alert-settings.service';
-
-
-interface AlertConfig {
-  id: number;
-  alertType: string;
-  enabled: boolean;
-  filledCylinderThreshold?: number;
-  emptyCylinderThreshold?: number;
-  pendingReturnThreshold?: number;
-  description: string;
-}
+import { AlertConfig } from 'src/app/models/alert-config.model';
 
 @Component({
   selector: 'app-alert-settings',
@@ -52,14 +42,13 @@ export class AlertSettingsComponent implements OnInit {
   private loadSettings(): void {
     this.loading = true;
     this.alertSettingsService.getAlertConfigurations().subscribe(
-      (response: any) => {
-        if (response.success && response.data) {
-          this.mapConfigsToForm(response.data);
+      (response: AlertConfig[]) => {
+        if (response) {
+          this.mapConfigsToForm(response);
         }
         this.loading = false;
       },
-      (error: any) => {
-        console.error('Error loading alert settings:', error);
+      (error: unknown) => {
         this.errorMessage = 'Failed to load alert settings';
         this.loading = false;
       }
@@ -100,8 +89,8 @@ export class AlertSettingsComponent implements OnInit {
     // Update LOW_STOCK
     this.alertSettingsService.updateAlertConfig('LOW_STOCK_WAREHOUSE', {
       enabled: formValue.lowStockEnabled,
-      filledThreshold: formValue.filledThreshold,
-      emptyThreshold: formValue.emptyThreshold
+      filledCylinderThreshold: formValue.filledThreshold,
+      emptyCylinderThreshold: formValue.emptyThreshold
     }).subscribe(
       () => {
         // Update PENDING_RETURN - Must include all fields: enabled, pendingReturnThreshold
@@ -115,17 +104,15 @@ export class AlertSettingsComponent implements OnInit {
             this.settingsForm.markAsPristine();
             setTimeout(() => this.successMessage = '', 3000);
           },
-          (error: any) => {
+          (error: unknown) => {
             this.saving = false;
             this.errorMessage = 'Failed to save pending returns alert settings';
-            console.error('Error:', error);
           }
         );
       },
-      (error: any) => {
+      (error: unknown) => {
         this.saving = false;
         this.errorMessage = 'Failed to save low stock alert settings';
-        console.error('Error:', error);
       }
     );
   }

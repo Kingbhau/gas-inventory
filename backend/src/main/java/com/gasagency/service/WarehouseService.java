@@ -1,6 +1,6 @@
 package com.gasagency.service;
 
-import com.gasagency.dto.WarehouseDTO;
+import com.gasagency.dto.response.WarehouseDTO;
 import com.gasagency.entity.Warehouse;
 import com.gasagency.entity.BusinessInfo;
 import com.gasagency.exception.ResourceNotFoundException;
@@ -256,3 +256,4 @@ public class WarehouseService {
         return dto;
     }
 }
+

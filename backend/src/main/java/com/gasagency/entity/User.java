@@ -125,3 +125,4 @@ public class User extends Auditable {
         this.refreshTokens = refreshTokens;
     }
 }
+

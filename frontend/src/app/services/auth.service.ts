@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { getApiUrl } from '../config/api.config';
 import { applyTimeout } from '../config/http.config';
+import { unwrapApiResponse } from '../utils/api-response.util';
+import { AuthLoginResponse, AuthRegisterResponse, AuthUserInfo } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -13,20 +15,20 @@ export class AuthService {
 
     // ...existing code...
 
-  refreshToken(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
-      .pipe(applyTimeout());
+  refreshToken(): Observable<void> {
+    return this.http.post<any>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<void>());
   }
 
-  login(username: string, password: string): Observable<any> {
+  login(username: string, password: string): Observable<AuthLoginResponse> {
     // withCredentials ensures cookie is set
-    return this.http.post(`${this.apiUrl}/login`, { username, password }, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.post<any>(`${this.apiUrl}/login`, { username, password }, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<AuthLoginResponse>());
   }
 
-  register(username: string, password: string, role: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, { username, password, role })
-      .pipe(applyTimeout());
+  register(username: string, password: string, role: string): Observable<AuthRegisterResponse> {
+    return this.http.post<any>(`${this.apiUrl}/register`, { username, password, role }, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<AuthRegisterResponse>());
   }
 
 
@@ -36,15 +38,15 @@ export class AuthService {
   // getToken removed: JWT is now stored in HTTP-only cookie
 
 
-  logout(): Observable<any> {
+  logout(): Observable<void> {
     // Call backend to clear cookie
-    return this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
-      .pipe(applyTimeout());
+    return this.http.post<any>(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<void>());
   }
 
-  forgotPassword(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/forgot-password`, { email })
-      .pipe(applyTimeout());
+  forgotPassword(email: string): Observable<void> {
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email })
+      .pipe(applyTimeout(), unwrapApiResponse<void>());
   }
 
 
@@ -53,7 +55,7 @@ export class AuthService {
     return info?.name || '';
   }
 
-  setUserInfo(user: any) {
+  setUserInfo(user: AuthUserInfo) {
     // Store only non-sensitive user info in localStorage (no token)
     const userInfo = {
       id: user.id,
@@ -61,7 +63,7 @@ export class AuthService {
       name: user.name,
       role: user.role,
       mobileNo: user.mobileNo,
-      businessId: user.businessId || user.business_id || (user.business && user.business.id) || null
+      businessId: user.businessId ?? null
     };
     localStorage.setItem('user_info', JSON.stringify(userInfo));
     if (user.role) {
@@ -72,7 +74,7 @@ export class AuthService {
     }
   }
 
-  getUserInfo(): any {
+  getUserInfo(): AuthUserInfo | null {
     const info = localStorage.getItem('user_info');
     return info ? JSON.parse(info) : null;
   }

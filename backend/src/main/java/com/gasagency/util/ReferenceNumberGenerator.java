@@ -211,3 +211,4 @@ public class ReferenceNumberGenerator {
         return "WH" + warehouse.getId();
     }
 }
+

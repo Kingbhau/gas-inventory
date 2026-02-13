@@ -16,3 +16,4 @@ public interface AlertNotificationRepository extends JpaRepository<AlertNotifica
 
     void deleteByExpiresAtLessThan(LocalDateTime now);
 }
+
