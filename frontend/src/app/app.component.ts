@@ -10,6 +10,7 @@ import { LoaderComponent } from './shared/components/loader.component';
 import { HttpClient } from '@angular/common/http';
 import { filter, takeUntil } from 'rxjs/operators';
 import { AlertService } from './services/alert.service';
+import { getApiUrl } from './config/api.config';
 import { Subject, Subscription, timer } from 'rxjs';
 @Component({
   selector: 'app-root',
@@ -99,6 +100,8 @@ export class AppComponent implements OnInit, OnDestroy {
   faBook = faBook;
 
   ngOnInit() {
+    this.initializeCsrf();
+
     // Initialize alerts if user is authenticated (handles page refresh)
     if (this.isAuthenticated) {
       this.alertService.initialize();
@@ -365,5 +368,14 @@ export class AppComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private initializeCsrf(): void {
+    this.http.get(getApiUrl('/csrf'), { withCredentials: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => undefined,
+        error: () => undefined
+      });
   }
 }

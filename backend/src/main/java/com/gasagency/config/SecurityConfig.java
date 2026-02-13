@@ -62,8 +62,9 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/api/csrf").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/register").hasRole("OWNER")
                         .requestMatchers("/api/users/**").hasAnyRole("OWNER", "MANAGER")
                         .requestMatchers("/api/manager/**").hasAnyRole("OWNER", "MANAGER")
                         .requestMatchers("/api/staff/**").hasAnyRole("OWNER", "MANAGER", "STAFF")
