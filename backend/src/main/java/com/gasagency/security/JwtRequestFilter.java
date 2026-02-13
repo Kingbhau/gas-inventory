@@ -42,13 +42,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 jwt = authorizationHeader.substring(7);
                 username = jwtUtil.extractUsername(jwt);
-                logger.debug("JWT_TOKEN_FOUND | method=header | username={}", username);
+                logger.info("JWT_TOKEN_FOUND | method=header | username={}", username);
             } else if (request.getCookies() != null) {
                 for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
                     if ("jwt_token".equals(cookie.getName())) {
                         jwt = cookie.getValue();
                         username = jwtUtil.extractUsername(jwt);
-                        logger.debug("JWT_TOKEN_FOUND | method=cookie | username={}", username);
+                        logger.info("JWT_TOKEN_FOUND | method=cookie | username={}", username);
                     }
                 }
             }
@@ -62,7 +62,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         if (parts.length == 2 && "jwt_token".equals(parts[0])) {
                             jwt = parts[1];
                             username = jwtUtil.extractUsername(jwt);
-                            logger.debug("JWT_TOKEN_FOUND | method=cookie_header | username={}", username);
+                            logger.info("JWT_TOKEN_FOUND | method=cookie_header | username={}", username);
                             break;
                         }
                     }
@@ -87,7 +87,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                             username, request.getRemoteAddr());
                 }
             } else if (username == null) {
-                logger.debug("NO_JWT_TOKEN_FOUND | uri={} | method={}",
+                logger.info("NO_JWT_TOKEN_FOUND | uri={} | method={}",
                         request.getRequestURI(), request.getMethod());
             }
 
