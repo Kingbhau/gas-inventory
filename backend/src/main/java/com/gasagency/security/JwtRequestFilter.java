@@ -53,6 +53,22 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
             }
 
+            if (jwt == null) {
+                String cookieHeader = request.getHeader("Cookie");
+                if (cookieHeader != null && !cookieHeader.isBlank()) {
+                    String[] cookies = cookieHeader.split(";");
+                    for (String rawCookie : cookies) {
+                        String[] parts = rawCookie.trim().split("=", 2);
+                        if (parts.length == 2 && "jwt_token".equals(parts[0])) {
+                            jwt = parts[1];
+                            username = jwtUtil.extractUsername(jwt);
+                            logger.debug("JWT_TOKEN_FOUND | method=cookie_header | username={}", username);
+                            break;
+                        }
+                    }
+                }
+            }
+
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsernameForJwt(username);
                 if (jwtUtil.validateToken(jwt, userDetails)) {
