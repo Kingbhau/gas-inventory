@@ -6,6 +6,7 @@ import com.gasagency.dto.response.SupplierTransactionDTO;
 import com.gasagency.entity.*;
 import com.gasagency.repository.*;
 import com.gasagency.exception.ResourceNotFoundException;
+import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.util.LoggerUtil;
 import com.gasagency.util.ReferenceNumberGenerator;
 import org.springframework.data.domain.Page;
@@ -87,27 +88,38 @@ public class SupplierTransactionService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Variant not found with id: " + request.getVariantId()));
 
-                // Inventory adjustment: only adjust quantities for the same warehouse
+                // Inventory adjustment: lock stock row to prevent race conditions
+                InventoryStock stock = inventoryStockService.getStockWithLock(warehouse, transaction.getVariant());
+                if (stock == null) {
+                        stock = inventoryStockService.getOrCreateStock(warehouse, transaction.getVariant());
+                }
+
                 // Calculate quantity differences
                 long filledDifference = request.getFilledReceived() - transaction.getFilledReceived();
                 long emptyDifference = request.getEmptySent() - transaction.getEmptySent();
 
-                // Apply adjustments only if there are differences
-                if (filledDifference > 0) {
-                        inventoryStockService.incrementFilledQty(warehouse, transaction.getVariant(), filledDifference);
-                } else if (filledDifference < 0) {
-                        inventoryStockService.decrementFilledQty(warehouse, transaction.getVariant(),
-                                        Math.abs(filledDifference));
+                long currentFilled = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
+                long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
+
+                long newFilled = currentFilled + filledDifference;
+                long newEmpty = currentEmpty - emptyDifference;
+
+                if (newFilled < 0) {
+                        throw new InvalidOperationException(
+                                        "Insufficient filled stock in " + warehouse.getName() +
+                                                        ". Available: " + currentFilled + ", Required: " +
+                                                        Math.abs(filledDifference));
+                }
+                if (newEmpty < 0) {
+                        throw new InvalidOperationException(
+                                        "Insufficient empty stock in " + warehouse.getName() +
+                                                        ". Available: " + currentEmpty + ", Required: " +
+                                                        Math.abs(emptyDifference));
                 }
 
-                if (emptyDifference > 0) {
-                        // More empties sent to supplier => reduce empty stock
-                        inventoryStockService.decrementEmptyQty(warehouse, transaction.getVariant(), emptyDifference);
-                } else if (emptyDifference < 0) {
-                        // Fewer empties sent => add back to empty stock
-                        inventoryStockService.incrementEmptyQty(warehouse, transaction.getVariant(),
-                                        Math.abs(emptyDifference));
-                }
+                stock.setFilledQty(newFilled);
+                stock.setEmptyQty(newEmpty);
+                inventoryStockService.updateStock(stock);
 
                 // Update transaction fields (warehouse remains unchanged)
                 transaction.setSupplier(supplier);
@@ -205,9 +217,28 @@ public class SupplierTransactionService {
                 logger.info("Supplier transaction created with id: {} - Reference: {}",
                                 transaction.getId(), referenceNumber);
 
-                // Update inventory for the specific warehouse using warehouse-aware methods
-                inventoryStockService.incrementFilledQty(warehouse, variant, request.getFilledReceived());
-                inventoryStockService.decrementEmptyQty(warehouse, variant, request.getEmptySent());
+                // Update inventory with lock to avoid concurrent stock mismatches
+                InventoryStock stock = inventoryStockService.getStockWithLock(warehouse, variant);
+                if (stock == null) {
+                        stock = inventoryStockService.getOrCreateStock(warehouse, variant);
+                }
+
+                long currentFilled = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
+                long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
+
+                long newFilled = currentFilled + request.getFilledReceived();
+                long newEmpty = currentEmpty - request.getEmptySent();
+
+                if (newEmpty < 0) {
+                        throw new InvalidOperationException(
+                                        "Insufficient empty stock in " + warehouse.getName() +
+                                                        ". Available: " + currentEmpty + ", Required: " +
+                                                        request.getEmptySent());
+                }
+
+                stock.setFilledQty(newFilled);
+                stock.setEmptyQty(newEmpty);
+                inventoryStockService.updateStock(stock);
 
                 LoggerUtil.logBusinessSuccess(logger, "RECORD_TRANSACTION", "id", transaction.getId(), "supplierId",
                                 supplier.getId(), "filled", request.getFilledReceived());

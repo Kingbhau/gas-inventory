@@ -8,6 +8,7 @@ import com.gasagency.repository.ExpenseRepository;
 import com.gasagency.repository.ExpenseCategoryRepository;
 import com.gasagency.repository.BankAccountRepository;
 import com.gasagency.repository.PaymentModeRepository;
+import com.gasagency.exception.ConcurrencyConflictException;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -210,7 +212,12 @@ public class ExpenseService {
                 } else {
                         expense.setBankAccount(null);
                 }
-                Expense updated = repository.save(expense);
+                Expense updated;
+                try {
+                        updated = repository.save(expense);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                        throw new ConcurrencyConflictException("Expense", id);
+                }
                 // Clear dashboard cache since expenses affect daily/monthly metrics
                 clearDashboardCache();
                 return convertToDTO(updated);
