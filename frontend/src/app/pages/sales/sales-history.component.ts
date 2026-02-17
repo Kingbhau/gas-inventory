@@ -13,6 +13,7 @@ import { LoadingService } from '../../services/loading.service';
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { UserService } from '../../services/user.service';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { Customer } from '../../models/customer.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
@@ -81,6 +82,7 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
   customersList: Customer[] = [];
   users: User[] = [];
   originalSalesMap: Map<number, Sale> = new Map();
+  isStaff = false;
 
   constructor(
     private saleService: SaleService,
@@ -89,13 +91,18 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
     private variantService: CylinderVariantService,
     private loadingService: LoadingService,
     private userService: UserService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
     this.loadSales();
     this.loadCustomers();
-    this.loadUsers();
+    if (!this.isStaff) {
+      this.loadUsers();
+    }
     // Load all variants (including inactive) for filtering historical sales
     this.variantService.getAllVariantsAll().subscribe({
       next: (data: CylinderVariant[]) => {

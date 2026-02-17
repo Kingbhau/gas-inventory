@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -274,7 +275,8 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            Authentication authentication) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         LocalDate from = null;
@@ -290,8 +292,9 @@ public class CustomerCylinderLedgerController {
             // Invalid date format, continue without filtering
         }
 
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         return ResponseEntity.ok(ApiResponseUtil.success("Empty returns retrieved successfully",
-                service.getEmptyReturns(from, to, customerId, variantId, createdBy, pageable)));
+                service.getEmptyReturns(from, to, customerId, variantId, effectiveCreatedBy, pageable)));
     }
 
     // Get payment history with filtering
@@ -306,7 +309,8 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "transactionDate") String sortBy,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction) {
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            Authentication authentication) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
 
         LocalDate from = null;
@@ -322,8 +326,9 @@ public class CustomerCylinderLedgerController {
             throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
         }
 
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         return ResponseEntity.ok(ApiResponseUtil.success("Payments retrieved successfully",
-                service.getPayments(from, to, customerId, paymentMode, bankAccountId, createdBy, pageable)));
+                service.getPayments(from, to, customerId, paymentMode, bankAccountId, effectiveCreatedBy, pageable)));
     }
 
     // Get payment summary for filters
@@ -334,7 +339,8 @@ public class CustomerCylinderLedgerController {
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) String paymentMode,
             @RequestParam(required = false) Long bankAccountId,
-            @RequestParam(required = false) String createdBy) {
+            @RequestParam(required = false) String createdBy,
+            Authentication authentication) {
         LocalDate from = null;
         LocalDate to = null;
         try {
@@ -348,10 +354,20 @@ public class CustomerCylinderLedgerController {
             throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD.");
         }
 
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         java.math.BigDecimal totalAmount = service.getPaymentsSummary(from, to, customerId, paymentMode, bankAccountId,
-                createdBy);
+                effectiveCreatedBy);
         PaymentsSummaryDTO summary = new PaymentsSummaryDTO(totalAmount);
         return ResponseEntity.ok(ApiResponseUtil.success("Payments summary retrieved successfully", summary));
+    }
+
+    private String resolveCreatedBy(Authentication authentication, String requestedCreatedBy) {
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return requestedCreatedBy;
+        }
+        boolean isStaff = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_STAFF".equals(authority.getAuthority()));
+        return isStaff ? authentication.getName() : requestedCreatedBy;
     }
 
     // Update a ledger entry with full chain recalculation

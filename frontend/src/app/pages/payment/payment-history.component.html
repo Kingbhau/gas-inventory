@@ -44,7 +44,7 @@
           </option>
         </select>
       </div>
-      <div class="filter-group">
+      <div class="filter-group" *ngIf="!isStaff">
         <app-autocomplete-input
           label="Created By"
           [labelClass]="'filter-label'"

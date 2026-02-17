@@ -29,6 +29,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     user: User | AuthUserInfo | null = null;
     showEdit = false;
     showPassword = false;
+    isStaff = false;
 
     constructor(
         private fb: FormBuilder,
@@ -41,6 +42,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         const localUser = this.authService.getUserInfo();
+        const role = localUser?.role || '';
+        this.isStaff = role === 'STAFF';
+        if (this.isStaff) {
+            this.user = localUser;
+            this.initForms();
+            this.cdr.markForCheck();
+            return;
+        }
         if (localUser && localUser.id) {
             this.loadingService.show('Loading profile...');
             this.userService.getUser(localUser.id)
@@ -97,6 +106,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
 
     updateProfile() {
+        if (this.isStaff) {
+            this.toastr.error('You do not have permission to update profile.', 'Error');
+            return;
+        }
         if (this.profileForm.valid) {
             const updated: Partial<User> = {
                 name: this.profileForm.get('name')?.value,
@@ -135,10 +148,29 @@ export class ProfileComponent implements OnInit, OnDestroy {
         if (this.passwordForm.valid && this.passwordForm.get('newPassword')?.value === this.passwordForm.get('confirmPassword')?.value) {
             const currentPassword = this.passwordForm.get('currentPassword')?.value;
             const newPassword = this.passwordForm.get('newPassword')?.value;
+            if (this.isStaff) {
+                this.userService.changeOwnPassword(currentPassword, newPassword).subscribe({
+                    next: () => {
+                        this.toastr.success('Password changed successfully.', 'Success');
+                        this.showPassword = false;
+                        this.passwordForm.reset();
+                        this.cdr.markForCheck();
+                    },
+                    error: (error: unknown) => {
+                        const err = error as { error?: { message?: string; error?: string }; message?: string };
+                        const errorMessage = err?.error?.message || err?.error?.error || err?.message || 'Failed to change password.';
+                        this.toastr.error(errorMessage, 'Error');
+                        this.cdr.markForCheck();
+                    }
+                });
+                return;
+            }
+
             if (!this.user?.id) {
                 this.toastr.error('Invalid user', 'Error');
                 return;
             }
+
             this.userService.changePassword(this.user.id, currentPassword, newPassword).subscribe({
                 next: () => {
                     this.toastr.success('Password changed successfully.', 'Success');

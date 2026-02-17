@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -44,9 +45,11 @@ public class SaleController {
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String referenceNumber,
-            @RequestParam(required = false) String createdBy) {
+            @RequestParam(required = false) String createdBy,
+            Authentication authentication) {
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         SaleSummaryDTO summary = service.getSalesSummary(fromDate, toDate, customerId, variantId,
-                minAmount, maxAmount, referenceNumber, createdBy);
+                minAmount, maxAmount, referenceNumber, effectiveCreatedBy);
         return ResponseEntity.ok(ApiResponseUtil.success("Sales summary retrieved successfully", summary));
     }
 
@@ -92,11 +95,22 @@ public class SaleController {
             @RequestParam(required = false) Double minAmount,
             @RequestParam(required = false) Double maxAmount,
             @RequestParam(required = false) String referenceNumber,
-            @RequestParam(required = false) String createdBy) {
+            @RequestParam(required = false) String createdBy,
+            Authentication authentication) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         Page<SaleDTO> sales = service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount,
-                maxAmount, referenceNumber, createdBy);
+                maxAmount, referenceNumber, effectiveCreatedBy);
         return ResponseEntity.ok(ApiResponseUtil.success("Sales retrieved successfully", sales));
+    }
+
+    private String resolveCreatedBy(Authentication authentication, String requestedCreatedBy) {
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return requestedCreatedBy;
+        }
+        boolean isStaff = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_STAFF".equals(authority.getAuthority()));
+        return isStaff ? authentication.getName() : requestedCreatedBy;
     }
 
     @GetMapping("/customer/{customerId}")

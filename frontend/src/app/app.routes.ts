@@ -37,7 +37,7 @@ export const routes: Routes = [
     path: 'sales/history',
     loadComponent: () => import('./pages/sales/sales-history.component').then(m => m.SalesHistoryComponent),
     canActivate: [RoleGuard],
-    data: { roles: ['OWNER', 'MANAGER'] }
+    data: { roles: ['OWNER', 'MANAGER', 'STAFF'] }
   },
   { path: 'sales', redirectTo: 'sales/entry', pathMatch: 'full' },
 
@@ -63,7 +63,7 @@ export const routes: Routes = [
     path: 'payments/history',
     loadComponent: () => import('./pages/payment/payment-history.component').then(m => m.PaymentHistoryComponent),
     canActivate: [RoleGuard],
-    data: { roles: ['OWNER', 'MANAGER'] }
+    data: { roles: ['OWNER', 'MANAGER', 'STAFF'] }
   },
   {
     path: 'payments',
@@ -154,7 +154,7 @@ export const routes: Routes = [
     path: 'empty-return/history',
     loadComponent: () => import('./pages/empty-return/empty-return-history.component').then(m => m.EmptyReturnHistoryComponent),
     canActivate: [RoleGuard],
-    data: { roles: ['OWNER', 'MANAGER'] }
+    data: { roles: ['OWNER', 'MANAGER', 'STAFF'] }
   },
   // Catch-all
   { path: '**', redirectTo: 'dashboard' }

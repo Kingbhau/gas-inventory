@@ -10,7 +10,7 @@
       <span class="username">{{ user?.username }}</span>
     </div>
 
-    <button class="btn-primary" (click)="openEditModal()">
+    <button class="btn-primary" (click)="openEditModal()" *ngIf="!isStaff">
       Edit Profile
     </button>
   </div>

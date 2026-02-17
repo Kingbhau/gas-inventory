@@ -13,6 +13,7 @@ import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-
 import { finalize } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { UserService } from '../../services/user.service';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { Customer } from '../../models/customer.model';
@@ -66,6 +67,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
   customersList: Customer[] = [];
   users: User[] = [];
   originalEmptyReturnsMap: Map<number, EmptyReturnRow> = new Map();
+  isStaff = false;
 
   constructor(
     private ledgerService: CustomerCylinderLedgerService,
@@ -74,13 +76,18 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     private variantService: CylinderVariantService,
     private loadingService: LoadingService,
     private userService: UserService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
     this.loadEmptyReturns();
     this.loadCustomers();
-    this.loadUsers();
+    if (!this.isStaff) {
+      this.loadUsers();
+    }
     // Load all variants (including inactive) for filtering historical empty returns
     this.variantService.getAllVariantsAll().subscribe({
       next: (data: CylinderVariant[]) => {
