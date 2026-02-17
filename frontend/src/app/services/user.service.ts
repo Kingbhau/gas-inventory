@@ -50,6 +50,14 @@ export class UserService {
     }, { withCredentials: true }).pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
   }
 
+  changeOwnPassword(currentPassword: string, newPassword: string): Observable<SimpleStatusDTO> {
+    const staffUrl = getApiUrl('/staff/change-password');
+    return this.http.post<any>(staffUrl, {
+      currentPassword,
+      newPassword
+    }, { withCredentials: true }).pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
+  }
+
   reactivateUser(id: number): Observable<User> {
     return this.http.post<any>(`${this.apiUrl}/${id}/reactivate`, {}, { withCredentials: true })
       .pipe(applyTimeout(), unwrapApiResponse<User>());

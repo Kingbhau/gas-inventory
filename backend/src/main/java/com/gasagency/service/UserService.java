@@ -57,6 +57,28 @@ public class UserService {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            if (!user.isActive()) {
+                return false;
+            }
+            if (passwordEncoder.matches(currentPassword, user.getPassword())) {
+                user.setPassword(passwordEncoder.encode(newPassword));
+                userRepository.save(user);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean changePasswordByUsername(String username, String currentPassword, String newPassword) {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!user.isActive()) {
+                return false;
+            }
             if (passwordEncoder.matches(currentPassword, user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(newPassword));
                 userRepository.save(user);

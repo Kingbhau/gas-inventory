@@ -15,6 +15,7 @@ import { PaymentModeService } from '../../services/payment-mode.service';
 import { BankAccountService } from '../../services/bank-account.service';
 import { LoadingService } from '../../services/loading.service';
 import { UserService } from '../../services/user.service';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user.model';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { BankAccount } from '../../models/bank-account.model';
@@ -57,6 +58,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   payments: CustomerCylinderLedger[] = [];
   paginatedPayments: CustomerCylinderLedger[] = [];
   users: User[] = [];
+  isStaff = false;
 
   // Summary
   totalAmount = 0;
@@ -71,15 +73,20 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     private bankAccountService: BankAccountService,
     private loadingService: LoadingService,
     private userService: UserService,
+    private authService: AuthService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
     this.loadCustomers();
     this.loadPaymentModes();
     this.loadBankAccounts();
-    this.loadUsers();
+    if (!this.isStaff) {
+      this.loadUsers();
+    }
     this.loadPayments();
   }
 

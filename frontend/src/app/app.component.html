@@ -180,11 +180,29 @@
           </ng-container>
           <ng-template #staffNav>
             <div class="nav-section">
-              <div class="nav-label">Sales</div>
+              <div class="nav-label">Transactions</div>
               <ul class="nav-items">
                 <li><a routerLink="/sales/entry" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faExchange"></fa-icon></span><span class="nav-text">Sales Entry</span></a></li>
                 <li><a routerLink="/empty-return" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBox"></fa-icon></span><span class="nav-text">Empty Return</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Records & Reports</div>
+              <ul class="nav-items">
+                <li><a routerLink="/sales/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Sales History</span></a></li>
+                <li><a routerLink="/empty-return/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Return History</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Finance</div>
+              <ul class="nav-items">
                 <li><a routerLink="/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faRupeeSign"></fa-icon></span><span class="nav-text">Payments</span></a></li>
+                <li><a routerLink="/payments/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Payment History</span></a></li>
+              </ul>
+            </div>
+            <div class="nav-section">
+              <div class="nav-label">Settings & Admin</div>
+              <ul class="nav-items">
                 <li><a routerLink="/profile" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faUser"></fa-icon></span><span class="nav-text">My Profile</span></a></li>
               </ul>
             </div>

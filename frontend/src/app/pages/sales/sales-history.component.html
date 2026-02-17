@@ -50,7 +50,7 @@
         <label class="filter-label">Reference #</label>
         <input type="text" [(ngModel)]="filterReference" class="filter-input" placeholder="Reference number">
       </div>
-      <div class="filter-group">
+      <div class="filter-group" *ngIf="!isStaff">
         <app-autocomplete-input
           label="Created By"
           [labelClass]="'filter-label'"
