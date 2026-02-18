@@ -41,6 +41,7 @@ import java.util.List;
 import com.gasagency.dto.response.CustomerBalanceDTO;
 import java.util.ArrayList;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -1118,8 +1119,8 @@ public class CustomerCylinderLedgerService {
                                         "customerId", customer.getId(), "paymentAmount", paymentRequest.amount,
                                         "dueAmount", currentDue);
                         throw new IllegalArgumentException(
-                                        "Payment amount â‚¹" + paymentRequest.amount
-                                                        + " cannot exceed due amount â‚¹" + currentDue);
+                                        "Payment amount Rs " + paymentRequest.amount
+                                                        + " cannot exceed due amount Rs " + currentDue);
                 }
 
                 // Calculate running balance (remaining customer debt) AFTER this payment
@@ -1539,6 +1540,41 @@ public class CustomerCylinderLedgerService {
                                 ? updateData.getAmountReceived()
                                 : oldAmountReceived;
 
+                // If filled count changes for a SALE and total wasn't provided, recalculate total
+                if (entry.getRefType() == CustomerCylinderLedger.TransactionType.SALE
+                                && entry.getRefId() != null
+                                && updateData != null
+                                && updateData.getTotalAmount() == null
+                                && updateData.getFilledOut() != null) {
+                        try {
+                                Sale saleForRecalc = saleRepository.findById(entry.getRefId()).orElse(null);
+                                if (saleForRecalc != null && saleForRecalc.getSaleItems() != null) {
+                                        for (com.gasagency.entity.SaleItem item : saleForRecalc.getSaleItems()) {
+                                                if (variant != null && item.getVariant().getId().equals(variant.getId())) {
+                                                        BigDecimal basePrice = item.getBasePrice() != null
+                                                                        ? item.getBasePrice()
+                                                                        : BigDecimal.ZERO;
+                                                        BigDecimal discount = item.getDiscount() != null
+                                                                        ? item.getDiscount()
+                                                                        : BigDecimal.ZERO;
+                                                        BigDecimal subtotal = basePrice.multiply(
+                                                                        BigDecimal.valueOf(newFilledOut));
+                                                        BigDecimal recalculatedFinal = subtotal.subtract(discount)
+                                                                        .setScale(2, RoundingMode.HALF_UP);
+                                                        if (recalculatedFinal.compareTo(BigDecimal.ZERO) < 0) {
+                                                                recalculatedFinal = BigDecimal.ZERO;
+                                                        }
+                                                        newTotalAmount = recalculatedFinal;
+                                                        break;
+                                                }
+                                        }
+                                }
+                        } catch (Exception e) {
+                                logger.warn("UPDATE_LEDGER: Failed to recalculate total amount for sale {}",
+                                                entry.getRefId(), e);
+                        }
+                }
+
                 // 4. Validate new values are non-negative
                 if (newFilledOut < 0 || newEmptyIn < 0) {
                         throw new InvalidOperationException("Filled/Empty count cannot be negative");
@@ -1596,25 +1632,6 @@ public class CustomerCylinderLedgerService {
                 }
                 // For PAYMENT transactions, entryIndex will be -1 (no variant entries)
 
-                // Get the latest entry's due amount - this is the total cumulative owed (ALL
-                // VARIANTS)
-                BigDecimal latestDueAmount = BigDecimal.ZERO;
-                if (!allEntries.isEmpty()) {
-                        CustomerCylinderLedger latestEntry = allEntries.get(allEntries.size() - 1);
-                        latestDueAmount = latestEntry.getDueAmount();
-                        if (latestDueAmount == null) {
-                                latestDueAmount = BigDecimal.ZERO;
-                        }
-                }
-
-                // VALIDATION: amountReceived should not exceed the total cumulative due
-                if (newAmountReceived.compareTo(latestDueAmount) > 0) {
-                        throw new InvalidOperationException(
-                                        "Amount received (â‚¹" + newAmountReceived +
-                                                        ") cannot exceed total amount owed (â‚¹" + latestDueAmount +
-                                                        "). Maximum allowed: â‚¹" + latestDueAmount);
-                }
-
                 // Calculate balance change for this entry (PER VARIANT) - only if variant
                 // exists
                 // balance = previousBalance + filledOut - emptyIn
@@ -1666,6 +1683,14 @@ public class CustomerCylinderLedgerService {
                 }
                 newCumulativeDue = prevCumulativeDue.add(newDueContribution);
 
+                // Validate the updated entry's due does not go negative (post-edit)
+                if (newCumulativeDue.compareTo(BigDecimal.ZERO) < 0) {
+                        throw new InvalidOperationException(
+                                        "Amount received (Rs" + newAmountReceived +
+                                                        ") cannot exceed total amount owed after this update (Rs "
+                                                        + newCumulativeDue + ").");
+                }
+
                 // Validation loop for both balance (per variant) and due (all variants)
                 BigDecimal runningDue = newCumulativeDue;
                 long runningBalance = newBalance;
@@ -1710,7 +1735,7 @@ public class CustomerCylinderLedgerService {
                         if (nextCumulativeDue.compareTo(BigDecimal.ZERO) < 0) {
                                 validationErrors.append("Entry ").append(nextEntry.getId())
                                                 .append(" (dated ").append(nextEntry.getTransactionDate())
-                                                .append(") would have negative due: â‚¹").append(nextCumulativeDue)
+                                                .append(") would have negative due: Rs ").append(nextCumulativeDue)
                                                 .append(". ");
                         }
 
@@ -1839,8 +1864,9 @@ public class CustomerCylinderLedgerService {
                                         logger.info("UPDATE_SALE: saleId={}, oldTotal={}, newTotal={}",
                                                         entry.getRefId(), oldTotalAmount, newTotalAmount);
 
-                                        // Update SaleItems with new quantity and price if filledOut or emptyIn changed
-                                        if (oldFilledOut != newFilledOut || oldEmptyIn != newEmptyIn) {
+                                        // Update SaleItems with new quantity/price if quantities or total changed
+                                        if (oldFilledOut != newFilledOut || oldEmptyIn != newEmptyIn
+                                                        || oldTotalAmount.compareTo(newTotalAmount) != 0) {
                                                 List<com.gasagency.entity.SaleItem> saleItems = sale.getSaleItems();
                                                 if (saleItems != null && !saleItems.isEmpty()) {
                                                         for (com.gasagency.entity.SaleItem item : saleItems) {
@@ -1951,9 +1977,9 @@ public class CustomerCylinderLedgerService {
                         entries.sort((a, b) -> a.getTransactionDate().compareTo(b.getTransactionDate()));
 
                         long runningBalance = 0;
-                        for (CustomerCylinderLedger entry : entries) {
-                                // Correct formula: balance = previousBalance - filledOut + emptyIn
-                                long newBalance = runningBalance - entry.getFilledOut() + entry.getEmptyIn();
+                for (CustomerCylinderLedger entry : entries) {
+                        // balance = previousBalance + filledOut - emptyIn
+                        long newBalance = runningBalance + entry.getFilledOut() - entry.getEmptyIn();
 
                                 if (newBalance != entry.getBalance()) {
                                         long oldBalance = entry.getBalance();
