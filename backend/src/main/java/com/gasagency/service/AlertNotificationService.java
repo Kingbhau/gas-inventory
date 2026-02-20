@@ -45,10 +45,30 @@ public class AlertNotificationService {
 
         if (existing.isPresent()) {
             AlertNotification alert = existing.get();
-            if (!alert.getIsDismissed() && alert.getExpiresAt().isAfter(LocalDateTime.now())) {
-                // Alert already active, no need to recreate
+            LocalDateTime now = LocalDateTime.now();
+            if (!alert.getIsDismissed() && alert.getExpiresAt().isAfter(now)) {
+                // Alert already active: refresh message/severity if changed
+                boolean updated = false;
+                if (message != null && !message.equals(alert.getMessage())) {
+                    alert.setMessage(message);
+                    updated = true;
+                }
+                if (severity != null && !severity.equals(alert.getSeverity())) {
+                    alert.setSeverity(severity);
+                    updated = true;
+                }
+                if (updated) {
+                    alert.setExpiresAt(now.plusHours(24));
+                    AlertNotification saved = repository.save(alert);
+                    sseService.broadcastAlert(saved);
+                    logger.info("Updated active alert: {} - {}", alertKey, message);
+                    return saved;
+                }
                 return alert;
             }
+            // Expired or dismissed: remove old record so a fresh one can be created
+            repository.delete(alert);
+            repository.flush();
         }
 
         // Create new alert
