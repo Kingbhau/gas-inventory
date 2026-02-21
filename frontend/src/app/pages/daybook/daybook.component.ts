@@ -231,6 +231,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
       exportDayBookReportToPDF({
         transactions: this.dayBookTransactions,
         summary: this.dayBookSummary ?? this.buildSummaryFromTransactions(this.dayBookTransactions),
+        typeSummaries: this.dayBookTypeSummaries,
+        filledVariantSummaries: this.filledVariantSummaries,
+        emptyVariantSummaries: this.emptyVariantSummaries,
         selectedDate: this.selectedDate,
         businessName: 'GAS AGENCY SYSTEM'
       });
