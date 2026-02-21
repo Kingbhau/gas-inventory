@@ -1,5 +1,5 @@
 import { catchError, of, finalize, Subject, takeUntil } from 'rxjs';
-import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
+import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomerService } from '../../services/customer.service';
@@ -34,6 +34,7 @@ import { EmptyReturnRequest } from '../../models/empty-return-request.model';
 })
 export class EmptyReturnComponent implements OnInit, OnDestroy {
     @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
+    @ViewChild('variantAutocomplete') variantAutocomplete?: AutocompleteInputComponent;
     
     private destroy$ = new Subject<void>();
     emptyReturnForm: FormGroup;
@@ -263,11 +264,13 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             this.filterVariantsByCustomerConfig(customer.id);
             // Clear variant selection when customer changes
             this.emptyReturnForm.get('variantId')?.setValue(null);
+            this.variantAutocomplete?.resetInput();
             this.loadCurrentBalance();
             this.loadCurrentDue();
             this.cdr.markForCheck();
         } else {
             this.emptyReturnForm.get('customerId')?.setValue(null);
+            this.variantAutocomplete?.resetInput();
             this.filteredVariants = this.variants;
             this.currentBalance = null;
             this.balanceLoading = false;

@@ -53,6 +53,7 @@ public class SaleService {
         private final WarehouseService warehouseService;
         private final BankAccountRepository bankAccountRepository;
         private final BankAccountLedgerRepository bankAccountLedgerRepository;
+        private final PaymentModeRepository paymentModeRepository;
         private final AuditLogger auditLogger;
         private final PerformanceTracker performanceTracker;
         private final ReferenceNumberGenerator referenceNumberGenerator;
@@ -70,6 +71,7 @@ public class SaleService {
                         WarehouseService warehouseService,
                         BankAccountRepository bankAccountRepository,
                         BankAccountLedgerRepository bankAccountLedgerRepository,
+                        PaymentModeRepository paymentModeRepository,
                         AuditLogger auditLogger,
                         PerformanceTracker performanceTracker,
                         ReferenceNumberGenerator referenceNumberGenerator,
@@ -86,6 +88,7 @@ public class SaleService {
                 this.warehouseService = warehouseService;
                 this.bankAccountRepository = bankAccountRepository;
                 this.bankAccountLedgerRepository = bankAccountLedgerRepository;
+                this.paymentModeRepository = paymentModeRepository;
                 this.auditLogger = auditLogger;
                 this.performanceTracker = performanceTracker;
                 this.referenceNumberGenerator = referenceNumberGenerator;
@@ -218,27 +221,30 @@ public class SaleService {
                         throw new InvalidOperationException("Sale must contain at least one item");
                 }
 
+                String paymentModeName = request.getModeOfPayment() != null ? request.getModeOfPayment().trim() : null;
+                Boolean requiresBankAccount = null;
+                if (paymentModeName != null && !paymentModeName.isEmpty()) {
+                        requiresBankAccount = paymentModeRepository.findByName(paymentModeName)
+                                        .map(pm -> Boolean.TRUE.equals(pm.getIsBankAccountRequired()))
+                                        .orElseThrow(() -> new InvalidOperationException(
+                                                        "Invalid payment mode: " + paymentModeName));
+                }
+
                 // Validate modeOfPayment is provided only when amountReceived > 0
                 if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
-                        if (request.getModeOfPayment() == null || request.getModeOfPayment().trim().isEmpty()) {
+                        if (paymentModeName == null || paymentModeName.isEmpty()) {
                                 logger.error("Invalid sale request - modeOfPayment is required when amountReceived > 0");
                                 throw new InvalidOperationException(
                                                 "Mode of payment is required when payment is received");
                         }
 
                         // Validate bankAccountId is provided when payment mode requires it
-                        if (request.getModeOfPayment() != null) {
-                                // Find the payment mode to check if bank account is required
-                                // This will help determine if we need to validate bankAccountId
-                                if (!request.getModeOfPayment().equalsIgnoreCase("CASH") &&
-                                                (request.getBankAccountId() == null
-                                                                || request.getBankAccountId() <= 0)) {
-                                        logger.error("Invalid sale request - bankAccountId is required for non-cash payment mode: {}",
-                                                        request.getModeOfPayment());
-                                        throw new InvalidOperationException(
-                                                        "Bank account is required for payment mode: "
-                                                                        + request.getModeOfPayment());
-                                }
+                        if (Boolean.TRUE.equals(requiresBankAccount)
+                                        && (request.getBankAccountId() == null || request.getBankAccountId() <= 0)) {
+                                logger.error("Invalid sale request - bankAccountId is required for payment mode: {}",
+                                                paymentModeName);
+                                throw new InvalidOperationException(
+                                                "Bank account is required for payment mode: " + paymentModeName);
                         }
                 }
 
@@ -415,8 +421,8 @@ public class SaleService {
                 // Create sale FIRST so we have a sale ID for ledger references
                 Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
                 // Set payment mode as provided (can be null)
-                String normalizedPaymentMode = request.getModeOfPayment() != null
-                                ? request.getModeOfPayment().trim().toUpperCase()
+                String normalizedPaymentMode = paymentModeName != null
+                                ? paymentModeName.toUpperCase()
                                 : null;
                 sale.setPaymentMode(normalizedPaymentMode);
 
@@ -426,8 +432,10 @@ public class SaleService {
 
                 // If bank account ID is provided and payment mode is not cash, set the bank
                 // account
-                if (request.getBankAccountId() != null && request.getModeOfPayment() != null &&
-                                !request.getModeOfPayment().equalsIgnoreCase("CASH")) {
+                Long bankAccountIdForLedger = Boolean.TRUE.equals(requiresBankAccount)
+                                ? request.getBankAccountId()
+                                : null;
+                if (bankAccountIdForLedger != null) {
                         BankAccount bankAccount = bankAccountRepository.findById(request.getBankAccountId())
                                         .orElseThrow(() -> {
                                                 logger.error("Bank account not found with id: {}",
@@ -508,8 +516,8 @@ public class SaleService {
                                         itemRequest.getQtyEmptyReceived(),
                                         totalAmount,
                                         request.getAmountReceived(),
-                                        request.getModeOfPayment(),
-                                        request.getBankAccountId());
+                                request.getModeOfPayment(),
+                                bankAccountIdForLedger);
                         logger.debug("Ledger entry created for sale item");
                 }
 

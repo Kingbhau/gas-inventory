@@ -43,10 +43,11 @@ public class CustomerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "ASC") String direction) {
+            @RequestParam(defaultValue = "ASC") String direction,
+            @RequestParam(required = false) String search) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<CustomerDTO> customers = service.getAllCustomers(pageable);
+        Page<CustomerDTO> customers = service.getAllCustomers(pageable, search);
         return ResponseEntity.ok(ApiResponseUtil.success("Customers retrieved successfully", customers));
     }
 

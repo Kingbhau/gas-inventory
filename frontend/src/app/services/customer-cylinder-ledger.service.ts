@@ -136,6 +136,11 @@ export class CustomerCylinderLedgerService {
       .pipe(applyTimeout(), unwrapApiResponse<CustomerBalance[]>());
   }
 
+  getCustomerBalancesByIds(customerIds: number[]): Observable<CustomerBalance[]> {
+    return this.http.post<any>(`${this.apiUrl}/customer-balances/by-ids`, { customerIds }, { withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<CustomerBalance[]>());
+  }
+
   getCustomerDueAmounts(customerIds: number[]): Observable<{ [key: number]: number }> {
     return this.http.post<any>(`${this.apiUrl}/customer-due-amounts`, { customerIds }, { withCredentials: true })
       .pipe(

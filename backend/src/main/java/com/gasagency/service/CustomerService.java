@@ -166,9 +166,17 @@ public class CustomerService {
     }
 
     public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        return getAllCustomers(pageable, null);
+    }
+
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable, String search) {
         LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "CUSTOMER", "page", pageable.getPageNumber(),
-                "size", pageable.getPageSize());
-        return repository.findAll(pageable)
+                "size", pageable.getPageSize(), "search", search);
+        if (search == null || search.trim().isEmpty()) {
+            return repository.findAll(pageable)
+                    .map(this::toDTO);
+        }
+        return repository.searchAll(search.trim(), pageable)
                 .map(this::toDTO);
     }
 

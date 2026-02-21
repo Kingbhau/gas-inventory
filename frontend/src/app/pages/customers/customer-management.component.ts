@@ -1,5 +1,5 @@
 
-import { catchError, of, finalize, debounceTime, distinctUntilChanged, map, Subject, takeUntil, BehaviorSubject } from 'rxjs';
+import { catchError, of, finalize, debounceTime, distinctUntilChanged, Subject, takeUntil, BehaviorSubject, skip } from 'rxjs';
 import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -54,13 +54,6 @@ type CustomerRow = Customer & {
 export class CustomerManagementComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private searchTerm$ = new BehaviorSubject<string>('');
-  filteredCustomers$ = this.searchTerm$.pipe(
-    debounceTime(300),
-    distinctUntilChanged(),
-    map(term => this.filterCustomersImpl(term)),
-    takeUntil(this.destroy$)
-  );
-
   /**
    * Custom validator: ensures discountPrice <= salePrice
    */
@@ -113,34 +106,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return this.totalPages;
   }
 
-  /**
-   * OPTIMIZATION: Implement debounced search using RxJS
-   * Before: Filtering happens on every keystroke (1000ms per keystroke)
-   * After: Debounced to 300ms, prevents excessive change detection
-   */
   get paginatedCustomers() {
-    // Return current search result with debouncing already applied
-    return this.filterCustomersImpl(this.searchTerm);
+    return this.customers;
   }
 
-  /**
-   * Implementation of search filtering logic
-   */
-  private filterCustomersImpl(term: string) {
-    if (!term || term.trim() === '') {
-      return this.customers;
-    }
-    const searchTerm = term.trim().toLowerCase();
-    return this.customers.filter(c =>
-      (c.name && c.name.toLowerCase().includes(searchTerm)) ||
-      (c.mobile && c.mobile.toLowerCase().includes(searchTerm)) ||
-      (c.address && c.address.toLowerCase().includes(searchTerm))
-    );
-  }
-
-  /**
-   * Update search term with debouncing via BehaviorSubject
-   */
   updateSearchTerm(term: string): void {
     this.searchTerm = term;
     this.searchTerm$.next(term);
@@ -238,10 +207,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.loadUsers();
 
     // Subscribe to debounced search changes
-    this.filteredCustomers$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.cdr.markForCheck();
+    this.searchTerm$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        skip(1),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((term) => {
+        this.customerPage = 1;
+        this.loadCustomersWithBalances(term);
       });
   }
 
@@ -415,10 +390,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.loadCustomersWithBalances();
   }
 
-  loadCustomersWithBalances() {
+  loadCustomersWithBalances(searchTerm: string = this.searchTerm) {
     this.loadingService.show('Loading customers...');
     // Fetch both customers and their balances for the current page
-    const customerSub = this.customerService.getAllCustomers(this.customerPage - 1, this.customerPageSize)
+    const customerSub = this.customerService.getAllCustomers(
+      this.customerPage - 1,
+      this.customerPageSize,
+      'id',
+      'ASC',
+      searchTerm
+    )
       .pipe(
         catchError((error: unknown) => {
           const err = error as { error?: { message?: string }; message?: string };
@@ -441,7 +422,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         this.totalCustomers = data.totalElements ?? customers.length;
         this.totalPages = data.totalPages ?? 1;
         // Now fetch balances for these customers in one batch
-        this.ledgerService.getCustomerBalances(this.customerPage - 1, this.customerPageSize).subscribe({
+        const customerIds = customers.map(c => c.id);
+        this.ledgerService.getCustomerBalancesByIds(customerIds).subscribe({
           next: (balances: CustomerBalance[]) => {
             // Merge balances into customers array
             this.customers = customers.map((customer: CustomerRow) => {
@@ -460,7 +442,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             });
             
             // Fetch due amounts in a single call to avoid N+1
-            const customerIds = this.customers.map(c => c.id);
             this.ledgerService.getCustomerDueAmounts(customerIds).subscribe({
               next: (dueMap: { [key: number]: number }) => {
                 this.customers.forEach(customer => {

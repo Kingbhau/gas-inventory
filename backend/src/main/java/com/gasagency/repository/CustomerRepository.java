@@ -28,6 +28,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             "c.mobile LIKE CONCAT('%', :search, '%'))")
     List<Customer> searchActiveList(@Param("search") String search);
 
+    @Query("SELECT c FROM Customer c WHERE " +
+            "LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "c.mobile LIKE CONCAT('%', :search, '%') OR " +
+            "LOWER(c.address) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Customer> searchAll(@Param("search") String search, Pageable pageable);
+
     Optional<Customer> findByMobile(String mobile);
 
     long countByActive(Boolean active);
