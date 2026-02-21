@@ -1,7 +1,7 @@
 
 import { catchError, of, finalize, debounceTime, distinctUntilChanged, Subject, takeUntil, BehaviorSubject, skip } from 'rxjs';
 import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -92,8 +92,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
 
   isLastRow(customer: CustomerRow): boolean {
+    const totalRows = this.paginatedCustomers.length;
+    if (totalRows <= 1) {
+      return false;
+    }
     const index = this.paginatedCustomers.indexOf(customer);
-    return index === this.paginatedCustomers.length - 1;
+    return index === totalRows - 1;
   }
   get isAnyDropdownOpen(): boolean {
     return this.paginatedCustomers && Array.isArray(this.paginatedCustomers)
@@ -301,6 +305,20 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     });
     // Toggle current menu
     customer.showMenu = !customer.showMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement | null;
+    if (!target || target.closest('.dropdown')) {
+      return;
+    }
+    this.paginatedCustomers.forEach((c: CustomerRow) => {
+      if (c?.showMenu) {
+        c.showMenu = false;
+      }
+    });
+    this.cdr.markForCheck();
   }
 
   openDetailsModal(customer: CustomerRow) {
