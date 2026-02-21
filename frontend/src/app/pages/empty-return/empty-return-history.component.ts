@@ -142,7 +142,14 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
             });
           });
 
-          this.allEmptyReturns = emptyReturns.sort((a, b) => b.id - a.id);
+          this.allEmptyReturns = emptyReturns.sort((a, b) => {
+            const dateA = new Date(a.transactionDate).getTime();
+            const dateB = new Date(b.transactionDate).getTime();
+            if (dateA === dateB) {
+              return b.id - a.id;
+            }
+            return dateB - dateA;
+          });
           this.filteredEmptyReturns = [...this.allEmptyReturns];
           this.totalElements = data.totalElements ?? this.filteredEmptyReturns.length;
           this.totalPages = data.totalPages ?? 1;

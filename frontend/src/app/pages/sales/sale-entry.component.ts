@@ -26,6 +26,7 @@ import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { PaymentMode } from '../../models/payment-mode.model';
+import { DateUtilityService } from '../../services/date-utility.service';
 import { Customer } from '../../models/customer.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { Warehouse } from '../../models/warehouse.model';
@@ -115,6 +116,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     private warehouseService: WarehouseService,
     private dataRefreshService: DataRefreshService,
     private paymentModeService: PaymentModeService,
+    private dateUtility: DateUtilityService,
     private cdr: ChangeDetectorRef
   ) {
     this.initForm();
@@ -436,7 +438,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
       amountReceived: [null, [Validators.max(100000)]],
       modeOfPayment: [null],
-      bankAccountId: [null]
+      bankAccountId: [null],
+      saleDate: [this.dateUtility.getTodayInIST(), Validators.required]
     });
 
     // Add conditional validation for modeOfPayment and bankAccountId
@@ -732,6 +735,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const saleRequest: CreateSaleRequest = {
       warehouseId: warehouseId,
       customerId: customerId,
+      saleDate: this.saleForm.get('saleDate')?.value || this.dateUtility.getTodayInIST(),
       amountReceived: this.saleForm.get('amountReceived')?.value || 0,
       modeOfPayment: modeOfPayment,
       items: [
@@ -791,7 +795,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
       amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
       modeOfPayment: [null],
-      bankAccountId: [null]
+      bankAccountId: [null],
+      saleDate: [this.dateUtility.getTodayInIST(), Validators.required]
     });
     
     this.saleForm.get('basePrice')?.disable();

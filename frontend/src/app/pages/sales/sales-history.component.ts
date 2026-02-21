@@ -191,7 +191,14 @@ export class SalesHistoryComponent implements OnInit, OnDestroy {
               });
             }
           });
-          this.allSales = flattenedSales.sort((a, b) => b.id - a.id);
+          this.allSales = flattenedSales.sort((a, b) => {
+            const dateA = new Date(a.saleDate).getTime();
+            const dateB = new Date(b.saleDate).getTime();
+            if (dateA === dateB) {
+              return (b.id || 0) - (a.id || 0);
+            }
+            return dateB - dateA;
+          });
           this.filteredSales = [...this.allSales];
           this.totalElements = data.totalElements ?? this.filteredSales.length;
           this.totalPages = data.totalPages ?? 1;

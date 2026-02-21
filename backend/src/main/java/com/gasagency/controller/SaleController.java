@@ -97,7 +97,11 @@ public class SaleController {
             @RequestParam(required = false) String referenceNumber,
             @RequestParam(required = false) String createdBy,
             Authentication authentication) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id"))
+        );
         String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
         Page<SaleDTO> sales = service.getAllSales(pageable, fromDate, toDate, customerId, variantId, minAmount,
                 maxAmount, referenceNumber, effectiveCreatedBy);

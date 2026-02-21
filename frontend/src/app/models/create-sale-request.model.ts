@@ -8,6 +8,7 @@ export interface SaleItemRequest {
 export interface CreateSaleRequest {
   customerId: number;
   warehouseId: number;
+  saleDate?: string;
   amountReceived?: number;
   modeOfPayment?: string;
   bankAccountId?: number;
