@@ -398,6 +398,52 @@ public class CustomerCylinderLedgerService {
                 return result;
         }
 
+        public List<CustomerBalanceDTO> getCustomerBalancesForCustomers(List<Long> customerIds) {
+                if (customerIds == null || customerIds.isEmpty()) {
+                        return new ArrayList<>();
+                }
+                List<Customer> customers = customerRepository.findAllById(customerIds);
+                Map<Long, Customer> customerMap = customers.stream()
+                                .collect(Collectors.toMap(Customer::getId, c -> c));
+                List<CylinderVariant> variants = variantRepository.findAllByActive(true);
+                Map<Long, Map<Long, CustomerCylinderLedger>> latestByCustomerVariant = new HashMap<>();
+                if (!customers.isEmpty()) {
+                        List<CustomerCylinderLedger> latestLedgers = repository
+                                        .findLatestPerCustomerVariantForCustomers(customers);
+                        for (CustomerCylinderLedger ledger : latestLedgers) {
+                                if (ledger.getCustomer() == null || ledger.getVariant() == null) {
+                                        continue;
+                                }
+                                Long customerId = ledger.getCustomer().getId();
+                                Long variantId = ledger.getVariant().getId();
+                                latestByCustomerVariant
+                                                .computeIfAbsent(customerId, k -> new HashMap<>())
+                                                .put(variantId, ledger);
+                        }
+                }
+                List<CustomerBalanceDTO> result = new ArrayList<>();
+                for (Long customerId : customerIds) {
+                        Customer customer = customerMap.get(customerId);
+                        if (customer == null) {
+                                continue;
+                        }
+                        List<CustomerBalanceDTO.VariantBalance> variantBalances = new ArrayList<>();
+                        for (CylinderVariant variant : variants) {
+                                CustomerCylinderLedger ledger = latestByCustomerVariant
+                                                .getOrDefault(customer.getId(), java.util.Collections.emptyMap())
+                                                .get(variant.getId());
+                                Long balance = ledger != null && ledger.getBalance() != null
+                                                ? ledger.getBalance()
+                                                : 0L;
+                                variantBalances.add(new CustomerBalanceDTO.VariantBalance(
+                                                variant.getId(), variant.getName(), balance));
+                        }
+                        result.add(new CustomerBalanceDTO(
+                                        customer.getId(), customer.getName(), variantBalances));
+                }
+                return result;
+        }
+
         public List<CustomerCylinderLedgerDTO> getAllPendingBalances() {
                 List<CustomerCylinderLedgerDTO> result = new java.util.ArrayList<>();
                 List<Customer> customers = customerRepository.findAllByActive(true);

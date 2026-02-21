@@ -43,6 +43,7 @@ import { Sale } from '../../models/sale.model';
 })
 export class SaleEntryComponent implements OnInit, OnDestroy {
   @ViewChildren(AutocompleteInputComponent) autocompleteInputs!: QueryList<AutocompleteInputComponent>;
+  @ViewChild('variantAutocomplete') variantAutocomplete?: AutocompleteInputComponent;
   
   private destroy$ = new Subject<void>();
   saleForm!: FormGroup;
@@ -525,6 +526,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       this.filterVariantsByCustomerConfig(customer.id);
       // Clear variant selection when customer changes
       this.saleForm.get('variantId')?.setValue(null);
+      this.variantAutocomplete?.resetInput();
       // Reload prices when customer changes
       this.prefillPrice(customer.id, this.saleForm.get('variantId')?.value);
       this.loadCurrentBalance();
@@ -532,6 +534,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     } else {
       this.saleForm.get('customerId')?.setValue(null);
+      this.variantAutocomplete?.resetInput();
       this.filteredVariants = this.variants;
       this.saleForm.get('basePrice')?.setValue(0);
       this.discountPrice = 0;

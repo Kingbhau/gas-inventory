@@ -13,6 +13,7 @@ import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.dto.request.EmptyReturnRequestDTO;
 import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.CustomerCylinderLedgerService;
+import com.gasagency.repository.PaymentModeRepository;
 import com.gasagency.util.ApiResponse;
 import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/ledger")
 public class CustomerCylinderLedgerController {
+    private final PaymentModeRepository paymentModeRepository;
 
     @GetMapping("/pending-summary")
     public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getAllPendingBalances() {
@@ -39,8 +41,10 @@ public class CustomerCylinderLedgerController {
 
     private final CustomerCylinderLedgerService service;
 
-    public CustomerCylinderLedgerController(CustomerCylinderLedgerService service) {
+    public CustomerCylinderLedgerController(CustomerCylinderLedgerService service,
+            PaymentModeRepository paymentModeRepository) {
         this.service = service;
+        this.paymentModeRepository = paymentModeRepository;
     }
 
     @GetMapping("/{id}")
@@ -56,6 +60,21 @@ public class CustomerCylinderLedgerController {
             @RequestParam int size) {
         return ResponseEntity.ok(ApiResponseUtil.success("Customer balances retrieved successfully",
                 service.getCustomerBalancesForPage(page, size)));
+    }
+
+    @PostMapping("/customer-balances/by-ids")
+    public ResponseEntity<ApiResponse<List<CustomerBalanceDTO>>> getCustomerBalancesByIds(
+            @RequestBody CustomerDueAmountsRequestDTO payload) {
+        List<Long> rawIds = payload != null ? payload.getCustomerIds() : null;
+        List<Long> customerIds = null;
+        if (rawIds != null) {
+            customerIds = rawIds.stream()
+                    .filter(Objects::nonNull)
+                    .map(Long::longValue)
+                    .collect(Collectors.toList());
+        }
+        return ResponseEntity.ok(ApiResponseUtil.success("Customer balances retrieved successfully",
+                service.getCustomerBalancesForCustomers(customerIds)));
     }
 
     @GetMapping
@@ -74,6 +93,15 @@ public class CustomerCylinderLedgerController {
     @PostMapping("/empty-return")
     public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> recordEmptyReturn(
             @RequestBody EmptyReturnRequestDTO request) {
+        String paymentModeName = request.getPaymentMode() != null ? request.getPaymentMode().trim() : null;
+        Boolean requiresBankAccount = null;
+        if (paymentModeName != null && !paymentModeName.isEmpty()) {
+            requiresBankAccount = paymentModeRepository.findByName(paymentModeName)
+                    .map(pm -> Boolean.TRUE.equals(pm.getIsBankAccountRequired()))
+                    .orElseThrow(() -> new com.gasagency.exception.InvalidOperationException(
+                            "Invalid payment mode: " + paymentModeName));
+        }
+
         // Validate amountReceived does not exceed customer's due amount
         if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(java.math.BigDecimal.ZERO) > 0) {
             java.math.BigDecimal customerDueAmount = service.getCustomerPreviousDue(request.getCustomerId());
@@ -85,13 +113,13 @@ public class CustomerCylinderLedgerController {
             }
 
             // Validate paymentMode is provided when amountReceived > 0
-            if (request.getPaymentMode() == null || request.getPaymentMode().trim().isEmpty()) {
+            if (paymentModeName == null || paymentModeName.isEmpty()) {
                 throw new com.gasagency.exception.InvalidOperationException(
                         "Payment mode is required when amount is received");
             }
 
-            // Validate bankAccountId is provided when payment mode is not CASH
-            if (!request.getPaymentMode().equalsIgnoreCase("CASH") &&
+            // Validate bankAccountId is provided when payment mode requires it
+            if (Boolean.TRUE.equals(requiresBankAccount) &&
                     (request.getBankAccountId() == null || request.getBankAccountId() <= 0)) {
                 throw new com.gasagency.exception.InvalidOperationException(
                         "Bank account is required for payment mode: " + request.getPaymentMode());
@@ -113,13 +141,12 @@ public class CustomerCylinderLedgerController {
                 request.getAmountReceived() != null ? request.getAmountReceived() : java.math.BigDecimal.ZERO);
 
         // If payment mode is provided, update the ledger entry
-        if (request.getPaymentMode() != null && !request.getPaymentMode().isEmpty()) {
-            service.updatePaymentMode(dto.getId(), request.getPaymentMode());
+        if (paymentModeName != null && !paymentModeName.isEmpty()) {
+            service.updatePaymentMode(dto.getId(), paymentModeName);
         }
 
         // Record bank account deposit if payment is via bank account
-        if (request.getBankAccountId() != null && request.getPaymentMode() != null &&
-                !request.getPaymentMode().equalsIgnoreCase("CASH")) {
+        if (Boolean.TRUE.equals(requiresBankAccount) && request.getBankAccountId() != null) {
             try {
                 service.recordBankAccountDeposit(
                         request.getBankAccountId(),

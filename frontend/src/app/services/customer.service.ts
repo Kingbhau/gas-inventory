@@ -30,12 +30,21 @@ export class CustomerService {
       .pipe(applyTimeout(), unwrapApiResponse<Customer>());
   }
 
-  getAllCustomers(page: number = 0, size: number = 20, sortBy: string = 'id', direction: string = 'ASC'): Observable<PageResponse<Customer>> {
+  getAllCustomers(
+    page: number = 0,
+    size: number = 20,
+    sortBy: string = 'id',
+    direction: string = 'ASC',
+    search?: string
+  ): Observable<PageResponse<Customer>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('direction', direction);
+    if (search && search.trim()) {
+      params = params.set('search', search.trim());
+    }
     return this.http.get<any>(this.apiUrl, { params, withCredentials: true })
       .pipe(applyTimeout(), unwrapApiResponse<PageResponse<Customer>>());
   }
