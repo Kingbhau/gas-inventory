@@ -25,6 +25,7 @@ import { PaymentMode } from '../../models/payment-mode.model';
 import { DateUtilityService } from '../../services/date-utility.service';
 import { SharedModule } from '../../shared/shared.module';
 import { DataRefreshService } from '../../services/data-refresh.service';
+import { AuthService } from '../../services/auth.service';
 import { SimpleStatusDTO } from '../../models/simple-status';
 import { Customer } from '../../models/customer.model';
 import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
@@ -151,6 +152,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   detailsCustomer: CustomerRow | null = null;
   detailsVariantPrices: CustomerVariantPrice[] = [];
   users: User[] = [];
+  isStaff = false;
 
   showReasonModal = false;
   selectedReasonEntry: CustomerCylinderLedger | null = null;
@@ -199,12 +201,15 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     public cdr: ChangeDetectorRef,
     private dateUtility: DateUtilityService,
     private dataRefreshService: DataRefreshService,
-    private userService: UserService
+    private userService: UserService,
+    private authService: AuthService
   ) {
     this.initForm();
   }
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
     this.loadVariantsAndCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
@@ -1396,6 +1401,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     if (!this.selectedCustomer) {
       this.toastr.error('No customer selected', 'Error');
       return;
+    }
+    if (this.isStaff) {
+      this.paymentForm.paymentDate = this.dateUtility.getTodayInIST();
     }
     if (!this.paymentForm.amount) {
       this.toastr.error('Please enter a valid payment amount', 'Validation Error');
