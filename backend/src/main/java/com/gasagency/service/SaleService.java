@@ -271,6 +271,7 @@ public class SaleService {
                         throw new ResourceNotFoundException("Warehouse not found with id: " + request.getWarehouseId());
                 }
 
+                LocalDate saleDate = request.getSaleDate() != null ? request.getSaleDate() : LocalDate.now();
                 BigDecimal totalAmount = BigDecimal.ZERO;
                 List<SaleItem> saleItems = new ArrayList<>();
                 logger.debug("Processing {} sale items", request.getItems().size());
@@ -419,7 +420,7 @@ public class SaleService {
                 }
 
                 // Create sale FIRST so we have a sale ID for ledger references
-                Sale sale = new Sale(warehouse, customer, LocalDate.now(), totalAmount);
+                Sale sale = new Sale(warehouse, customer, saleDate, totalAmount);
                 // Set payment mode as provided (can be null)
                 String normalizedPaymentMode = paymentModeName != null
                                 ? paymentModeName.toUpperCase()

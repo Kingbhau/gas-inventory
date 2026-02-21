@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalDate;
 
 public class CreateSaleRequestDTO {
     @NotNull(message = "Customer ID cannot be null")
@@ -21,6 +22,8 @@ public class CreateSaleRequestDTO {
 
     private Long bankAccountId;
 
+    private LocalDate saleDate;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -30,12 +33,13 @@ public class CreateSaleRequestDTO {
     }
 
     public CreateSaleRequestDTO(Long customerId, Long warehouseId, BigDecimal amountReceived, String modeOfPayment,
-            Long bankAccountId, List<SaleItemRequestDTO> items) {
+            Long bankAccountId, LocalDate saleDate, List<SaleItemRequestDTO> items) {
         this.customerId = customerId;
         this.warehouseId = warehouseId;
         this.amountReceived = amountReceived;
         this.modeOfPayment = modeOfPayment;
         this.bankAccountId = bankAccountId;
+        this.saleDate = saleDate;
         this.items = items;
     }
 
@@ -145,6 +149,14 @@ public class CreateSaleRequestDTO {
 
     public void setBankAccountId(Long bankAccountId) {
         this.bankAccountId = bankAccountId;
+    }
+
+    public LocalDate getSaleDate() {
+        return saleDate;
+    }
+
+    public void setSaleDate(LocalDate saleDate) {
+        this.saleDate = saleDate;
     }
 }
 

@@ -59,10 +59,20 @@
   gap: 0.5rem;
 }
 
+.form-field {
+  display: block;
+}
+
+
 .form-label {
   font-size: 0.95rem;
   font-weight: 500;
   color: #0f172a;
+}
+
+.form-label-sale-date{
+   margin: 0;
+   padding: 0;
 }
 
 .required {
@@ -88,6 +98,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
+}
+
+.form-row app-autocomplete-input {
+  display: block;
+  width: 100%;
 }
 
 .input-with-prefix {

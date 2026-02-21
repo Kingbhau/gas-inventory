@@ -304,7 +304,11 @@ public class CustomerCylinderLedgerController {
             @RequestParam(defaultValue = "transactionDate") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             Authentication authentication) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(direction, sortBy).and(Sort.by(Sort.Direction.DESC, "id"))
+        );
 
         LocalDate from = null;
         LocalDate to = null;

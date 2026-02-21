@@ -59,7 +59,8 @@ public class SaleRepositoryCustomImpl implements SaleRepositoryCustom {
             predicates.add(cb.equal(sale.get("createdBy"), createdBy));
         }
 
-        cq.select(sale).distinct(true).where(predicates.toArray(new Predicate[0]));
+        cq.select(sale).distinct(true).where(predicates.toArray(new Predicate[0]))
+                .orderBy(cb.desc(sale.get("saleDate")), cb.desc(sale.get("id")));
 
         TypedQuery<Sale> query = entityManager.createQuery(cq);
         List<Sale> resultList;
