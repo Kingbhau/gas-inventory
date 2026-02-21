@@ -27,6 +27,7 @@ import { BankAccount } from '../../models/bank-account.model';
 import { PaymentModeService } from '../../services/payment-mode.service';
 import { PaymentMode } from '../../models/payment-mode.model';
 import { DateUtilityService } from '../../services/date-utility.service';
+import { AuthService } from '../../services/auth.service';
 import { Customer } from '../../models/customer.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { Warehouse } from '../../models/warehouse.model';
@@ -95,6 +96,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   filteredVariants: CylinderVariant[] = [];
   customerSearch: string = '';
   variantSearch: string = '';
+  isStaff = false;
   // filteredCustomers: any[] = [];
   // filteredVariants: any[] = [];
   // customerAutocompleteCtrl: FormControl = new FormControl('');
@@ -117,12 +119,16 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     private dataRefreshService: DataRefreshService,
     private paymentModeService: PaymentModeService,
     private dateUtility: DateUtilityService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {
     this.initForm();
   }
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
+    this.applyStaffDateRestriction();
     // OPTIMIZATION: Load all reference data in parallel instead of sequentially
     this.loadReferenceDataInParallel();
     
@@ -175,6 +181,15 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private applyStaffDateRestriction() {
+    if (!this.isStaff) {
+      return;
+    }
+    const today = this.dateUtility.getTodayInIST();
+    this.saleForm.get('saleDate')?.setValue(today, { emitEvent: false });
+    this.saleForm.get('saleDate')?.disable({ emitEvent: false });
   }
 
   /**
@@ -732,10 +747,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     // Calculate total discount (per-unit discount × quantity)
     const totalDiscount = (this.discountPrice || 0) * qtyIssued;
     
+    const saleDate = this.isStaff
+      ? this.dateUtility.getTodayInIST()
+      : (this.saleForm.get('saleDate')?.value || this.dateUtility.getTodayInIST());
     const saleRequest: CreateSaleRequest = {
       warehouseId: warehouseId,
       customerId: customerId,
-      saleDate: this.saleForm.get('saleDate')?.value || this.dateUtility.getTodayInIST(),
+      saleDate: saleDate,
       amountReceived: this.saleForm.get('amountReceived')?.value || 0,
       modeOfPayment: modeOfPayment,
       items: [
@@ -844,5 +862,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.currentDue = null;
     this.dueLoading = false;
     this.dueError = '';
+    this.applyStaffDateRestriction();
   }
 }

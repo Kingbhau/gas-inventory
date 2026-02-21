@@ -12,6 +12,7 @@ import { PaymentModeService } from '../../services/payment-mode.service';
 import { ToastrService } from 'ngx-toastr';
 import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
+import { AuthService } from '../../services/auth.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { WarehouseService } from '../../services/warehouse.service';
 import { BankAccount } from '../../models/bank-account.model';
@@ -52,6 +53,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     currentDue: number | null = null;
     dueLoading = false;
     dueError = '';
+    isStaff = false;
 
     constructor(
         private fb: FormBuilder,
@@ -64,6 +66,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         private loadingService: LoadingService,
         private warehouseService: WarehouseService,
         private dateUtility: DateUtilityService,
+        private authService: AuthService,
         private cdr: ChangeDetectorRef
     ) {
         this.emptyReturnForm = this.fb.group({
@@ -142,6 +145,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        const role = this.authService.getUserInfo()?.role || '';
+        this.isStaff = role === 'STAFF';
+        this.applyStaffDateRestriction();
         this.loadingService.show('Loading customers and variants...');
         this.loadPaymentModes();
         const customerSub = this.customerService.getActiveCustomers()
@@ -194,6 +200,15 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.destroy$.complete();
     }
 
+    private applyStaffDateRestriction() {
+        if (!this.isStaff) {
+            return;
+        }
+        const today = this.dateUtility.getTodayInIST();
+        this.emptyReturnForm.get('transactionDate')?.setValue(today, { emitEvent: false });
+        this.emptyReturnForm.get('transactionDate')?.disable({ emitEvent: false });
+    }
+
     resetForm() {
         // Reset autocomplete components
         if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
@@ -229,6 +244,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.currentDue = null;
         this.dueLoading = false;
         this.dueError = '';
+        this.applyStaffDateRestriction();
         
         // Clear validation state on all controls
         Object.keys(this.emptyReturnForm.controls).forEach(key => {
@@ -437,14 +453,16 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         }
         this.submitting = true;
         
-        const formData = this.emptyReturnForm.value;
+        const formData = this.emptyReturnForm.getRawValue();
         const paymentMode = formData.paymentMode;
         const bankAccountId = formData.bankAccountId;
         
         // Add bankAccountId to request if required by payment mode configuration
         const request: EmptyReturnRequest = {
             ...formData,
-            transactionDate: formData.transactionDate || this.dateUtility.getTodayInIST()
+            transactionDate: this.isStaff
+                ? this.dateUtility.getTodayInIST()
+                : (formData.transactionDate || this.dateUtility.getTodayInIST())
         };
         
         const selectedMode = this.getSelectedPaymentMode(paymentMode);

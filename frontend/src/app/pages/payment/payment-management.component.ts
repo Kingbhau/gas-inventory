@@ -68,6 +68,7 @@ export class PaymentManagementComponent implements OnInit {
   paymentModes: PaymentMode[] = [];
   bankAccounts: BankAccount[] = [];
   ledgerEntries: CustomerCylinderLedger[] = [];
+  isStaff = false;
 
   constructor(
     private customerService: CustomerService,
@@ -87,6 +88,8 @@ export class PaymentManagementComponent implements OnInit {
 
   ngOnInit() {
     this.userName = this.authService.getLoggedInUserName();
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
     this.loadCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
@@ -222,6 +225,9 @@ export class PaymentManagementComponent implements OnInit {
       paymentMode: '',
       bankAccountId: null
     };
+    if (this.isStaff) {
+      this.paymentForm.paymentDate = this.dateUtility.getTodayInIST();
+    }
     this.paymentError = '';
     this.showPaymentForm = true;
     this.cdr.markForCheck();
@@ -235,6 +241,9 @@ export class PaymentManagementComponent implements OnInit {
   }
 
   submitPayment() {
+    if (this.isStaff) {
+      this.paymentForm.paymentDate = this.dateUtility.getTodayInIST();
+    }
     if (!this.paymentForm.amount) {
       this.toastr.error('Please enter a valid payment amount', 'Validation Error');
       return;

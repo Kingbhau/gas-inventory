@@ -576,7 +576,8 @@
           <input 
             [(ngModel)]="paymentForm.paymentDate" 
             type="date" 
-            class="form-control">
+            class="form-control"
+            [disabled]="isStaff">
         </div>
       </div>
       <div class="modal-footer">
