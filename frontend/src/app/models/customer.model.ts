@@ -15,6 +15,8 @@ export interface Customer {
   returnPendingUnits?: number;
   filledUnits?: number;
   configuredVariants?: number[];
+  dueUpdateNote?: string;
+  variantFilledCylinders?: { variantId: number; filledCylinders: number }[];
   createdBy?: string;
   createdDate?: string | Date;
   updatedBy?: string;

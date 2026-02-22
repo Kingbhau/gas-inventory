@@ -154,7 +154,14 @@
                   </div>
                   <div class="details-section">
                     <div class="details-label">Due Amount</div>
-                    <div class="details-value">₹{{ detailsCustomer.dueAmount | number: '1.0-2' }}</div>
+                    <div class="details-value">
+                      ₹{{ detailsCustomer.dueAmount | number: '1.0-2' }}
+                      <div class="details-history-row">
+                        <button type="button" class="details-history-link" (click)="openDueHistoryModal()">
+                          View History
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div class="details-section">
                     <div class="details-label">Security Deposit</div>
@@ -208,6 +215,53 @@
                 </div>
               </div>
             </div>
+
+      <!-- Initial Due Audit History Modal -->
+      <div *ngIf="showDueHistoryModal" class="modal-overlay" (click)="closeDueHistoryModal()">
+        <div class="modal-content" style="max-width: 760px;" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title">Initial Due History</h2>
+              <p class="modal-subtitle">{{ detailsCustomer?.name }}</p>
+            </div>
+            <button class="modal-close" (click)="closeDueHistoryModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            <div *ngIf="dueHistoryEntries.length === 0 && !dueHistoryLoading" class="text-muted" style="text-align:center; padding: 20px;">
+              No history found.
+            </div>
+            <div *ngIf="dueHistoryLoading" class="text-muted" style="text-align:center; padding: 20px;">
+              Loading...
+            </div>
+            <div *ngIf="dueHistoryEntries.length > 0" class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 160px;">Date/Time</th>
+                    <th style="width: 160px;">User</th>
+                    <th style="width: 160px;">Old → New</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let entry of dueHistoryEntries">
+                    <td>{{ entry.createdDate | date: 'dd MMM yyyy, hh:mm a' }}</td>
+                    <td>{{ getCreatedByName(entry.createdBy) }}</td>
+                    <td>₹{{ entry.oldValue || '0' }} → ₹{{ entry.newValue || '0' }}</td>
+                    <td>{{ entry.note || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeDueHistoryModal()">Close</button>
+            <button type="button" class="btn btn-primary" (click)="loadMoreDueHistory()" [disabled]="!dueHistoryHasMore || dueHistoryLoading">
+              {{ dueHistoryLoading ? 'Loading...' : 'Load More' }}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <ng-template #noData>
         <div class="empty-state">
@@ -267,10 +321,19 @@
           <div class="form-group form-group-half">
             <label class="form-label">Initial Due Amount (₹) <span class="required">*</span></label>
             <div class="input-with-prefix">
-              <input formControlName="dueAmount" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
+              <input formControlName="dueAmount" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat (input)="cdr.markForCheck()">
             </div>
             <div *ngIf="customerForm.get('dueAmount')?.invalid && customerForm.get('dueAmount')?.touched" class="form-error">
               <fa-icon [icon]="faExclamation"></fa-icon> Must be a non-negative amount
+            </div>
+          </div>
+        </div>
+        <div class="form-row" *ngIf="editingId && isInitialDueChanged">
+          <div class="form-group form-full-width">
+            <label class="form-label">Initial Due Update Note <span class="required" *ngIf="isInitialDueChanged">*</span></label>
+            <textarea formControlName="dueUpdateNote" class="form-control" rows="2" placeholder="Reason for changing initial due amount"></textarea>
+            <div *ngIf="isInitialDueChanged && !customerForm.get('dueUpdateNote')?.value && customerForm.get('dueUpdateNote')?.touched" class="form-error">
+              <fa-icon [icon]="faExclamation"></fa-icon> Note is required when initial due changes
             </div>
           </div>
         </div>
@@ -458,8 +521,16 @@
                     {{ entry.note }}
                   </div>
                 </td>
-                <td class="text-center">{{ entry.filledOut }}</td>
-                <td class="text-center">{{ entry.emptyIn }}</td>
+                <td class="text-center">
+                  <span *ngIf="entry.refType === 'INITIAL_STOCK'" class="opening-badge">
+                    Opening: {{ entry.filledOut }}
+                  </span>
+                  <span *ngIf="entry.refType !== 'INITIAL_STOCK'">{{ entry.filledOut }}</span>
+                </td>
+                <td class="text-center">
+                  <span *ngIf="entry.refType === 'INITIAL_STOCK'" class="text-muted">—</span>
+                  <span *ngIf="entry.refType !== 'INITIAL_STOCK'">{{ entry.emptyIn }}</span>
+                </td>
                 <td class="text-center" [class.negative]="entry.balance < 0">
                   {{ entry.balance }}
                 </td>
@@ -477,7 +548,7 @@
                                       : 'Edit entry'">
                     <fa-icon [icon]="faEdit"></fa-icon>
                   </button>
-                  <button *ngIf="entry.updateReason" 
+                  <button *ngIf="entry.updateReason && entry.refType !== 'INITIAL_STOCK'" 
                           class="btn-action ms-1" 
                           (click)="openReasonModal(entry)"
                           title="View update reason">

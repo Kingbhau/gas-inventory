@@ -129,14 +129,14 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
 
         @Query("SELECT l FROM CustomerCylinderLedger l " +
                         "WHERE l.refType <> 'INITIAL_STOCK' " +
-                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
-                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
-                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
-                        "AND (:paymentMode IS NULL OR :paymentMode = '' OR LOWER(l.paymentMode) = LOWER(:paymentMode)) " +
-                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
-                        "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
-                        "AND (:minAmount IS NULL OR l.amountReceived >= :minAmount) " +
-                        "AND (:maxAmount IS NULL OR l.amountReceived <= :maxAmount) " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND (COALESCE(:paymentMode, '') = '' OR LOWER(l.paymentMode) = LOWER(:paymentMode)) " +
+                        "AND l.bankAccount.id = COALESCE(:bankAccountId, l.bankAccount.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND l.amountReceived >= COALESCE(:minAmount, l.amountReceived) " +
+                        "AND l.amountReceived <= COALESCE(:maxAmount, l.amountReceived) " +
                         "ORDER BY l.transactionDate DESC, l.id DESC")
         List<CustomerCylinderLedger> findForPaymentModeSummary(
                         @Param("fromDate") LocalDate fromDate,
@@ -169,17 +169,21 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "ORDER BY l.transactionDate ASC, l.id ASC")
         List<CustomerCylinderLedger> findByCustomerOrdered(@Param("customer") Customer customer);
 
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer = :customer " +
+                        "ORDER BY l.id ASC")
+        List<CustomerCylinderLedger> findByCustomerOrderedById(@Param("customer") Customer customer);
+
         boolean existsByCustomerIdAndVariantIdAndRefType(Long customerId, Long variantId,
                         CustomerCylinderLedger.TransactionType refType);
 
         // Get empty return transactions with optional date range and customer/variant filtering
         @Query("SELECT l FROM CustomerCylinderLedger l " +
                         "WHERE l.refType = 'EMPTY_RETURN' " +
-                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
-                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
-                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
-                        "AND (:variantId IS NULL OR l.variant.id = :variantId) " +
-                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND l.createdBy = COALESCE(:createdBy, l.createdBy) " +
                         "ORDER BY l.transactionDate DESC")
         Page<CustomerCylinderLedger> findEmptyReturns(
                         @Param("fromDate") LocalDate fromDate,
@@ -192,12 +196,12 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
         // Get payment transactions with optional date range and customer/mode/bank filtering
         @Query("SELECT l FROM CustomerCylinderLedger l " +
                         "WHERE l.refType = 'PAYMENT' " +
-                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
-                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
-                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
-                        "AND (:paymentMode IS NULL OR l.paymentMode = :paymentMode) " +
-                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
-                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.paymentMode = COALESCE(:paymentMode, l.paymentMode) " +
+                        "AND l.bankAccount.id = COALESCE(:bankAccountId, l.bankAccount.id) " +
+                        "AND l.createdBy = COALESCE(:createdBy, l.createdBy) " +
                         "ORDER BY l.transactionDate DESC, l.id DESC")
         Page<CustomerCylinderLedger> findPayments(
                         @Param("fromDate") LocalDate fromDate,
@@ -210,12 +214,12 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
 
         @Query("SELECT COALESCE(SUM(l.amountReceived), 0) FROM CustomerCylinderLedger l " +
                         "WHERE l.refType = 'PAYMENT' " +
-                        "AND (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
-                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
-                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
-                        "AND (:paymentMode IS NULL OR l.paymentMode = :paymentMode) " +
-                        "AND (:bankAccountId IS NULL OR l.bankAccount.id = :bankAccountId) " +
-                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy)")
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.paymentMode = COALESCE(:paymentMode, l.paymentMode) " +
+                        "AND l.bankAccount.id = COALESCE(:bankAccountId, l.bankAccount.id) " +
+                        "AND l.createdBy = COALESCE(:createdBy, l.createdBy)")
         BigDecimal sumPayments(
                         @Param("fromDate") LocalDate fromDate,
                         @Param("toDate") LocalDate toDate,
@@ -255,13 +259,13 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "COALESCE(SUM(l.totalAmount), 0), COALESCE(SUM(l.amountReceived), 0), " +
                         "MAX(l.transactionDate), COUNT(l) " +
                         "FROM CustomerCylinderLedger l " +
-                        "WHERE (:fromDate IS NULL OR l.transactionDate >= :fromDate) " +
-                        "AND (:toDate IS NULL OR l.transactionDate <= :toDate) " +
-                        "AND (:customerId IS NULL OR l.customer.id = :customerId) " +
+                        "WHERE l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
                         "GROUP BY l.customer.id, l.customer.name, l.customer.mobile, l.customer.address " +
                         "HAVING (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) > 0 " +
-                        "AND (:minAmount IS NULL OR (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) >= :minAmount) " +
-                        "AND (:maxAmount IS NULL OR (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) <= :maxAmount) " +
+                        "AND (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) >= COALESCE(:minAmount, (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0))) " +
+                        "AND (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) <= COALESCE(:maxAmount, (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0))) " +
                         "ORDER BY (COALESCE(SUM(l.totalAmount), 0) - COALESCE(SUM(l.amountReceived), 0)) DESC")
         List<Object[]> findDuePaymentAggregates(
                         @Param("fromDate") LocalDate fromDate,

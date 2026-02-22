@@ -85,6 +85,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponseUtil.success("Customer updated successfully", updated));
     }
 
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<SimpleStatusDTO>> deleteCustomer(@PathVariable Long id) {
         service.deleteCustomer(id);

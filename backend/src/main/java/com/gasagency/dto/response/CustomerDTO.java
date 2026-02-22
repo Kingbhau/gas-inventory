@@ -55,6 +55,8 @@ public class CustomerDTO {
     @DecimalMin(value = "0.0", message = "Due amount must be non-negative")
     private BigDecimal dueAmount;
 
+    private String dueUpdateNote;
+
     private List<VariantFilledCylinder> variantFilledCylinders; // Per-variant filled cylinder counts
 
     /**
@@ -255,6 +257,14 @@ public class CustomerDTO {
 
     public void setDueAmount(BigDecimal dueAmount) {
         this.dueAmount = dueAmount;
+    }
+
+    public String getDueUpdateNote() {
+        return dueUpdateNote;
+    }
+
+    public void setDueUpdateNote(String dueUpdateNote) {
+        this.dueUpdateNote = dueUpdateNote;
     }
 
     public List<VariantFilledCylinder> getVariantFilledCylinders() {

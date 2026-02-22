@@ -130,6 +130,7 @@ export class CustomerService {
       .pipe(applyTimeout(), unwrapApiResponse<Customer>());
   }
 
+
   deleteCustomer(id: number): Observable<SimpleStatusDTO> {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { withCredentials: true })
       .pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
