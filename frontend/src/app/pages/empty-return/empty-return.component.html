@@ -38,6 +38,7 @@
               [displayKey]="'name'"
               placeholder="Select a customer"
               (selectedChange)="onCustomerSelected($event)"
+              (searchChange)="onCustomerSearch($event)"
             ></app-autocomplete-input>
             <div *ngIf="emptyReturnForm.get('customerId')?.invalid && emptyReturnForm.get('customerId')?.touched" class="error-message">
               Customer is required

@@ -24,6 +24,7 @@
           [displayKey]="'name'"
           placeholder="All Customers"
           (selectedChange)="selectedCustomer = $event?.id?.toString() || ''"
+          (searchChange)="onCustomerSearch($event)"
         ></app-autocomplete-input>
       </div>
       <br>

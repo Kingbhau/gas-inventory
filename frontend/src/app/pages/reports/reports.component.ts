@@ -18,7 +18,7 @@ type PaymentModeReportRow = { paymentMode: string; paymentModeCode?: string; tot
 import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList, ViewChild } from '@angular/core';
-import { catchError, of, finalize, Observable } from 'rxjs';
+import { catchError, of, finalize, Observable, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -84,6 +84,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
   @ViewChildren('paymentModeFilterAutocomplete') paymentModeFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
   @ViewChild('returnPendingCustomerAutocomplete') returnPendingCustomerAutocomplete?: AutocompleteInputComponent;
   @ViewChild('returnPendingVariantAutocomplete') returnPendingVariantAutocomplete?: AutocompleteInputComponent;
+  private customerSearch$ = new Subject<string>();
+  private destroy$ = new Subject<void>();
   agencyName: string = '';
         private filtersEverApplied = false;
       // Helper methods for pagination (Angular templates can't use Math)
@@ -315,12 +317,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadInventoryData();
     this.loadSupplierData();
     
-    this.customerService.getAllCustomersAll().subscribe({
-      next: (data) => {
-        this.customersList = data || [];
-      },
-      error: () => { this.customersList = []; }
-    });
+    this.customerSearch$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((term) => this.loadCustomerOptions(term));
+    this.onCustomerSearch('');
     this.variantService.getAllVariantsAll().subscribe({
       next: (data) => {
         this.variantsList = data || [];
@@ -368,7 +368,31 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.loadPendingReturnThreshold();
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onCustomerSearch(term: string) {
+    this.customerSearch$.next(term || '');
+  }
+
+  private loadCustomerOptions(search: string) {
+    this.customerService.getAllCustomers(0, 20, 'name', 'ASC', search)
+      .pipe(
+        catchError(() => of({
+          items: [],
+          totalElements: 0,
+          totalPages: 1,
+          page: 0,
+          size: 20
+        } as PageResponse<Customer>))
+      )
+      .subscribe((response: PageResponse<Customer>) => {
+        this.customersList = response.items || [];
+        this.cdr.markForCheck();
+      });
+  }
 
   onTabChange(tabName: string) {
     this.selectedReport = tabName;

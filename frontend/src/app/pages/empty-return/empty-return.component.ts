@@ -1,4 +1,4 @@
-import { catchError, of, finalize, Subject, takeUntil } from 'rxjs';
+import { catchError, of, finalize, Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -24,6 +24,7 @@ import { Warehouse } from '../../models/warehouse.model';
 import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
 import { InventoryStock } from '../../models/inventory-stock.model';
 import { EmptyReturnRequest } from '../../models/empty-return-request.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
     selector: 'app-empty-return',
@@ -54,6 +55,7 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     dueLoading = false;
     dueError = '';
     isStaff = false;
+    private customerSearch$ = new Subject<string>();
 
     constructor(
         private fb: FormBuilder,
@@ -150,19 +152,10 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         this.applyStaffDateRestriction();
         this.loadingService.show('Loading customers and variants...');
         this.loadPaymentModes();
-        const customerSub = this.customerService.getActiveCustomers()
-            .pipe(
-                catchError((err: unknown) => {
-                    const errorObj = err as { error?: { message?: string }; message?: string };
-                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load customers';
-                    this.toastr.error(errorMessage, 'Error');
-                    return of([] as Customer[]);
-                })
-            )
-            .subscribe((data: Customer[]) => {
-                this.customers = data || [];
-                this.cdr.markForCheck();
-            });
+        this.customerSearch$
+            .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+            .subscribe((term) => this.loadCustomers(term));
+        this.onCustomerSearch('');
         const variantSub = this.variantService.getActiveVariants()
             .pipe(
                 finalize(() => this.loadingService.hide()),
@@ -198,6 +191,32 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    onCustomerSearch(term: string) {
+        this.customerSearch$.next(term || '');
+    }
+
+    private loadCustomers(search: string = '') {
+        this.customerService.getActiveCustomersPaged(0, 20, 'name', 'ASC', search)
+            .pipe(
+                catchError((err: unknown) => {
+                    const errorObj = err as { error?: { message?: string }; message?: string };
+                    const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load customers';
+                    this.toastr.error(errorMessage, 'Error');
+                    return of({
+                        items: [],
+                        totalElements: 0,
+                        totalPages: 1,
+                        page: 0,
+                        size: 20
+                    } as PageResponse<Customer>);
+                })
+            )
+            .subscribe((response: PageResponse<Customer>) => {
+                this.customers = response.items || [];
+                this.cdr.markForCheck();
+            });
     }
 
     private applyStaffDateRestriction() {
