@@ -3,6 +3,7 @@ import { CustomerDueAmount } from '../models/customer-due-amount.model';
 import { CustomerLedgerSummary } from '../models/customer-ledger-summary.model';
 import { LedgerUpdateRequest } from '../models/ledger-update-request.model';
 import { PageResponse } from '../models/page-response';
+import { ReturnPendingSummary } from '../models/return-pending-summary.model';
 import { PaymentsSummary } from '../models/payments-summary.model';
 
 import { Injectable } from '@angular/core';
@@ -76,6 +77,44 @@ export class CustomerCylinderLedgerService {
     getAllReturnPendingSummary(): Observable<CustomerCylinderLedger[]> {
       return this.http.get<any>(`${this.apiUrl}/pending-summary`, { withCredentials: true })
         .pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger[]>());
+    }
+
+    getReturnPendingSummaryPaged(
+      page: number = 0,
+      size: number = 10,
+      sortBy: string = 'balance',
+      direction: string = 'DESC',
+      customerId?: number | null,
+      variantId?: number | null,
+      search?: string | null,
+      status?: string | null
+    ): Observable<PageResponse<CustomerCylinderLedger>> {
+      let params = new HttpParams()
+        .set('page', page.toString())
+        .set('size', size.toString())
+        .set('sortBy', sortBy)
+        .set('direction', direction);
+      if (customerId) params = params.set('customerId', customerId.toString());
+      if (variantId) params = params.set('variantId', variantId.toString());
+      if (search) params = params.set('search', search);
+      if (status) params = params.set('status', status);
+      return this.http.get<any>(`${this.apiUrl}/pending-summary/paged`, { params, withCredentials: true })
+        .pipe(applyTimeout(), unwrapApiResponse<PageResponse<CustomerCylinderLedger>>());
+    }
+
+    getReturnPendingSummaryTotals(
+      customerId?: number | null,
+      variantId?: number | null,
+      search?: string | null,
+      status?: string | null
+    ): Observable<ReturnPendingSummary> {
+      let params = new HttpParams();
+      if (customerId) params = params.set('customerId', customerId.toString());
+      if (variantId) params = params.set('variantId', variantId.toString());
+      if (search) params = params.set('search', search);
+      if (status) params = params.set('status', status);
+      return this.http.get<any>(`${this.apiUrl}/pending-summary/summary`, { params, withCredentials: true })
+        .pipe(applyTimeout(), unwrapApiResponse<ReturnPendingSummary>());
     }
   private apiUrl = getApiUrl('/ledger');
 

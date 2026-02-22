@@ -17,7 +17,7 @@ type PaymentModeReportRow = { paymentMode: string; paymentModeCode?: string; tot
 
 import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, ViewChildren, QueryList, ViewChild } from '@angular/core';
 import { catchError, of, finalize, Observable } from 'rxjs';
 import { SharedModule } from '../../shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -59,6 +59,7 @@ import { PaymentModeSummary, PaymentModeStats } from '../../models/payment-mode-
 import { PageResponse } from '../../models/page-response';
 import { AlertConfig } from '../../models/alert-config.model';
 import { CustomerCylinderLedger } from '../../models/customer-cylinder-ledger.model';
+import { ReturnPendingSummary } from '../../models/return-pending-summary.model';
 
 
 
@@ -81,6 +82,8 @@ export class ReportsComponent implements OnInit, OnDestroy {
   @ViewChildren('salesFilterAutocomplete') salesFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
   @ViewChildren('duePaymentFilterAutocomplete') duePaymentFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
   @ViewChildren('paymentModeFilterAutocomplete') paymentModeFilterAutocompletes!: QueryList<AutocompleteInputComponent>;
+  @ViewChild('returnPendingCustomerAutocomplete') returnPendingCustomerAutocomplete?: AutocompleteInputComponent;
+  @ViewChild('returnPendingVariantAutocomplete') returnPendingVariantAutocomplete?: AutocompleteInputComponent;
   agencyName: string = '';
         private filtersEverApplied = false;
       // Helper methods for pagination (Angular templates can't use Math)
@@ -160,9 +163,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       return flattened;
     }
     get paginatedReturnPendingData() {
-      const startIndex = (this.returnPendingPage - 1) * this.returnPendingPageSize;
-      const endIndex = startIndex + this.returnPendingPageSize;
-      return this.returnPendingData.slice(startIndex, endIndex);
+      return this.returnPendingData;
     }
     get paginatedInventoryData() {
       return this.inventoryData;
@@ -181,7 +182,9 @@ export class ReportsComponent implements OnInit, OnDestroy {
   filterMaxAmount: number | null = null;
   filterSalesReference: string = '';
   filterSalesCreatedBy: string = '';
+  filterReturnPendingCustomerId: string = '';
   filterReturnPendingVariantId: string = '';
+  filterReturnPendingStatus: string = '';
   filterInventoryWarehouseId: string = '';
   filterDuePaymentCustomerId: string = '';
   filterDuePaymentMinAmount: number | null = null;
@@ -234,6 +237,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
   // Return Pending Data
   returnPendingData: ReturnPendingRow[] = [];
   pendingReturnThreshold: number | null = null; // null means not configured, fallback to 10 for calculations
+  returnPendingSummary: ReturnPendingSummary = {
+    totalReturnPending: 0,
+    customersWithReturnPending: 0,
+    highRiskCount: 0,
+    pendingReturnThreshold: null
+  };
 
   // Inventory Data
   inventoryData: InventoryReportRow[] = [];
@@ -405,30 +414,78 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   loadReturnPendingData() {
-    // Simulate paging for return pending (if backend supports, update here)
-    const sub = this.ledgerService.getAllReturnPendingSummary()
+    const customerId = this.filterReturnPendingCustomerId ? Number(this.filterReturnPendingCustomerId) : undefined;
+    const variantId = this.filterReturnPendingVariantId ? Number(this.filterReturnPendingVariantId) : undefined;
+    const status = this.filterReturnPendingStatus || undefined;
+    const sub = this.ledgerService.getReturnPendingSummaryPaged(
+      this.returnPendingPage - 1,
+      this.returnPendingPageSize,
+      'balance',
+      'DESC',
+      customerId,
+      variantId,
+      undefined,
+      status
+    )
       .pipe(
         catchError((error: any) => {
           const errorMessage = error?.error?.message || error?.message || 'Error loading return pending data';
           this.toastr.error(errorMessage, 'Error');
-          return of([]);
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: this.returnPendingPage - 1,
+            size: this.returnPendingPageSize
+          } as PageResponse<CustomerCylinderLedger>);
         })
       )
-      .subscribe((data: CustomerCylinderLedger[]) => {
-        // Store the full transformed data
-        this.returnPendingData = data
+      .subscribe((response: PageResponse<CustomerCylinderLedger>) => {
+        this.returnPendingData = (response.items || [])
           .filter((ledger) => ledger != null)
           .map((ledger) => ({
             customer: ledger.customerName || 'Unknown',
             variant: ledger.variantName || 'Unknown',
             returnPending: ledger.balance || 0
           }));
-        // Calculate pagination based on full data
-        this.returnPendingTotalElements = this.returnPendingData.length;
-        this.returnPendingTotalPages = Math.ceil(this.returnPendingData.length / this.returnPendingPageSize) || 1;
+        this.returnPendingTotalElements = response.totalElements || 0;
+        this.returnPendingTotalPages = response.totalPages || 1;
+
+        this.ledgerService.getReturnPendingSummaryTotals(customerId, variantId, undefined, status)
+          .pipe(
+            catchError(() => of({
+              totalReturnPending: 0,
+              customersWithReturnPending: 0,
+              highRiskCount: 0,
+              pendingReturnThreshold: null
+            }))
+          )
+          .subscribe((summary) => {
+            this.returnPendingSummary = summary;
+            if (summary.pendingReturnThreshold !== undefined) {
+              this.pendingReturnThreshold = summary.pendingReturnThreshold ?? null;
+            }
+            this.cdr.markForCheck();
+          });
+
         this.cdr.markForCheck();
         sub.unsubscribe();
       });
+  }
+
+  applyReturnPendingFilters() {
+    this.returnPendingPage = 1;
+    this.loadReturnPendingData();
+  }
+
+  resetReturnPendingFilters() {
+    this.filterReturnPendingCustomerId = '';
+    this.filterReturnPendingVariantId = '';
+    this.filterReturnPendingStatus = '';
+    this.returnPendingPage = 1;
+    this.returnPendingCustomerAutocomplete?.resetInput();
+    this.returnPendingVariantAutocomplete?.resetInput();
+    this.loadReturnPendingData();
   }
 
   loadInventoryData() {
@@ -610,20 +667,15 @@ export class ReportsComponent implements OnInit, OnDestroy {
     return this.summaryTransactionCount;
   }
   get filteredReturnPendingData(): any[] {
-    if (!Array.isArray(this.returnPendingData)) return [];
-    if (!this.filterReturnPendingVariantId) return this.returnPendingData;
-    return this.returnPendingData.filter(item => item.variant === this.filterReturnPendingVariantId);
+    return this.returnPendingData;
   }
 
   get totalReturnPending(): number {
-    return this.filteredReturnPendingData.reduce((sum, item) => {
-      const pending = Number(item.returnPending) || 0;
-      return sum + (pending > 0 ? pending : 0);
-    }, 0);
+    return this.returnPendingSummary.totalReturnPending || 0;
   }
 
   get customersWithReturnPending(): number {
-    return this.filteredReturnPendingData.filter(item => (Number(item.returnPending) || 0) > 0).length;
+    return this.returnPendingSummary.customersWithReturnPending || 0;
   }
 
   get highRiskCount(): number {
@@ -632,8 +684,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
 
   getHighRiskReturnPendingCount(): number {
-    if (this.pendingReturnThreshold === null) return 0; // No threshold configured, no high risk
-    return this.filteredReturnPendingData.filter(item => item.returnPending > (this.pendingReturnThreshold ?? 0)).length;
+    return this.returnPendingSummary.highRiskCount || 0;
   }
 
   getReturnPendingStatus(returnPending: number): string {

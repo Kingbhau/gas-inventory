@@ -323,6 +323,75 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
 
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
                         "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer.active = true GROUP BY l2.customer.id, l2.variant.id) " +
+                        "AND COALESCE(l.balance, 0) > 0 " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND (COALESCE(:search, '') = '' OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%')) " +
+                        "AND (COALESCE(:status, '') = '' " +
+                        "OR (:status = 'PENDING' AND (:threshold IS NULL OR COALESCE(l.balance, 0) <= :threshold)) " +
+                        "OR (:status = 'HIGH_RISK' AND (:threshold IS NOT NULL AND COALESCE(l.balance, 0) > :threshold)))")
+        Page<CustomerCylinderLedger> findPendingReturnBalancesPaged(
+                        @Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId,
+                        @Param("search") String search,
+                        @Param("status") String status,
+                        @Param("threshold") Long threshold,
+                        Pageable pageable);
+
+        @Query("SELECT COALESCE(SUM(l.balance), 0) FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer.active = true GROUP BY l2.customer.id, l2.variant.id) " +
+                        "AND COALESCE(l.balance, 0) > 0 " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND (COALESCE(:search, '') = '' OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%')) " +
+                        "AND (COALESCE(:status, '') = '' " +
+                        "OR (:status = 'PENDING' AND (:threshold IS NULL OR COALESCE(l.balance, 0) <= :threshold)) " +
+                        "OR (:status = 'HIGH_RISK' AND (:threshold IS NOT NULL AND COALESCE(l.balance, 0) > :threshold)))")
+        Long sumPendingReturnBalances(
+                        @Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId,
+                        @Param("search") String search,
+                        @Param("status") String status,
+                        @Param("threshold") Long threshold);
+
+        @Query("SELECT COUNT(l) FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer.active = true GROUP BY l2.customer.id, l2.variant.id) " +
+                        "AND COALESCE(l.balance, 0) > 0 " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND (COALESCE(:search, '') = '' OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%')) " +
+                        "AND (COALESCE(:status, '') = '' " +
+                        "OR (:status = 'PENDING' AND (:threshold IS NULL OR COALESCE(l.balance, 0) <= :threshold)) " +
+                        "OR (:status = 'HIGH_RISK' AND (:threshold IS NOT NULL AND COALESCE(l.balance, 0) > :threshold)))")
+        long countPendingReturnBalances(
+                        @Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId,
+                        @Param("search") String search,
+                        @Param("status") String status,
+                        @Param("threshold") Long threshold);
+
+        @Query("SELECT COUNT(l) FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
+                        "WHERE l2.customer.active = true GROUP BY l2.customer.id, l2.variant.id) " +
+                        "AND COALESCE(l.balance, 0) > :threshold " +
+                        "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
+                        "AND l.variant.id = COALESCE(:variantId, l.variant.id) " +
+                        "AND (COALESCE(:search, '') = '' OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%'))")
+        long countHighRiskPendingReturnBalances(
+                        @Param("threshold") Long threshold,
+                        @Param("customerId") Long customerId,
+                        @Param("variantId") Long variantId,
+                        @Param("search") String search);
+
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 " +
                         "WHERE l2.customer.id IN :customerIds GROUP BY l2.customer.id)")
         List<CustomerCylinderLedger> findLatestLedgerForCustomerIds(
                         @Param("customerIds") List<Long> customerIds);

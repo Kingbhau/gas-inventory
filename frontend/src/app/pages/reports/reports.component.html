@@ -515,22 +515,50 @@
     </div>
   </div>
 
+  <!-- Return Pending Filters -->
+  <div *ngIf="selectedReport === 'returnPending'" class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">Customer</label>
+        <app-autocomplete-input
+          #returnPendingCustomerAutocomplete
+          [items]="customersList"
+          [displayKey]="'name'"
+          placeholder="All Customers"
+          (selectedChange)="filterReturnPendingCustomerId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Variant</label>
+        <app-autocomplete-input
+          #returnPendingVariantAutocomplete
+          [items]="variantsList"
+          [displayKey]="'name'"
+          placeholder="All"
+          (selectedChange)="filterReturnPendingVariantId = $event?.id?.toString() || ''"
+        ></app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <select class="filter-input" [(ngModel)]="filterReturnPendingStatus">
+          <option value="">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="HIGH_RISK">High Risk</option>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button (click)="applyReturnPendingFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetReturnPendingFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Return Pending Cylinders Report -->
   <div *ngIf="selectedReport === 'returnPending'" class="card">
     <div class="card-header">
       <h3 class="card-title">Return Pending Cylinders Report</h3>
     </div>
     <div class="card-body">
-      <div class="filter-row" style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
-        <div class="filter-group" style="min-width: 200px; margin: 0;">
-          <app-autocomplete-input
-            [items]="variantsList"
-            [displayKey]="'name'"
-            placeholder="All"
-            (selectedChange)="filterReturnPendingVariantId = $event?.name || ''"
-          ></app-autocomplete-input>
-        </div>
-      </div>
       <div class="report-summary">
         <div class="summary-card">
           <span class="label">Total Return Pending</span>
@@ -558,7 +586,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of paginatedReturnPendingData | variantReturnPendingFilter:filterReturnPendingVariantId">
+              <tr *ngFor="let item of paginatedReturnPendingData">
                 <td>{{ item.customer }}</td>
                 <td>{{ item.variant }}</td>
                 <td class="text-center">{{ item.returnPending }}</td>

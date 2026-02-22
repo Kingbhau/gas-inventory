@@ -6,6 +6,7 @@ import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
 import com.gasagency.dto.response.CustomerDueAmountDTO;
 import com.gasagency.dto.request.CustomerDueAmountsRequestDTO;
 import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
+import com.gasagency.dto.response.ReturnPendingSummaryDTO;
 import com.gasagency.dto.request.LedgerUpdateRequestDTO;
 import com.gasagency.dto.request.PaymentRequestDTO;
 import com.gasagency.dto.response.PaymentsSummaryDTO;
@@ -37,6 +38,33 @@ public class CustomerCylinderLedgerController {
     public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getAllPendingBalances() {
         return ResponseEntity.ok(ApiResponseUtil.success("Pending balances retrieved successfully",
                 service.getAllPendingBalances()));
+    }
+
+    @GetMapping("/pending-summary/paged")
+    public ResponseEntity<ApiResponse<PagedResponseDTO<CustomerCylinderLedgerDTO>>> getPendingBalancesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "balance") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<CustomerCylinderLedgerDTO> result = service.getPendingReturnBalancesPaged(
+                customerId, variantId, search, status, pageable);
+        return ResponseEntity.ok(ApiResponseUtil.success("Pending balances retrieved successfully", result));
+    }
+
+    @GetMapping("/pending-summary/summary")
+    public ResponseEntity<ApiResponse<ReturnPendingSummaryDTO>> getPendingBalancesSummary(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status) {
+        ReturnPendingSummaryDTO summary = service.getPendingReturnSummary(customerId, variantId, search, status);
+        return ResponseEntity.ok(ApiResponseUtil.success("Pending balances summary retrieved successfully", summary));
     }
 
     private final CustomerCylinderLedgerService service;

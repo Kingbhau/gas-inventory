@@ -57,6 +57,12 @@ export class DayBookComponent implements OnInit, OnDestroy {
     variantName: string;
     emptyCount: number;
   }> = [];
+  paymentModeBreakdown: Array<{
+    mode: string;
+    amount: number;
+    count: number;
+  }> = [];
+  showPaymentModeBreakdownModal = false;
   selectedDate: string = '';
   isLoading = false;
   filterCreatedBy = '';
@@ -171,12 +177,14 @@ export class DayBookComponent implements OnInit, OnDestroy {
                   this.dayBookSummary = this.buildSummaryFromTransactions(filteredTransactions);
                   this.dayBookTypeSummaries = this.buildTypeSummaries(filteredTransactions);
                   this.setVariantSummaries(filteredTransactions);
+                  this.setPaymentModeBreakdown(filteredTransactions);
                   this.applyPaginationFromTransactions(filteredTransactions);
                 } else {
                   this.dayBookSummary = summaryResponse;
                   this.dayBookTransactions = summaryResponse.transactions || [];
                   this.dayBookTypeSummaries = this.buildTypeSummaries(this.dayBookTransactions);
                   this.setVariantSummaries(this.dayBookTransactions);
+                  this.setPaymentModeBreakdown(this.dayBookTransactions);
                 }
                 this.cdr.markForCheck();
               },
@@ -185,6 +193,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                   this.dayBookSummary = this.buildSummaryFromTransactions(this.paginatedDayBookTransactions);
                   this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
                   this.setVariantSummaries(this.paginatedDayBookTransactions);
+                  this.setPaymentModeBreakdown(this.paginatedDayBookTransactions);
                 }
               }
             });
@@ -199,6 +208,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
           this.variantSummaries = [];
           this.filledVariantSummaries = [];
           this.emptyVariantSummaries = [];
+          this.paymentModeBreakdown = [];
           this.cdr.markForCheck();
         }
       });
@@ -452,6 +462,36 @@ export class DayBookComponent implements OnInit, OnDestroy {
     this.emptyVariantSummaries = this.variantSummaries
       .filter(summary => summary.emptyCount > 0)
       .map(summary => ({ variantName: summary.variantName, emptyCount: summary.emptyCount }));
+  }
+
+  private setPaymentModeBreakdown(transactions: DayBook[]): void {
+    const summaryMap = new Map<string, { mode: string; amount: number; count: number }>();
+    (transactions || []).forEach(tx => {
+      const received = Number(tx?.amountReceived) || 0;
+      if (received <= 0) {
+        return;
+      }
+      const rawMode = typeof tx?.paymentMode === 'string' ? tx.paymentMode.trim() : '';
+      const mode = rawMode || 'Unknown';
+      const key = mode.toLowerCase();
+      const existing = summaryMap.get(key) || { mode, amount: 0, count: 0 };
+      existing.amount += received;
+      existing.count += 1;
+      summaryMap.set(key, existing);
+    });
+    this.paymentModeBreakdown = Array.from(summaryMap.values())
+      .sort((a, b) => b.amount - a.amount);
+  }
+
+  openPaymentModeBreakdown() {
+    if (this.paymentModeBreakdown.length === 0) {
+      return;
+    }
+    this.showPaymentModeBreakdownModal = true;
+  }
+
+  closePaymentModeBreakdown() {
+    this.showPaymentModeBreakdownModal = false;
   }
 
   private getTransferQuantity(details?: string | null): number {

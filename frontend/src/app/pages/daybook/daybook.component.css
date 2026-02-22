@@ -205,6 +205,79 @@
   font-weight: 500;
 }
 
+.payment-mode-breakdown {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-mode-breakdown.compact {
+  display: block;
+}
+
+.mode-inline-label {
+  font-weight: 600;
+  margin-right: 4px;
+  color: #334155;
+}
+
+.mode-inline-item {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.mode-inline-sep {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.view-breakdown-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.view-breakdown-link:hover {
+  text-decoration: none;
+}
+
+.payment-breakdown-modal {
+  max-width: 420px;
+}
+
+.payment-breakdown-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.payment-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.payment-breakdown-mode {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.payment-breakdown-amount {
+  font-weight: 700;
+  color: #2563eb;
+}
+
 /* Table */
 .table-wrapper {
   overflow-x: auto;
@@ -340,6 +413,72 @@
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: #0f172a;
+}
+
+.modal-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 1rem 1.25rem;
+}
+
+.modal-footer {
+  padding: 0.75rem 1.25rem 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 /* Responsive */
