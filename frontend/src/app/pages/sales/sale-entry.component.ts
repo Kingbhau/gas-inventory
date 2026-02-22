@@ -34,6 +34,7 @@ import { Warehouse } from '../../models/warehouse.model';
 import { CreateSaleRequest, SaleItemRequest } from '../../models/create-sale-request.model';
 import { CustomerVariantPrice } from '../../models/customer-variant-price.model';
 import { Sale } from '../../models/sale.model';
+import { PageResponse } from '../../models/page-response';
 
 @Component({
   selector: 'app-sale-entry',
@@ -48,6 +49,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   @ViewChild('variantAutocomplete') variantAutocomplete?: AutocompleteInputComponent;
   
   private destroy$ = new Subject<void>();
+  private customerSearch$ = new Subject<string>();
   saleForm!: FormGroup;
   successMessage = '';
   baseAmount = 0;
@@ -129,6 +131,10 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const role = this.authService.getUserInfo()?.role || '';
     this.isStaff = role === 'STAFF';
     this.applyStaffDateRestriction();
+    this.customerSearch$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((term) => this.loadCustomerOptions(term));
+    this.onCustomerSearch('');
     // OPTIMIZATION: Load all reference data in parallel instead of sequentially
     this.loadReferenceDataInParallel();
     
@@ -136,44 +142,32 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     this.dataRefreshService.customerUpdated$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
-        this.customerService.getActiveCustomers()
+        this.onCustomerSearch('');
+        const currentCustomerId = this.saleForm.get('customerId')?.value?.id;
+        const currentVariantId = this.saleForm.get('variantId')?.value?.id;
+        if (!currentCustomerId) {
+          return;
+        }
+        this.customerService.getCustomer(currentCustomerId)
           .pipe(takeUntil(this.destroy$))
           .subscribe({
-            next: (customers) => {
-              this.customers = customers || [];
-              this.filteredCustomers = this.customers;
-              
-              // Get current selections
-              const currentCustomerId = this.saleForm.get('customerId')?.value?.id;
-              const currentVariantId = this.saleForm.get('variantId')?.value?.id;
-              
-              // If a customer is currently selected, re-filter variants
-              if (currentCustomerId) {
-                const updatedCustomer = this.customers.find(c => c.id === currentCustomerId);
-                if (updatedCustomer) {
-                  // Update the selected customer object in the form with fresh data
-                  this.saleForm.patchValue({ customerId: updatedCustomer }, { emitEvent: false });
-                  
-                  // Re-filter variants based on updated customer config
-                  this.filterVariantsByCustomerConfig(currentCustomerId);
-                  
-                  // If the previously selected variant is no longer configured, clear it
-                  if (currentVariantId && this.filteredVariants && this.filteredVariants.length > 0) {
-                    const variantStillAvailable = this.filteredVariants.some(v => v.id === currentVariantId);
-                    if (!variantStillAvailable) {
-                      this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
-                    }
-                  } else if (!currentVariantId || !this.filteredVariants || this.filteredVariants.length === 0) {
-                    // Clear variant if no variants are now available
-                    this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
-                  }
-                }
+            next: (updatedCustomer) => {
+              if (!updatedCustomer) {
+                return;
               }
-              
+              this.saleForm.patchValue({ customerId: updatedCustomer }, { emitEvent: false });
+              this.filterVariantsByCustomerConfig(currentCustomerId);
+              if (currentVariantId && this.filteredVariants && this.filteredVariants.length > 0) {
+                const variantStillAvailable = this.filteredVariants.some(v => v.id === currentVariantId);
+                if (!variantStillAvailable) {
+                  this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
+                }
+              } else if (!currentVariantId || !this.filteredVariants || this.filteredVariants.length === 0) {
+                this.saleForm.patchValue({ variantId: null }, { emitEvent: false });
+              }
               this.cdr.markForCheck();
             },
-            error: (err) => {
-            }
+            error: () => {}
           });
       });
   }
@@ -200,7 +194,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   private loadReferenceDataInParallel(): void {
     this.loadingService.show('Loading form data...');
     forkJoin([
-      this.customerService.getActiveCustomers(),
       this.variantService.getActiveVariants(),
       this.warehouseService.getActiveWarehouses(),
       this.paymentModeService.getActivePaymentModes(),
@@ -211,13 +204,11 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     )
     .subscribe({
-      next: ([customers, variants, warehouses, paymentModes, bankAccounts]) => {
-        this.customers = customers || [];
+      next: ([variants, warehouses, paymentModes, bankAccounts]) => {
         this.variants = variants || [];
         this.warehouses = warehouses || [];
         this.paymentModes = paymentModes || [];
         this.bankAccounts = bankAccounts || [];
-        this.filteredCustomers = this.customers;
         this.filteredVariants = this.variants;
         this.cdr.markForCheck();
       },
@@ -291,6 +282,33 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           bankAccountControl?.clearValidators();
         }
         bankAccountControl?.updateValueAndValidity();
+        this.cdr.markForCheck();
+      });
+  }
+
+  onCustomerSearch(term: string) {
+    this.customerSearch$.next(term || '');
+  }
+
+  private loadCustomerOptions(search: string) {
+    this.customerService.getActiveCustomersPaged(0, 20, 'name', 'ASC', search)
+      .pipe(
+        catchError((err: unknown) => {
+          const errorObj = err as { error?: { message?: string }; message?: string };
+          const errorMessage = errorObj?.error?.message || errorObj?.message || 'Failed to load customers';
+          this.toastr.error(errorMessage, 'Error');
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: 0,
+            size: 20
+          } as PageResponse<Customer>);
+        })
+      )
+      .subscribe((response: PageResponse<Customer>) => {
+        this.customers = response.items || [];
+        this.filteredCustomers = this.customers;
         this.cdr.markForCheck();
       });
   }

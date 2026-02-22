@@ -20,6 +20,7 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
   @Input() selected: T | null = null;
 
   @Output() selectedChange = new EventEmitter<T | null>();
+  @Output() searchChange = new EventEmitter<string>();
   @ViewChild('searchInput') searchInput!: ElementRef;
 
   searchText: string = '';
@@ -46,6 +47,7 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
 
   onFocus() {
     this.isOpen = true;
+    this.searchChange.emit((this.searchText || '').trim());
     this.cdr.markForCheck();
   }
 
@@ -57,6 +59,7 @@ export class AutocompleteInputComponent<T = any> implements OnChanges {
   }
 
   onInputChange() {
+    this.searchChange.emit((this.searchText || '').trim());
     // If input is cleared, emit null to clear the form value
     if (!this.searchText || this.searchText.trim() === '') {
       this.selected = null;

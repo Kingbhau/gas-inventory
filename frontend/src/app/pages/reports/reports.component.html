@@ -38,6 +38,7 @@
           [displayKey]="'name'"
           placeholder="All"
           (selectedChange)="filterCustomerId = $event?.id?.toString() || ''"
+          (searchChange)="onCustomerSearch($event)"
         ></app-autocomplete-input>
       </div>
       <div class="filter-group">
@@ -281,6 +282,7 @@
           [displayKey]="'name'"
           placeholder="All"
           (selectedChange)="filterDuePaymentCustomerId = $event?.id?.toString() || ''"
+          (searchChange)="onCustomerSearch($event)"
         ></app-autocomplete-input>
       </div>
       <div class="filter-group">
@@ -423,6 +425,7 @@
           [displayKey]="'name'"
           placeholder="All"
           (selectedChange)="filterPaymentModeCustomerId = $event?.id?.toString() || ''"
+          (searchChange)="onCustomerSearch($event)"
         ></app-autocomplete-input>
       </div>
       <div class="filter-group">
@@ -526,6 +529,7 @@
           [displayKey]="'name'"
           placeholder="All Customers"
           (selectedChange)="filterReturnPendingCustomerId = $event?.id?.toString() || ''"
+          (searchChange)="onCustomerSearch($event)"
         ></app-autocomplete-input>
       </div>
       <div class="filter-group">

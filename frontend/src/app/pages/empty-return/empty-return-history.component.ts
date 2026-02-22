@@ -10,7 +10,7 @@ import { CustomerService } from '../../services/customer.service';
 import { CylinderVariantService } from '../../services/cylinder-variant.service';
 import { LoadingService } from '../../services/loading.service';
 import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
-import { finalize } from 'rxjs';
+import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil, catchError, of } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
@@ -68,6 +68,8 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
   users: User[] = [];
   originalEmptyReturnsMap: Map<number, EmptyReturnRow> = new Map();
   isStaff = false;
+  private customerSearch$ = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private ledgerService: CustomerCylinderLedgerService,
@@ -84,7 +86,10 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     const role = this.authService.getUserInfo()?.role || '';
     this.isStaff = role === 'STAFF';
     this.loadEmptyReturns();
-    this.loadCustomers();
+    this.customerSearch$
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((term) => this.loadCustomers(term));
+    this.onCustomerSearch('');
     if (!this.isStaff) {
       this.loadUsers();
     }
@@ -100,7 +105,10 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   loadEmptyReturns() {
     const fromDate = this.filterFromDate || undefined;
@@ -171,21 +179,30 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadCustomers() {
-    this.loadingService.show('Loading customers...');
-    this.customerService.getAllCustomersAll()
-      .pipe(finalize(() => this.loadingService.hide()))
-      .subscribe({
-        next: (data: Customer[]) => {
-          this.customersList = data;
-          this.cdr.markForCheck();
-        },
-        error: (error: unknown) => {
+  loadCustomers(search: string = '') {
+    this.customerService.getAllCustomers(0, 20, 'name', 'ASC', search)
+      .pipe(
+        catchError((error: unknown) => {
           const err = error as { error?: { message?: string }; message?: string };
           const errorMessage = err?.error?.message || err?.message || 'Error loading customers';
           this.toastr.error(errorMessage, 'Error');
-        }
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 1,
+            page: 0,
+            size: 20
+          } as PageResponse<Customer>);
+        })
+      )
+      .subscribe((data: PageResponse<Customer>) => {
+        this.customersList = data.items || [];
+        this.cdr.markForCheck();
       });
+  }
+
+  onCustomerSearch(term: string) {
+    this.customerSearch$.next(term || '');
   }
 
   applyFilters() {
