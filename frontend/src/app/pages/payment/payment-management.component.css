@@ -181,6 +181,71 @@
   gap: var(--spacing-lg);
 }
 
+/* Card List */
+.payment-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.payment-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.payment-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-card-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.payment-card-phone {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+
+.payment-card-body {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.payment-card-due {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.payment-card-due-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.payment-card-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-pay {
+  width: 100%;
+  justify-content: center;
+}
+
 /* Table */
 .table-wrapper {
   overflow-x: auto;

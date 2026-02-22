@@ -221,7 +221,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   availableReports: ReportOption[] = [
     { id: 'sales', name: 'Sales Report', icon: faShoppingCart },
     { id: 'expenses', name: 'Expenses Report', icon: faReceipt },
-    { id: 'customerDuePayment', name: 'Customer Due Payment', icon: faFileInvoice },
+    { id: 'customerDuePayment', name: 'Customer Due Payment Collection', icon: faFileInvoice },
     { id: 'paymentModes', name: 'Payment Mode Report', icon: faBank },
     { id: 'returnPending', name: 'Return Pending', icon: faHourglassEnd },
     { id: 'inventory', name: 'Inventory', icon: faBox },

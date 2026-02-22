@@ -255,11 +255,18 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0 ORDER BY l.dueAmount DESC")
         Page<CustomerCylinderLedger> findLatestDuePerCustomer(Pageable pageable);
 
+        @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.id IN " +
+                        "(SELECT MAX(l2.id) FROM CustomerCylinderLedger l2 WHERE l2.customer.active = true GROUP BY l2.customer.id) " +
+                        "AND l.customer.active = true " +
+                        "AND l.dueAmount IS NOT NULL AND l.dueAmount > 0 ORDER BY l.dueAmount DESC")
+        Page<CustomerCylinderLedger> findLatestDuePerCustomerActive(Pageable pageable);
+
         @Query("SELECT l.customer.id, l.customer.name, l.customer.mobile, l.customer.address, " +
                         "COALESCE(SUM(l.totalAmount), 0), COALESCE(SUM(l.amountReceived), 0), " +
                         "MAX(l.transactionDate), COUNT(l) " +
                         "FROM CustomerCylinderLedger l " +
-                        "WHERE l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "WHERE l.customer.active = true " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
                         "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
                         "AND l.customer.id = COALESCE(:customerId, l.customer.id) " +
                         "GROUP BY l.customer.id, l.customer.name, l.customer.mobile, l.customer.address " +

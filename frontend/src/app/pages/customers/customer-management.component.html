@@ -452,6 +452,39 @@
     </div>
   </div>
 
+  <!-- Duplicate Name Confirmation Modal -->
+  <div *ngIf="showDuplicateNameConfirm" class="modal-overlay" (click)="closeDuplicateNameConfirm()">
+    <div class="modal-content duplicate-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Possible Duplicate</h2>
+          <p class="modal-subtitle">Customers with the same name already exist.</p>
+        </div>
+        <button class="modal-close" (click)="closeDuplicateNameConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="duplicate-list">
+          <div class="duplicate-item" *ngFor="let match of duplicateNameMatches">
+            <div class="duplicate-avatar">
+              {{ match.name ? (match.name[0] | uppercase) : '?' }}
+            </div>
+            <div class="duplicate-details">
+              <div class="duplicate-name">{{ match.name }}</div>
+              <div class="duplicate-phone">{{ match.mobile }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="duplicate-note">
+          If this is a different person, you can still create a new customer.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDuplicateNameConfirm()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="confirmDuplicateNameCreate()">Create New Customer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Ledger Modal -->
   <div *ngIf="showLedger" class="modal-overlay" (click)="closeLedger()">
     <div class="modal-content wide" (click)="$event.stopPropagation()">

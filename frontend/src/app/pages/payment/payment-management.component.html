@@ -1,8 +1,8 @@
 <div class="payment-container">
   <!-- Page Header -->
   <div class="page-header">
-    <h1 class="page-title">Payments</h1>
-    <p class="page-subtitle">Record and track customer payments</p>
+    <h1 class="page-title">Payment Collection</h1>
+    <p class="page-subtitle">Record and track customer payment collections</p>
   </div>
 
   <!-- Search Section -->
@@ -27,33 +27,28 @@
         <span class="record-count">{{ paymentTotalElements }} customers</span>
       </div>
       <div class="card-body">
-        <div *ngIf="filteredCustomers.length > 0; else noCustomers" class="table-wrapper">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Customer Name</th>
-                <th>Phone</th>
-                <th>Due Amount</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let customer of paginatedCustomers">
-                <td><strong>{{ customer.name }}</strong></td>
-                <td>{{ customer.mobile }}</td>
-                <td class="due-amount">₹{{ customer.dueAmount ? (customer.dueAmount | number: '1.2-2') : '0.00' }}</td>
-                <td>
-                  <button 
-                    class="btn-action" 
-                    (click)="selectAndPayment(customer)"
-                    title="Record Payment"
-                  >
-                    Pay
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div *ngIf="filteredCustomers.length > 0; else noCustomers" class="payment-cards">
+          <div class="payment-card" *ngFor="let customer of paginatedCustomers">
+            <div class="payment-card-header">
+              <div class="payment-card-title">{{ customer.name }}</div>
+              <div class="payment-card-phone">{{ customer.mobile }}</div>
+            </div>
+            <div class="payment-card-body">
+              <div class="payment-card-due">
+                ₹{{ customer.dueAmount ? (customer.dueAmount | number: '1.2-2') : '0.00' }}
+              </div>
+              <div class="payment-card-due-label">Due Amount</div>
+            </div>
+            <div class="payment-card-footer">
+              <button 
+                class="btn btn-primary btn-pay"
+                (click)="selectAndPayment(customer)"
+                title="Record Payment"
+              >
+                Collect Payment
+              </button>
+            </div>
+          </div>
         </div>
 
         <ng-template #noCustomers>

@@ -278,7 +278,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
       case 'EMPTY_RETURN':
         return 'Empty Return';
       case 'PAYMENT':
-        return 'Payment';
+        return 'Payment Collection';
       case 'TRANSFER':
         return 'Ledger Transfer';
       case 'WAREHOUSE_TRANSFER':
