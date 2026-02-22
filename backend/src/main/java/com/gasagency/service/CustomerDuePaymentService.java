@@ -51,7 +51,7 @@ public class CustomerDuePaymentService {
             // Fast path: no filters, use latest due per customer (database query)
             if (fromDate == null && toDate == null && customerId == null
                     && minAmount == null && maxAmount == null) {
-                Page<CustomerCylinderLedger> page = ledgerRepository.findLatestDuePerCustomer(pageable);
+                Page<CustomerCylinderLedger> page = ledgerRepository.findLatestDuePerCustomerActive(pageable);
                 List<CustomerCylinderLedger> latestLedgers = page.getContent();
                 if (latestLedgers.isEmpty()) {
                     return new PageImpl<>(Collections.emptyList(), pageable, page.getTotalElements());

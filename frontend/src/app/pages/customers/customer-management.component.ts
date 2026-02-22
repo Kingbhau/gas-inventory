@@ -156,6 +156,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   detailsVariantPrices: CustomerVariantPrice[] = [];
   users: User[] = [];
   isStaff = false;
+  showDuplicateNameConfirm = false;
+  duplicateNameMatches: CustomerRow[] = [];
+  pendingCreateCustomerData: Customer | null = null;
+  pendingCreateVariantPrices: CustomerVariantPrice[] = [];
 
   showDueHistoryModal = false;
   dueHistoryEntries: AuditRecord[] = [];
@@ -782,6 +786,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showForm = false;
     this.customerForm.reset();
     this.originalDueAmount = null;
+    this.closeDuplicateNameConfirm();
   }
 
   openAddForm() {
@@ -794,6 +799,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.initialStockEntriesMap = {};
     // Clear existing prices for new customer
     this.existingCustomerPrices = {};
+    this.closeDuplicateNameConfirm();
   }
 
   editCustomer(customer: CustomerRow) {
@@ -986,32 +992,81 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           }
         });
     } else {
-      // Create customer
-      const sub = this.customerService.createCustomer(customerData)
-        .pipe(
-          catchError((error: unknown) => {
-            const err = error as { error?: { message?: string }; message?: string };
-            const errorMessage = err?.error?.message || err?.message || 'Error creating customer';
-            this.toastr.error(errorMessage, 'Error');
-            return of(null as CustomerRow | null);
-          })
-        )
-        .subscribe((newCustomer: Customer | null) => {
-          if (newCustomer && typeof newCustomer.id === 'number') {
-            const newRow = newCustomer as CustomerRow;
-            // Create variant prices for the new customer
-            this.updateVariantPrices(newRow.id, variantPrices, true);
-
-            this.customerService.invalidateCache();
-            this.toastr.success('Customer added successfully.', 'Success');
-            this.showForm = false;
-            this.customerForm.reset();
-            // Reload all customers with balances after adding new customer
-            this.loadCustomersWithBalances();
-            this.cdr.markForCheck();
-          }
-        });
+      this.checkDuplicateNameAndConfirm(customerData, variantPrices);
     }
+  }
+
+  private checkDuplicateNameAndConfirm(customerData: Customer, variantPrices: CustomerVariantPrice[]) {
+    const name = customerData.name?.trim();
+    if (!name) {
+      this.executeCreateCustomer(customerData, variantPrices);
+      return;
+    }
+
+    this.customerService.getAllCustomers(0, 20, 'id', 'DESC', name)
+      .pipe(
+        catchError(() => of({ items: [], totalElements: 0, totalPages: 1, page: 0, size: 20 } as PageResponse<Customer>))
+      )
+      .subscribe((response: PageResponse<Customer>) => {
+        const matches = (response.items || [])
+          .filter((c): c is CustomerRow => typeof c.id === 'number')
+          .filter(c => (c.name || '').trim().toLowerCase() === name.toLowerCase());
+        if (matches.length > 0) {
+          this.duplicateNameMatches = matches;
+          this.pendingCreateCustomerData = customerData;
+          this.pendingCreateVariantPrices = variantPrices;
+          this.showDuplicateNameConfirm = true;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.executeCreateCustomer(customerData, variantPrices);
+      });
+  }
+
+  confirmDuplicateNameCreate() {
+    if (!this.pendingCreateCustomerData) {
+      this.closeDuplicateNameConfirm();
+      return;
+    }
+    const customerData = this.pendingCreateCustomerData;
+    const variantPrices = this.pendingCreateVariantPrices;
+    this.closeDuplicateNameConfirm();
+    this.executeCreateCustomer(customerData, variantPrices);
+  }
+
+  closeDuplicateNameConfirm() {
+    this.showDuplicateNameConfirm = false;
+    this.duplicateNameMatches = [];
+    this.pendingCreateCustomerData = null;
+    this.pendingCreateVariantPrices = [];
+  }
+
+  private executeCreateCustomer(customerData: Customer, variantPrices: CustomerVariantPrice[]) {
+    // Create customer
+    this.customerService.createCustomer(customerData)
+      .pipe(
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error creating customer';
+          this.toastr.error(errorMessage, 'Error');
+          return of(null as CustomerRow | null);
+        })
+      )
+      .subscribe((newCustomer: Customer | null) => {
+        if (newCustomer && typeof newCustomer.id === 'number') {
+          const newRow = newCustomer as CustomerRow;
+          // Create variant prices for the new customer
+          this.updateVariantPrices(newRow.id, variantPrices, true);
+
+          this.customerService.invalidateCache();
+          this.toastr.success('Customer added successfully.', 'Success');
+          this.showForm = false;
+          this.customerForm.reset();
+          // Reload all customers with balances after adding new customer
+          this.loadCustomersWithBalances();
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   /**
