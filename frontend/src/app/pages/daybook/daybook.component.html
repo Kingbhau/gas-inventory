@@ -99,6 +99,11 @@
             <ng-template #countOnly>
               <span class="summary-meta">{{ summary.count }} txn</span>
             </ng-template>
+            <div class="payment-mode-breakdown compact" *ngIf="summary.type === 'PAYMENT' && paymentModeBreakdown.length > 0">
+              <button type="button" class="view-breakdown-link" (click)="openPaymentModeBreakdown()">
+                View breakdown
+              </button>
+            </div>
           </ng-template>
         </div>
       </div>
@@ -169,6 +174,30 @@
           <p><fa-icon [icon]="faClipboard"></fa-icon> No transactions found for this day</p>
         </div>
       </ng-template>
+    </div>
+  </div>
+
+  <!-- Payment Mode Breakdown Modal -->
+  <div *ngIf="showPaymentModeBreakdownModal" class="modal-overlay" (click)="closePaymentModeBreakdown()">
+    <div class="modal-content payment-breakdown-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Payment Mode Breakdown</h2>
+          <p class="modal-subtitle">Summary for {{ selectedDate | date: 'dd MMM yyyy' }}</p>
+        </div>
+        <button class="modal-close" (click)="closePaymentModeBreakdown()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="payment-breakdown-list">
+          <div class="payment-breakdown-item" *ngFor="let mode of paymentModeBreakdown">
+            <span class="payment-breakdown-mode">{{ mode.mode }}</span>
+            <span class="payment-breakdown-amount">₹{{ formatAmount(mode.amount) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closePaymentModeBreakdown()">Close</button>
+      </div>
     </div>
   </div>
 </div>

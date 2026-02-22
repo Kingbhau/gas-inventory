@@ -3,6 +3,7 @@ package com.gasagency.service;
 import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
 import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
 import com.gasagency.dto.response.CustomerLedgerVariantSummaryDTO;
+import com.gasagency.dto.response.ReturnPendingSummaryDTO;
 import com.gasagency.dto.request.InitialDueUpdateRequestDTO;
 import com.gasagency.dto.request.LedgerUpdateRequestDTO;
 import com.gasagency.dto.request.PaymentRequestDTO;
@@ -15,6 +16,7 @@ import com.gasagency.entity.BankAccount;
 import com.gasagency.entity.PaymentMode;
 import com.gasagency.entity.Sale;
 import com.gasagency.entity.WarehouseTransfer;
+import com.gasagency.entity.AlertConfiguration;
 import com.gasagency.entity.BankAccountLedger;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
 import com.gasagency.repository.CustomerRepository;
@@ -65,6 +67,7 @@ public class CustomerCylinderLedgerService {
         private final BankAccountLedgerRepository bankAccountLedgerRepository;
         private final PaymentModeRepository paymentModeRepository;
         private final AuditRecordService auditRecordService;
+        private final AlertConfigurationService alertConfigurationService;
 
         public CustomerCylinderLedgerService(CustomerCylinderLedgerRepository repository,
                         CustomerRepository customerRepository,
@@ -78,7 +81,8 @@ public class CustomerCylinderLedgerService {
                         WarehouseTransferRepository warehouseTransferRepository,
                         BankAccountLedgerRepository bankAccountLedgerRepository,
                         PaymentModeRepository paymentModeRepository,
-                        AuditRecordService auditRecordService) {
+                        AuditRecordService auditRecordService,
+                        AlertConfigurationService alertConfigurationService) {
                 this.repository = repository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
@@ -92,6 +96,7 @@ public class CustomerCylinderLedgerService {
                 this.bankAccountLedgerRepository = bankAccountLedgerRepository;
                 this.paymentModeRepository = paymentModeRepository;
                 this.auditRecordService = auditRecordService;
+                this.alertConfigurationService = alertConfigurationService;
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
@@ -461,6 +466,63 @@ public class CustomerCylinderLedgerService {
                         result.add(toDTO(ledger));
                 }
                 return result;
+        }
+
+        @Transactional(readOnly = true)
+        public Page<CustomerCylinderLedgerDTO> getPendingReturnBalancesPaged(Long customerId, Long variantId,
+                        String search, String status, Pageable pageable) {
+                Integer threshold = getPendingReturnThreshold();
+                String normalizedStatus = normalizePendingStatus(status);
+                Long thresholdValue = threshold != null ? threshold.longValue() : null;
+                Page<CustomerCylinderLedger> page = repository.findPendingReturnBalancesPaged(
+                                customerId, variantId, search, normalizedStatus, thresholdValue, pageable);
+                return page.map(this::toDTO);
+        }
+
+        @Transactional(readOnly = true)
+        public ReturnPendingSummaryDTO getPendingReturnSummary(Long customerId, Long variantId, String search,
+                        String status) {
+                Integer threshold = getPendingReturnThreshold();
+                String normalizedStatus = normalizePendingStatus(status);
+                Long thresholdValue = threshold != null ? threshold.longValue() : null;
+
+                Long totalReturnPending = repository.sumPendingReturnBalances(
+                                customerId, variantId, search, normalizedStatus, thresholdValue);
+                long customersWithReturnPending = repository.countPendingReturnBalances(
+                                customerId, variantId, search, normalizedStatus, thresholdValue);
+
+                long highRiskCount = 0;
+                if ("HIGH_RISK".equals(normalizedStatus)) {
+                        highRiskCount = customersWithReturnPending;
+                } else if (normalizedStatus == null || normalizedStatus.isEmpty()) {
+                        if (threshold != null) {
+                                highRiskCount = repository.countHighRiskPendingReturnBalances(
+                                                threshold.longValue(), customerId, variantId, search);
+                        }
+                }
+
+                return new ReturnPendingSummaryDTO(
+                                totalReturnPending != null ? totalReturnPending : 0L,
+                                customersWithReturnPending,
+                                highRiskCount,
+                                threshold);
+        }
+
+        private Integer getPendingReturnThreshold() {
+                java.util.Optional<AlertConfiguration> configOpt = alertConfigurationService
+                                .getConfigOptional("PENDING_RETURN_CYLINDERS");
+                return configOpt.map(AlertConfiguration::getPendingReturnThreshold).orElse(null);
+        }
+
+        private String normalizePendingStatus(String status) {
+                if (status == null || status.trim().isEmpty()) {
+                        return null;
+                }
+                String normalized = status.trim().toUpperCase();
+                if ("PENDING".equals(normalized) || "HIGH_RISK".equals(normalized)) {
+                        return normalized;
+                }
+                return null;
         }
 
         @Transactional
