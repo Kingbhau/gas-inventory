@@ -1,6 +1,7 @@
 package com.gasagency.service;
 
 import com.gasagency.dto.response.CustomerDTO;
+import com.gasagency.dto.request.InitialDueUpdateRequestDTO;
 import com.gasagency.entity.Customer;
 import com.gasagency.entity.CylinderVariant;
 import com.gasagency.entity.Sale;
@@ -248,6 +249,13 @@ public class CustomerService {
                     return new ResourceNotFoundException("Customer not found with id: " + id);
                 });
 
+        if (dto.getDueAmount() != null) {
+            InitialDueUpdateRequestDTO dueRequest = new InitialDueUpdateRequestDTO();
+            dueRequest.setDueAmount(dto.getDueAmount());
+            dueRequest.setNote(dto.getDueUpdateNote());
+            ledgerService.updateInitialDueAmount(customer.getId(), dueRequest);
+        }
+
         // Prevent duplicate mobile (except for self)
         repository.findByMobile(mobileFinal).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
@@ -287,8 +295,8 @@ public class CustomerService {
                         boolean hasInitialStock = ledgerRepository.existsByCustomerIdAndVariantIdAndRefType(
                                 customer.getId(), variantId, CustomerCylinderLedger.TransactionType.INITIAL_STOCK);
 
-                        // Only create if no INITIAL_STOCK entry exists for this variant
-                        if (!hasInitialStock && filledOut > 0) {
+                        // Create INITIAL_STOCK even if filledOut is 0 to keep variant history consistent
+                        if (!hasInitialStock) {
                             ledgerService.createLedgerEntry(
                                     customer.getId(),
                                     null,
@@ -314,6 +322,7 @@ public class CustomerService {
 
         return toDTO(customer);
     }
+
 
     @Transactional
     public void deleteCustomer(Long id) {

@@ -3,6 +3,7 @@ package com.gasagency.service;
 import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
 import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
 import com.gasagency.dto.response.CustomerLedgerVariantSummaryDTO;
+import com.gasagency.dto.request.InitialDueUpdateRequestDTO;
 import com.gasagency.dto.request.LedgerUpdateRequestDTO;
 import com.gasagency.dto.request.PaymentRequestDTO;
 import com.gasagency.dto.response.WarehouseTransferDTO;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,6 +64,7 @@ public class CustomerCylinderLedgerService {
         private final WarehouseTransferRepository warehouseTransferRepository;
         private final BankAccountLedgerRepository bankAccountLedgerRepository;
         private final PaymentModeRepository paymentModeRepository;
+        private final AuditRecordService auditRecordService;
 
         public CustomerCylinderLedgerService(CustomerCylinderLedgerRepository repository,
                         CustomerRepository customerRepository,
@@ -74,7 +77,8 @@ public class CustomerCylinderLedgerService {
                         SaleRepository saleRepository,
                         WarehouseTransferRepository warehouseTransferRepository,
                         BankAccountLedgerRepository bankAccountLedgerRepository,
-                        PaymentModeRepository paymentModeRepository) {
+                        PaymentModeRepository paymentModeRepository,
+                        AuditRecordService auditRecordService) {
                 this.repository = repository;
                 this.customerRepository = customerRepository;
                 this.variantRepository = variantRepository;
@@ -87,6 +91,7 @@ public class CustomerCylinderLedgerService {
                 this.warehouseTransferRepository = warehouseTransferRepository;
                 this.bankAccountLedgerRepository = bankAccountLedgerRepository;
                 this.paymentModeRepository = paymentModeRepository;
+                this.auditRecordService = auditRecordService;
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
@@ -734,6 +739,11 @@ public class CustomerCylinderLedgerService {
                         }
 
                         ledger = repository.save(ledger);
+
+                        if (shouldRecalculateDueChain(ledger.getCustomer(), ledger.getTransactionDate(), ledger.getId())) {
+                                recalculateDueChainForCustomer(ledger.getCustomer());
+                        }
+
                         return toDTO(ledger);
                 }
 
@@ -1201,6 +1211,10 @@ public class CustomerCylinderLedgerService {
 
                 CustomerCylinderLedger savedLedger = repository.save(ledger);
 
+                if (shouldRecalculateDueChain(customer, savedLedger.getTransactionDate(), savedLedger.getId())) {
+                        recalculateDueChainForCustomer(customer);
+                }
+
                 // Record bank account transaction if required by payment mode configuration
                 if (paymentRequest.bankAccountId != null && paymentRequest.paymentMode != null) {
                         // Fetch the payment mode configuration to check if bank account is required
@@ -1240,6 +1254,44 @@ public class CustomerCylinderLedgerService {
                                 "amount", paymentRequest.amount);
 
                 return toDTO(savedLedger);
+        }
+
+        private boolean shouldRecalculateDueChain(Customer customer, LocalDate transactionDate, Long newEntryId) {
+                if (customer == null || transactionDate == null || newEntryId == null) {
+                        return false;
+                }
+                List<CustomerCylinderLedger> latestEntries = repository.findLatestByCustomerIdExcludingId(
+                                customer.getId(),
+                                newEntryId,
+                                PageRequest.of(0, 1));
+                if (latestEntries.isEmpty()) {
+                        return false;
+                }
+                LocalDate latestDate = latestEntries.get(0).getTransactionDate();
+                if (latestDate == null) {
+                        return false;
+                }
+                return transactionDate.isBefore(latestDate);
+        }
+
+        private void recalculateDueChainForCustomer(Customer customer) {
+                List<CustomerCylinderLedger> entries = repository.findByCustomerOrderedById(customer);
+                if (entries.isEmpty()) {
+                        return;
+                }
+                BigDecimal runningDue = BigDecimal.ZERO;
+                for (CustomerCylinderLedger entry : entries) {
+                        BigDecimal total = entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO;
+                        BigDecimal received = entry.getAmountReceived() != null ? entry.getAmountReceived()
+                                        : BigDecimal.ZERO;
+                        BigDecimal contribution = total.subtract(received);
+                        runningDue = runningDue.add(contribution);
+                        if (runningDue.compareTo(BigDecimal.ZERO) < 0) {
+                                runningDue = BigDecimal.ZERO;
+                        }
+                        entry.setDueAmount(runningDue);
+                        repository.save(entry);
+                }
         }
 
         /**
@@ -1571,6 +1623,8 @@ public class CustomerCylinderLedgerService {
                 long oldEmptyIn = entry.getEmptyIn();
                 BigDecimal oldTotalAmount = entry.getTotalAmount();
                 BigDecimal oldAmountReceived = entry.getAmountReceived();
+                String oldPaymentMode = entry.getPaymentMode();
+                Long oldBankAccountId = entry.getBankAccount() != null ? entry.getBankAccount().getId() : null;
 
                 // 3. Extract new values (if provided)
                 Long newFilledOut = updateData != null && updateData.getFilledOut() != null
@@ -1639,7 +1693,7 @@ public class CustomerCylinderLedgerService {
                 }
 
                 // Get entries for ALL VARIANTS for due amount calculation (cumulative debt)
-                List<CustomerCylinderLedger> allEntries = repository.findByCustomerOrdered(customer);
+                List<CustomerCylinderLedger> allEntries = repository.findByCustomerOrderedById(customer);
 
                 // Check if entry is within the latest 15 records (per variant)
                 if (variantEntries.size() > 15) {
@@ -1998,12 +2052,76 @@ public class CustomerCylinderLedgerService {
 
                 LoggerUtil.logBusinessSuccess(logger, "UPDATE_LEDGER", "ledgerId", ledgerId,
                                 "affectedEntries", affectedEntries.size());
+                recordLedgerUpdateAudit(updateData, entry, oldFilledOut, oldEmptyIn, oldTotalAmount, oldAmountReceived,
+                                oldPaymentMode, oldBankAccountId, newFilledOut, newEmptyIn, newTotalAmount,
+                                newAmountReceived);
                 LoggerUtil.logAudit("UPDATE", "LEDGER_ENTRY", "ledgerId", ledgerId,
                                 "customerId", customer.getId(),
                                 "oldValues", "total=" + oldTotalAmount + ", received=" + oldAmountReceived,
                                 "newValues", "total=" + newTotalAmount + ", received=" + newAmountReceived);
 
                 return toDTO(entry);
+        }
+
+        private void recordLedgerUpdateAudit(LedgerUpdateRequestDTO updateData,
+                        CustomerCylinderLedger entry,
+                        long oldFilledOut,
+                        long oldEmptyIn,
+                        BigDecimal oldTotalAmount,
+                        BigDecimal oldAmountReceived,
+                        String oldPaymentMode,
+                        Long oldBankAccountId,
+                        long newFilledOut,
+                        long newEmptyIn,
+                        BigDecimal newTotalAmount,
+                        BigDecimal newAmountReceived) {
+                if (updateData == null) {
+                        return;
+                }
+
+                String note = updateData.getUpdateReason();
+                String entityType = "CustomerCylinderLedger";
+                Long entityId = entry.getId();
+                String source = "CustomerCylinderLedgerService";
+
+                if (oldFilledOut != newFilledOut) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "filledOut",
+                                        oldFilledOut, newFilledOut, note, source);
+                }
+                if (oldEmptyIn != newEmptyIn) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "emptyIn",
+                                        oldEmptyIn, newEmptyIn, note, source);
+                }
+                if (hasBigDecimalChanged(oldTotalAmount, newTotalAmount)) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "totalAmount",
+                                        oldTotalAmount, newTotalAmount, note, source);
+                }
+                if (hasBigDecimalChanged(oldAmountReceived, newAmountReceived)) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "amountReceived",
+                                        oldAmountReceived, newAmountReceived, note, source);
+                }
+
+                String newPaymentMode = entry.getPaymentMode();
+                if (!Objects.equals(oldPaymentMode, newPaymentMode)) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "paymentMode",
+                                        oldPaymentMode, newPaymentMode, note, source);
+                }
+
+                Long newBankAccountId = entry.getBankAccount() != null ? entry.getBankAccount().getId() : null;
+                if (!Objects.equals(oldBankAccountId, newBankAccountId)) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "bankAccountId",
+                                        oldBankAccountId, newBankAccountId, note, source);
+                }
+        }
+
+        private boolean hasBigDecimalChanged(BigDecimal oldValue, BigDecimal newValue) {
+                if (oldValue == null && newValue == null) {
+                        return false;
+                }
+                if (oldValue == null || newValue == null) {
+                        return true;
+                }
+                return oldValue.compareTo(newValue) != 0;
         }
 
         // Repair function to recalculate all balances with correct formula
@@ -2041,6 +2159,135 @@ public class CustomerCylinderLedgerService {
                 }
 
                 logger.info("BALANCE_REPAIR_COMPLETE: Total entries recalculated: {}", totalUpdated);
+        }
+
+        /**
+         * Update initial due amount and recalculate the entire due chain.
+         * Validates that due never goes negative at any step.
+         */
+        @Transactional
+        public void updateInitialDueAmount(Long customerId, InitialDueUpdateRequestDTO request) {
+                if (customerId == null) {
+                        throw new IllegalArgumentException("Customer id is required");
+                }
+                if (request == null || request.getDueAmount() == null) {
+                        throw new IllegalArgumentException("Due amount is required");
+                }
+                if (request.getDueAmount().compareTo(BigDecimal.ZERO) < 0) {
+                        throw new InvalidOperationException("Initial due amount cannot be negative");
+                }
+
+                Customer customer = customerRepository.findById(customerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+
+                List<CustomerCylinderLedger> allEntries = repository.findByCustomerOrderedById(customer);
+                if (allEntries.isEmpty()) {
+                        throw new InvalidOperationException("No ledger entries found for customer");
+                }
+
+                CustomerCylinderLedger initialEntry = null;
+                for (CustomerCylinderLedger entry : allEntries) {
+                        if (entry.getRefType() == CustomerCylinderLedger.TransactionType.INITIAL_STOCK) {
+                                initialEntry = entry;
+                                break;
+                        }
+                }
+
+                if (initialEntry == null) {
+                        throw new InvalidOperationException("No INITIAL_STOCK entry found for customer");
+                }
+
+                BigDecimal oldDueAmount = initialEntry.getTotalAmount() != null
+                                ? initialEntry.getTotalAmount()
+                                : BigDecimal.ZERO;
+                BigDecimal newDueAmount = request.getDueAmount();
+
+                if (oldDueAmount.compareTo(newDueAmount) == 0) {
+                        return;
+                }
+
+                BigDecimal minRunningDue = calculateMinRunningDue(allEntries);
+                BigDecimal minAllowedInitialDue = oldDueAmount.subtract(minRunningDue);
+                if (newDueAmount.compareTo(oldDueAmount) < 0
+                                && newDueAmount.compareTo(minAllowedInitialDue) < 0) {
+                        throw new InvalidOperationException(
+                                        "Initial due cannot be less than Rs " + minAllowedInitialDue
+                                                        + " based on existing payments/credits.");
+                }
+
+                String note = request.getNote();
+                if (note != null && note.trim().isEmpty()) {
+                        note = null;
+                }
+                if (note == null) {
+                        throw new InvalidOperationException(
+                                        "Note is required when updating initial due amount");
+                }
+
+                String updateReason = "Initial due updated from " + oldDueAmount + " to " + newDueAmount;
+                if (note != null) {
+                        updateReason = updateReason + " | " + note;
+                }
+
+                initialEntry.setTotalAmount(newDueAmount);
+                initialEntry.setUpdateReason(updateReason);
+
+                // Recalculate due chain with strict non-negative validation
+                BigDecimal runningDue = BigDecimal.ZERO;
+                for (CustomerCylinderLedger entry : allEntries) {
+                        BigDecimal total = entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO;
+                        BigDecimal received = entry.getAmountReceived() != null ? entry.getAmountReceived()
+                                        : BigDecimal.ZERO;
+                        BigDecimal contribution = total.subtract(received);
+                        runningDue = runningDue.add(contribution);
+                        if (runningDue.compareTo(BigDecimal.ZERO) < 0) {
+                                throw new InvalidOperationException(
+                                                "Initial due update would make due negative at entry "
+                                                                + entry.getId() + " on "
+                                                                + entry.getTransactionDate()
+                                                                + ". Minimum allowed initial due is Rs "
+                                                                + minAllowedInitialDue + ".");
+                        }
+                        entry.setDueAmount(runningDue);
+                }
+
+                repository.save(initialEntry);
+                for (CustomerCylinderLedger entry : allEntries) {
+                        if (!entry.getId().equals(initialEntry.getId())) {
+                                repository.save(entry);
+                        }
+                }
+
+                auditRecordService.recordChange(
+                                "Customer",
+                                customerId,
+                                "UPDATE",
+                                "initialDueAmount",
+                                oldDueAmount,
+                                newDueAmount,
+                                note,
+                                "CustomerCylinderLedgerService");
+
+                LoggerUtil.logBusinessSuccess(logger, "UPDATE_INITIAL_DUE",
+                                "customerId", customerId,
+                                "oldDue", oldDueAmount,
+                                "newDue", newDueAmount);
+        }
+
+        private BigDecimal calculateMinRunningDue(List<CustomerCylinderLedger> entries) {
+                BigDecimal runningDue = BigDecimal.ZERO;
+                BigDecimal minRunning = null;
+                for (CustomerCylinderLedger entry : entries) {
+                        BigDecimal total = entry.getTotalAmount() != null ? entry.getTotalAmount() : BigDecimal.ZERO;
+                        BigDecimal received = entry.getAmountReceived() != null ? entry.getAmountReceived()
+                                        : BigDecimal.ZERO;
+                        BigDecimal contribution = total.subtract(received);
+                        runningDue = runningDue.add(contribution);
+                        if (minRunning == null || runningDue.compareTo(minRunning) < 0) {
+                                minRunning = runningDue;
+                        }
+                }
+                return minRunning != null ? minRunning : BigDecimal.ZERO;
         }
 }
 

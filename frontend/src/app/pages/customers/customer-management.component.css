@@ -278,6 +278,30 @@
   max-width: 100%;
   word-break: break-word;
 }
+.details-history-link {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.details-history-row {
+  margin-top: 6px;
+}
+.details-history-link:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #1d4ed8;
+}
+.details-history-link:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
 .details-value {
   font-size: 1.05rem;
   color: #0f172a;
@@ -1328,6 +1352,15 @@ textarea.form-control {
   font-size: 0.75rem;
   color: #6b7280;
   line-height: 1.2;
+}
+.opening-badge {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* Highlight INITIAL_STOCK rows */

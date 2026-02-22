@@ -1,5 +1,5 @@
 
-import { catchError, of, finalize, debounceTime, distinctUntilChanged, Subject, takeUntil, BehaviorSubject, skip } from 'rxjs';
+import { catchError, of, finalize, debounceTime, distinctUntilChanged, Subject, takeUntil, BehaviorSubject, skip, take } from 'rxjs';
 import { ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -35,6 +35,8 @@ import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { LedgerUpdateRequest } from '../../models/ledger-update-request.model';
 import { PageResponse } from '../../models/page-response';
 import { PaymentsSummary } from '../../models/payments-summary.model';
+import { AuditRecord } from '../../models/audit-record.model';
+import { AuditRecordService } from '../../services/audit-record.service';
 
 type CustomerRow = Customer & {
   id: number;
@@ -123,6 +125,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   customerForm!: FormGroup;
   showForm = false;
   editingId: number | null = null;
+  originalDueAmount: number | null = null;
   showLedger = false;
   selectedCustomer: CustomerRow | null = null;
   searchTerm = '';
@@ -153,6 +156,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   detailsVariantPrices: CustomerVariantPrice[] = [];
   users: User[] = [];
   isStaff = false;
+
+  showDueHistoryModal = false;
+  dueHistoryEntries: AuditRecord[] = [];
+  dueHistoryPage = 0;
+  dueHistoryPageSize = 10;
+  dueHistoryHasMore = false;
+  dueHistoryLoading = false;
 
   showReasonModal = false;
   selectedReasonEntry: CustomerCylinderLedger | null = null;
@@ -202,7 +212,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     private dateUtility: DateUtilityService,
     private dataRefreshService: DataRefreshService,
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private auditRecordService: AuditRecordService
   ) {
     this.initForm();
   }
@@ -297,6 +308,15 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     return this.variants.filter(v => v.name === this.ledgerFilterVariant);
   }
 
+  get isInitialDueChanged(): boolean {
+    if (this.editingId === null) {
+      return false;
+    }
+    const currentValue = this.customerForm.get('dueAmount')?.value;
+    const currentDue = this.parseCurrencyToNumber(currentValue);
+    return this.originalDueAmount !== null && currentDue !== this.originalDueAmount;
+  }
+
   /**
    * Toggle action menu for a specific customer
    * Closes all other dropdowns and toggles the current one
@@ -350,6 +370,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     this.showDetailsModal = false;
     this.detailsCustomer = null;
     this.detailsVariantPrices = [];
+    this.closeDueHistoryModal();
   }
 
   getCreatedByName(createdBy?: string | null): string {
@@ -358,6 +379,67 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
     const user = this.users.find(u => u.username === createdBy);
     return user?.name || createdBy;
+  }
+
+  openDueHistoryModal() {
+    if (!this.detailsCustomer || typeof this.detailsCustomer.id !== 'number') {
+      return;
+    }
+    this.showDueHistoryModal = true;
+    this.dueHistoryEntries = [];
+    this.dueHistoryPage = 0;
+    this.loadDueHistory(true);
+  }
+
+  closeDueHistoryModal() {
+    this.showDueHistoryModal = false;
+    this.dueHistoryEntries = [];
+    this.dueHistoryPage = 0;
+    this.dueHistoryHasMore = false;
+    this.dueHistoryLoading = false;
+  }
+
+  loadDueHistory(reset: boolean = false) {
+    if (!this.detailsCustomer || typeof this.detailsCustomer.id !== 'number' || this.dueHistoryLoading) {
+      return;
+    }
+    this.dueHistoryLoading = true;
+    const pageToLoad = reset ? 0 : this.dueHistoryPage;
+    this.auditRecordService.getAuditRecords('Customer', this.detailsCustomer.id, 'initialDueAmount',
+      pageToLoad, this.dueHistoryPageSize)
+      .pipe(
+        catchError((error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          const errorMessage = err?.error?.message || err?.message || 'Error loading audit history';
+          this.toastr.error(errorMessage, 'Error');
+          return of({
+            items: [],
+            totalElements: 0,
+            totalPages: 0,
+            page: pageToLoad,
+            size: this.dueHistoryPageSize
+          } as PageResponse<AuditRecord>);
+        }),
+        finalize(() => {
+          this.dueHistoryLoading = false;
+          this.cdr.markForCheck();
+        })
+      )
+      .subscribe((data: PageResponse<AuditRecord>) => {
+        const items = data.items || [];
+        this.dueHistoryEntries = reset ? items : [...this.dueHistoryEntries, ...items];
+        this.dueHistoryPage = (data.page ?? pageToLoad) + 1;
+        const totalPages = data.totalPages ?? 0;
+        this.dueHistoryHasMore = this.dueHistoryPage < totalPages;
+        this.cdr.markForCheck();
+      });
+  }
+
+  loadMoreDueHistory() {
+    if (!this.dueHistoryHasMore || this.dueHistoryLoading) {
+      return;
+    }
+    this.loadDueHistory(false);
   }
 
   private loadUsers() {
@@ -384,8 +466,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
   loadVariantsAndCustomers() {
     this.loadingService.show('Loading variants...');
-    const variantSub = this.variantService.getAllVariantsWithCache()
+    this.variantService.getAllVariantsWithCache()
       .pipe(
+        take(1),
         catchError((error: unknown) => {
           const err = error as { error?: { message?: string }; message?: string };
           const errorMessage = err?.error?.message || err?.message || 'Error loading variants';
@@ -398,7 +481,6 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         this.variants = data || [];
         this.buildVariantPricingArray(); // Build form array with variants
         this.loadCustomersWithBalances();
-        variantSub.unsubscribe();
       });
   }
 
@@ -468,8 +550,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             this.ledgerService.getCustomerDueAmounts(customerIds).subscribe({
               next: (dueMap: { [key: number]: number }) => {
                 this.customers.forEach(customer => {
-                  const due = dueMap[customer.id];
-                  customer.dueAmount = due !== undefined ? due : 0;
+                  const rawDue = dueMap[customer.id];
+                  const parsedDue = rawDue !== undefined && rawDue !== null ? Number(rawDue) : NaN;
+                  if (!Number.isNaN(parsedDue)) {
+                    customer.dueAmount = parsedDue;
+                  } else if (customer.dueAmount === undefined || customer.dueAmount === null) {
+                    customer.dueAmount = 0;
+                  }
                 });
                 this.cdr.markForCheck();
               },
@@ -505,15 +592,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         entries = entries.filter(e => e.variantName === this.ledgerFilterVariant || e.refType === 'PAYMENT');
       }
     }
-    // Sort by transaction date (newest first) for display
+    // Sort by ID descending (latest created first)
     entries = entries.sort((a: CustomerCylinderLedger, b: CustomerCylinderLedger) => {
-      const dateA = new Date(a.transactionDate).getTime();
-      const dateB = new Date(b.transactionDate).getTime();
-      if (dateA === dateB) {
-        // If same date, sort by ID descending (newer entries have higher IDs)
-        return (b.id || 0) - (a.id || 0);
-      }
-      return dateB - dateA; // Newest first
+      return (b.id || 0) - (a.id || 0);
     });
     return entries;
   }
@@ -564,6 +645,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       gstNo: ['', [Validators.pattern('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[0-9A-Z]{2}$')]],
       securityDeposit: [0, [Validators.min(0)]],
       dueAmount: [0, [Validators.required, Validators.min(0)]],
+      dueUpdateNote: [''],
       active: [true, Validators.required],
       configuredVariants: [[], Validators.required],
       variantFilledCylinders: this.fb.array([]),
@@ -699,11 +781,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   closeForm() {
     this.showForm = false;
     this.customerForm.reset();
+    this.originalDueAmount = null;
   }
 
   openAddForm() {
     this.showForm = true;
     this.editingId = null;
+    this.originalDueAmount = null;
     this.customerForm.reset();
     this.customerForm.patchValue({ active: true, configuredVariants: [] });
     // Clear the initial stock entries map for new customer
@@ -715,6 +799,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   editCustomer(customer: CustomerRow) {
     this.showForm = true;
     this.editingId = customer.id;
+    this.originalDueAmount = customer.dueAmount ?? 0;
     
     // Fetch fresh customer data from backend to ensure we have latest configured variants
     this.customerService.getCustomer(customer.id).subscribe({
@@ -730,10 +815,12 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
           address: customerRow.address || '',
           gstNo: customerRow.gstNo || '',
           securityDeposit: customerRow.securityDeposit !== undefined ? customerRow.securityDeposit : 0,
-          dueAmount: customerRow.dueAmount !== undefined ? customerRow.dueAmount : 0,
+          dueAmount: 0,
+          dueUpdateNote: '',
           active: customerRow.active !== undefined ? customerRow.active : true,
           configuredVariants: customerRow.configuredVariants || []
         });
+        this.originalDueAmount = null;
 
         // Load existing variant prices from backend and initial filled cylinders
         if (customerRow.id) {
@@ -775,6 +862,10 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
         next: (ledgerEntries: CustomerCylinderLedger[]) => {
           // Get INITIAL_STOCK entries to populate filled cylinders
           const initialStockEntries = ledgerEntries.filter(entry => entry.refType === 'INITIAL_STOCK');
+          const initialDueEntry = [...initialStockEntries]
+            .filter(entry => entry.totalAmount !== null && entry.totalAmount !== undefined)
+            .sort((a, b) => (a.id || 0) - (b.id || 0))[0];
+          const initialDueAmount = initialDueEntry?.totalAmount ?? 0;
           
           // Store in map for later use when rebuilding array
           this.initialStockEntriesMap = {};
@@ -798,7 +889,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
               control.get('filledCylinders')?.disable();
             }
           });
-          
+          this.customerForm.patchValue({ dueAmount: initialDueAmount });
+          this.originalDueAmount = initialDueAmount;
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -832,19 +924,35 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     const formValue = this.customerForm.value;
     const variantPrices = formValue.variantPrices || [];
     const variantFilledCylinders = formValue.variantFilledCylinders || [];
-    const customerData = {
+    const currentDueAmount = this.parseCurrencyToNumber(formValue.dueAmount);
+    const dueAmountChanged = this.editingId !== null && this.originalDueAmount !== null
+      && currentDueAmount !== this.originalDueAmount;
+    const dueUpdateNote = typeof formValue.dueUpdateNote === 'string' ? formValue.dueUpdateNote.trim() : '';
+
+    if (dueAmountChanged && !dueUpdateNote) {
+      this.customerForm.get('dueUpdateNote')?.markAsTouched();
+      this.toastr.error('Please enter a note for the initial due update.', 'Validation Error');
+      return;
+    }
+
+    const customerData: Customer = {
       name: formValue.name,
       mobile: formValue.mobile,
       address: formValue.address,
       gstNo: formValue.gstNo || null,
       securityDeposit: formValue.securityDeposit || 0,
-      dueAmount: formValue.dueAmount || 0,
+      dueAmount: currentDueAmount || 0,
+      dueUpdateNote: dueAmountChanged ? dueUpdateNote : null,
       active: formValue.active,
       configuredVariants: formValue.configuredVariants,
       variantFilledCylinders: variantFilledCylinders
     };
 
     if (this.editingId) {
+      if (this.originalDueAmount === null) {
+        delete customerData.dueAmount;
+        delete customerData.dueUpdateNote;
+      }
       // Update customer
       const sub = this.customerService.updateCustomer(this.editingId, customerData)
         .pipe(
@@ -873,6 +981,7 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
             this.toastr.success('Customer updated successfully.', 'Success');
             this.showForm = false;
             this.customerForm.reset();
+            this.originalDueAmount = null;
             this.cdr.markForCheck();
           }
         });
