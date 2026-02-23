@@ -223,6 +223,10 @@ export class AppComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.ngZone.run(() => this.router.navigate(['/expenses/entry']));
             break;
+          case 'C':
+            event.preventDefault();
+            this.ngZone.run(() => this.router.navigate(['/payments']));
+            break;
         }
       }
     });
