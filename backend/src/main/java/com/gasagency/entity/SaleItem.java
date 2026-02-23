@@ -42,7 +42,7 @@ public class SaleItem extends Auditable {
     private CylinderVariant variant;
 
     @NotNull(message = "Quantity issued is required.")
-    @Min(value = 1, message = "Quantity issued must be at least 1.")
+    @Min(value = 0, message = "Quantity issued cannot be negative.")
     @Column(nullable = false)
     private Long qtyIssued;
 
