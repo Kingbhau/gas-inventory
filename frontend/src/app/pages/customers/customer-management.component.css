@@ -312,6 +312,40 @@
   flex-direction: row;
 }
 
+.modal-content.duplicate-payment-modal {
+  max-width: 520px;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.duplicate-payment-details {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.duplicate-payment-details .detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.duplicate-payment-details .detail-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.duplicate-payment-details .detail-value {
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+}
+
 .duplicate-list {
   display: grid;
   gap: 0.75rem;

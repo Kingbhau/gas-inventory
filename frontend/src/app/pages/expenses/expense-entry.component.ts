@@ -38,6 +38,14 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   paymentModes: PaymentMode[] = [];
   isSubmitting = false;
   private destroy$ = new Subject<void>();
+  showDuplicateConfirm = false;
+  duplicateExpenseInfo: {
+    description: string;
+    categoryName: string;
+    amount: number;
+    expenseDate: string;
+  } | null = null;
+  pendingExpense: Expense | null = null;
 
   // Font Awesome Icons
   faCheckCircle = faCheckCircle;
@@ -165,9 +173,101 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
 
     const expense: Expense = {
       ...formValue,
+      amount: this.parseAmountInput(formValue.amount),
       categoryId: categoryId
     };
 
+    this.checkDuplicateAndSubmit(expense);
+  }
+
+  private normalizeDescription(value: string | null | undefined): string {
+    return (value || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  private parseAmountInput(value: unknown): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/,/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  private normalizeAmount(value: number | string | null | undefined): number {
+    const parsed = this.parseAmountInput(value);
+    return Math.round(parsed * 100) / 100;
+  }
+
+  private getLatestExpense() {
+    return this.expenseService.getAllExpenses(0, 1).pipe(takeUntil(this.destroy$));
+  }
+
+  private isDuplicateExpense(lastExpense: Expense | null, expense: Expense): boolean {
+    if (!lastExpense) return false;
+    const sameDescription = this.normalizeDescription(lastExpense.description) === this.normalizeDescription(expense.description);
+    const sameCategory = lastExpense.categoryId === expense.categoryId;
+    const sameAmount = this.normalizeAmount(lastExpense.amount) === this.normalizeAmount(expense.amount);
+    const sameDate = String(lastExpense.expenseDate || '') === String(expense.expenseDate || '');
+    return sameDescription && sameCategory && sameAmount && sameDate;
+  }
+
+  private buildDuplicateExpenseInfo(expense: Expense) {
+    return {
+      description: expense.description,
+      categoryName: this.expenseForm.get('category')?.value || 'Category',
+      amount: this.normalizeAmount(expense.amount),
+      expenseDate: String(expense.expenseDate || '')
+    };
+  }
+
+  private checkDuplicateAndSubmit(expense: Expense): void {
+    this.getLatestExpense()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          const lastExpense = response?.items?.length ? response.items[0] : null;
+          if (lastExpense && this.isDuplicateExpense(lastExpense, expense)) {
+            this.pendingExpense = expense;
+            this.duplicateExpenseInfo = this.buildDuplicateExpenseInfo(expense);
+            this.showDuplicateConfirm = true;
+            this.isSubmitting = false;
+            this.cdr.markForCheck();
+            return;
+          }
+          this.createExpense(expense);
+        },
+        error: () => {
+          this.createExpense(expense);
+        }
+      });
+  }
+
+  confirmDuplicateExpense(): void {
+    if (!this.pendingExpense) {
+      this.showDuplicateConfirm = false;
+      this.duplicateExpenseInfo = null;
+      return;
+    }
+    const expense = this.pendingExpense;
+    this.pendingExpense = null;
+    this.showDuplicateConfirm = false;
+    this.duplicateExpenseInfo = null;
+    this.createExpense(expense);
+  }
+
+  cancelDuplicateExpense(): void {
+    this.pendingExpense = null;
+    this.showDuplicateConfirm = false;
+    this.duplicateExpenseInfo = null;
+    this.isSubmitting = false;
+    this.cdr.markForCheck();
+  }
+
+  private createExpense(expense: Expense): void {
     this.expenseService.createExpense(expense)
       .pipe(
         finalize(() => {

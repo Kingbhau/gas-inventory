@@ -180,5 +180,48 @@
       </div>
     </div>
   </div>
+
+  <!-- Duplicate Payment Confirmation Modal -->
+  <div *ngIf="showDuplicatePaymentConfirm" class="modal-overlay" (click)="cancelDuplicatePayment()">
+    <div class="modal-content duplicate-payment-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">Possible Duplicate Payment</h2>
+          <p class="modal-subtitle">This payment matches the last payment for this customer.</p>
+        </div>
+        <button (click)="cancelDuplicatePayment()" class="modal-close">
+          <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="duplicate-details" *ngIf="duplicatePaymentInfo">
+          <div class="detail-row">
+            <span class="detail-label">Customer</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.customerName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Amount</span>
+            <span class="detail-value">₹{{ duplicatePaymentInfo.amount | number: '1.2-2' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Date</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.paymentDate }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Mode</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.paymentMode }}</span>
+          </div>
+          <div class="detail-row" *ngIf="duplicatePaymentInfo.bankAccountLabel">
+            <span class="detail-label">Bank Account</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.bankAccountLabel }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button (click)="cancelDuplicatePayment()" class="btn btn-secondary">Cancel</button>
+        <button (click)="confirmDuplicatePayment()" class="btn btn-primary">Proceed</button>
+      </div>
+    </div>
+  </div>
 </div>
 

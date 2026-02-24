@@ -2,6 +2,7 @@
 package com.gasagency.service;
 
 import com.gasagency.dto.request.CreateSupplierTransactionRequestDTO;
+import com.gasagency.dto.response.SupplierBorrowBalanceDTO;
 import com.gasagency.dto.response.SupplierTransactionDTO;
 import com.gasagency.entity.*;
 import com.gasagency.repository.*;
@@ -68,16 +69,24 @@ public class SupplierTransactionService {
                         throw new IllegalArgumentException("Warehouse cannot be changed after transaction creation");
                 }
 
-                if (request.getFilledReceived() < 0 || request.getEmptySent() < 0) {
+                if (request.getFilledReceived() < 0 || request.getEmptyReceived() < 0
+                                || request.getFilledSent() < 0 || request.getEmptySent() < 0) {
                         LoggerUtil.logBusinessError(logger, "UPDATE_TRANSACTION", "Negative quantities", "filled",
                                         request.getFilledReceived(), "empty", request.getEmptySent());
                         throw new IllegalArgumentException("Quantities cannot be negative");
                 }
-                if (request.getFilledReceived() == 0 && request.getEmptySent() == 0) {
-                        LoggerUtil.logBusinessError(logger, "UPDATE_TRANSACTION", "Zero quantities", "reason",
-                                        "must have at least one quantity");
-                        throw new IllegalArgumentException(
-                                        "Transaction must have at least one quantity (filled or empty)");
+                SupplierTransaction.TransactionType existingType = transaction.getTransactionType() != null
+                                ? transaction.getTransactionType()
+                                : SupplierTransaction.TransactionType.PURCHASE;
+                SupplierTransaction.TransactionType requestedType = parseTransactionType(request.getTransactionType());
+                if (existingType != requestedType) {
+                        throw new IllegalArgumentException("Transaction type cannot be changed after creation");
+                }
+                validateQuantities(existingType, request.getFilledReceived(), request.getEmptyReceived(),
+                                request.getFilledSent(), request.getEmptySent());
+
+                if (existingType == SupplierTransaction.TransactionType.PURCHASE && request.getAmount() == null) {
+                        throw new IllegalArgumentException("Amount is required for purchase transactions");
                 }
 
                 Warehouse warehouse = transaction.getWarehouse(); // Use existing warehouse
@@ -94,15 +103,46 @@ public class SupplierTransactionService {
                         stock = inventoryStockService.getOrCreateStock(warehouse, transaction.getVariant());
                 }
 
+                Long filledReceived = request.getFilledReceived() != null ? request.getFilledReceived() : 0L;
+                Long emptyReceived = request.getEmptyReceived() != null ? request.getEmptyReceived() : 0L;
+                Long filledSent = request.getFilledSent() != null ? request.getFilledSent() : 0L;
+                Long emptySent = request.getEmptySent() != null ? request.getEmptySent() : 0L;
+
+                long prevFilledReceived = transaction.getFilledReceived() != null ? transaction.getFilledReceived() : 0L;
+                long prevEmptyReceived = transaction.getEmptyReceived() != null ? transaction.getEmptyReceived() : 0L;
+                long prevFilledSent = transaction.getFilledSent() != null ? transaction.getFilledSent() : 0L;
+                long prevEmptySent = transaction.getEmptySent() != null ? transaction.getEmptySent() : 0L;
+
+                if (existingType == SupplierTransaction.TransactionType.BORROW_OUT) {
+                        validateBorrowOutAvailability(
+                                        request.getSupplierId(),
+                                        request.getWarehouseId(),
+                                        request.getVariantId(),
+                                        filledSent,
+                                        emptySent,
+                                        transaction.getId(),
+                                        prevFilledSent,
+                                        prevEmptySent);
+                }
+                if (existingType == SupplierTransaction.TransactionType.PURCHASE_RETURN) {
+                        validatePurchaseReturnAvailability(
+                                        request.getSupplierId(),
+                                        request.getWarehouseId(),
+                                        request.getVariantId(),
+                                        filledSent,
+                                        transaction.getId(),
+                                        prevFilledSent);
+                }
+
                 // Calculate quantity differences
-                long filledDifference = request.getFilledReceived() - transaction.getFilledReceived();
-                long emptyDifference = request.getEmptySent() - transaction.getEmptySent();
+                long filledDifference = (filledReceived - prevFilledReceived) - (filledSent - prevFilledSent);
+                long emptyDifference = (emptyReceived - prevEmptyReceived) - (emptySent - prevEmptySent);
 
                 long currentFilled = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
                 long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
 
                 long newFilled = currentFilled + filledDifference;
-                long newEmpty = currentEmpty - emptyDifference;
+                long newEmpty = currentEmpty + emptyDifference;
 
                 if (newFilled < 0) {
                         throw new InvalidOperationException(
@@ -126,11 +166,16 @@ public class SupplierTransactionService {
                 transaction.setVariant(variant);
                 transaction.setTransactionDate(request.getTransactionDate() != null ? request.getTransactionDate()
                                 : transaction.getTransactionDate());
-                transaction.setFilledReceived(request.getFilledReceived());
-                transaction.setEmptySent(request.getEmptySent());
-                transaction.setReference(request.getReference());
+                transaction.setFilledReceived(filledReceived);
+                transaction.setEmptyReceived(emptyReceived);
+                transaction.setFilledSent(filledSent);
+                transaction.setEmptySent(emptySent);
+                if (request.getReference() != null && !request.getReference().trim().isEmpty()) {
+                        transaction.setReference(request.getReference().trim());
+                }
                 transaction.setAmount(
                                 request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
+                transaction.setNote(request.getNote());
                 transaction = repository.save(transaction);
 
                 LoggerUtil.logBusinessSuccess(logger, "UPDATE_TRANSACTION", "id", transaction.getId(), "supplierId",
@@ -156,17 +201,40 @@ public class SupplierTransactionService {
                         throw new IllegalArgumentException("Warehouse ID, Supplier ID and Variant ID cannot be null");
                 }
 
-                if (request.getFilledReceived() < 0 || request.getEmptySent() < 0) {
+                if (request.getFilledReceived() < 0 || request.getEmptyReceived() < 0
+                                || request.getFilledSent() < 0 || request.getEmptySent() < 0) {
                         LoggerUtil.logBusinessError(logger, "RECORD_TRANSACTION", "Negative quantities", "filled",
                                         request.getFilledReceived(), "empty", request.getEmptySent());
                         throw new IllegalArgumentException("Quantities cannot be negative");
                 }
 
-                if (request.getFilledReceived() == 0 && request.getEmptySent() == 0) {
-                        LoggerUtil.logBusinessError(logger, "RECORD_TRANSACTION", "Zero quantities", "reason",
-                                        "must have at least one quantity");
-                        throw new IllegalArgumentException(
-                                        "Transaction must have at least one quantity (filled or empty)");
+                SupplierTransaction.TransactionType type = parseTransactionType(request.getTransactionType());
+                validateQuantities(type, request.getFilledReceived(), request.getEmptyReceived(),
+                                request.getFilledSent(), request.getEmptySent());
+
+                if (type == SupplierTransaction.TransactionType.PURCHASE && request.getAmount() == null) {
+                        throw new IllegalArgumentException("Amount is required for purchase transactions");
+                }
+
+                if (type == SupplierTransaction.TransactionType.BORROW_OUT) {
+                        validateBorrowOutAvailability(
+                                        request.getSupplierId(),
+                                        request.getWarehouseId(),
+                                        request.getVariantId(),
+                                        request.getFilledSent(),
+                                        request.getEmptySent(),
+                                        null,
+                                        0L,
+                                        0L);
+                }
+                if (type == SupplierTransaction.TransactionType.PURCHASE_RETURN) {
+                        validatePurchaseReturnAvailability(
+                                        request.getSupplierId(),
+                                        request.getWarehouseId(),
+                                        request.getVariantId(),
+                                        request.getFilledSent(),
+                                        null,
+                                        0L);
                 }
 
                 Warehouse warehouse = warehouseRepository.findById(request.getWarehouseId())
@@ -202,16 +270,32 @@ public class SupplierTransactionService {
                                                                                         + request.getVariantId());
                                                 });
 
+                Long filledReceived = request.getFilledReceived() != null ? request.getFilledReceived() : 0L;
+                Long emptyReceived = request.getEmptyReceived() != null ? request.getEmptyReceived() : 0L;
+                Long filledSent = request.getFilledSent() != null ? request.getFilledSent() : 0L;
+                Long emptySent = request.getEmptySent() != null ? request.getEmptySent() : 0L;
+
+                String referenceNumber = null;
+                if (type == SupplierTransaction.TransactionType.PURCHASE) {
+                        referenceNumber = referenceNumberGenerator.generateSupplierPurchaseOrderReference(
+                                        supplier.getCode());
+                } else if (type == SupplierTransaction.TransactionType.PURCHASE_RETURN) {
+                        referenceNumber = referenceNumberGenerator.generateSupplierPurchaseReturnReference(
+                                        supplier.getCode());
+                } else {
+                        referenceNumber = referenceNumberGenerator.generateSupplierBorrowReference(
+                                        supplier.getCode(), type.name());
+                }
+
                 // Create transaction with warehouse
                 SupplierTransaction transaction = new SupplierTransaction(
-                                warehouse, supplier, variant, LocalDate.now(),
-                                request.getFilledReceived(), request.getEmptySent(), request.getReference(),
-                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null);
-
-                // Generate reference number BEFORE initial save
-                String referenceNumber = referenceNumberGenerator.generateSupplierPurchaseOrderReference(
-                                supplier.getCode());
-                transaction.setReference(referenceNumber);
+                                warehouse, supplier, variant,
+                                request.getTransactionDate() != null ? request.getTransactionDate() : LocalDate.now(),
+                                filledReceived, emptyReceived, filledSent, emptySent,
+                                referenceNumber,
+                                request.getAmount() != null ? new java.math.BigDecimal(request.getAmount()) : null,
+                                type,
+                                request.getNote());
 
                 transaction = repository.save(transaction);
                 logger.info("Supplier transaction created with id: {} - Reference: {}",
@@ -226,14 +310,20 @@ public class SupplierTransactionService {
                 long currentFilled = stock.getFilledQty() != null ? stock.getFilledQty() : 0L;
                 long currentEmpty = stock.getEmptyQty() != null ? stock.getEmptyQty() : 0L;
 
-                long newFilled = currentFilled + request.getFilledReceived();
-                long newEmpty = currentEmpty - request.getEmptySent();
+                long newFilled = currentFilled + filledReceived - filledSent;
+                long newEmpty = currentEmpty + emptyReceived - emptySent;
 
+                if (newFilled < 0) {
+                        throw new InvalidOperationException(
+                                        "Insufficient filled stock in " + warehouse.getName() +
+                                                        ". Available: " + currentFilled + ", Required: " +
+                                                        filledSent);
+                }
                 if (newEmpty < 0) {
                         throw new InvalidOperationException(
                                         "Insufficient empty stock in " + warehouse.getName() +
                                                         ". Available: " + currentEmpty + ", Required: " +
-                                                        request.getEmptySent());
+                                                        emptySent);
                 }
 
                 stock.setFilledQty(newFilled);
@@ -277,12 +367,19 @@ public class SupplierTransactionService {
                                 .map(this::toDTO);
         }
 
-        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber, String createdBy) {
+        public Page<SupplierTransactionDTO> getAllTransactions(Pageable pageable, String referenceNumber, String createdBy,
+                        Long supplierId, Long warehouseId, Long variantId, LocalDate fromDate, LocalDate toDate,
+                        String transactionType) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "SUPPLIER_TRANSACTION", "page",
                                 pageable.getPageNumber(), "size", pageable.getPageSize(), "referenceNumber",
                                 referenceNumber);
 
-                return repository.findByReferenceAndCreatedBy(referenceNumber, createdBy, pageable)
+                SupplierTransaction.TransactionType parsedType = (transactionType == null || transactionType.trim().isEmpty())
+                                ? null
+                                : parseTransactionType(transactionType);
+
+                return repository.findByFilters(referenceNumber, createdBy, supplierId, warehouseId, variantId,
+                                fromDate, toDate, parsedType, pageable)
                                 .map(this::toDTO);
         }
 
@@ -316,6 +413,20 @@ public class SupplierTransactionService {
                                 .collect(Collectors.toList());
         }
 
+        public SupplierBorrowBalanceDTO getBorrowBalance(Long supplierId, Long warehouseId, Long variantId,
+                        Long excludeId) {
+                long borrowedFilled = repository.sumBorrowInFilled(supplierId, warehouseId, variantId, excludeId)
+                                - repository.sumBorrowOutFilled(supplierId, warehouseId, variantId, excludeId);
+                long borrowedEmpty = repository.sumBorrowInEmpty(supplierId, warehouseId, variantId, excludeId)
+                                - repository.sumBorrowOutEmpty(supplierId, warehouseId, variantId, excludeId);
+                return new SupplierBorrowBalanceDTO(
+                                supplierId,
+                                warehouseId,
+                                variantId,
+                                Math.max(borrowedFilled, 0L),
+                                Math.max(borrowedEmpty, 0L));
+        }
+
         private SupplierTransactionDTO toDTO(SupplierTransaction transaction) {
                 SupplierTransactionDTO dto = new SupplierTransactionDTO(
                                 transaction.getId(),
@@ -327,14 +438,126 @@ public class SupplierTransactionService {
                                 transaction.getVariant().getName(),
                                 transaction.getTransactionDate(),
                                 transaction.getFilledReceived(),
+                                transaction.getEmptyReceived(),
+                                transaction.getFilledSent(),
                                 transaction.getEmptySent(),
+                                transaction.getTransactionType() != null ? transaction.getTransactionType().name() : SupplierTransaction.TransactionType.PURCHASE.name(),
                                 transaction.getReference(),
-                                transaction.getAmount());
+                                transaction.getAmount(),
+                                transaction.getNote());
                 dto.setCreatedBy(transaction.getCreatedBy());
                 dto.setCreatedDate(transaction.getCreatedDate());
                 dto.setUpdatedBy(transaction.getUpdatedBy());
                 dto.setUpdatedDate(transaction.getUpdatedDate());
                 return dto;
+        }
+
+        private SupplierTransaction.TransactionType parseTransactionType(String value) {
+                if (value == null || value.trim().isEmpty()) {
+                        return SupplierTransaction.TransactionType.PURCHASE;
+                }
+                try {
+                        return SupplierTransaction.TransactionType.valueOf(value.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                        throw new IllegalArgumentException("Invalid transaction type: " + value);
+                }
+        }
+
+        private void validateQuantities(SupplierTransaction.TransactionType type,
+                        Long filledReceived, Long emptyReceived, Long filledSent, Long emptySent) {
+                long fr = filledReceived != null ? filledReceived : 0L;
+                long er = emptyReceived != null ? emptyReceived : 0L;
+                long fs = filledSent != null ? filledSent : 0L;
+                long es = emptySent != null ? emptySent : 0L;
+
+                if (fr == 0 && er == 0 && fs == 0 && es == 0) {
+                        throw new IllegalArgumentException("At least one quantity must be greater than zero");
+                }
+
+                switch (type) {
+                        case PURCHASE:
+                                if (fs > 0 || er > 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Purchase transactions cannot have filled sent or empty received");
+                                }
+                                if (fr == 0 && es == 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Purchase transactions require filled received or empty sent");
+                                }
+                                break;
+                        case BORROW_IN:
+                                if (fs > 0 || es > 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Borrow in cannot have filled sent or empty sent");
+                                }
+                                if (fr == 0 && er == 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Borrow in requires filled received or empty received");
+                                }
+                                break;
+                        case BORROW_OUT:
+                                if (fr > 0 || er > 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Borrow out cannot have filled received or empty received");
+                                }
+                                if (fs == 0 && es == 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Borrow out requires filled sent or empty sent");
+                                }
+                                break;
+                        case PURCHASE_RETURN:
+                                if (fr > 0 || er > 0 || es > 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Purchase return supports only filled sent quantity");
+                                }
+                                if (fs == 0) {
+                                        throw new IllegalArgumentException(
+                                                        "Purchase return requires filled sent quantity");
+                                }
+                                break;
+                        default:
+                                throw new IllegalArgumentException("Unsupported transaction type: " + type);
+                }
+        }
+
+        private void validateBorrowOutAvailability(Long supplierId, Long warehouseId, Long variantId,
+                        Long filledSent, Long emptySent, Long excludeId, Long previousFilledSent, Long previousEmptySent) {
+                long requestedFilledSent = filledSent != null ? filledSent : 0L;
+                long requestedEmptySent = emptySent != null ? emptySent : 0L;
+
+                long borrowedFilled = repository.sumBorrowInFilled(supplierId, warehouseId, variantId, excludeId)
+                                - repository.sumBorrowOutFilled(supplierId, warehouseId, variantId, excludeId);
+                long borrowedEmpty = repository.sumBorrowInEmpty(supplierId, warehouseId, variantId, excludeId)
+                                - repository.sumBorrowOutEmpty(supplierId, warehouseId, variantId, excludeId);
+
+                long availableFilled = borrowedFilled + (previousFilledSent != null ? previousFilledSent : 0L);
+                long availableEmpty = borrowedEmpty + (previousEmptySent != null ? previousEmptySent : 0L);
+
+                if (requestedFilledSent > availableFilled) {
+                        throw new InvalidOperationException(
+                                        "Cannot return more filled cylinders than borrowed. Borrowed available: "
+                                                        + availableFilled + ", Requested: " + requestedFilledSent);
+                }
+                if (requestedEmptySent > availableEmpty) {
+                        throw new InvalidOperationException(
+                                        "Cannot return more empty cylinders than borrowed. Borrowed available: "
+                                                        + availableEmpty + ", Requested: " + requestedEmptySent);
+                }
+        }
+
+        private void validatePurchaseReturnAvailability(Long supplierId, Long warehouseId, Long variantId,
+                        Long filledSent, Long excludeId, Long previousFilledSent) {
+                long requestedFilledSent = filledSent != null ? filledSent : 0L;
+                long purchasedFilled = repository.sumPurchaseFilled(supplierId, warehouseId, variantId, excludeId);
+                long alreadyReturnedFilled = repository.sumPurchaseReturnFilled(supplierId, warehouseId, variantId, excludeId);
+                long availableToReturn = (purchasedFilled - alreadyReturnedFilled)
+                                + (previousFilledSent != null ? previousFilledSent : 0L);
+
+                if (requestedFilledSent > availableToReturn) {
+                        throw new InvalidOperationException(
+                                        "Cannot return more filled cylinders than purchased from this supplier. Purchased available: "
+                                                        + availableToReturn + ", Requested: " + requestedFilledSent);
+                }
         }
 }
 

@@ -16,7 +16,7 @@ import { CylinderVariantService } from '../../services/cylinder-variant.service'
 import { WarehouseService } from '../../services/warehouse.service';
 import { LoadingService } from '../../services/loading.service';
 import { DateUtilityService } from '../../services/date-utility.service';
-import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { finalize, Subject, debounceTime, distinctUntilChanged, takeUntil, catchError, of } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
@@ -27,6 +27,7 @@ import { SupplierTransaction } from '../../models/supplier-transaction.model';
 import { InventoryStock } from '../../models/inventory-stock.model';
 import { PageResponse } from '../../models/page-response';
 import { CreateSupplierTransactionRequest } from '../../models/create-supplier-transaction-request.model';
+import { SupplierBorrowBalance } from '../../models/supplier-borrow-balance.model';
 
 @Component({
   selector: 'app-supplier-transaction',
@@ -60,12 +61,16 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   filterVariantId: string = '';
   filterReference: string = '';
   filterCreatedBy = '';
+  selectedTransactionTypeTab: string = 'ALL';
   selectedTransaction: SupplierTransaction | null = null;
   originalTransaction: SupplierTransaction | null = null;
   transactionForm!: FormGroup;
   currentEmpty: number | null = null;
   emptyLoading = false;
   emptyError = '';
+  borrowBalance: SupplierBorrowBalance | null = null;
+  borrowBalanceLoading = false;
+  borrowBalanceError = '';
 
   // Font Awesome Icons
   faEdit = faEdit;
@@ -83,6 +88,19 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
   allTransactions: SupplierTransaction[] = [];
   filteredTransactions: SupplierTransaction[] = [];
   users: User[] = [];
+  transactionTypes = [
+    { value: 'PURCHASE', label: 'Purchase' },
+    { value: 'BORROW_IN', label: 'Borrow In' },
+    { value: 'BORROW_OUT', label: 'Borrow Out' },
+    { value: 'PURCHASE_RETURN', label: 'Purchase Return (Defective)' }
+  ];
+  transactionTypeTabs = [
+    { value: 'ALL', label: 'All' },
+    { value: 'PURCHASE', label: 'Purchase' },
+    { value: 'BORROW_IN', label: 'Borrow In' },
+    { value: 'BORROW_OUT', label: 'Borrow Out' },
+    { value: 'PURCHASE_RETURN', label: 'Purchase Return' }
+  ];
 
   warehouseCompare = (w1: Warehouse | number | null, w2: Warehouse | number | null) => {
     if (!w1 || !w2) return w1 === w2;
@@ -159,28 +177,33 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadWarehouses() {
     this.loadingService.show('Loading warehouses...');
-    this.warehouseService.getAllWarehouses()
+    this.warehouseService.getActiveWarehouses()
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data: Warehouse[]) => {
-          this.warehouses = data || [];
-          this.cdr.markForCheck();
-        },
-        error: (error: unknown) => {
-          const err = error as { error?: { message?: string }; message?: string };
-          const errorMessage = err?.error?.message || err?.message || 'Error loading warehouses';
-          this.toastr.error(errorMessage, 'Error');
-        }
-      });
-
-    this.warehouseService.getActiveWarehouses()
-      .subscribe({
-        next: (data: Warehouse[]) => {
           this.warehousesActive = data || [];
+          // Keep filter usable even if all-warehouses endpoint fails on first load
+          if (!this.warehouses || this.warehouses.length === 0) {
+            this.warehouses = [...this.warehousesActive];
+          }
           this.cdr.markForCheck();
         },
         error: () => {
           this.warehousesActive = [];
+          this.warehouses = [];
+        }
+      });
+
+    this.warehouseService.getAllWarehouses()
+      .pipe(
+        catchError(() => of([] as Warehouse[]))
+      )
+      .subscribe({
+        next: (data: Warehouse[]) => {
+          if (data && data.length > 0) {
+            this.warehouses = data;
+          }
+          this.cdr.markForCheck();
         }
       });
   }
@@ -236,16 +259,30 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
   loadTransactions() {
     this.loadingService.show('Loading transactions...');
-    this.transactionService.getAllTransactions(this.transactionPage - 1, this.transactionPageSize, 'id', 'ASC', this.filterReference, this.filterCreatedBy || undefined)
+    this.transactionService.getAllTransactions(
+      this.transactionPage - 1,
+      this.transactionPageSize,
+      'transactionDate',
+      'DESC',
+      {
+        referenceNumber: this.filterReference || undefined,
+        createdBy: this.filterCreatedBy || undefined,
+        supplierId: this.selectedSupplier ? Number(this.selectedSupplier) : undefined,
+        warehouseId: this.selectedWarehouse ? Number(this.selectedWarehouse) : undefined,
+        variantId: this.filterVariantId ? Number(this.filterVariantId) : undefined,
+        fromDate: this.filterFromDate || undefined,
+        toDate: this.filterToDate || undefined,
+        transactionType: this.selectedTransactionTypeTab !== 'ALL' ? this.selectedTransactionTypeTab : undefined
+      }
+    )
       .pipe(finalize(() => this.loadingService.hide()))
       .subscribe({
         next: (data: PageResponse<SupplierTransaction>) => {
           this.allTransactions = (data.items || [])
-            .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
-            .sort((a, b) => b.id - a.id);
-          this.filteredTransactions = this.applyCreatedByFilter([...this.allTransactions]);
-          this.totalTransactions = this.filterCreatedBy ? this.filteredTransactions.length : (data.totalElements ?? this.allTransactions.length);
-          this.totalPages = this.filterCreatedBy ? 1 : (data.totalPages ?? 1);
+            .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number');
+          this.filteredTransactions = [...this.allTransactions];
+          this.totalTransactions = data.totalElements ?? this.allTransactions.length;
+          this.totalPages = data.totalPages ?? 1;
           this.cdr.markForCheck();
         },
         error: (error: unknown) => {
@@ -272,31 +309,67 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       warehouseId: ['', Validators.required],
       supplierId: ['', Validators.required],
       variantId: ['', Validators.required],
+      transactionType: ['PURCHASE', Validators.required],
       transactionDate: ['', Validators.required],
-      filledReceived: [0, [Validators.required, Validators.min(0)]],
-      emptySent: [0, [Validators.required, Validators.min(0)]],
+      filledReceived: [null, [Validators.min(0)]],
+      emptyReceived: [null, [Validators.min(0)]],
+      filledSent: [null, [Validators.min(0)]],
+      emptySent: [null, [Validators.min(0)]],
       reference: [''],
-      amount: [0, [Validators.required, Validators.min(0)]]
+      amount: [null, [Validators.required, Validators.min(0)]],
+      note: ['']
     });
+    this.updateAmountValidators();
+    this.updateQuantityValidators();
 
     this.transactionForm.get('warehouseId')?.valueChanges
       .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(() => this.loadCurrentEmpty());
+      .subscribe(() => {
+        this.loadCurrentEmpty();
+        this.loadBorrowBalance();
+      });
 
     this.transactionForm.get('variantId')?.valueChanges
       .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
-      .subscribe(() => this.loadCurrentEmpty());
+      .subscribe(() => {
+        this.loadCurrentEmpty();
+        this.loadBorrowBalance();
+      });
+
+    this.transactionForm.get('transactionType')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.updateQuantityValidators();
+        this.updateAmountValidators();
+        this.loadBorrowBalance();
+        this.cdr.markForCheck();
+      });
+
+    this.transactionForm.get('supplierId')?.valueChanges
+      .pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe(() => this.loadBorrowBalance());
   }
 
   openAddForm() {
     this.editingId = null;
     this.originalTransaction = null;
-    this.transactionForm.reset({ supplierId: '', variantId: '' });
+    this.transactionForm.reset({
+      supplierId: '',
+      variantId: '',
+      transactionType: 'PURCHASE',
+      filledReceived: null,
+      emptyReceived: null,
+      filledSent: null,
+      emptySent: null,
+      amount: null,
+      note: ''
+    });
     this.showForm = true;
     // Refresh variants to get any newly activated ones
     this.variantService.invalidateCache();
     this.loadVariants();
     this.loadCurrentEmpty();
+    this.loadBorrowBalance();
     this.cdr.markForCheck();
   }
 
@@ -308,14 +381,19 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
       warehouseId: warehouseId,
       supplierId: transaction.supplierId,
       variantId: transaction.variantId,
+      transactionType: transaction.transactionType || 'PURCHASE',
       transactionDate: transaction.transactionDate,
       filledReceived: transaction.filledReceived,
+      emptyReceived: transaction.emptyReceived ?? 0,
+      filledSent: transaction.filledSent ?? 0,
       emptySent: transaction.emptySent,
       reference: transaction.reference,
-      amount: transaction.amount || 0
+      amount: transaction.amount || 0,
+      note: transaction.note || ''
     });
     this.showForm = true;
     this.loadCurrentEmpty();
+    this.loadBorrowBalance();
     this.cdr.markForCheck();
   }
 
@@ -326,29 +404,41 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     formData.supplierId = Number(formData.supplierId);
     formData.variantId = Number(formData.variantId);
     formData.transactionDate = formData.transactionDate ? formData.transactionDate : this.dateUtility.getTodayInIST();
-    formData.filledReceived = Number(formData.filledReceived);
-    formData.emptySent = Number(formData.emptySent);
+    formData.transactionType = (formData.transactionType || 'PURCHASE') as string;
+    formData.filledReceived = Number(formData.filledReceived || 0);
+    formData.emptyReceived = Number(formData.emptyReceived || 0);
+    formData.filledSent = Number(formData.filledSent || 0);
+    formData.emptySent = Number(formData.emptySent || 0);
+    formData.amount = this.parseAmountInput(formData.amount);
 
-    // Prevent both fields being zero
-    if (formData.filledReceived === 0 && formData.emptySent === 0) {
-      this.toastr.error('At least one of Filled Received or Empty Sent must be greater than zero.', 'Validation Error');
+    if (!this.validateQuantities(formData)) {
       return;
     }
 
-    // Prevent sending more empty than available in inventory (warehouse-specific)
-    if (formData.emptySent > 0) {
+    if (formData.transactionType === 'PURCHASE' && (formData.amount === null || typeof formData.amount === 'undefined')) {
+      this.toastr.error('Amount is required for purchase transactions.', 'Validation Error');
+      return;
+    }
+
+    if (this.requiresInventoryCheck(formData)) {
       this.inventoryStockService.getStockByWarehouse(formData.warehouseId).subscribe((stocks: InventoryStock[]) => {
         const stockForVariant = (stocks || []).find((s) => s.variantId === formData.variantId);
         const currentEmpty = stockForVariant?.emptyQty ?? 0;
+        const currentFilled = stockForVariant?.filledQty ?? 0;
         const originalEmptySent = this.editingId ? (this.originalTransaction?.emptySent ?? 0) : 0;
-        // When editing, allow using the empties already accounted for in this transaction.
+        const originalFilledSent = this.editingId ? (this.originalTransaction?.filledSent ?? 0) : 0;
         const availableEmpty = currentEmpty + originalEmptySent;
-        if (formData.emptySent > availableEmpty) {
+        const availableFilled = currentFilled + originalFilledSent;
+
+        if ((formData.emptySent || 0) > availableEmpty) {
           this.toastr.error('Cannot send more empty cylinders than available in inventory for this warehouse.', 'Validation Error');
           return;
-        } else {
-          this._submitTransaction(formData);
         }
+        if ((formData.filledSent || 0) > availableFilled) {
+          this.toastr.error('Cannot send more filled cylinders than available in inventory for this warehouse.', 'Validation Error');
+          return;
+        }
+        this._submitTransaction(formData);
       }, (err: unknown) => {
         const errorObj = err as { error?: { message?: string }; message?: string };
         const errorMessage = errorObj?.error?.message || errorObj?.message || 'Could not validate inventory. Please try again.';
@@ -357,6 +447,130 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     } else {
       this._submitTransaction(formData);
     }
+  }
+
+  private updateAmountValidators(): void {
+    const type = this.transactionForm.get('transactionType')?.value || 'PURCHASE';
+    const amountControl = this.transactionForm.get('amount');
+    if (!amountControl) return;
+    if (type === 'PURCHASE') {
+      amountControl.setValidators([Validators.required, Validators.min(0)]);
+    } else {
+      amountControl.setValidators([Validators.min(0)]);
+    }
+    amountControl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private updateQuantityValidators(): void {
+    const type = this.transactionForm.get('transactionType')?.value || 'PURCHASE';
+    const filledReceivedControl = this.transactionForm.get('filledReceived');
+    const emptyReceivedControl = this.transactionForm.get('emptyReceived');
+    const filledSentControl = this.transactionForm.get('filledSent');
+    const emptySentControl = this.transactionForm.get('emptySent');
+
+    [filledReceivedControl, emptyReceivedControl, filledSentControl, emptySentControl]
+      .forEach((control) => {
+        if (!control) return;
+        control.setValidators([Validators.min(0)]);
+        control.updateValueAndValidity({ emitEvent: false });
+      });
+
+    if (type === 'PURCHASE') {
+      filledSentControl?.setValue(null, { emitEvent: false });
+      emptyReceivedControl?.setValue(null, { emitEvent: false });
+    } else if (type === 'BORROW_IN') {
+      filledSentControl?.setValue(null, { emitEvent: false });
+      emptySentControl?.setValue(null, { emitEvent: false });
+    } else if (type === 'BORROW_OUT') {
+      filledReceivedControl?.setValue(null, { emitEvent: false });
+      emptyReceivedControl?.setValue(null, { emitEvent: false });
+    } else if (type === 'PURCHASE_RETURN') {
+      filledReceivedControl?.setValue(null, { emitEvent: false });
+      emptyReceivedControl?.setValue(null, { emitEvent: false });
+      emptySentControl?.setValue(null, { emitEvent: false });
+    }
+  }
+
+  private parseAmountInput(value: unknown): number | undefined {
+    if (value === null || typeof value === 'undefined' || value === '') {
+      return undefined;
+    }
+    if (typeof value === 'number') {
+      return isNaN(value) ? undefined : value;
+    }
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/,/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? undefined : parsed;
+    }
+    return undefined;
+  }
+
+  private validateQuantities(formData: CreateSupplierTransactionRequest): boolean {
+    const fr = Number(formData.filledReceived || 0);
+    const er = Number(formData.emptyReceived || 0);
+    const fs = Number(formData.filledSent || 0);
+    const es = Number(formData.emptySent || 0);
+    const type = formData.transactionType || 'PURCHASE';
+
+    if (fr === 0 && er === 0 && fs === 0 && es === 0) {
+      this.toastr.error('At least one quantity must be greater than zero.', 'Validation Error');
+      return false;
+    }
+
+    if (type === 'PURCHASE') {
+      if (fs > 0 || er > 0) {
+        this.toastr.error('Purchase cannot include filled sent or empty received.', 'Validation Error');
+        return false;
+      }
+      if (fr === 0 && es === 0) {
+        this.toastr.error('Purchase requires filled received or empty sent.', 'Validation Error');
+        return false;
+      }
+    }
+
+    if (type === 'BORROW_IN') {
+      if (fs > 0 || es > 0) {
+        this.toastr.error('Borrow in cannot include filled sent or empty sent.', 'Validation Error');
+        return false;
+      }
+      if (fr === 0 && er === 0) {
+        this.toastr.error('Borrow in requires filled received or empty received.', 'Validation Error');
+        return false;
+      }
+    }
+
+    if (type === 'BORROW_OUT') {
+      if (fr > 0 || er > 0) {
+        this.toastr.error('Borrow out cannot include filled received or empty received.', 'Validation Error');
+        return false;
+      }
+      if (fs === 0 && es === 0) {
+        this.toastr.error('Borrow out requires filled sent or empty sent.', 'Validation Error');
+        return false;
+      }
+    }
+
+    if (type === 'PURCHASE_RETURN') {
+      if (fr > 0 || er > 0 || es > 0) {
+        this.toastr.error('Purchase return supports only filled sent quantity.', 'Validation Error');
+        return false;
+      }
+      if (fs === 0) {
+        this.toastr.error('Purchase return requires filled sent quantity.', 'Validation Error');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private requiresInventoryCheck(formData: CreateSupplierTransactionRequest): boolean {
+    const type = formData.transactionType || 'PURCHASE';
+    if (type === 'BORROW_IN') {
+      return false;
+    }
+    return (formData.emptySent || 0) > 0 || (formData.filledSent || 0) > 0;
   }
 
   loadCurrentEmpty() {
@@ -387,6 +601,53 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  loadBorrowBalance() {
+    const type = this.transactionForm.get('transactionType')?.value;
+    if (type !== 'BORROW_OUT') {
+      this.borrowBalance = null;
+      this.borrowBalanceLoading = false;
+      this.borrowBalanceError = '';
+      return;
+    }
+    const supplierId = this.transactionForm.get('supplierId')?.value;
+    const warehouseId = this.transactionForm.get('warehouseId')?.value;
+    const variantId = this.transactionForm.get('variantId')?.value;
+    if (!supplierId || !warehouseId || !variantId) {
+      this.borrowBalance = null;
+      this.borrowBalanceLoading = false;
+      this.borrowBalanceError = '';
+      return;
+    }
+    this.borrowBalanceLoading = true;
+    this.borrowBalanceError = '';
+    const excludeId = this.editingId ?? null;
+    this.transactionService.getBorrowBalance(Number(supplierId), Number(warehouseId), Number(variantId), excludeId)
+      .pipe(finalize(() => {
+        this.borrowBalanceLoading = false;
+        this.cdr.markForCheck();
+      }))
+      .subscribe({
+        next: (data: SupplierBorrowBalance) => {
+          this.borrowBalance = data;
+        },
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          this.borrowBalanceError = err?.error?.message || err?.message || 'Borrow balance unavailable';
+          this.borrowBalance = null;
+        }
+      });
+  }
+
+  getDisplayBorrowBalance(): { filled: number; empty: number } | null {
+    if (!this.borrowBalance) return null;
+    const extraFilled = this.editingId ? Number(this.transactionForm.get('filledSent')?.value || 0) : 0;
+    const extraEmpty = this.editingId ? Number(this.transactionForm.get('emptySent')?.value || 0) : 0;
+    return {
+      filled: (this.borrowBalance.filledAvailable || 0) + extraFilled,
+      empty: (this.borrowBalance.emptyAvailable || 0) + extraEmpty
+    };
   }
 
   _submitTransaction(formData: CreateSupplierTransactionRequest & { supplierName?: string; variantName?: string }) {
@@ -434,42 +695,14 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
 
 
   applyFilters() {
-    let filtered = [...this.allTransactions];
-    // Supplier filter
-    if (this.selectedSupplier) {
-      const selectedSupplierId = parseInt(this.selectedSupplier);
-      filtered = filtered.filter(t => t.supplierId === selectedSupplierId);
-    }
-    // Warehouse filter
-    if (this.selectedWarehouse) {
-      const warehouseId = parseInt(this.selectedWarehouse);
-      filtered = filtered.filter(t => t.warehouseId === warehouseId);
-    }
-    // Variant filter
-    if (this.filterVariantId) {
-      const variantId = parseInt(this.filterVariantId);
-      filtered = filtered.filter(t => t.variantId === variantId);
-    }
-    // Date range filter
-    if (this.filterFromDate) {
-      filtered = filtered.filter(t => t.transactionDate >= this.filterFromDate);
-    }
-    if (this.filterToDate) {
-      filtered = filtered.filter(t => t.transactionDate <= this.filterToDate);
-    }
-    // Reference filter
-    if (this.filterReference) {
-      const refFilter = this.filterReference.toLowerCase();
-      filtered = filtered.filter(t => t.reference && t.reference.toLowerCase().includes(refFilter));
-    }
-    // Created by filter
-    if (this.filterCreatedBy) {
-      filtered = filtered.filter(t => t.createdBy === this.filterCreatedBy);
-    }
-    this.filteredTransactions = filtered
-      .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
-      .sort((a, b) => b.id - a.id);
-    this.cdr.markForCheck();
+    this.transactionPage = 1;
+    this.loadTransactions();
+  }
+
+  setTransactionTypeTab(tab: string) {
+    this.selectedTransactionTypeTab = tab;
+    this.transactionPage = 1;
+    this.loadTransactions();
   }
 
   resetFilters() {
@@ -480,10 +713,9 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     this.filterVariantId = '';
     this.filterReference = '';
     this.filterCreatedBy = '';
-    this.filteredTransactions = [...this.allTransactions]
-      .filter((t): t is SupplierTransaction & { id: number } => typeof t.id === 'number')
-      .sort((a, b) => b.id - a.id);
-    this.cdr.markForCheck();
+    this.selectedTransactionTypeTab = 'ALL';
+    this.transactionPage = 1;
+    this.loadTransactions();
   }
 
   closeForm() {
@@ -508,13 +740,6 @@ export class SupplierTransactionComponent implements OnInit, OnDestroy {
     }
     const user = this.users.find(u => u.username === createdBy);
     return user?.name || createdBy;
-  }
-
-  private applyCreatedByFilter(entries: SupplierTransaction[]): SupplierTransaction[] {
-    if (!this.filterCreatedBy) {
-      return entries;
-    }
-    return entries.filter(entry => entry.createdBy === this.filterCreatedBy);
   }
 
   private loadUsers() {

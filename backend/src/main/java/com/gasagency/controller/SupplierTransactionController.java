@@ -3,6 +3,7 @@ package com.gasagency.controller;
 
 import com.gasagency.dto.request.CreateSupplierTransactionRequestDTO;
 import com.gasagency.dto.response.SupplierTransactionDTO;
+import com.gasagency.dto.response.SupplierBorrowBalanceDTO;
 import com.gasagency.dto.response.PagedResponseDTO;
 import com.gasagency.service.SupplierTransactionService;
 import com.gasagency.util.ApiResponse;
@@ -13,8 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -54,10 +57,22 @@ public class SupplierTransactionController {
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String direction,
             @RequestParam(required = false) String referenceNumber,
-            @RequestParam(required = false) String createdBy) {
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) Long supplierId,
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) Long variantId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) String transactionType) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<SupplierTransactionDTO> transactions = service.getAllTransactions(pageable, referenceNumber, createdBy);
+        Sort sort = Sort.by(sortDirection, sortBy);
+        if (!"id".equalsIgnoreCase(sortBy)) {
+            // Keep latest-first stable within same date/time buckets.
+            sort = sort.and(Sort.by(Sort.Direction.DESC, "id"));
+        }
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<SupplierTransactionDTO> transactions = service.getAllTransactions(pageable, referenceNumber, createdBy,
+                supplierId, warehouseId, variantId, fromDate, toDate, transactionType);
         return ResponseEntity.ok(ApiResponseUtil.success("Supplier transactions retrieved successfully", transactions));
     }
 
@@ -73,6 +88,16 @@ public class SupplierTransactionController {
             @PathVariable Long warehouseId) {
         List<SupplierTransactionDTO> transactions = service.getTransactionsByWarehouse(warehouseId);
         return ResponseEntity.ok(ApiResponseUtil.success("Supplier transactions retrieved successfully", transactions));
+    }
+
+    @GetMapping("/borrow-balance")
+    public ResponseEntity<ApiResponse<SupplierBorrowBalanceDTO>> getBorrowBalance(
+            @RequestParam Long supplierId,
+            @RequestParam Long warehouseId,
+            @RequestParam Long variantId,
+            @RequestParam(required = false) Long excludeId) {
+        SupplierBorrowBalanceDTO balance = service.getBorrowBalance(supplierId, warehouseId, variantId, excludeId);
+        return ResponseEntity.ok(ApiResponseUtil.success("Borrow balance retrieved successfully", balance));
     }
 }
 

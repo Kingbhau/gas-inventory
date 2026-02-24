@@ -1138,6 +1138,10 @@ public class CustomerCylinderLedgerService {
                 dto.setNote(ledger.getNote());
                 dto.setCreatedBy(ledger.getCreatedBy());
                 dto.setUpdatedBy(ledger.getUpdatedBy());
+                if (ledger.getWarehouse() != null) {
+                        dto.setWarehouseId(ledger.getWarehouse().getId());
+                        dto.setWarehouseName(ledger.getWarehouse().getName());
+                }
                 if (ledger.getBankAccount() != null) {
                         dto.setBankAccountId(ledger.getBankAccount().getId());
                         dto.setBankAccountName(ledger.getBankAccount().getBankName());

@@ -530,6 +530,41 @@
   justify-content: center;
 }
 
+/* Duplicate Payment Modal */
+.modal-content.duplicate-payment-modal {
+  max-width: 480px;
+}
+
+.duplicate-details {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.detail-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+}
+
 /* Info Section */
 .info-section {
   background: var(--bg-tertiary);

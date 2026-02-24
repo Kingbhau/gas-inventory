@@ -126,7 +126,10 @@ export function exportSupplierTransactionsToPDF({
     t.warehouseName ?? '',
     t.supplierName ?? '',
     t.variantName ?? '',
+    t.transactionType ?? 'PURCHASE',
     t.filledReceived ?? 0,
+    t.filledSent ?? 0,
+    t.emptyReceived ?? 0,
     t.emptySent ?? 0,
     `Rs. ${Number(t.amount ?? 0).toLocaleString()}`
   ]);
@@ -138,8 +141,11 @@ export function exportSupplierTransactionsToPDF({
       'Warehouse',
       'Supplier',
       'Variant',
-      'Filled Received',
-      'Empty Sent',
+      'Type',
+      'Filled In',
+      'Filled Out',
+      'Empty In',
+      'Empty Out',
       'Amount'
     ]],
     body: tableData,

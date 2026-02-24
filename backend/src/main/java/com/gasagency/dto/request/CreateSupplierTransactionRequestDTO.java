@@ -25,6 +25,14 @@ public class CreateSupplierTransactionRequestDTO {
     @PositiveOrZero(message = "Filled received must be 0 or positive")
     private Long filledReceived;
 
+    @NotNull(message = "Empty received cannot be null")
+    @PositiveOrZero(message = "Empty received must be 0 or positive")
+    private Long emptyReceived;
+
+    @NotNull(message = "Filled sent cannot be null")
+    @PositiveOrZero(message = "Filled sent must be 0 or positive")
+    private Long filledSent;
+
     @NotNull(message = "Empty sent cannot be null")
     @PositiveOrZero(message = "Empty sent must be 0 or positive")
     private Long emptySent;
@@ -33,23 +41,31 @@ public class CreateSupplierTransactionRequestDTO {
     private String reference;
 
     private LocalDate transactionDate;
-    @NotNull(message = "Amount cannot be null")
     @PositiveOrZero(message = "Amount must be 0 or positive")
     private BigDecimal amount;
+
+    private String transactionType;
+
+    @Size(max = 500, message = "Note cannot exceed 500 characters")
+    private String note;
 
     public CreateSupplierTransactionRequestDTO() {
     }
 
     public CreateSupplierTransactionRequestDTO(Long warehouseId, Long supplierId, Long variantId, Long filledReceived,
-            Long emptySent,
-            String reference, BigDecimal amount) {
+            Long emptyReceived, Long filledSent, Long emptySent,
+            String reference, BigDecimal amount, String transactionType, String note) {
         this.warehouseId = warehouseId;
         this.supplierId = supplierId;
         this.variantId = variantId;
         this.filledReceived = filledReceived;
+        this.emptyReceived = emptyReceived;
+        this.filledSent = filledSent;
         this.emptySent = emptySent;
         this.reference = reference;
         this.amount = amount;
+        this.transactionType = transactionType;
+        this.note = note;
     }
 
     public Double getAmount() {
@@ -92,12 +108,44 @@ public class CreateSupplierTransactionRequestDTO {
         this.filledReceived = filledReceived;
     }
 
+    public Long getEmptyReceived() {
+        return emptyReceived;
+    }
+
+    public void setEmptyReceived(Long emptyReceived) {
+        this.emptyReceived = emptyReceived;
+    }
+
+    public Long getFilledSent() {
+        return filledSent;
+    }
+
+    public void setFilledSent(Long filledSent) {
+        this.filledSent = filledSent;
+    }
+
     public Long getEmptySent() {
         return emptySent;
     }
 
     public void setEmptySent(Long emptySent) {
         this.emptySent = emptySent;
+    }
+
+    public String getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(String transactionType) {
+        this.transactionType = transactionType;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public String getReference() {

@@ -692,6 +692,46 @@
       </div>
     </div>
   </div>
+  <!-- Duplicate Payment Confirmation Modal -->
+  <div *ngIf="showDuplicatePaymentConfirm" class="modal-overlay" (click)="cancelDuplicatePayment()">
+    <div class="modal-content duplicate-payment-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Possible Duplicate Payment</h2>
+        <button class="modal-close" (click)="cancelDuplicatePayment()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin: 0 0 12px 0; color: #555;">
+          This payment matches the last payment for this customer. Do you want to proceed?
+        </p>
+        <div class="duplicate-payment-details" *ngIf="duplicatePaymentInfo">
+          <div class="detail-row">
+            <span class="detail-label">Customer</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.customerName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Amount</span>
+            <span class="detail-value">₹{{ duplicatePaymentInfo.amount | number: '1.2-2' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Date</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.paymentDate }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Payment Mode</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.paymentMode }}</span>
+          </div>
+          <div class="detail-row" *ngIf="duplicatePaymentInfo.bankAccountLabel">
+            <span class="detail-label">Bank Account</span>
+            <span class="detail-value">{{ duplicatePaymentInfo.bankAccountLabel }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelDuplicatePayment()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="confirmDuplicatePayment()">Proceed</button>
+      </div>
+    </div>
+  </div>
   <!-- UPDATE LEDGER ENTRY MODAL -->
   <div *ngIf="showUpdateForm && selectedLedgerEntry" class="modal-overlay" (click)="$event.target === $event.currentTarget && closeUpdateForm()">
     <div class="modal-content" style="max-width: 600px;" (click)="$event.stopPropagation()">
