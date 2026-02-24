@@ -185,6 +185,15 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     paymentMode: '',
     bankAccountId: null
   };
+  showDuplicatePaymentConfirm = false;
+  duplicatePaymentInfo: {
+    customerName: string;
+    amount: number;
+    paymentDate: string;
+    paymentMode: string;
+    bankAccountLabel?: string;
+  } | null = null;
+  pendingPaymentRequest: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number } | null = null;
   //filledUnits: number = 0;
 
   // UPDATE LEDGER FORM
@@ -1626,6 +1635,128 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       paymentData.bankAccountId = this.paymentForm.bankAccountId;
     }
 
+    this.checkDuplicateAndSubmitPayment(paymentData);
+  }
+
+  private normalizeAmount(value: number | string | null | undefined): number {
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/,/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : Math.round(parsed * 100) / 100;
+    }
+    const numeric = Number(value ?? 0);
+    if (isNaN(numeric)) return 0;
+    return Math.round(numeric * 100) / 100;
+  }
+
+  private normalizeId(value: number | string | null | undefined): number | null {
+    if (value === null || typeof value === 'undefined') return null;
+    const parsed = Number(value);
+    return isNaN(parsed) ? null : parsed;
+  }
+
+  private getLatestPaymentEntry(entries: CustomerCylinderLedger[] = this.ledgerEntries): CustomerCylinderLedger | null {
+    const payments = (entries || []).filter(entry => entry.refType === 'PAYMENT');
+    if (payments.length === 0) return null;
+    const getTimestamp = (entry: CustomerCylinderLedger) => {
+      if (entry.createdAt) {
+        const ts = Date.parse(entry.createdAt);
+        if (!isNaN(ts)) return ts;
+      }
+      if (entry.transactionDate) {
+        const ts = Date.parse(entry.transactionDate);
+        if (!isNaN(ts)) return ts;
+      }
+      return 0;
+    };
+    return payments.sort((a, b) => {
+      const timeDiff = getTimestamp(b) - getTimestamp(a);
+      if (timeDiff !== 0) return timeDiff;
+      return (b.id || 0) - (a.id || 0);
+    })[0];
+  }
+
+  private isDuplicatePayment(lastEntry: CustomerCylinderLedger | null, request: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number }): boolean {
+    if (!lastEntry) return false;
+    const sameCustomer = lastEntry.customerId === request.customerId;
+    const sameAmount = this.normalizeAmount(lastEntry.amountReceived) === this.normalizeAmount(request.amount);
+    const sameDate = String(lastEntry.transactionDate || '') === String(request.paymentDate || '');
+    const sameMode = String(lastEntry.paymentMode || '') === String(request.paymentMode || '');
+    const sameBankAccount = this.normalizeId(lastEntry.bankAccountId) === this.normalizeId(request.bankAccountId);
+    return sameCustomer && sameAmount && sameDate && sameMode && sameBankAccount;
+  }
+
+  private buildDuplicatePaymentInfo(request: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number }) {
+    const bankAccountId = this.normalizeId(request.bankAccountId);
+    const bankAccount = this.bankAccounts.find(acc => acc.id === bankAccountId);
+    return {
+      customerName: this.selectedCustomer?.name || 'Customer',
+      amount: this.normalizeAmount(request.amount),
+      paymentDate: String(request.paymentDate || ''),
+      paymentMode: request.paymentMode || '',
+      bankAccountLabel: bankAccount
+        ? `${bankAccount.bankName} - ${bankAccount.accountNumber}`
+        : undefined
+    };
+  }
+
+  private checkDuplicateAndSubmitPayment(request: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number }): void {
+    const lastEntry = this.getLatestPaymentEntry();
+    if (lastEntry) {
+      if (this.isDuplicatePayment(lastEntry, request)) {
+        this.pendingPaymentRequest = request;
+        this.duplicatePaymentInfo = this.buildDuplicatePaymentInfo(request);
+        this.showDuplicatePaymentConfirm = true;
+        this.isSubmittingPayment = false;
+        this.cdr.markForCheck();
+        return;
+      }
+      this.createPayment(request);
+      return;
+    }
+
+    this.ledgerService.getLedgerByCustomerAll(request.customerId)
+      .pipe(
+        take(1),
+        catchError(() => of([] as CustomerCylinderLedger[]))
+      )
+      .subscribe((entries: CustomerCylinderLedger[]) => {
+        const fetchedLast = this.getLatestPaymentEntry(entries);
+        if (fetchedLast && this.isDuplicatePayment(fetchedLast, request)) {
+          this.pendingPaymentRequest = request;
+          this.duplicatePaymentInfo = this.buildDuplicatePaymentInfo(request);
+          this.showDuplicatePaymentConfirm = true;
+          this.isSubmittingPayment = false;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.createPayment(request);
+      });
+  }
+
+  confirmDuplicatePayment(): void {
+    if (!this.pendingPaymentRequest) {
+      this.showDuplicatePaymentConfirm = false;
+      this.duplicatePaymentInfo = null;
+      return;
+    }
+    const request = this.pendingPaymentRequest;
+    this.pendingPaymentRequest = null;
+    this.showDuplicatePaymentConfirm = false;
+    this.duplicatePaymentInfo = null;
+    this.createPayment(request);
+  }
+
+  cancelDuplicatePayment(): void {
+    this.pendingPaymentRequest = null;
+    this.showDuplicatePaymentConfirm = false;
+    this.duplicatePaymentInfo = null;
+    this.isSubmittingPayment = false;
+    this.cdr.markForCheck();
+  }
+
+  private createPayment(paymentData: { customerId: number; amount: number; paymentDate: string; paymentMode?: string; bankAccountId?: number }): void {
+    const selectedCustomerId = paymentData.customerId;
     this.ledgerService.recordPayment(paymentData)
       .pipe(
         catchError((error: unknown) => {

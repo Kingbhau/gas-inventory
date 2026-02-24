@@ -148,4 +148,50 @@
       </form>
     </div>
   </div>
+
+  <!-- Duplicate Empty Return Confirmation Modal -->
+  <div *ngIf="showDuplicateConfirm" class="modal-overlay" (click)="cancelDuplicateEmptyReturn()">
+    <div class="modal-content duplicate-sale-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Possible Duplicate Empty Return</h3>
+        <button class="modal-close" (click)="cancelDuplicateEmptyReturn()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">
+          An empty return with the same values was recorded in the last entry for this customer.
+          Please confirm if you want to proceed.
+        </p>
+        <div class="duplicate-sale-details" *ngIf="duplicateReturnInfo">
+          <div class="detail-row">
+            <span class="detail-label">Customer</span>
+            <span class="detail-value">{{ duplicateReturnInfo.customerName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Warehouse</span>
+            <span class="detail-value">{{ duplicateReturnInfo.warehouseName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Variant</span>
+            <span class="detail-value">{{ duplicateReturnInfo.variantName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Empty Qty</span>
+            <span class="detail-value">{{ duplicateReturnInfo.emptyQty }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date</span>
+            <span class="detail-value">{{ duplicateReturnInfo.transactionDate }}</span>
+          </div>
+          <div class="detail-row" *ngIf="duplicateReturnInfo.lastReference">
+            <span class="detail-label">Last Reference</span>
+            <span class="detail-value">{{ duplicateReturnInfo.lastReference }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDuplicateEmptyReturn()">Cancel</button>
+        <button class="btn btn-primary" (click)="confirmDuplicateEmptyReturn()">Proceed</button>
+      </div>
+    </div>
+  </div>
 </div>

@@ -10,6 +10,7 @@ public class SaleDTO {
     private String referenceNumber;
     private Long customerId;
     private String customerName;
+    private Long warehouseId;
     private LocalDate saleDate;
     private BigDecimal totalAmount;
     private BigDecimal amountReceived;
@@ -25,13 +26,14 @@ public class SaleDTO {
     public SaleDTO() {
     }
 
-    public SaleDTO(Long id, String referenceNumber, Long customerId, String customerName, LocalDate saleDate,
-            BigDecimal totalAmount,
-            String paymentMode, Long bankAccountId, String bankAccountName, List<SaleItemDTO> saleItems) {
+    public SaleDTO(Long id, String referenceNumber, Long customerId, String customerName, Long warehouseId,
+            LocalDate saleDate, BigDecimal totalAmount, String paymentMode, Long bankAccountId,
+            String bankAccountName, List<SaleItemDTO> saleItems) {
         this.id = id;
         this.referenceNumber = referenceNumber;
         this.customerId = customerId;
         this.customerName = customerName;
+        this.warehouseId = warehouseId;
         this.saleDate = saleDate;
         this.totalAmount = totalAmount;
         this.paymentMode = paymentMode;
@@ -70,6 +72,14 @@ public class SaleDTO {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     public LocalDate getSaleDate() {

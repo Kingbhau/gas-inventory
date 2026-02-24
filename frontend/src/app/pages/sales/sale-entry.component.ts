@@ -60,6 +60,18 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   currentDue: number | null = null;
   dueLoading = false;
   dueError = '';
+  showDuplicateConfirm = false;
+  duplicateSaleInfo: {
+    customerName: string;
+    warehouseName: string;
+    variantName: string;
+    filledQty: number;
+    emptyQty: number;
+    saleDate: string;
+    lastSaleDate?: string;
+    lastReferenceNumber?: string;
+  } | null = null;
+  pendingSaleRequest: CreateSaleRequest | null = null;
 
   customerIdControl = new FormControl(null, Validators.required);
   variantIdControl = new FormControl(null, Validators.required);
@@ -541,6 +553,120 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     return discount;
   }
 
+  get totalDueWithPrevious(): number {
+    const previousDue = this.currentDue ?? 0;
+    const amountReceived = Number(this.saleForm.get('amountReceived')?.value) || 0;
+    let total = previousDue + this.totalAmount - amountReceived;
+    if (isNaN(total)) total = 0;
+    return total;
+  }
+
+  private normalizeAmount(value: number | string | null | undefined): number {
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/,/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      if (isNaN(parsed)) return 0;
+      return Math.round(parsed * 100) / 100;
+    }
+    const numeric = Number(value ?? 0);
+    if (isNaN(numeric)) return 0;
+    return Math.round(numeric * 100) / 100;
+  }
+
+  private parseAmountInput(value: unknown): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const cleaned = value.replace(/,/g, '').trim();
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  private getLatestSaleForCustomer(customerId: number) {
+    return this.saleService.getAllSales(0, 1, 'createdDate', 'DESC', undefined, undefined, customerId.toString())
+      .pipe(
+        map((response: PageResponse<Sale>) => (response.items && response.items.length > 0 ? response.items[0] : null)),
+        catchError(() => of(null as Sale | null))
+      );
+  }
+
+  private isDuplicateSale(lastSale: Sale | null, saleRequest: CreateSaleRequest): boolean {
+    if (!lastSale || !saleRequest || !saleRequest.items || saleRequest.items.length === 0) {
+      return false;
+    }
+    const lastItem = lastSale.saleItems && lastSale.saleItems.length > 0 ? lastSale.saleItems[0] : null;
+    const currentItem = saleRequest.items[0];
+    if (!lastItem) return false;
+
+    const sameCustomer = lastSale.customerId === saleRequest.customerId;
+    const sameWarehouse = (lastSale.warehouseId ?? null) === (saleRequest.warehouseId ?? null);
+    const sameVariant = lastItem.variantId === currentItem.variantId;
+    const sameFilledQty = Number(lastItem.qtyIssued || 0) === Number(currentItem.qtyIssued || 0);
+    const sameEmptyQty = Number(lastItem.qtyEmptyReceived || 0) === Number(currentItem.qtyEmptyReceived || 0);
+    const sameSaleDate = String(lastSale.saleDate || '') === String(saleRequest.saleDate || '');
+
+    return sameCustomer
+      && sameWarehouse
+      && sameVariant
+      && sameFilledQty
+      && sameEmptyQty
+      && sameSaleDate;
+  }
+
+  private buildDuplicateSaleInfo(lastSale: Sale, saleRequest: CreateSaleRequest) {
+    const customerObj = this.saleForm.get('customerId')?.value;
+    const variantObj = this.saleForm.get('variantId')?.value;
+    const warehouseObj = this.saleForm.get('warehouseId')?.value;
+    return {
+      customerName: customerObj?.name || lastSale.customerName || 'Customer',
+      warehouseName: warehouseObj?.name || 'Warehouse',
+      variantName: variantObj?.name || (lastSale.saleItems?.[0]?.variantName ?? 'Variant'),
+      filledQty: Number(saleRequest.items[0].qtyIssued || 0),
+      emptyQty: Number(saleRequest.items[0].qtyEmptyReceived || 0),
+      saleDate: String(saleRequest.saleDate || ''),
+      lastSaleDate: lastSale.saleDate,
+      lastReferenceNumber: lastSale.referenceNumber
+    };
+  }
+
+  private checkDuplicateAndSubmit(saleRequest: CreateSaleRequest): void {
+    if (!saleRequest.customerId) {
+      this.createSale(saleRequest);
+      return;
+    }
+    this.getLatestSaleForCustomer(saleRequest.customerId)
+      .subscribe((lastSale: Sale | null) => {
+        if (lastSale && this.isDuplicateSale(lastSale, saleRequest)) {
+          this.pendingSaleRequest = saleRequest;
+          this.duplicateSaleInfo = this.buildDuplicateSaleInfo(lastSale, saleRequest);
+          this.showDuplicateConfirm = true;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.createSale(saleRequest);
+      });
+  }
+
+  confirmDuplicateSale(): void {
+    if (!this.pendingSaleRequest) {
+      this.showDuplicateConfirm = false;
+      this.duplicateSaleInfo = null;
+      return;
+    }
+    const request = this.pendingSaleRequest;
+    this.pendingSaleRequest = null;
+    this.showDuplicateConfirm = false;
+    this.duplicateSaleInfo = null;
+    this.createSale(request);
+  }
+
+  cancelDuplicateSale(): void {
+    this.pendingSaleRequest = null;
+    this.showDuplicateConfirm = false;
+    this.duplicateSaleInfo = null;
+  }
+
   /**
    * Handle warehouse selection from autocomplete
    */
@@ -772,7 +898,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       warehouseId: warehouseId,
       customerId: customerId,
       saleDate: saleDate,
-      amountReceived: this.saleForm.get('amountReceived')?.value || 0,
+      amountReceived: this.parseAmountInput(this.saleForm.get('amountReceived')?.value),
       modeOfPayment: modeOfPayment,
       items: [
         {
@@ -789,6 +915,10 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     if (modeOfPayment && selectedPaymentMode?.isBankAccountRequired && bankAccountIdValue) {
       saleRequest.bankAccountId = bankAccountIdValue;
     }
+    this.checkDuplicateAndSubmit(saleRequest);
+  }
+
+  private createSale(saleRequest: CreateSaleRequest): void {
     const sub = this.saleService.createSale(saleRequest)
       .pipe(
         catchError((error: unknown) => {

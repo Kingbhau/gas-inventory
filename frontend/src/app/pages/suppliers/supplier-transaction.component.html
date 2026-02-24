@@ -78,6 +78,15 @@
       <h3 class="card-title">Transaction History</h3>
       <span class="record-count">{{ totalTransactions }} transactions</span>
     </div>
+    <div class="transaction-type-tabs">
+      <button
+        *ngFor="let tab of transactionTypeTabs"
+        class="type-tab-btn"
+        [class.active]="selectedTransactionTypeTab === tab.value"
+        (click)="setTransactionTypeTab(tab.value)">
+        {{ tab.label }}
+      </button>
+    </div>
     <div class="card-body">
       <div *ngIf="paginatedTransactions.length > 0; else noData" class="table-wrapper">
         <table class="table">
@@ -86,9 +95,12 @@
               <th>Date</th>
               <th>Supplier</th>
               <th>Variant</th>
-              <th class="text-center">Filled Received</th>
-              <th class="text-center">Empty Returned</th>
-              <th class="text-center">Amount</th>
+              <th *ngIf="selectedTransactionTypeTab === 'ALL'">Type</th>
+              <th class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE' || selectedTransactionTypeTab === 'BORROW_IN'">Filled In</th>
+              <th class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'BORROW_OUT' || selectedTransactionTypeTab === 'PURCHASE_RETURN'">Filled Out</th>
+              <th class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'BORROW_IN'">Empty In</th>
+              <th class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE' || selectedTransactionTypeTab === 'BORROW_OUT'">Empty Out</th>
+              <th class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE'">Amount</th>
               <th class="text-center">Actions</th>
             </tr>
           </thead>
@@ -97,9 +109,12 @@
               <td>{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</td>
               <td><strong>{{ transaction.supplierName }}</strong></td>
               <td>{{ transaction.variantName }}</td>
-              <td class="text-center received">{{ transaction.filledReceived }} units</td>
-              <td class="text-center returned">{{ transaction.emptySent }} units</td>
-              <td class="text-center">{{ transaction.amount | number:'1.2-2' }}</td>
+              <td *ngIf="selectedTransactionTypeTab === 'ALL'">{{ transaction.transactionType || 'PURCHASE' }}</td>
+              <td class="text-center received" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE' || selectedTransactionTypeTab === 'BORROW_IN'">{{ transaction.filledReceived || 0 }} units</td>
+              <td class="text-center returned" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'BORROW_OUT' || selectedTransactionTypeTab === 'PURCHASE_RETURN'">{{ transaction.filledSent || 0 }} units</td>
+              <td class="text-center received" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'BORROW_IN'">{{ transaction.emptyReceived || 0 }} units</td>
+              <td class="text-center returned" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE' || selectedTransactionTypeTab === 'BORROW_OUT'">{{ transaction.emptySent || 0 }} units</td>
+              <td class="text-center" *ngIf="selectedTransactionTypeTab === 'ALL' || selectedTransactionTypeTab === 'PURCHASE'">{{ (transaction.amount || 0) | number:'1.2-2' }}</td>
               <td class="text-center">
                 <button class="btn-action" (click)="viewTransactionDetails(transaction)" title="View Details" style="margin-right: 0.5rem;">
                   <fa-icon [icon]="faEye"></fa-icon>
@@ -200,8 +215,18 @@
           </div>
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Transaction Type <span class="required">*</span></label>
+          <select formControlName="transactionType" class="form-control" [disabled]="editingId !== null">
+            <option *ngFor="let type of transactionTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+          <div *ngIf="transactionForm.get('transactionType')?.invalid && transactionForm.get('transactionType')?.touched" class="error-message">
+            Transaction type is required
+          </div>
+        </div>
+
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE' || transactionForm.get('transactionType')?.value === 'BORROW_IN'">
             <label class="form-label">Filled Cylinders Received <span class="required">*</span></label>
             <input formControlName="filledReceived" type="number" class="form-control" placeholder="0">
             <div *ngIf="transactionForm.get('filledReceived')?.invalid && transactionForm.get('filledReceived')?.touched" class="error-message">
@@ -209,23 +234,63 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_IN'">
+            <label class="form-label">Empty Cylinders Received <span class="required">*</span></label>
+            <input formControlName="emptyReceived" type="number" class="form-control" placeholder="0">
+            <div *ngIf="transactionForm.get('emptyReceived')?.invalid && transactionForm.get('emptyReceived')?.touched" class="error-message">
+              Valid quantity required
+            </div>
+          </div>
+
+          <div class="form-group" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' || transactionForm.get('transactionType')?.value === 'PURCHASE_RETURN'">
+            <label class="form-label">Filled Cylinders Sent <span class="required">*</span></label>
+            <input formControlName="filledSent" type="number" class="form-control" placeholder="0">
+            <div *ngIf="transactionForm.get('filledSent')?.invalid && transactionForm.get('filledSent')?.touched" class="error-message">
+              Valid quantity required
+            </div>
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && borrowBalanceLoading">
+              <span class="balance-label">Borrowed filled available</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && !borrowBalanceLoading && getDisplayBorrowBalance()">
+              <span class="balance-label">Borrowed filled available</span>
+              <span class="balance-value">{{ getDisplayBorrowBalance()?.filled }}</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && !borrowBalanceLoading && borrowBalanceError">
+              <span class="balance-label">Borrowed filled available</span>
+              <span class="balance-value">{{ borrowBalanceError }}</span>
+            </div>
+          </div>
+
+          <div class="form-group" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE' || transactionForm.get('transactionType')?.value === 'BORROW_OUT'">
             <label class="form-label">Empty Cylinders Sent <span class="required">*</span></label>
             <input formControlName="emptySent" type="number" class="form-control" placeholder="0">
             <div *ngIf="transactionForm.get('emptySent')?.invalid && transactionForm.get('emptySent')?.touched" class="error-message">
               Valid quantity required
             </div>
-            <div class="balance-info" *ngIf="emptyLoading">
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE' && emptyLoading">
               <span class="balance-label">Current empty available</span>
               <span class="balance-value">Loading...</span>
             </div>
-            <div class="balance-info" *ngIf="!emptyLoading && currentEmpty !== null">
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE' && !emptyLoading && currentEmpty !== null">
               <span class="balance-label">Current empty available</span>
               <span class="balance-value">{{ currentEmpty }} cylinders</span>
             </div>
-            <div class="balance-info balance-info-error" *ngIf="!emptyLoading && emptyError">
+            <div class="balance-info balance-info-error" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE' && !emptyLoading && emptyError">
               <span class="balance-label">Current empty available</span>
               <span class="balance-value">{{ emptyError }}</span>
+            </div>
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && borrowBalanceLoading">
+              <span class="balance-label">Borrowed empty available</span>
+              <span class="balance-value">Loading...</span>
+            </div>
+            <div class="balance-info" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && !borrowBalanceLoading && getDisplayBorrowBalance()">
+              <span class="balance-label">Borrowed empty available</span>
+              <span class="balance-value">{{ getDisplayBorrowBalance()?.empty }}</span>
+            </div>
+            <div class="balance-info balance-info-error" *ngIf="transactionForm.get('transactionType')?.value === 'BORROW_OUT' && !borrowBalanceLoading && borrowBalanceError">
+              <span class="balance-label">Borrowed empty available</span>
+              <span class="balance-value">{{ borrowBalanceError }}</span>
             </div>
           </div>
         </div>
@@ -235,12 +300,19 @@
           <input formControlName="reference" type="text" class="form-control" placeholder="e.g., SUP-001" readonly style="background-color: #f5f5f5;">
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Amount <span class="required">*</span></label>
+        <div class="form-group" *ngIf="transactionForm.get('transactionType')?.value === 'PURCHASE'">
+          <label class="form-label">
+            Amount <span class="required">*</span>
+          </label>
           <input formControlName="amount" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
           <div *ngIf="transactionForm.get('amount')?.invalid && transactionForm.get('amount')?.touched" class="error-message">
             Valid amount required
           </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Note (optional)</label>
+          <textarea formControlName="note" class="form-control" rows="2" placeholder="Add a note..."></textarea>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary" [disabled]="!transactionForm.valid">Save</button>
@@ -264,6 +336,10 @@
             <span class="value">{{ selectedTransaction.transactionDate | date: 'dd MMM yyyy' }}</span>
           </div>
           <div class="invoice-row">
+            <span class="label">Type:</span>
+            <span class="value">{{ selectedTransaction.transactionType || 'PURCHASE' }}</span>
+          </div>
+          <div class="invoice-row">
             <span class="label">Reference Number:</span>
             <span class="value">{{ selectedTransaction.reference || '-' }}</span>
           </div>
@@ -279,17 +355,29 @@
             <span class="label">Variant:</span>
             <span class="value">{{ selectedTransaction.variantName }}</span>
           </div>
-          <div class="invoice-row">
+          <div class="invoice-row" *ngIf="(selectedTransaction.transactionType || 'PURCHASE') === 'PURCHASE' || (selectedTransaction.transactionType || 'PURCHASE') === 'BORROW_IN'">
             <span class="label">Filled Received:</span>
-            <span class="value">{{ selectedTransaction.filledReceived }} units</span>
+            <span class="value">{{ selectedTransaction.filledReceived || 0 }} units</span>
           </div>
-          <div class="invoice-row">
-            <span class="label">Empty Returned:</span>
-            <span class="value">{{ selectedTransaction.emptySent }} units</span>
+          <div class="invoice-row" *ngIf="(selectedTransaction.transactionType || 'PURCHASE') === 'BORROW_OUT' || (selectedTransaction.transactionType || 'PURCHASE') === 'PURCHASE_RETURN'">
+            <span class="label">Filled Sent:</span>
+            <span class="value">{{ selectedTransaction.filledSent || 0 }} units</span>
+          </div>
+          <div class="invoice-row" *ngIf="(selectedTransaction.transactionType || 'PURCHASE') === 'BORROW_IN'">
+            <span class="label">Empty Received:</span>
+            <span class="value">{{ selectedTransaction.emptyReceived || 0 }} units</span>
+          </div>
+          <div class="invoice-row" *ngIf="(selectedTransaction.transactionType || 'PURCHASE') === 'PURCHASE' || (selectedTransaction.transactionType || 'PURCHASE') === 'BORROW_OUT'">
+            <span class="label">Empty Sent:</span>
+            <span class="value">{{ selectedTransaction.emptySent || 0 }} units</span>
           </div>
           <div class="invoice-row total">
             <span class="label">Amount:</span>
-            <span class="value">{{ selectedTransaction.amount | number:'1.2-2' }}</span>
+            <span class="value">{{ (selectedTransaction.amount || 0) | number:'1.2-2' }}</span>
+          </div>
+          <div class="invoice-row" *ngIf="selectedTransaction.note">
+            <span class="label">Note:</span>
+            <span class="value">{{ selectedTransaction.note }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Created By:</span>

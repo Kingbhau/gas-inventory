@@ -136,6 +136,56 @@ public class ReferenceNumberGenerator {
     }
 
     /**
+     * Generates Borrow Reference:
+     * BRI-{SUPPLIER}-{YYYYMM}-{SEQUENCE} for BORROW_IN
+     * BRO-{SUPPLIER}-{YYYYMM}-{SEQUENCE} for BORROW_OUT
+     */
+    public String generateSupplierBorrowReference(String supplierCode, String borrowType) {
+        Objects.requireNonNull(supplierCode, "Supplier code cannot be null");
+        Objects.requireNonNull(borrowType, "Borrow type cannot be null");
+        if (supplierCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Supplier code cannot be empty");
+        }
+        if (!borrowType.matches("^(BORROW_IN|BORROW_OUT)$")) {
+            throw new IllegalArgumentException("Borrow type must be BORROW_IN or BORROW_OUT");
+        }
+
+        String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
+        String normalizedSupplierCode = supplierCode.trim();
+        String seqKey = String.format("BORROW:%s:%s:%s", borrowType, normalizedSupplierCode.toUpperCase(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
+
+        String formattedSequence = String.format("%06d", sequence);
+        String prefix = "BORROW_IN".equals(borrowType) ? "BRI" : "BRO";
+        String reference = String.format("%s-%s-%s-%s", prefix, normalizedSupplierCode, yearMonth, formattedSequence);
+
+        logger.info("Generated Borrow reference: {} for supplier: {} type: {}", reference, supplierCode, borrowType);
+        return reference;
+    }
+
+    /**
+     * Generates Supplier Purchase Return Reference:
+     * PR-{SUPPLIER_CODE}-{YYYYMM}-{SEQUENCE}
+     * Example: PR-SUP001-202602-000001
+     */
+    public String generateSupplierPurchaseReturnReference(String supplierCode) {
+        Objects.requireNonNull(supplierCode, "Supplier code cannot be null");
+        if (supplierCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("Supplier code cannot be empty");
+        }
+
+        String yearMonth = LocalDate.now().format(MONTH_FORMATTER);
+        String normalizedSupplierCode = supplierCode.trim();
+        String seqKey = String.format("PURCHASE_RETURN:%s:%s", normalizedSupplierCode.toUpperCase(), yearMonth);
+        long sequence = referenceSequenceService.next(seqKey);
+
+        String formattedSequence = String.format("%06d", sequence);
+        String reference = String.format("PR-%s-%s-%s", normalizedSupplierCode, yearMonth, formattedSequence);
+        logger.info("Generated Purchase Return reference: {} for supplier: {}", reference, supplierCode);
+        return reference;
+    }
+
+    /**
      * Generates Empty Return Reference: ER-{WH_CODE}-{YYYYMM}-{SEQUENCE}
      * Example: ER-WH001-202601-000001
      * 

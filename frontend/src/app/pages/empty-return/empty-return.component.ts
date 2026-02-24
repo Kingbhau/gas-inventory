@@ -56,6 +56,16 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     dueError = '';
     isStaff = false;
     private customerSearch$ = new Subject<string>();
+    showDuplicateConfirm = false;
+    duplicateReturnInfo: {
+        customerName: string;
+        warehouseName: string;
+        variantName: string;
+        emptyQty: number;
+        transactionDate: string;
+        lastReference?: string;
+    } | null = null;
+    pendingEmptyReturnRequest: EmptyReturnRequest | null = null;
 
     constructor(
         private fb: FormBuilder,
@@ -491,6 +501,88 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
             request.bankAccountId = bankAccountId;
         }
         
+        this.checkDuplicateAndSubmit(request);
+    }
+
+    private getLatestEmptyReturnForCustomer(customerId: number) {
+        return this.ledgerService.getEmptyReturns(0, 1, 'createdDate', 'DESC', undefined, undefined, customerId.toString())
+            .pipe(
+                catchError(() => of({
+                    items: [],
+                    totalElements: 0,
+                    totalPages: 1,
+                    page: 0,
+                    size: 1
+                } as PageResponse<CustomerCylinderLedger>))
+            );
+    }
+
+    private isDuplicateEmptyReturn(lastEntry: CustomerCylinderLedger | null, request: EmptyReturnRequest): boolean {
+        if (!lastEntry) return false;
+        const sameCustomer = lastEntry.customerId === request.customerId;
+        const sameWarehouse = (lastEntry.warehouseId ?? null) === (request.warehouseId ?? null);
+        const sameVariant = lastEntry.variantId === request.variantId;
+        const sameEmptyQty = Number(lastEntry.emptyIn || 0) === Number(request.emptyIn || 0);
+        const sameDate = String(lastEntry.transactionDate || '') === String(request.transactionDate || '');
+        return sameCustomer && sameWarehouse && sameVariant && sameEmptyQty && sameDate;
+    }
+
+    private buildDuplicateReturnInfo(lastEntry: CustomerCylinderLedger, request: EmptyReturnRequest) {
+        const customer = this.customers.find(c => c.id === request.customerId);
+        const warehouse = this.warehouses.find(w => w.id === request.warehouseId);
+        const variant = this.variants.find(v => v.id === request.variantId);
+        return {
+            customerName: customer?.name || lastEntry.customerName || 'Customer',
+            warehouseName: warehouse?.name || lastEntry.warehouseName || 'Warehouse',
+            variantName: variant?.name || lastEntry.variantName || 'Variant',
+            emptyQty: Number(request.emptyIn || 0),
+            transactionDate: String(request.transactionDate || ''),
+            lastReference: lastEntry.transactionReference
+        };
+    }
+
+    private checkDuplicateAndSubmit(request: EmptyReturnRequest): void {
+        if (!request.customerId) {
+            this.createEmptyReturn(request);
+            return;
+        }
+        this.getLatestEmptyReturnForCustomer(request.customerId)
+            .subscribe((response: PageResponse<CustomerCylinderLedger>) => {
+                const lastEntry = response.items && response.items.length > 0 ? response.items[0] : null;
+                if (lastEntry && this.isDuplicateEmptyReturn(lastEntry, request)) {
+                    this.pendingEmptyReturnRequest = request;
+                    this.duplicateReturnInfo = this.buildDuplicateReturnInfo(lastEntry, request);
+                    this.showDuplicateConfirm = true;
+                    this.submitting = false;
+                    this.cdr.markForCheck();
+                    return;
+                }
+                this.createEmptyReturn(request);
+            });
+    }
+
+    confirmDuplicateEmptyReturn(): void {
+        if (!this.pendingEmptyReturnRequest) {
+            this.showDuplicateConfirm = false;
+            this.duplicateReturnInfo = null;
+            return;
+        }
+        const request = this.pendingEmptyReturnRequest;
+        this.pendingEmptyReturnRequest = null;
+        this.showDuplicateConfirm = false;
+        this.duplicateReturnInfo = null;
+        this.createEmptyReturn(request);
+    }
+
+    cancelDuplicateEmptyReturn(): void {
+        this.pendingEmptyReturnRequest = null;
+        this.showDuplicateConfirm = false;
+        this.duplicateReturnInfo = null;
+        this.submitting = false;
+        this.cdr.markForCheck();
+    }
+
+    private createEmptyReturn(request: EmptyReturnRequest): void {
         const sub = this.ledgerService.recordEmptyReturn(request)
             .pipe(
                 finalize(() => {

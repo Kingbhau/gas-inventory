@@ -237,9 +237,9 @@
             <span class="summary-label">Amount Received:</span>
             <span class="summary-value" style="color: #0066cc;">{{ saleForm.get('amountReceived')?.value | indianCurrency }}</span>
           </div>
-          <div class="summary-row" [style.color]="(totalAmount - (saleForm.get('amountReceived')?.value || 0)) > 0 ? '#d32f2f' : '#28a745'">
-            <span class="summary-label">Amount Due:</span>
-            <span class="summary-value">{{ (totalAmount - (saleForm.get('amountReceived')?.value || 0)) | indianCurrency }}</span>
+          <div class="summary-row" [style.color]="totalDueWithPrevious > 0 ? '#d32f2f' : '#28a745'">
+            <span class="summary-label">Amount Due (incl. previous):</span>
+            <span class="summary-value">{{ totalDueWithPrevious | indianCurrency }}</span>
           </div>
         </div>
 
@@ -256,6 +256,55 @@
       <!-- Success Message -->
       <div *ngIf="successMessage" class="success-alert">
         ✓ {{ successMessage }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Duplicate Sale Confirmation Modal -->
+  <div *ngIf="showDuplicateConfirm" class="modal-overlay" (click)="cancelDuplicateSale()">
+    <div class="modal-content duplicate-sale-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Possible Duplicate Sale</h3>
+        <button class="modal-close" (click)="cancelDuplicateSale()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">
+          A sale with the same values was created in the last entry for this customer.
+          Please confirm if you want to proceed.
+        </p>
+        <div class="duplicate-sale-details" *ngIf="duplicateSaleInfo">
+          <div class="detail-row">
+            <span class="detail-label">Customer</span>
+            <span class="detail-value">{{ duplicateSaleInfo.customerName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Warehouse</span>
+            <span class="detail-value">{{ duplicateSaleInfo.warehouseName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Variant</span>
+            <span class="detail-value">{{ duplicateSaleInfo.variantName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Filled / Empty</span>
+            <span class="detail-value">{{ duplicateSaleInfo.filledQty }} / {{ duplicateSaleInfo.emptyQty }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Sale Date</span>
+            <span class="detail-value">{{ duplicateSaleInfo.saleDate }}</span>
+          </div>
+          <div class="detail-row" *ngIf="duplicateSaleInfo.lastReferenceNumber || duplicateSaleInfo.lastSaleDate">
+            <span class="detail-label">Last Entry</span>
+            <span class="detail-value">
+              {{ duplicateSaleInfo.lastReferenceNumber || '-' }}
+              <span *ngIf="duplicateSaleInfo.lastSaleDate">({{ duplicateSaleInfo.lastSaleDate }})</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDuplicateSale()">Cancel</button>
+        <button class="btn btn-primary" (click)="confirmDuplicateSale()">Proceed</button>
       </div>
     </div>
   </div>

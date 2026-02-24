@@ -5,6 +5,7 @@ export interface Sale {
   referenceNumber: string;
   customerId: number;
   customerName: string;
+  warehouseId?: number;
   saleDate: string;
   totalAmount: number;
   amountReceived: number;

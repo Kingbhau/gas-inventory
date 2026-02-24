@@ -18,6 +18,8 @@ public class CustomerCylinderLedgerDTO {
     private Long filledOut;
     private Long emptyIn;
     private Long balance;
+    private Long warehouseId;
+    private String warehouseName;
     private Long fromWarehouseId;
     private String fromWarehouseName;
     private Long toWarehouseId;
@@ -175,6 +177,22 @@ public class CustomerCylinderLedgerDTO {
 
     public void setBalance(Long balance) {
         this.balance = balance;
+    }
+
+    public Long getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
     }
 
     public Long getFromWarehouseId() {

@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -52,35 +51,54 @@ public class SupplierTransaction extends Auditable {
     @Column(nullable = false)
     private Long filledReceived;
 
+    @Min(value = 0, message = "Empty received cannot be negative.")
+    @Column(nullable = true)
+    private Long emptyReceived;
+
+    @Min(value = 0, message = "Filled sent cannot be negative.")
+    @Column(nullable = true)
+    private Long filledSent;
+
     @NotNull(message = "Empty sent is required.")
     @Min(value = 0, message = "Empty sent cannot be negative.")
     @Column(nullable = false)
     private Long emptySent;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true, length = 20)
+    private TransactionType transactionType = TransactionType.PURCHASE;
+
     @Size(max = 50, message = "Reference must be at most 50 characters.")
     @Column(name = "reference_number", unique = true, nullable = false, length = 50)
-    @Pattern(regexp = "^PO-[A-Z0-9]+-\\d{6}-\\d{6}$", message = "Reference must match format: PO-SUPPLIER-YYYYMM-SEQUENCE")
     private String reference;
 
-    @NotNull(message = "Amount is required.")
     @Min(value = 0, message = "Amount cannot be negative.")
-    @Column(nullable = false, columnDefinition = "DECIMAL(10,2)")
+    @Column(nullable = true, columnDefinition = "DECIMAL(10,2)")
     private BigDecimal amount;
+
+    @Size(max = 500, message = "Note must be at most 500 characters.")
+    @Column(nullable = true, length = 500)
+    private String note;
 
     public SupplierTransaction() {
     }
 
     public SupplierTransaction(Warehouse warehouse, Supplier supplier, CylinderVariant variant,
             LocalDate transactionDate,
-            Long filledReceived, Long emptySent, String reference, BigDecimal amount) {
+            Long filledReceived, Long emptyReceived, Long filledSent, Long emptySent,
+            String reference, BigDecimal amount, TransactionType transactionType, String note) {
         this.warehouse = warehouse;
         this.supplier = supplier;
         this.variant = variant;
         this.transactionDate = transactionDate;
         this.filledReceived = filledReceived;
+        this.emptyReceived = emptyReceived;
+        this.filledSent = filledSent;
         this.emptySent = emptySent;
         this.reference = reference;
         this.amount = amount;
+        this.transactionType = transactionType != null ? transactionType : TransactionType.PURCHASE;
+        this.note = note;
     }
 
     public Warehouse getWarehouse() {
@@ -139,6 +157,22 @@ public class SupplierTransaction extends Auditable {
         this.filledReceived = filledReceived;
     }
 
+    public Long getEmptyReceived() {
+        return emptyReceived;
+    }
+
+    public void setEmptyReceived(Long emptyReceived) {
+        this.emptyReceived = emptyReceived;
+    }
+
+    public Long getFilledSent() {
+        return filledSent;
+    }
+
+    public void setFilledSent(Long filledSent) {
+        this.filledSent = filledSent;
+    }
+
     public Long getEmptySent() {
         return emptySent;
     }
@@ -147,12 +181,35 @@ public class SupplierTransaction extends Auditable {
         this.emptySent = emptySent;
     }
 
+    public TransactionType getTransactionType() {
+        return transactionType;
+    }
+
+    public void setTransactionType(TransactionType transactionType) {
+        this.transactionType = transactionType;
+    }
+
     public String getReference() {
         return reference;
     }
 
     public void setReference(String reference) {
         this.reference = reference;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public enum TransactionType {
+        PURCHASE,
+        BORROW_IN,
+        BORROW_OUT,
+        PURCHASE_RETURN
     }
 }
 

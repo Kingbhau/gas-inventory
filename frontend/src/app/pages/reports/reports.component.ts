@@ -628,8 +628,12 @@ export class ReportsComponent implements OnInit, OnDestroy {
           }
           const supplier = supplierMap.get(transaction.supplierId);
           if (supplier) {
-            supplier.filled += transaction.filledReceived || 0;
-            supplier.empty += transaction.emptySent || 0;
+            const filledIn = transaction.filledReceived || 0;
+            const filledOut = transaction.filledSent || 0;
+            const emptyIn = transaction.emptyReceived || 0;
+            const emptyOut = transaction.emptySent || 0;
+            supplier.filled += (filledIn - filledOut);
+            supplier.empty += (emptyOut - emptyIn);
           }
         });
         this.supplierData = Array.from(supplierMap.values())
