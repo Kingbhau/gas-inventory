@@ -731,7 +731,8 @@ public class SaleService {
 
                 String normalizedPaymentMode = paymentMode != null ? paymentMode.trim().toUpperCase() : null;
                 for (Sale sale : sales) {
-                        if (sale.getPaymentSplits() == null || sale.getPaymentSplits().isEmpty()) {
+                        List<SalePaymentSplit> saleSplits = getPaymentSplitsForSale(sale);
+                        if (saleSplits.isEmpty()) {
                                 String legacyMode = sale.getPaymentMode() != null ? sale.getPaymentMode().trim().toUpperCase() : null;
                                 if (legacyMode == null || legacyMode.isEmpty()) {
                                         continue;
@@ -762,7 +763,7 @@ public class SaleService {
                                 totalTransactions++;
                                 continue;
                         }
-                        for (SalePaymentSplit split : sale.getPaymentSplits()) {
+                        for (SalePaymentSplit split : saleSplits) {
                                 String splitMode = split.getPaymentMode() != null
                                                 ? split.getPaymentMode().trim().toUpperCase()
                                                 : null;
@@ -967,7 +968,7 @@ public class SaleService {
                                         sale.getBankAccount().getAccountNumber();
                 }
 
-                List<SalePaymentSplitDTO> paymentSplitDTOs = toPaymentSplitDTOs(sale.getPaymentSplits());
+                List<SalePaymentSplitDTO> paymentSplitDTOs = toPaymentSplitDTOs(getPaymentSplitsForSale(sale));
                 BigDecimal amountReceived = paymentSplitDTOs.stream()
                                 .map(SalePaymentSplitDTO::getAmount)
                                 .filter(v -> v != null)
@@ -1049,7 +1050,7 @@ public class SaleService {
                                         sale.getBankAccount().getAccountNumber();
                 }
 
-                List<SalePaymentSplitDTO> paymentSplitDTOs = toPaymentSplitDTOs(sale.getPaymentSplits());
+                List<SalePaymentSplitDTO> paymentSplitDTOs = toPaymentSplitDTOs(getPaymentSplitsForSale(sale));
                 BigDecimal amountReceived = paymentSplitDTOs.stream()
                                 .map(SalePaymentSplitDTO::getAmount)
                                 .filter(v -> v != null)
@@ -1096,6 +1097,13 @@ public class SaleService {
                                                                         : null,
                                                         split.getNote()))
                                         .collect(Collectors.toList());
+        }
+
+        private List<SalePaymentSplit> getPaymentSplitsForSale(Sale sale) {
+                if (sale == null || sale.getId() == null) {
+                        return List.of();
+                }
+                return salePaymentSplitRepository.findBySaleId(sale.getId());
         }
 
         private List<ResolvedPaymentSplit> validateAndResolvePaymentSplits(CreateSaleRequestDTO request) {
