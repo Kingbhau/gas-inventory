@@ -163,9 +163,21 @@
           </div>
           <div class="invoice-row">
             <span class="label">Payment Mode:</span>
-            <span class="value">{{ selectedEmptyReturn.paymentMode || 'N/A' }}</span>
+            <span class="value">
+              {{ selectedEmptyReturn.paymentSplits && selectedEmptyReturn.paymentSplits.length > 1 ? 'MULTIPLE' : (selectedEmptyReturn.paymentMode || 'N/A') }}
+            </span>
           </div>
-          <div class="invoice-row" *ngIf="selectedEmptyReturn.paymentMode && selectedEmptyReturn.paymentMode !== 'Cash'">
+          <div class="invoice-row payment-breakup-row" *ngIf="selectedEmptyReturn.paymentSplits && selectedEmptyReturn.paymentSplits.length > 0">
+            <span class="label">Payment Breakup:</span>
+            <div class="value payment-breakup-list">
+              <div class="payment-breakup-item" *ngFor="let split of selectedEmptyReturn.paymentSplits">
+                <span class="payment-mode-chip">{{ split.paymentMode || 'N/A' }}</span>
+                <span class="payment-breakup-amount">{{ split.amount | indianCurrency }}</span>
+                <span class="payment-breakup-bank" *ngIf="split.bankAccountName">{{ split.bankAccountName }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="invoice-row" *ngIf="(!selectedEmptyReturn.paymentSplits || selectedEmptyReturn.paymentSplits.length === 0) && selectedEmptyReturn.paymentMode && selectedEmptyReturn.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ (selectedEmptyReturn.bankAccountName || 'N/A') + ' - ' + (selectedEmptyReturn.bankAccountNumber || 'N/A') }}</span>
           </div>

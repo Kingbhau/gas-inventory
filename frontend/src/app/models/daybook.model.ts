@@ -1,3 +1,12 @@
+export interface DayBookPaymentSplit {
+  id?: number;
+  paymentMode: string;
+  amount: number;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  note?: string;
+}
+
 export interface DayBook {
   id: number;
   customerId: number;
@@ -17,6 +26,7 @@ export interface DayBook {
   referenceNumber?: string;
   partyName?: string;
   details?: string;
+  paymentSplits?: DayBookPaymentSplit[];
 }
 
 export interface DayBookSummary {

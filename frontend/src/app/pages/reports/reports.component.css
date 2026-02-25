@@ -506,10 +506,10 @@
 .modal-content {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
   width: 90%;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow-y: auto;
   animation: slideIn 0.3s ease-out;
 }
@@ -535,7 +535,7 @@
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #0f172a;
 }
 
@@ -559,7 +559,7 @@
 .invoice-section {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 1rem;
 }
 
 .invoice-row {
@@ -573,18 +573,56 @@
   font-weight: 600;
   font-size: 1.1rem;
   padding: 1rem 0;
-  border-bottom: 2px solid #3b82f6;
-  color: #0f172a;
+  border-bottom: 2px solid #2563eb;
 }
 
 .invoice-row .label {
+  color: #64748b;
   font-weight: 500;
-  color: #475569;
 }
 
 .invoice-row .value {
   color: #0f172a;
-  text-align: right;
+  font-weight: 600;
+}
+
+.invoice-row.payment-breakup-row {
+  align-items: flex-start;
+}
+
+.payment-breakup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.payment-breakup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.payment-mode-chip {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.payment-breakup-amount {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.payment-breakup-bank {
+  color: #64748b;
+  font-size: 0.85rem;
 }
 
 .modal-footer {
@@ -592,7 +630,7 @@
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .btn {

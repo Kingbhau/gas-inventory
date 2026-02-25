@@ -208,6 +208,12 @@
   font-weight: 500;
 }
 
+.summary-meta-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
 .payment-mode-breakdown {
   margin-top: 0.35rem;
   font-size: 0.8rem;

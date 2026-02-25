@@ -93,14 +93,35 @@
             <ng-template #totalAmountValue>
               <span class="value">₹{{ formatAmount(summary.totalAmount) }}</span>
             </ng-template>
-            <span class="summary-meta" *ngIf="summary.amountReceived > 0; else countOnly">
-              {{ summary.count }} txn · ₹{{ formatAmount(summary.amountReceived) }} received
-            </span>
-            <ng-template #countOnly>
-              <span class="summary-meta">{{ summary.count }} txn</span>
-            </ng-template>
+            <ng-container [ngSwitch]="summary.type">
+              <div class="summary-meta-lines" *ngSwitchCase="'SALE'">
+                <span class="summary-meta">{{ summary.count }} txn</span>
+                <span class="summary-meta">₹{{ formatAmount(summary.totalAmount) }} billed</span>
+                <span class="summary-meta">₹{{ formatAmount(summary.amountReceived) }} received</span>
+                <span class="summary-meta">₹{{ formatAmount((summary.totalAmount || 0) - (summary.amountReceived || 0)) }} due</span>
+              </div>
+              <span class="summary-meta" *ngSwitchCase="'EMPTY_RETURN'">
+                {{ summary.count }} txn · ₹{{ formatAmount(summary.amountReceived) }} received
+              </span>
+              <span class="summary-meta" *ngSwitchCase="'PAYMENT'">
+                {{ summary.count }} txn · ₹{{ formatAmount(summary.amountReceived) }} received
+              </span>
+              <span class="summary-meta" *ngSwitchDefault>
+                {{ summary.count }} txn<span *ngIf="summary.amountReceived > 0"> · ₹{{ formatAmount(summary.amountReceived) }} received</span>
+              </span>
+            </ng-container>
+            <div class="payment-mode-breakdown compact" *ngIf="summary.type === 'SALE' && salePaymentModeBreakdown.length > 0">
+              <button type="button" class="view-breakdown-link" (click)="openPaymentModeBreakdown('SALE')">
+                View breakdown
+              </button>
+            </div>
+            <div class="payment-mode-breakdown compact" *ngIf="summary.type === 'EMPTY_RETURN' && emptyReturnPaymentModeBreakdown.length > 0">
+              <button type="button" class="view-breakdown-link" (click)="openPaymentModeBreakdown('EMPTY_RETURN')">
+                View breakdown
+              </button>
+            </div>
             <div class="payment-mode-breakdown compact" *ngIf="summary.type === 'PAYMENT' && paymentModeBreakdown.length > 0">
-              <button type="button" class="view-breakdown-link" (click)="openPaymentModeBreakdown()">
+              <button type="button" class="view-breakdown-link" (click)="openPaymentModeBreakdown('PAYMENT')">
                 View breakdown
               </button>
             </div>
@@ -182,14 +203,14 @@
     <div class="modal-content payment-breakdown-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div>
-          <h2 class="modal-title">Payment Mode Breakdown</h2>
+          <h2 class="modal-title">{{ paymentBreakdownTitle }}</h2>
           <p class="modal-subtitle">Summary for {{ selectedDate | date: 'dd MMM yyyy' }}</p>
         </div>
         <button class="modal-close" (click)="closePaymentModeBreakdown()">✕</button>
       </div>
       <div class="modal-body">
         <div class="payment-breakdown-list">
-          <div class="payment-breakdown-item" *ngFor="let mode of paymentModeBreakdown">
+          <div class="payment-breakdown-item" *ngFor="let mode of activePaymentBreakdown">
             <span class="payment-breakdown-mode">{{ mode.mode }}</span>
             <span class="payment-breakdown-amount">₹{{ formatAmount(mode.amount) }}</span>
           </div>

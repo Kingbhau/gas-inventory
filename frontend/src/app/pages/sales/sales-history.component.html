@@ -192,7 +192,7 @@
           </div>
           <div class="invoice-row">
             <span class="label">Amount Received:</span>
-            <span class="value">{{ (selectedSale.saleItems && selectedSale.saleItems[0].amountReceived || 0) | indianCurrency }}</span>
+            <span class="value">{{ (selectedSale.amountReceived || 0) | indianCurrency }}</span>
           </div>
           <div class="invoice-row">
             <span class="label">Due Amount:</span>
@@ -200,9 +200,21 @@
           </div>
           <div class="invoice-row">
             <span class="label">Payment Mode:</span>
-            <span class="value">{{ selectedSale.paymentMode || 'N/A' }}</span>
+            <span class="value">
+              {{ selectedSale.paymentSplits && selectedSale.paymentSplits.length > 1 ? 'MULTIPLE' : (selectedSale.paymentMode || 'N/A') }}
+            </span>
           </div>
-          <div class="invoice-row" *ngIf="selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
+          <div class="invoice-row payment-breakup-row" *ngIf="selectedSale.paymentSplits && selectedSale.paymentSplits.length > 0">
+            <span class="label">Payment Breakup:</span>
+            <div class="value payment-breakup-list">
+              <div class="payment-breakup-item" *ngFor="let split of selectedSale.paymentSplits">
+                <span class="payment-mode-chip">{{ split.paymentMode || 'N/A' }}</span>
+                <span class="payment-breakup-amount">{{ split.amount | indianCurrency }}</span>
+                <span class="payment-breakup-bank" *ngIf="split.bankAccountName">{{ split.bankAccountName }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="invoice-row" *ngIf="(!selectedSale.paymentSplits || selectedSale.paymentSplits.length === 0) && selectedSale.paymentMode && selectedSale.paymentMode !== 'Cash'">
             <span class="label">Bank Name:</span>
             <span class="value">{{ selectedSale.bankAccountName || 'N/A' }}</span>
           </div>

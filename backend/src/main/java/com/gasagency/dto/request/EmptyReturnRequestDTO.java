@@ -2,6 +2,7 @@ package com.gasagency.dto.request;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 public class EmptyReturnRequestDTO {
     private Long customerId;
@@ -10,8 +11,10 @@ public class EmptyReturnRequestDTO {
     private LocalDate transactionDate;
     private Long emptyIn;
     private BigDecimal amountReceived;
+    private String paymentType;
     private String paymentMode;
     private Long bankAccountId;
+    private List<PaymentSplitRequestDTO> paymentSplits;
 
     public Long getCustomerId() {
         return customerId;
@@ -75,6 +78,61 @@ public class EmptyReturnRequestDTO {
 
     public void setBankAccountId(Long bankAccountId) {
         this.bankAccountId = bankAccountId;
+    }
+
+    public String getPaymentType() {
+        return paymentType;
+    }
+
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+
+    public List<PaymentSplitRequestDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<PaymentSplitRequestDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
+    }
+
+    public static class PaymentSplitRequestDTO {
+        private String modeOfPayment;
+        private BigDecimal amount;
+        private Long bankAccountId;
+        private String note;
+
+        public String getModeOfPayment() {
+            return modeOfPayment;
+        }
+
+        public void setModeOfPayment(String modeOfPayment) {
+            this.modeOfPayment = modeOfPayment;
+        }
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount) {
+            this.amount = amount;
+        }
+
+        public Long getBankAccountId() {
+            return bankAccountId;
+        }
+
+        public void setBankAccountId(Long bankAccountId) {
+            this.bankAccountId = bankAccountId;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
     }
 }
 

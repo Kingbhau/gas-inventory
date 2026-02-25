@@ -163,7 +163,11 @@ export function exportSalesReportToPDF({
     `Rs. ${Number(item.basePrice).toLocaleString()}`,
     `Rs. ${Number(item.discount).toLocaleString()}`,
     `Rs. ${Number(item.finalPrice).toLocaleString()}`,
-    sale.paymentMode || 'N/A'
+    sale.paymentSplits && sale.paymentSplits.length > 1
+      ? 'MULTIPLE'
+      : (sale.paymentSplits && sale.paymentSplits.length === 1
+        ? sale.paymentSplits[0].paymentMode
+        : (sale.paymentMode || 'N/A'))
   ]);
 
   autoTable(doc, {

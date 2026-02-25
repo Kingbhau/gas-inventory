@@ -13,8 +13,8 @@ import com.gasagency.dto.response.PaymentsSummaryDTO;
 import com.gasagency.dto.response.SimpleStatusDTO;
 import com.gasagency.dto.request.EmptyReturnRequestDTO;
 import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.service.ApiIdempotencyService;
 import com.gasagency.service.CustomerCylinderLedgerService;
-import com.gasagency.repository.PaymentModeRepository;
 import com.gasagency.util.ApiResponse;
 import com.gasagency.util.ApiResponseUtil;
 import org.springframework.data.domain.Page;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/ledger")
 public class CustomerCylinderLedgerController {
-    private final PaymentModeRepository paymentModeRepository;
 
     @GetMapping("/pending-summary")
     public ResponseEntity<ApiResponse<List<CustomerCylinderLedgerDTO>>> getAllPendingBalances() {
@@ -68,11 +67,12 @@ public class CustomerCylinderLedgerController {
     }
 
     private final CustomerCylinderLedgerService service;
+    private final ApiIdempotencyService apiIdempotencyService;
 
     public CustomerCylinderLedgerController(CustomerCylinderLedgerService service,
-            PaymentModeRepository paymentModeRepository) {
+            ApiIdempotencyService apiIdempotencyService) {
         this.service = service;
-        this.paymentModeRepository = paymentModeRepository;
+        this.apiIdempotencyService = apiIdempotencyService;
     }
 
     @GetMapping("/{id}")
@@ -120,72 +120,18 @@ public class CustomerCylinderLedgerController {
     // Endpoint: Record empty cylinder return (without sale)
     @PostMapping("/empty-return")
     public ResponseEntity<ApiResponse<CustomerCylinderLedgerDTO>> recordEmptyReturn(
-            @RequestBody EmptyReturnRequestDTO request) {
-        String paymentModeName = request.getPaymentMode() != null ? request.getPaymentMode().trim() : null;
-        Boolean requiresBankAccount = null;
-        if (paymentModeName != null && !paymentModeName.isEmpty()) {
-            requiresBankAccount = paymentModeRepository.findByName(paymentModeName)
-                    .map(pm -> Boolean.TRUE.equals(pm.getIsBankAccountRequired()))
-                    .orElseThrow(() -> new com.gasagency.exception.InvalidOperationException(
-                            "Invalid payment mode: " + paymentModeName));
-        }
-
-        // Validate amountReceived does not exceed customer's due amount
-        if (request.getAmountReceived() != null && request.getAmountReceived().compareTo(java.math.BigDecimal.ZERO) > 0) {
-            java.math.BigDecimal customerDueAmount = service.getCustomerPreviousDue(request.getCustomerId());
-            if (request.getAmountReceived().compareTo(customerDueAmount) > 0) {
-                throw new com.gasagency.exception.InvalidOperationException(
-                        "Amount received (" + request.getAmountReceived().setScale(2, java.math.RoundingMode.HALF_UP) +
-                                ") cannot exceed customer due amount ("
-                                + customerDueAmount.setScale(2, java.math.RoundingMode.HALF_UP) + ")");
-            }
-
-            // Validate paymentMode is provided when amountReceived > 0
-            if (paymentModeName == null || paymentModeName.isEmpty()) {
-                throw new com.gasagency.exception.InvalidOperationException(
-                        "Payment mode is required when amount is received");
-            }
-
-            // Validate bankAccountId is provided when payment mode requires it
-            if (Boolean.TRUE.equals(requiresBankAccount) &&
-                    (request.getBankAccountId() == null || request.getBankAccountId() <= 0)) {
-                throw new com.gasagency.exception.InvalidOperationException(
-                        "Bank account is required for payment mode: " + request.getPaymentMode());
-            }
-        }
-
-        // For empty returns, set refId to 0L (not null) to satisfy DB constraint
-        // Create ledger entry with amount received
-        CustomerCylinderLedgerDTO dto = service.createLedgerEntry(
-                request.getCustomerId(),
-                request.getWarehouseId(),
-                request.getVariantId(),
-                request.getTransactionDate(),
-                "EMPTY_RETURN",
-                0L,
-                0L,
-                request.getEmptyIn(),
-                java.math.BigDecimal.ZERO,
-                request.getAmountReceived() != null ? request.getAmountReceived() : java.math.BigDecimal.ZERO);
-
-        // If payment mode is provided, update the ledger entry
-        if (paymentModeName != null && !paymentModeName.isEmpty()) {
-            service.updatePaymentMode(dto.getId(), paymentModeName);
-        }
-
-        // Record bank account deposit if payment is via bank account
-        if (Boolean.TRUE.equals(requiresBankAccount) && request.getBankAccountId() != null) {
-            try {
-                service.recordBankAccountDeposit(
-                        request.getBankAccountId(),
-                        request.getAmountReceived() != null ? request.getAmountReceived() : java.math.BigDecimal.ZERO,
-                        dto.getId(),
-                        "Empty cylinder return refund");
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to record bank account deposit: " + e.getMessage());
-            }
-        }
-
+            @RequestBody EmptyReturnRequestDTO request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "anonymous";
+        CustomerCylinderLedgerDTO dto = apiIdempotencyService.execute(
+                "POST:/api/ledger/empty-return",
+                idempotencyKey,
+                username,
+                request,
+                () -> service.recordEmptyReturnWithPayments(request),
+                CustomerCylinderLedgerDTO::getId,
+                service::getLedgerEntryById);
         return ResponseEntity.ok(ApiResponseUtil.success("Empty return recorded successfully", dto));
     }
 

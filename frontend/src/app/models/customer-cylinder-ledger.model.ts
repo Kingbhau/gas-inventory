@@ -1,3 +1,12 @@
+export interface LedgerPaymentSplit {
+  id?: number;
+  paymentMode: string;
+  amount: number;
+  bankAccountId?: number;
+  bankAccountName?: string;
+  note?: string;
+}
+
 export interface CustomerCylinderLedger {
   id?: number;
   customerId: number;
@@ -28,4 +37,5 @@ export interface CustomerCylinderLedger {
   createdBy?: string;
   updatedBy?: string;
   note?: string;
+  paymentSplits?: LedgerPaymentSplit[];
 }

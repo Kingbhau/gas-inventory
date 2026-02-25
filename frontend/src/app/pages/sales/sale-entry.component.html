@@ -151,6 +151,14 @@
 
         <!-- Two Column Layout for Amount Fields -->
         <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Payment Type</label>
+            <select formControlName="paymentType" class="form-control">
+              <option value="SINGLE">Single Payment</option>
+              <option value="MULTIPLE">Multiple Payments</option>
+            </select>
+          </div>
+
           <!-- Amount Received -->
           <div class="form-group">
             <label class="form-label">Amount Received (₹)</label>
@@ -161,6 +169,7 @@
                 type="text" 
                 class="form-control" 
                 placeholder="0.00"
+                [readonly]="isMultiplePayment"
                 indianCurrencyFormat>
             </div>
             <div class="balance-info" *ngIf="dueLoading">
@@ -181,7 +190,7 @@
           </div>
 
           <!-- Payment Mode -->
-          <div class="form-group">
+          <div class="form-group" *ngIf="!isMultiplePayment">
             <label class="form-label">Payment Mode</label>
             <select formControlName="modeOfPayment" class="form-control">
               <option [value]="null" disabled hidden>Select Payment Mode</option>
@@ -193,7 +202,7 @@
           </div>
 
           <!-- Bank Account Selection (visible only when payment mode requires bank account) -->
-          <div class="form-group" *ngIf="saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired">
+          <div class="form-group" *ngIf="!isMultiplePayment && saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired">
             <label class="form-label">Bank Account <span class="required">*</span></label>
             <select formControlName="bankAccountId" class="form-control">
               <option [value]="null" disabled>Select Bank Account</option>
@@ -204,6 +213,63 @@
             <div *ngIf="saleForm.get('bankAccountId')?.invalid && saleForm.get('bankAccountId')?.touched" class="error-message">
               Please select a bank account for this payment mode
             </div>
+          </div>
+        </div>
+
+        <div class="payment-split-card" *ngIf="isMultiplePayment">
+          <div class="payment-split-header">
+            <div>
+              <div class="payment-split-title">Payment Split</div>
+              <div class="payment-split-subtitle">Add one or more payment lines. Amount Received is auto-calculated.</div>
+            </div>
+            <button type="button" class="btn btn-secondary payment-split-add-btn" (click)="addPaymentSplit()">+ Add Row</button>
+          </div>
+
+          <div class="payment-split-table-head">
+            <span>Mode</span>
+            <span>Bank Account</span>
+            <span>Amount</span>
+            <span>Note</span>
+            <span>Action</span>
+          </div>
+
+          <div formArrayName="paymentSplits" class="payment-split-body">
+            <div class="payment-split-row" *ngFor="let split of paymentSplits.controls; let i = index" [formGroupName]="i">
+              <div class="form-group">
+                <select formControlName="modeOfPayment" class="form-control">
+                  <option [value]="null" disabled hidden>Select mode</option>
+                  <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <select
+                  formControlName="bankAccountId"
+                  class="form-control"
+                  [disabled]="!(split.get('modeOfPayment')?.value && getSelectedPaymentMode(split.get('modeOfPayment')?.value)?.isBankAccountRequired)">
+                  <option [value]="null">Select Bank Account</option>
+                  <option *ngFor="let account of bankAccounts" [value]="account.id">
+                    {{ account.bankName }} - {{ account.accountNumber }}
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <div class="input-with-prefix">
+                  <span class="currency">₹</span>
+                  <input formControlName="amount" type="text" class="form-control" placeholder="0.00" indianCurrencyFormat>
+                </div>
+              </div>
+              <div class="form-group">
+                <input formControlName="note" type="text" class="form-control" placeholder="Optional note">
+              </div>
+              <div class="form-group payment-split-action">
+                <button type="button" class="btn btn-secondary payment-split-remove-btn" (click)="removePaymentSplit(i)" [disabled]="paymentSplits.length <= 1">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-split-footer">
+            <span class="payment-split-total-label">Split Total</span>
+            <span class="payment-split-total-value">{{ saleForm.get('amountReceived')?.value | indianCurrency }}</span>
           </div>
         </div>
 
@@ -233,6 +299,14 @@
             <span class="summary-label">Total Amount to Pay:</span>
             <span class="summary-value">{{ totalAmount | indianCurrency }}</span>
           </div>
+          <ng-container *ngIf="isMultiplePayment">
+            <div class="summary-row" *ngFor="let split of paymentSplits.controls; let i = index">
+              <span class="summary-label">Split {{ i + 1 }} ({{ split.get('modeOfPayment')?.value || 'Mode' }}):</span>
+              <span class="summary-value" style="color: #0066cc;">
+                {{ (split.get('amount')?.value || 0) | indianCurrency }}
+              </span>
+            </div>
+          </ng-container>
           <div class="summary-row">
             <span class="summary-label">Amount Received:</span>
             <span class="summary-value" style="color: #0066cc;">{{ saleForm.get('amountReceived')?.value | indianCurrency }}</span>
@@ -248,7 +322,7 @@
           <button
             type="submit"
             class="btn btn-primary"
-            [disabled]="!saleForm.valid || (saleForm.get('modeOfPayment')?.value && getSelectedPaymentMode(saleForm.get('modeOfPayment')?.value)?.isBankAccountRequired && !saleForm.get('bankAccountId')?.value)">Save</button>
+            [disabled]="isSaveButtonDisabled">Save</button>
           <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
         </div>
       </form>
