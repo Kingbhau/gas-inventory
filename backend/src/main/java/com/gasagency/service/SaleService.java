@@ -695,6 +695,7 @@ public class SaleService {
                                 .map(this::toDTO);
         }
 
+        @Transactional(readOnly = true)
         public PaymentModeSummaryDTO getPaymentModeSummary(String fromDate, String toDate,
                         Long customerId,
                         String paymentMode, Long variantId, Long bankAccountId, Double minAmount, Double maxAmount,
