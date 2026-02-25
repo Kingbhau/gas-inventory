@@ -143,6 +143,7 @@ export class EmptyReturnHistoryComponent implements OnInit, OnDestroy {
               balance: entry.balance ?? 0,
               amountReceived: entry.amountReceived,
               paymentMode: entry.paymentMode,
+              paymentSplits: entry.paymentSplits || [],
               dueAmount: entry.dueAmount,
               bankAccountName: entry.bankAccountName,
               bankAccountNumber: entry.bankAccountNumber,

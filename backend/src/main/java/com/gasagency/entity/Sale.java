@@ -79,6 +79,10 @@ public class Sale extends Auditable {
     @JsonManagedReference("sale-ledgers")
     private List<CustomerCylinderLedger> ledgers = new ArrayList<>();
 
+    @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("sale-payment-splits")
+    private List<SalePaymentSplit> paymentSplits = new ArrayList<>();
+
     public Sale() {
     }
 
@@ -173,6 +177,14 @@ public class Sale extends Auditable {
 
     public void setLedgers(List<CustomerCylinderLedger> ledgers) {
         this.ledgers = ledgers;
+    }
+
+    public List<SalePaymentSplit> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<SalePaymentSplit> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 
     public String getPaymentMode() {

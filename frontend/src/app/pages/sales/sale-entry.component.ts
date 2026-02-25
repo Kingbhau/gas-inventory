@@ -1,4 +1,4 @@
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule, FormControl, FormArray } from '@angular/forms';
 import { Component, OnInit, ViewChild, ViewChildren, QueryList, ChangeDetectionStrategy, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,7 +31,7 @@ import { AuthService } from '../../services/auth.service';
 import { Customer } from '../../models/customer.model';
 import { CylinderVariant } from '../../models/cylinder-variant.model';
 import { Warehouse } from '../../models/warehouse.model';
-import { CreateSaleRequest, SaleItemRequest } from '../../models/create-sale-request.model';
+import { CreateSaleRequest, SaleItemRequest, SalePaymentSplitRequest } from '../../models/create-sale-request.model';
 import { CustomerVariantPrice } from '../../models/customer-variant-price.model';
 import { Sale } from '../../models/sale.model';
 import { PageResponse } from '../../models/page-response';
@@ -52,6 +52,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   private customerSearch$ = new Subject<string>();
   saleForm!: FormGroup;
   successMessage = '';
+  submitting = false;
   baseAmount = 0;
   discountPrice: number = 0; // Customer-specific discount price
   currentBalance: number | null = null;
@@ -473,6 +474,79 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     return this.paymentModes.find(mode => mode.name === modeName);
   }
 
+  get paymentSplits(): FormArray {
+    return this.saleForm.get('paymentSplits') as FormArray;
+  }
+
+  get isMultiplePayment(): boolean {
+    return this.saleForm.get('paymentType')?.value === 'MULTIPLE';
+  }
+
+  private createPaymentSplitGroup(): FormGroup {
+    return this.fb.group({
+      modeOfPayment: [null, Validators.required],
+      bankAccountId: [{ value: null, disabled: true }],
+      amount: [null, [Validators.required, Validators.min(0.01), Validators.max(100000)]],
+      note: ['']
+    });
+  }
+
+  addPaymentSplit(): void {
+    const splitGroup = this.createPaymentSplitGroup();
+    splitGroup.get('modeOfPayment')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((mode: string | null) => {
+        const bankAccountControl = splitGroup.get('bankAccountId');
+        const selectedMode = mode ? this.getSelectedPaymentMode(mode) : undefined;
+        if (selectedMode?.isBankAccountRequired) {
+          bankAccountControl?.enable({ emitEvent: false });
+          bankAccountControl?.setValidators(Validators.required);
+        } else {
+          bankAccountControl?.clearValidators();
+          bankAccountControl?.setValue(null, { emitEvent: false });
+          bankAccountControl?.disable({ emitEvent: false });
+        }
+        bankAccountControl?.updateValueAndValidity({ emitEvent: false });
+      });
+    splitGroup.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.syncAmountReceivedFromSplits());
+    this.paymentSplits.push(splitGroup);
+    this.syncAmountReceivedFromSplits();
+  }
+
+  removePaymentSplit(index: number): void {
+    if (this.paymentSplits.length <= 1) {
+      return;
+    }
+    this.paymentSplits.removeAt(index);
+    this.syncAmountReceivedFromSplits();
+  }
+
+  private syncAmountReceivedFromSplits(): void {
+    if (!this.isMultiplePayment) {
+      return;
+    }
+    const total = this.paymentSplits.controls.reduce((sum, control) => {
+      const amount = this.parseAmountInput(control.get('amount')?.value);
+      return sum + amount;
+    }, 0);
+    this.saleForm.get('amountReceived')?.setValue(total, { emitEvent: false });
+    this.saleForm.get('amountReceived')?.updateValueAndValidity({ emitEvent: false });
+    this.cdr.markForCheck();
+  }
+
+  private setPaymentSplitsEnabled(enabled: boolean): void {
+    if (enabled) {
+      this.paymentSplits.enable({ emitEvent: false });
+      if (this.paymentSplits.length === 0) {
+        this.addPaymentSplit();
+      }
+      return;
+    }
+    this.paymentSplits.disable({ emitEvent: false });
+  }
+
   initForm() {
     this.saleForm = this.fb.group({
       warehouseId: [null, Validators.required],
@@ -482,23 +556,29 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
       basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
       amountReceived: [null, [Validators.max(100000)]],
+      paymentType: ['SINGLE'],
       modeOfPayment: [null],
       bankAccountId: [null],
+      paymentSplits: this.fb.array([]),
       saleDate: [this.dateUtility.getTodayInIST(), Validators.required]
     });
+
+    this.paymentSplits.clear();
+    this.addPaymentSplit();
+    this.setPaymentSplitsEnabled(false);
 
     // Add conditional validation for modeOfPayment and bankAccountId
     this.saleForm.get('amountReceived')?.valueChanges.subscribe(() => {
       const modeControl = this.saleForm.get('modeOfPayment');
-      const bankAccountControl = this.saleForm.get('bankAccountId');
       const amountReceived = this.saleForm.get('amountReceived')?.value;
-      
-      if (amountReceived && amountReceived > 0) {
+      const hasAmount = amountReceived && amountReceived > 0;
+
+      if (!this.isMultiplePayment && hasAmount) {
         modeControl?.setValidators(Validators.required);
       } else {
         modeControl?.clearValidators();
       }
-      modeControl?.updateValueAndValidity();
+      modeControl?.updateValueAndValidity({ emitEvent: false });
       this.saleForm.updateValueAndValidity();
     });
 
@@ -515,6 +595,29 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       bankAccountControl?.updateValueAndValidity();
       this.saleForm.updateValueAndValidity();
     });
+
+    this.saleForm.get('paymentType')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((type: string) => {
+        const amountControl = this.saleForm.get('amountReceived');
+        const modeControl = this.saleForm.get('modeOfPayment');
+        const bankControl = this.saleForm.get('bankAccountId');
+        if (type === 'MULTIPLE') {
+          amountControl?.disable({ emitEvent: false });
+          modeControl?.clearValidators();
+          modeControl?.setValue(null, { emitEvent: false });
+          bankControl?.clearValidators();
+          bankControl?.setValue(null, { emitEvent: false });
+          this.setPaymentSplitsEnabled(true);
+          this.syncAmountReceivedFromSplits();
+        } else {
+          amountControl?.enable({ emitEvent: false });
+          this.setPaymentSplitsEnabled(false);
+        }
+        modeControl?.updateValueAndValidity({ emitEvent: false });
+        bankControl?.updateValueAndValidity({ emitEvent: false });
+        this.cdr.markForCheck();
+      });
 
     // Load bank accounts on init
     this.loadBankAccounts();
@@ -801,15 +904,52 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
    */
   private updatePaymentModeValidators(hasAmount: boolean): void {
     const modeControl = this.saleForm.get('modeOfPayment');
-    const bankAccountControl = this.saleForm.get('bankAccountId');
     
-    if (hasAmount) {
+    if (this.isMultiplePayment) {
+      modeControl?.clearValidators();
+    } else if (hasAmount) {
       modeControl?.setValidators(Validators.required);
     } else {
       modeControl?.clearValidators();
     }
     modeControl?.updateValueAndValidity({ emitEvent: false });
     this.cdr.markForCheck();
+  }
+
+  get isSaveButtonDisabled(): boolean {
+    if (this.submitting || !this.saleForm || this.totalAmount <= 0 || this.saleForm.invalid) {
+      return true;
+    }
+
+    if (this.isMultiplePayment) {
+      const splits = this.paymentSplits.controls;
+      if (!splits.length) {
+        return true;
+      }
+      let splitTotal = 0;
+      for (const control of splits) {
+        const mode = control.get('modeOfPayment')?.value;
+        const amount = this.parseAmountInput(control.get('amount')?.value);
+        if (!mode || amount <= 0) {
+          return true;
+        }
+        const selectedMode = this.getSelectedPaymentMode(mode);
+        if (selectedMode?.isBankAccountRequired && !control.get('bankAccountId')?.value) {
+          return true;
+        }
+        splitTotal += amount;
+      }
+      const amountReceived = this.parseAmountInput(this.saleForm.get('amountReceived')?.value);
+      return Math.abs(splitTotal - amountReceived) > 0.009;
+    }
+
+    const amountReceived = this.parseAmountInput(this.saleForm.get('amountReceived')?.value);
+    const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
+    if (amountReceived > 0 && !modeOfPayment) {
+      return true;
+    }
+    const selectedPaymentMode = this.getSelectedPaymentMode(modeOfPayment);
+    return !!(modeOfPayment && selectedPaymentMode?.isBankAccountRequired && !this.saleForm.get('bankAccountId')?.value);
   }
 
   onSubmit() {
@@ -887,6 +1027,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const qtyEmptyReceived = isNaN(parseInt(qtyEmptyReceivedRaw)) ? 0 : parseInt(qtyEmptyReceivedRaw);
     const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
     const bankAccountIdValue = this.saleForm.get('bankAccountId')?.value;
+    const paymentType = this.saleForm.get('paymentType')?.value;
     
     // Calculate total discount (per-unit discount × quantity)
     const totalDiscount = (this.discountPrice || 0) * qtyIssued;
@@ -899,7 +1040,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       customerId: customerId,
       saleDate: saleDate,
       amountReceived: this.parseAmountInput(this.saleForm.get('amountReceived')?.value),
-      modeOfPayment: modeOfPayment,
       items: [
         {
           variantId: variantId,
@@ -910,17 +1050,53 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       ]
     };
 
-    // Add bankAccountId if payment requires bank account
-    const selectedPaymentMode = this.getSelectedPaymentMode(modeOfPayment);
-    if (modeOfPayment && selectedPaymentMode?.isBankAccountRequired && bankAccountIdValue) {
-      saleRequest.bankAccountId = bankAccountIdValue;
+    if (paymentType === 'MULTIPLE') {
+      const paymentSplits: SalePaymentSplitRequest[] = this.paymentSplits.controls
+        .map((control) => ({
+          modeOfPayment: control.get('modeOfPayment')?.value,
+          bankAccountId: control.get('bankAccountId')?.value || undefined,
+          amount: this.parseAmountInput(control.get('amount')?.value),
+          note: control.get('note')?.value || undefined
+        }))
+        .filter((split) => split.modeOfPayment && split.amount > 0);
+
+      if (paymentSplits.length === 0) {
+        this.toastr.error('Add at least one valid payment split.', 'Validation Error');
+        return;
+      }
+
+      for (const split of paymentSplits) {
+        const selectedMode = this.getSelectedPaymentMode(split.modeOfPayment);
+        if (selectedMode?.isBankAccountRequired && !split.bankAccountId) {
+          this.toastr.error(`Bank account is required for payment mode: ${split.modeOfPayment}`, 'Validation Error');
+          return;
+        }
+      }
+
+      const splitTotal = paymentSplits.reduce((sum, split) => sum + split.amount, 0);
+      saleRequest.amountReceived = splitTotal;
+      saleRequest.paymentSplits = paymentSplits;
+      saleRequest.modeOfPayment = undefined;
+      saleRequest.bankAccountId = undefined;
+    } else {
+      saleRequest.modeOfPayment = modeOfPayment;
+      const selectedPaymentMode = this.getSelectedPaymentMode(modeOfPayment);
+      if (modeOfPayment && selectedPaymentMode?.isBankAccountRequired && bankAccountIdValue) {
+        saleRequest.bankAccountId = bankAccountIdValue;
+      }
     }
     this.checkDuplicateAndSubmit(saleRequest);
   }
 
   private createSale(saleRequest: CreateSaleRequest): void {
-    const sub = this.saleService.createSale(saleRequest)
+    const idempotencyKey = this.generateIdempotencyKey();
+    this.submitting = true;
+    const sub = this.saleService.createSale(saleRequest, idempotencyKey)
       .pipe(
+        finalize(() => {
+          this.submitting = false;
+          this.cdr.markForCheck();
+        }),
         catchError((error: unknown) => {
           const err = error as { error?: { message?: string }; message?: string };
           const errorMessage = err?.error?.message || err?.message || 'Error recording sale. Please try again.';
@@ -943,6 +1119,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       });
   }
 
+  private generateIdempotencyKey(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
   resetForm() {
     // Reset the autocomplete components
     if (this.autocompleteInputs && this.autocompleteInputs.length > 0) {
@@ -951,53 +1134,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       });
     }
     
-    // Rebuild the form with correct validators (amountReceived and modeOfPayment are optional)
-    this.saleForm = this.fb.group({
-      warehouseId: [null, Validators.required],
-      customerId: [null, Validators.required],
-      variantId: [null, Validators.required],
-      filledIssuedQty: [null, [Validators.required, Validators.min(1), Validators.max(100)]],
-      emptyReceivedQty: [null, [Validators.min(0), Validators.max(100)]],
-      basePrice: [null, [Validators.required, Validators.min(0), Validators.max(10000)]],
-      amountReceived: [null, [Validators.min(0), Validators.max(100000)]],
-      modeOfPayment: [null],
-      bankAccountId: [null],
-      saleDate: [this.dateUtility.getTodayInIST(), Validators.required]
-    });
-    
+    this.initForm();
     this.saleForm.get('basePrice')?.disable();
-    
-    // Re-add conditional validators for payment mode and bank account
-    this.saleForm.get('amountReceived')?.valueChanges.subscribe(() => {
-      const modeControl = this.saleForm.get('modeOfPayment');
-      const bankAccountControl = this.saleForm.get('bankAccountId');
-      const amountReceived = this.saleForm.get('amountReceived')?.value;
-      
-      if (amountReceived && amountReceived > 0) {
-        modeControl?.setValidators(Validators.required);
-      } else {
-        modeControl?.clearValidators();
-      }
-      modeControl?.updateValueAndValidity();
-      
-      // Update form validity
-      this.saleForm.updateValueAndValidity();
-    });
-
-    this.saleForm.get('modeOfPayment')?.valueChanges.subscribe((mode) => {
-      const bankAccountControl = this.saleForm.get('bankAccountId');
-      const selectedMode = this.getSelectedPaymentMode(mode);
-      if (mode && selectedMode?.isBankAccountRequired) {
-        bankAccountControl?.setValidators(Validators.required);
-      } else {
-        bankAccountControl?.clearValidators();
-        bankAccountControl?.reset();
-      }
-      bankAccountControl?.updateValueAndValidity();
-      
-      // Update form validity
-      this.saleForm.updateValueAndValidity();
-    });
     
     this.saleForm.markAsPristine();
     this.saleForm.markAsUntouched();

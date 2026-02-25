@@ -7,7 +7,7 @@ import { ReturnPendingSummary } from '../models/return-pending-summary.model';
 import { PaymentsSummary } from '../models/payments-summary.model';
 
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, EMPTY } from 'rxjs';
 import { expand, map, reduce } from 'rxjs';
 import { CustomerCylinderLedger } from '../models/customer-cylinder-ledger.model';
@@ -238,10 +238,24 @@ export class CustomerCylinderLedgerService {
   recordEmptyReturn(data: {
     customerId: number|string,
     variantId: number|string,
+    warehouseId?: number|string,
     emptyIn: number,
-    transactionDate: string
-  }): Observable<CustomerCylinderLedger> {
-    return this.http.post<any>(`${this.apiUrl}/empty-return`, data, { withCredentials: true })
+    transactionDate: string,
+    amountReceived?: number,
+    paymentType?: 'SINGLE' | 'MULTIPLE',
+    paymentMode?: string,
+    bankAccountId?: number,
+    paymentSplits?: Array<{
+      modeOfPayment: string;
+      amount: number;
+      bankAccountId?: number;
+      note?: string;
+    }>
+  }, idempotencyKey?: string): Observable<CustomerCylinderLedger> {
+    const headers = idempotencyKey
+      ? new HttpHeaders({ 'Idempotency-Key': idempotencyKey })
+      : undefined;
+    return this.http.post<any>(`${this.apiUrl}/empty-return`, data, { withCredentials: true, headers })
       .pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger>());
   }
 

@@ -6,6 +6,7 @@ import com.gasagency.dto.response.SaleDTO;
 import com.gasagency.dto.response.SaleSummaryDTO;
 import com.gasagency.dto.response.PaymentModeSummaryDTO;
 import com.gasagency.dto.response.PagedResponseDTO;
+import com.gasagency.service.ApiIdempotencyService;
 import com.gasagency.service.SaleService;
 import com.gasagency.util.ApiResponse;
 import com.gasagency.util.ApiResponseUtil;
@@ -25,9 +26,11 @@ import java.util.List;
 @RequestMapping("/api/sales")
 public class SaleController {
     private final SaleService service;
+    private final ApiIdempotencyService apiIdempotencyService;
 
-    public SaleController(SaleService service) {
+    public SaleController(SaleService service, ApiIdempotencyService apiIdempotencyService) {
         this.service = service;
+        this.apiIdempotencyService = apiIdempotencyService;
     }
 
     @GetMapping("/recent")
@@ -70,8 +73,19 @@ public class SaleController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<SaleDTO>> createSale(@Valid @RequestBody CreateSaleRequestDTO request) {
-        SaleDTO created = service.createSale(request);
+    public ResponseEntity<ApiResponse<SaleDTO>> createSale(
+            @Valid @RequestBody CreateSaleRequestDTO request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            Authentication authentication) {
+        String username = authentication != null ? authentication.getName() : "anonymous";
+        SaleDTO created = apiIdempotencyService.execute(
+                "POST:/api/sales",
+                idempotencyKey,
+                username,
+                request,
+                () -> service.createSale(request),
+                SaleDTO::getId,
+                service::getSaleById);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponseUtil.success("Sale created successfully", created));
     }

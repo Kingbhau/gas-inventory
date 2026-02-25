@@ -3,6 +3,7 @@ package com.gasagency.dto.response;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class DayBookDTO {
     private Long id;
@@ -23,6 +24,7 @@ public class DayBookDTO {
     private String referenceNumber;
     private String partyName;
     private String details;
+    private List<SalePaymentSplitDTO> paymentSplits;
 
     public DayBookDTO() {
     }
@@ -189,6 +191,14 @@ public class DayBookDTO {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public List<SalePaymentSplitDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<SalePaymentSplitDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 }
 

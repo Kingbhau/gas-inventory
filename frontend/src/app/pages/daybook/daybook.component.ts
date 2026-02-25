@@ -62,6 +62,22 @@ export class DayBookComponent implements OnInit, OnDestroy {
     amount: number;
     count: number;
   }> = [];
+  salePaymentModeBreakdown: Array<{
+    mode: string;
+    amount: number;
+    count: number;
+  }> = [];
+  emptyReturnPaymentModeBreakdown: Array<{
+    mode: string;
+    amount: number;
+    count: number;
+  }> = [];
+  activePaymentBreakdown: Array<{
+    mode: string;
+    amount: number;
+    count: number;
+  }> = [];
+  paymentBreakdownTitle = 'Payment Mode Breakdown';
   showPaymentModeBreakdownModal = false;
   selectedDate: string = '';
   isLoading = false;
@@ -178,6 +194,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                   this.dayBookTypeSummaries = this.buildTypeSummaries(filteredTransactions);
                   this.setVariantSummaries(filteredTransactions);
                   this.setPaymentModeBreakdown(filteredTransactions);
+                  this.setTypePaymentModeBreakdowns(filteredTransactions);
                   this.applyPaginationFromTransactions(filteredTransactions);
                 } else {
                   this.dayBookSummary = summaryResponse;
@@ -185,6 +202,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                   this.dayBookTypeSummaries = this.buildTypeSummaries(this.dayBookTransactions);
                   this.setVariantSummaries(this.dayBookTransactions);
                   this.setPaymentModeBreakdown(this.dayBookTransactions);
+                  this.setTypePaymentModeBreakdowns(this.dayBookTransactions);
                 }
                 this.cdr.markForCheck();
               },
@@ -194,6 +212,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
                   this.dayBookTypeSummaries = this.buildTypeSummaries(this.paginatedDayBookTransactions);
                   this.setVariantSummaries(this.paginatedDayBookTransactions);
                   this.setPaymentModeBreakdown(this.paginatedDayBookTransactions);
+                  this.setTypePaymentModeBreakdowns(this.paginatedDayBookTransactions);
                 }
               }
             });
@@ -209,6 +228,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
           this.filledVariantSummaries = [];
           this.emptyVariantSummaries = [];
           this.paymentModeBreakdown = [];
+          this.salePaymentModeBreakdown = [];
+          this.emptyReturnPaymentModeBreakdown = [];
+          this.activePaymentBreakdown = [];
           this.cdr.markForCheck();
         }
       });
@@ -465,8 +487,38 @@ export class DayBookComponent implements OnInit, OnDestroy {
   }
 
   private setPaymentModeBreakdown(transactions: DayBook[]): void {
+    this.paymentModeBreakdown = this.buildPaymentModeBreakdownByType(transactions, 'PAYMENT');
+  }
+
+  private setTypePaymentModeBreakdowns(transactions: DayBook[]): void {
+    this.salePaymentModeBreakdown = this.buildPaymentModeBreakdownByType(transactions, 'SALE');
+    this.emptyReturnPaymentModeBreakdown = this.buildPaymentModeBreakdownByType(transactions, 'EMPTY_RETURN');
+  }
+
+  private buildPaymentModeBreakdownByType(transactions: DayBook[], type?: string): Array<{ mode: string; amount: number; count: number }> {
     const summaryMap = new Map<string, { mode: string; amount: number; count: number }>();
     (transactions || []).forEach(tx => {
+      if (type && tx?.transactionType !== type) {
+        return;
+      }
+      const splits = tx?.paymentSplits || [];
+      if (splits.length > 0) {
+        splits.forEach(split => {
+          const splitAmount = Number(split?.amount) || 0;
+          if (splitAmount <= 0) {
+            return;
+          }
+          const rawSplitMode = typeof split?.paymentMode === 'string' ? split.paymentMode.trim() : '';
+          const splitMode = rawSplitMode || 'Unknown';
+          const splitKey = splitMode.toLowerCase();
+          const splitExisting = summaryMap.get(splitKey) || { mode: splitMode, amount: 0, count: 0 };
+          splitExisting.amount += splitAmount;
+          splitExisting.count += 1;
+          summaryMap.set(splitKey, splitExisting);
+        });
+        return;
+      }
+
       const received = Number(tx?.amountReceived) || 0;
       if (received <= 0) {
         return;
@@ -479,19 +531,32 @@ export class DayBookComponent implements OnInit, OnDestroy {
       existing.count += 1;
       summaryMap.set(key, existing);
     });
-    this.paymentModeBreakdown = Array.from(summaryMap.values())
-      .sort((a, b) => b.amount - a.amount);
+    return Array.from(summaryMap.values()).sort((a, b) => b.amount - a.amount);
   }
 
-  openPaymentModeBreakdown() {
-    if (this.paymentModeBreakdown.length === 0) {
+  openPaymentModeBreakdown(type: 'PAYMENT' | 'SALE' | 'EMPTY_RETURN' = 'PAYMENT') {
+    const titleMap: Record<'PAYMENT' | 'SALE' | 'EMPTY_RETURN', string> = {
+      PAYMENT: 'Payment Collection Breakdown',
+      SALE: 'Sale Payment Breakdown',
+      EMPTY_RETURN: 'Empty Return Payment Breakdown'
+    };
+    const breakdownMap: Record<'PAYMENT' | 'SALE' | 'EMPTY_RETURN', Array<{ mode: string; amount: number; count: number }>> = {
+      PAYMENT: this.paymentModeBreakdown,
+      SALE: this.salePaymentModeBreakdown,
+      EMPTY_RETURN: this.emptyReturnPaymentModeBreakdown
+    };
+    const breakdown = breakdownMap[type] || [];
+    if (breakdown.length === 0) {
       return;
     }
+    this.paymentBreakdownTitle = titleMap[type];
+    this.activePaymentBreakdown = breakdown;
     this.showPaymentModeBreakdownModal = true;
   }
 
   closePaymentModeBreakdown() {
     this.showPaymentModeBreakdownModal = false;
+    this.activePaymentBreakdown = [];
   }
 
   private getTransferQuantity(details?: string | null): number {

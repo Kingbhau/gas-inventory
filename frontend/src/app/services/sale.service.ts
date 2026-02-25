@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, timeout } from 'rxjs';
 import { Sale } from '../models/sale.model';
 import { CreateSaleRequest } from '../models/create-sale-request.model';
@@ -21,8 +21,11 @@ export class SaleService {
 
   constructor(private http: HttpClient) { }
 
-  createSale(saleRequest: CreateSaleRequest): Observable<Sale> {
-    return this.http.post<any>(this.apiUrl, saleRequest, { withCredentials: true })
+  createSale(saleRequest: CreateSaleRequest, idempotencyKey?: string): Observable<Sale> {
+    const headers = idempotencyKey
+      ? new HttpHeaders({ 'Idempotency-Key': idempotencyKey })
+      : undefined;
+    return this.http.post<any>(this.apiUrl, saleRequest, { withCredentials: true, headers })
       .pipe(timeout(30000), unwrapApiResponse<Sale>());
   }
 

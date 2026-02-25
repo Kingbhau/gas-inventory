@@ -402,6 +402,45 @@
   font-weight: 600;
 }
 
+.invoice-row.payment-breakup-row {
+  align-items: flex-start;
+}
+
+.payment-breakup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.payment-breakup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.payment-mode-chip {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.payment-breakup-amount {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.payment-breakup-bank {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
 .modal-footer {
   padding: 1.5rem;
   border-top: 1px solid #e2e8f0;

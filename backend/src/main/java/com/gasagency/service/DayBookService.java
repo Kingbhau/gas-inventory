@@ -2,12 +2,15 @@ package com.gasagency.service;
 
 import com.gasagency.dto.response.DayBookDTO;
 import com.gasagency.dto.response.DayBookSummaryDTO;
+import com.gasagency.dto.response.SalePaymentSplitDTO;
 import com.gasagency.entity.CustomerCylinderLedger;
+import com.gasagency.entity.CustomerLedgerPaymentSplit;
 import com.gasagency.entity.Expense;
 import com.gasagency.entity.BankDeposit;
 import com.gasagency.entity.SupplierTransaction;
 import com.gasagency.entity.WarehouseTransfer;
 import com.gasagency.repository.CustomerCylinderLedgerRepository;
+import com.gasagency.repository.CustomerLedgerPaymentSplitRepository;
 import com.gasagency.repository.ExpenseRepository;
 import com.gasagency.repository.BankDepositRepository;
 import com.gasagency.repository.SupplierTransactionRepository;
@@ -33,17 +36,20 @@ public class DayBookService {
     private final SupplierTransactionRepository supplierTransactionRepository;
     private final BankDepositRepository bankDepositRepository;
     private final ExpenseRepository expenseRepository;
+    private final CustomerLedgerPaymentSplitRepository customerLedgerPaymentSplitRepository;
 
     public DayBookService(CustomerCylinderLedgerRepository ledgerRepository,
             WarehouseTransferRepository warehouseTransferRepository,
             SupplierTransactionRepository supplierTransactionRepository,
             BankDepositRepository bankDepositRepository,
-            ExpenseRepository expenseRepository) {
+            ExpenseRepository expenseRepository,
+            CustomerLedgerPaymentSplitRepository customerLedgerPaymentSplitRepository) {
         this.ledgerRepository = ledgerRepository;
         this.warehouseTransferRepository = warehouseTransferRepository;
         this.supplierTransactionRepository = supplierTransactionRepository;
         this.bankDepositRepository = bankDepositRepository;
         this.expenseRepository = expenseRepository;
+        this.customerLedgerPaymentSplitRepository = customerLedgerPaymentSplitRepository;
     }
 
     /**
@@ -87,8 +93,15 @@ public class DayBookService {
                     date,
                     refTypes,
                     createdBy);
+
+            Map<Long, List<CustomerLedgerPaymentSplit>> paymentSplitMap = ledgers.isEmpty()
+                    ? Map.of()
+                    : customerLedgerPaymentSplitRepository.findByLedgerIdIn(
+                                    ledgers.stream().map(CustomerCylinderLedger::getId).collect(Collectors.toList()))
+                            .stream()
+                            .collect(Collectors.groupingBy(split -> split.getLedger().getId()));
             ledgers.stream()
-                    .map(this::convertLedgerToDayBook)
+                    .map(ledger -> convertLedgerToDayBook(ledger, paymentSplitMap))
                     .forEach(dayBookList::add);
         }
 
@@ -200,7 +213,8 @@ public class DayBookService {
     /**
      * Convert CustomerCylinderLedger to DayBookDTO
      */
-    private DayBookDTO convertLedgerToDayBook(CustomerCylinderLedger ledger) {
+    private DayBookDTO convertLedgerToDayBook(CustomerCylinderLedger ledger,
+            Map<Long, List<CustomerLedgerPaymentSplit>> paymentSplitMap) {
         DayBookDTO dayBook = new DayBookDTO();
         dayBook.setId(ledger.getId());
         dayBook.setCustomerId(ledger.getCustomer() != null ? ledger.getCustomer().getId() : null);
@@ -248,6 +262,37 @@ public class DayBookService {
         dayBook.setAmountReceived(ledger.getAmountReceived());
         dayBook.setDueAmount(ledger.getDueAmount());
         dayBook.setPaymentMode(ledger.getPaymentMode());
+        if (ledger.getSale() != null && ledger.getSale().getPaymentSplits() != null
+                && !ledger.getSale().getPaymentSplits().isEmpty()) {
+            List<SalePaymentSplitDTO> splitDTOs = ledger.getSale().getPaymentSplits().stream()
+                    .map(split -> new SalePaymentSplitDTO(
+                            split.getId(),
+                            split.getPaymentMode(),
+                            split.getAmount(),
+                            split.getBankAccount() != null ? split.getBankAccount().getId() : null,
+                            split.getBankAccount() != null
+                                    ? split.getBankAccount().getBankName() + " - " + split.getBankAccount().getAccountNumber()
+                                    : null,
+                            split.getNote()))
+                    .collect(Collectors.toList());
+            dayBook.setPaymentSplits(splitDTOs);
+        } else {
+            List<CustomerLedgerPaymentSplit> ledgerSplits = paymentSplitMap.get(ledger.getId());
+            if (ledgerSplits != null && !ledgerSplits.isEmpty()) {
+                List<SalePaymentSplitDTO> splitDTOs = ledgerSplits.stream()
+                        .map(split -> new SalePaymentSplitDTO(
+                                split.getId(),
+                                split.getPaymentMode(),
+                                split.getAmount(),
+                                split.getBankAccount() != null ? split.getBankAccount().getId() : null,
+                                split.getBankAccount() != null
+                                        ? split.getBankAccount().getBankName() + " - " + split.getBankAccount().getAccountNumber()
+                                        : null,
+                                split.getNote()))
+                        .collect(Collectors.toList());
+                dayBook.setPaymentSplits(splitDTOs);
+            }
+        }
         dayBook.setTransactionType(ledger.getRefType().toString());
         dayBook.setCreatedBy(ledger.getCreatedBy());
 

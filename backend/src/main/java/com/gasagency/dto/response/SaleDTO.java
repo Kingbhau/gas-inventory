@@ -17,6 +17,7 @@ public class SaleDTO {
     private String paymentMode;
     private Long bankAccountId;
     private String bankAccountName;
+    private List<SalePaymentSplitDTO> paymentSplits;
     private List<SaleItemDTO> saleItems;
     private String createdBy;
     private LocalDateTime createdDate;
@@ -28,7 +29,7 @@ public class SaleDTO {
 
     public SaleDTO(Long id, String referenceNumber, Long customerId, String customerName, Long warehouseId,
             LocalDate saleDate, BigDecimal totalAmount, String paymentMode, Long bankAccountId,
-            String bankAccountName, List<SaleItemDTO> saleItems) {
+            String bankAccountName, List<SaleItemDTO> saleItems, List<SalePaymentSplitDTO> paymentSplits) {
         this.id = id;
         this.referenceNumber = referenceNumber;
         this.customerId = customerId;
@@ -40,6 +41,7 @@ public class SaleDTO {
         this.bankAccountId = bankAccountId;
         this.bankAccountName = bankAccountName;
         this.saleItems = saleItems;
+        this.paymentSplits = paymentSplits;
     }
 
     public Long getId() {
@@ -136,6 +138,14 @@ public class SaleDTO {
 
     public void setBankAccountName(String bankAccountName) {
         this.bankAccountName = bankAccountName;
+    }
+
+    public List<SalePaymentSplitDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<SalePaymentSplitDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 
     public String getCreatedBy() {

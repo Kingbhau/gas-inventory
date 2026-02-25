@@ -24,6 +24,9 @@ public class CreateSaleRequestDTO {
 
     private LocalDate saleDate;
 
+    @Valid
+    private List<PaymentSplitRequestDTO> paymentSplits;
+
     @NotEmpty(message = "Sale must contain at least one item")
     @Size(min = 1, max = 100, message = "Sale cannot have more than 100 items")
     @Valid
@@ -33,7 +36,8 @@ public class CreateSaleRequestDTO {
     }
 
     public CreateSaleRequestDTO(Long customerId, Long warehouseId, BigDecimal amountReceived, String modeOfPayment,
-            Long bankAccountId, LocalDate saleDate, List<SaleItemRequestDTO> items) {
+            Long bankAccountId, LocalDate saleDate, List<SaleItemRequestDTO> items,
+            List<PaymentSplitRequestDTO> paymentSplits) {
         this.customerId = customerId;
         this.warehouseId = warehouseId;
         this.amountReceived = amountReceived;
@@ -41,6 +45,53 @@ public class CreateSaleRequestDTO {
         this.bankAccountId = bankAccountId;
         this.saleDate = saleDate;
         this.items = items;
+        this.paymentSplits = paymentSplits;
+    }
+
+    public static class PaymentSplitRequestDTO {
+        @NotBlank(message = "Payment mode is required")
+        private String modeOfPayment;
+
+        @NotNull(message = "Payment amount is required")
+        @DecimalMin(value = "0.01", message = "Payment amount must be greater than 0")
+        private BigDecimal amount;
+
+        private Long bankAccountId;
+
+        @Size(max = 255, message = "Note cannot exceed 255 characters")
+        private String note;
+
+        public String getModeOfPayment() {
+            return modeOfPayment;
+        }
+
+        public void setModeOfPayment(String modeOfPayment) {
+            this.modeOfPayment = modeOfPayment;
+        }
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount) {
+            this.amount = amount;
+        }
+
+        public Long getBankAccountId() {
+            return bankAccountId;
+        }
+
+        public void setBankAccountId(Long bankAccountId) {
+            this.bankAccountId = bankAccountId;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
     }
 
     public static class SaleItemRequestDTO {
@@ -157,6 +208,14 @@ public class CreateSaleRequestDTO {
 
     public void setSaleDate(LocalDate saleDate) {
         this.saleDate = saleDate;
+    }
+
+    public List<PaymentSplitRequestDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<PaymentSplitRequestDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 }
 

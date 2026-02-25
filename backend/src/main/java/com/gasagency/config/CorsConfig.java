@@ -14,7 +14,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Value("${app.cors.allowed-methods:GET,POST,PUT,DELETE,OPTIONS}")
     private String allowedMethods;
 
-    @Value("${app.cors.allowed-headers:Content-Type,Authorization}")
+    @Value("${app.cors.allowed-headers:Content-Type,Authorization,X-XSRF-TOKEN,Idempotency-Key}")
     private String allowedHeaders;
 
     @Value("${app.cors.max-age:3600}")

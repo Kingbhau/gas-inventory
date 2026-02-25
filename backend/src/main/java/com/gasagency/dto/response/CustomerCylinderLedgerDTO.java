@@ -3,6 +3,7 @@ package com.gasagency.dto.response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class CustomerCylinderLedgerDTO {
     private Long id;
@@ -36,6 +37,7 @@ public class CustomerCylinderLedgerDTO {
     private String note; // Internal note for special cases
     private String createdBy;
     private String updatedBy;
+    private List<SalePaymentSplitDTO> paymentSplits;
 
     public CustomerCylinderLedgerDTO() {
     }
@@ -321,6 +323,14 @@ public class CustomerCylinderLedgerDTO {
 
     public void setUpdatedBy(String updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public List<SalePaymentSplitDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<SalePaymentSplitDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 }
 

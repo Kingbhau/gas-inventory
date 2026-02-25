@@ -161,6 +161,100 @@
   color: #dc2626;
 }
 
+/* Multiple Payment Split Design */
+.payment-split-card {
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.payment-split-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.payment-split-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.payment-split-subtitle {
+  margin-top: 0.2rem;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.payment-split-add-btn {
+  white-space: nowrap;
+  padding: 0.55rem 0.9rem;
+}
+
+.payment-split-table-head {
+  display: grid;
+  grid-template-columns: 1.3fr 1.8fr 1fr 1.4fr auto;
+  gap: 0.75rem;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.payment-split-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.payment-split-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1.8fr 1fr 1.4fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.payment-split-row .form-group {
+  margin: 0;
+}
+
+.payment-split-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.payment-split-remove-btn {
+  padding: 0.55rem 0.8rem;
+}
+
+.payment-split-footer {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-split-total-label {
+  color: #475569;
+  font-weight: 600;
+}
+
+.payment-split-total-value {
+  color: #0f172a;
+  font-weight: 700;
+}
+
 /* Summary Section */
 .summary-section {
   background: #f1f5f9;
@@ -381,6 +475,28 @@
   .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .payment-split-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .payment-split-add-btn {
+    width: 100%;
+  }
+
+  .payment-split-table-head {
+    display: none;
+  }
+
+  .payment-split-row {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .payment-split-action .btn {
+    width: auto;
   }
 }
 
