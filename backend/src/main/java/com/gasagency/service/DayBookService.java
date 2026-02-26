@@ -72,19 +72,20 @@ public class DayBookService {
         String typeFilter = transactionType != null && !transactionType.isEmpty()
                 ? transactionType.trim().toUpperCase()
                 : null;
+        boolean staffCoreOnly = "STAFF_CORE".equals(typeFilter);
 
         // Ledger entries: sales, empty returns, payments, and transfers
         List<CustomerCylinderLedger.TransactionType> refTypes = new ArrayList<>();
-        if (typeFilter == null || "SALE".equals(typeFilter)) {
+        if (staffCoreOnly || typeFilter == null || "SALE".equals(typeFilter)) {
             refTypes.add(CustomerCylinderLedger.TransactionType.SALE);
         }
-        if (typeFilter == null || "EMPTY_RETURN".equals(typeFilter)) {
+        if (staffCoreOnly || typeFilter == null || "EMPTY_RETURN".equals(typeFilter)) {
             refTypes.add(CustomerCylinderLedger.TransactionType.EMPTY_RETURN);
         }
-        if (typeFilter == null || "PAYMENT".equals(typeFilter)) {
+        if (staffCoreOnly || typeFilter == null || "PAYMENT".equals(typeFilter)) {
             refTypes.add(CustomerCylinderLedger.TransactionType.PAYMENT);
         }
-        if (typeFilter == null || "TRANSFER".equals(typeFilter)) {
+        if (!staffCoreOnly && (typeFilter == null || "TRANSFER".equals(typeFilter))) {
             refTypes.add(CustomerCylinderLedger.TransactionType.TRANSFER);
         }
 
@@ -106,7 +107,7 @@ public class DayBookService {
         }
 
         // Warehouse transfers
-        if (typeFilter == null || "WAREHOUSE_TRANSFER".equals(typeFilter)) {
+        if (!staffCoreOnly && (typeFilter == null || "WAREHOUSE_TRANSFER".equals(typeFilter))) {
             List<WarehouseTransfer> transfers = warehouseTransferRepository.findByDateRangeAndCreatedBy(
                     date, date, createdBy);
             transfers.stream()
@@ -115,7 +116,7 @@ public class DayBookService {
         }
 
         // Supplier transactions
-        if (typeFilter == null || "SUPPLIER_TRANSACTION".equals(typeFilter)) {
+        if (!staffCoreOnly && (typeFilter == null || "SUPPLIER_TRANSACTION".equals(typeFilter))) {
             List<SupplierTransaction> supplierTransactions = supplierTransactionRepository
                     .findByTransactionDateAndCreatedBy(date, createdBy);
             supplierTransactions.stream()
@@ -124,7 +125,7 @@ public class DayBookService {
         }
 
         // Bank deposits
-        if (typeFilter == null || "BANK_DEPOSIT".equals(typeFilter)) {
+        if (!staffCoreOnly && (typeFilter == null || "BANK_DEPOSIT".equals(typeFilter))) {
             List<BankDeposit> deposits = bankDepositRepository.findByDepositDateAndCreatedBy(date, createdBy);
             deposits.stream()
                     .map(this::convertBankDepositToDayBook)
@@ -132,7 +133,7 @@ public class DayBookService {
         }
 
         // Expenses
-        if (typeFilter == null || "EXPENSE".equals(typeFilter)) {
+        if (!staffCoreOnly && (typeFilter == null || "EXPENSE".equals(typeFilter))) {
             List<Expense> expenses = expenseRepository.findByExpenseDateBetweenAndCreatedBy(date, date, createdBy);
             expenses.stream()
                     .map(this::convertExpenseToDayBook)

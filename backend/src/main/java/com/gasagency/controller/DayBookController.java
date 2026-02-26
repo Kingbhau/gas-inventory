@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -37,9 +38,13 @@ public class DayBookController {
             @RequestParam(defaultValue = "transactionDate") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @RequestParam(required = false) String createdBy,
-            @RequestParam(required = false) String transactionType) {
+            @RequestParam(required = false) String transactionType,
+            Authentication authentication) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<DayBookDTO> transactions = dayBookService.getCurrentDayTransactions(pageable, createdBy, transactionType);
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
+        String effectiveTransactionType = resolveTransactionType(authentication, transactionType);
+        Page<DayBookDTO> transactions = dayBookService.getCurrentDayTransactions(pageable, effectiveCreatedBy,
+                effectiveTransactionType);
         return ResponseEntity.ok(ApiResponseUtil.success("Daybook transactions retrieved successfully", transactions));
     }
 
@@ -56,7 +61,8 @@ public class DayBookController {
             @RequestParam(defaultValue = "transactionDate") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @RequestParam(required = false) String createdBy,
-            @RequestParam(required = false) String transactionType) {
+            @RequestParam(required = false) String transactionType,
+            Authentication authentication) {
 
         LocalDate transactionDate;
 
@@ -73,8 +79,10 @@ public class DayBookController {
         }
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<DayBookDTO> transactions = dayBookService.getTransactionsByDate(transactionDate, pageable, createdBy,
-                transactionType);
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
+        String effectiveTransactionType = resolveTransactionType(authentication, transactionType);
+        Page<DayBookDTO> transactions = dayBookService.getTransactionsByDate(transactionDate, pageable,
+                effectiveCreatedBy, effectiveTransactionType);
         return ResponseEntity.ok(ApiResponseUtil.success("Daybook transactions retrieved successfully", transactions));
     }
 
@@ -85,7 +93,8 @@ public class DayBookController {
     public ResponseEntity<ApiResponse<DayBookSummaryDTO>> getSummaryByDate(
             @RequestParam(required = false) String date,
             @RequestParam(required = false) String createdBy,
-            @RequestParam(required = false) String transactionType) {
+            @RequestParam(required = false) String transactionType,
+            Authentication authentication) {
 
         LocalDate transactionDate;
 
@@ -101,9 +110,39 @@ public class DayBookController {
             }
         }
 
-        DayBookSummaryDTO summary = dayBookService.getTransactionsByDateSummary(transactionDate, createdBy,
-                transactionType);
+        String effectiveCreatedBy = resolveCreatedBy(authentication, createdBy);
+        String effectiveTransactionType = resolveTransactionType(authentication, transactionType);
+        DayBookSummaryDTO summary = dayBookService.getTransactionsByDateSummary(transactionDate, effectiveCreatedBy,
+                effectiveTransactionType);
         return ResponseEntity.ok(ApiResponseUtil.success("Daybook summary retrieved successfully", summary));
+    }
+
+    private String resolveCreatedBy(Authentication authentication, String requestedCreatedBy) {
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return requestedCreatedBy;
+        }
+        boolean isStaff = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_STAFF".equals(authority.getAuthority()));
+        return isStaff ? authentication.getName() : requestedCreatedBy;
+    }
+
+    private String resolveTransactionType(Authentication authentication, String requestedTransactionType) {
+        if (authentication == null || authentication.getAuthorities() == null) {
+            return requestedTransactionType;
+        }
+        boolean isStaff = authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_STAFF".equals(authority.getAuthority()));
+        if (!isStaff) {
+            return requestedTransactionType;
+        }
+        if (requestedTransactionType == null || requestedTransactionType.trim().isEmpty()) {
+            return "STAFF_CORE";
+        }
+        String normalized = requestedTransactionType.trim().toUpperCase();
+        if ("SALE".equals(normalized) || "EMPTY_RETURN".equals(normalized) || "PAYMENT".equals(normalized)) {
+            return normalized;
+        }
+        return "STAFF_CORE";
     }
 }
 

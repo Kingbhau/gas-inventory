@@ -156,6 +156,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   detailsVariantPrices: CustomerVariantPrice[] = [];
   users: User[] = [];
   isStaff = false;
+  isManager = false;
+  minAllowedManagerDate = '';
+  maxAllowedEntryDate = '';
   showDuplicateNameConfirm = false;
   duplicateNameMatches: CustomerRow[] = [];
   pendingCreateCustomerData: Customer | null = null;
@@ -234,6 +237,8 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const role = this.authService.getUserInfo()?.role || '';
     this.isStaff = role === 'STAFF';
+    this.isManager = role === 'MANAGER';
+    this.initializeDateRestrictionBounds();
     this.loadVariantsAndCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
@@ -1542,6 +1547,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   // Payment form methods
+  private initializeDateRestrictionBounds(): void {
+    const today = this.dateUtility.getTodayInIST();
+    this.maxAllowedEntryDate = today;
+    const yesterday = this.dateUtility.addDays(new Date(`${today}T00:00:00`), -1);
+    this.minAllowedManagerDate = this.dateUtility.getLocalDateString(yesterday);
+  }
+
   openPaymentForm() {
     // Validate customer is active
     if (this.selectedCustomer && !this.selectedCustomer.active) {
@@ -1554,6 +1566,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       paymentMode: '',
       bankAccountId: null
     };
+    if (this.isStaff) {
+      this.paymentForm.paymentDate = this.dateUtility.getTodayInIST();
+    }
     this.paymentError = '';
     this.showPaymentForm = true;
   }

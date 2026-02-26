@@ -84,7 +84,7 @@
           <!-- Date -->
           <div class="form-group">
             <label class="form-label">Date <span class="required">*</span></label>
-            <input formControlName="transactionDate" type="date" class="form-control" [disabled]="isStaff" required />
+            <input formControlName="transactionDate" type="date" class="form-control" [disabled]="isStaff" [min]="isManager ? minAllowedManagerDate : null" [max]="isStaff ? maxAllowedEntryDate : null" required />
           </div>
         </div>
 

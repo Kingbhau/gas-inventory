@@ -69,6 +69,9 @@ export class PaymentManagementComponent implements OnInit {
   bankAccounts: BankAccount[] = [];
   ledgerEntries: CustomerCylinderLedger[] = [];
   isStaff = false;
+  isManager = false;
+  minAllowedManagerDate = '';
+  maxAllowedEntryDate = '';
   showDuplicatePaymentConfirm = false;
   duplicatePaymentInfo: {
     customerName: string;
@@ -99,6 +102,8 @@ export class PaymentManagementComponent implements OnInit {
     this.userName = this.authService.getLoggedInUserName();
     const role = this.authService.getUserInfo()?.role || '';
     this.isStaff = role === 'STAFF';
+    this.isManager = role === 'MANAGER';
+    this.initializeDateRestrictionBounds();
     this.loadCustomers();
     this.loadBankAccounts();
     this.loadPaymentModes();
@@ -325,6 +330,13 @@ export class PaymentManagementComponent implements OnInit {
       return isNaN(parsed) ? 0 : parsed;
     }
     return 0;
+  }
+
+  private initializeDateRestrictionBounds(): void {
+    const today = this.dateUtility.getTodayInIST();
+    this.maxAllowedEntryDate = today;
+    const yesterday = this.dateUtility.addDays(new Date(`${today}T00:00:00`), -1);
+    this.minAllowedManagerDate = this.dateUtility.getLocalDateString(yesterday);
   }
 
   private normalizeAmount(value: number | string | null | undefined): number {
