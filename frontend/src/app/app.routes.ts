@@ -23,7 +23,7 @@ export const routes: Routes = [
     path: 'daybook',
     loadComponent: () => import('./pages/daybook/daybook.component').then(m => m.DayBookComponent),
     canActivate: [RoleGuard],
-    data: { roles: ['OWNER', 'MANAGER'] }
+    data: { roles: ['OWNER', 'MANAGER', 'STAFF'] }
   },
   
   // Sales Routes

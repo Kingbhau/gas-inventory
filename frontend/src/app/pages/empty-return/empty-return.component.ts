@@ -55,6 +55,9 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     dueLoading = false;
     dueError = '';
     isStaff = false;
+    isManager = false;
+    minAllowedManagerDate = '';
+    maxAllowedEntryDate = '';
     private customerSearch$ = new Subject<string>();
     showDuplicateConfirm = false;
     duplicateReturnInfo: {
@@ -319,6 +322,8 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
     ngOnInit() {
         const role = this.authService.getUserInfo()?.role || '';
         this.isStaff = role === 'STAFF';
+        this.isManager = role === 'MANAGER';
+        this.initializeDateRestrictionBounds();
         this.applyStaffDateRestriction();
         this.loadingService.show('Loading customers and variants...');
         this.loadPaymentModes();
@@ -396,6 +401,13 @@ export class EmptyReturnComponent implements OnInit, OnDestroy {
         const today = this.dateUtility.getTodayInIST();
         this.emptyReturnForm.get('transactionDate')?.setValue(today, { emitEvent: false });
         this.emptyReturnForm.get('transactionDate')?.disable({ emitEvent: false });
+    }
+
+    private initializeDateRestrictionBounds() {
+        const today = this.dateUtility.getTodayInIST();
+        this.maxAllowedEntryDate = today;
+        const yesterday = this.dateUtility.addDays(new Date(`${today}T00:00:00`), -1);
+        this.minAllowedManagerDate = this.dateUtility.getLocalDateString(yesterday);
     }
 
     resetForm() {

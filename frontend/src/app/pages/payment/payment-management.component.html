@@ -143,6 +143,8 @@
               name="paymentDate"
               class="form-control"
               [disabled]="isStaff"
+              [min]="isManager ? minAllowedManagerDate : null"
+              [max]="isStaff ? maxAllowedEntryDate : null"
             />
           </div>
 

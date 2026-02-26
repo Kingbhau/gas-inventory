@@ -75,6 +75,9 @@
               formControlName="expenseDate"
               type="date"
               class="form-control"
+              [disabled]="isStaff"
+              [min]="isManager ? minAllowedManagerDate : null"
+              [max]="isStaff ? maxAllowedEntryDate : null"
               [class.is-invalid]="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched">
             <div *ngIf="expenseForm.get('expenseDate')?.invalid && expenseForm.get('expenseDate')?.touched" class="error-message">
               Expense date is required

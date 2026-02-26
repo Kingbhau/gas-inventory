@@ -95,6 +95,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     { value: 'BANK_DEPOSIT', label: 'Bank Deposit' },
     { value: 'EXPENSE', label: 'Expense' }
   ];
+  private readonly staffAllowedTransactionTypes = ['', 'SALE', 'EMPTY_RETURN', 'PAYMENT'];
 
   // Pagination
   dayBookPage = 1;
@@ -120,10 +121,20 @@ export class DayBookComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const userInfo = this.authService.getUserInfo();
     this.currentUserRole = userInfo?.role || null;
+    if (this.isStaff) {
+      this.transactionTypeOptions = this.transactionTypeOptions
+        .filter(option => this.staffAllowedTransactionTypes.includes(option.value));
+      if (!this.staffAllowedTransactionTypes.includes(this.filterTransactionType)) {
+        this.filterTransactionType = '';
+      }
+      this.filterCreatedBy = userInfo?.username || this.filterCreatedBy;
+      this.users = [];
+    } else {
+      this.loadUsers();
+    }
     if (this.isManager) {
       this.transactionTypeOptions = this.transactionTypeOptions.filter(option => option.value !== 'BANK_DEPOSIT');
     }
-    this.loadUsers();
     this.loadDayBookData();
   }
 
@@ -149,6 +160,9 @@ export class DayBookComponent implements OnInit, OnDestroy {
     if (this.isManager && this.filterTransactionType === 'BANK_DEPOSIT') {
       this.filterTransactionType = '';
     }
+    if (this.isStaff && !this.staffAllowedTransactionTypes.includes(this.filterTransactionType)) {
+      this.filterTransactionType = '';
+    }
     
     this.dayBookService.getTransactionsByDate(
       this.selectedDate, 
@@ -156,7 +170,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
       this.dayBookPageSize,
       this.daybookSortBy,
       this.daybookDirection,
-      this.filterCreatedBy || undefined,
+      (this.isStaff ? undefined : (this.filterCreatedBy || undefined)),
       this.filterTransactionType || undefined
     )
       .pipe(
@@ -182,7 +196,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
           // Also fetch summary
           this.dayBookService.getTransactionsSummary(
             this.selectedDate,
-            this.filterCreatedBy || undefined,
+            (this.isStaff ? undefined : (this.filterCreatedBy || undefined)),
             this.filterTransactionType || undefined
           )
             .subscribe({
@@ -338,6 +352,10 @@ export class DayBookComponent implements OnInit, OnDestroy {
     return this.currentUserRole === 'MANAGER';
   }
 
+  get isStaff(): boolean {
+    return this.currentUserRole === 'STAFF';
+  }
+
   private filterOutBankDeposits(transactions: DayBook[]): DayBook[] {
     return (transactions || []).filter(tx => tx?.transactionType !== 'BANK_DEPOSIT');
   }
@@ -487,7 +505,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
   }
 
   private setPaymentModeBreakdown(transactions: DayBook[]): void {
-    this.paymentModeBreakdown = this.buildPaymentModeBreakdownByType(transactions, 'PAYMENT');
+    this.paymentModeBreakdown = this.buildPaymentModeBreakdownByType(transactions);
   }
 
   private setTypePaymentModeBreakdowns(transactions: DayBook[]): void {

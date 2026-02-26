@@ -189,6 +189,7 @@
             <div class="nav-section">
               <div class="nav-label">Records & Reports</div>
               <ul class="nav-items">
+                <li><a routerLink="/daybook" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faBook"></fa-icon></span><span class="nav-text">Day Book</span></a></li>
                 <li><a routerLink="/sales/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Sales History</span></a></li>
                 <li><a routerLink="/empty-return/history" routerLinkActive="active" class="nav-link" (click)="closeSidebarOnMobile()"><span class="nav-icon"><fa-icon [icon]="faHistory"></fa-icon></span><span class="nav-text">Return History</span></a></li>
               </ul>

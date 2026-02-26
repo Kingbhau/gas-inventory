@@ -16,6 +16,7 @@ import { BankAccount } from '../../models/bank-account.model';
 import { LoadingService } from '../../services/loading.service';
 import { DataRefreshService } from '../../services/data-refresh.service';
 import { DateUtilityService } from '../../services/date-utility.service';
+import { AuthService } from '../../services/auth.service';
 import { finalize, forkJoin, Subject, takeUntil } from 'rxjs';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 
@@ -37,6 +38,10 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
   bankAccounts: BankAccount[] = [];
   paymentModes: PaymentMode[] = [];
   isSubmitting = false;
+  isStaff = false;
+  isManager = false;
+  minAllowedManagerDate = '';
+  maxAllowedEntryDate = '';
   private destroy$ = new Subject<void>();
   showDuplicateConfirm = false;
   duplicateExpenseInfo: {
@@ -59,18 +64,40 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private dataRefreshService: DataRefreshService,
     private cdr: ChangeDetectorRef,
-    private dateUtility: DateUtilityService
+    private dateUtility: DateUtilityService,
+    private authService: AuthService
   ) {
     this.initForm();
   }
 
   ngOnInit() {
+    const role = this.authService.getUserInfo()?.role || '';
+    this.isStaff = role === 'STAFF';
+    this.isManager = role === 'MANAGER';
+    this.initializeDateRestrictionBounds();
+    this.applyStaffDateRestriction();
     this.loadCategoriesAndPaymentData();
     // Set today's date as default (in Indian timezone)
     const today = this.dateUtility.getTodayInIST();
     this.expenseForm.patchValue({
       expenseDate: today
     });
+  }
+
+  private initializeDateRestrictionBounds() {
+    const today = this.dateUtility.getTodayInIST();
+    this.maxAllowedEntryDate = today;
+    const yesterday = this.dateUtility.addDays(new Date(`${today}T00:00:00`), -1);
+    this.minAllowedManagerDate = this.dateUtility.getLocalDateString(yesterday);
+  }
+
+  private applyStaffDateRestriction() {
+    if (!this.isStaff) {
+      return;
+    }
+    const today = this.dateUtility.getTodayInIST();
+    this.expenseForm.get('expenseDate')?.setValue(today, { emitEvent: false });
+    this.expenseForm.get('expenseDate')?.disable({ emitEvent: false });
   }
 
   private loadCategoriesAndPaymentData() {
@@ -309,6 +336,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
           // Mark form as pristine and untouched
           this.expenseForm.markAsPristine();
           this.expenseForm.markAsUntouched();
+          this.applyStaffDateRestriction();
 
           // Clear success message after 3 seconds
           setTimeout(() => {
@@ -351,6 +379,7 @@ export class ExpenseEntryComponent implements OnInit, OnDestroy {
     // Mark form as pristine and untouched
     this.expenseForm.markAsPristine();
     this.expenseForm.markAsUntouched();
+    this.applyStaffDateRestriction();
     
     this.successMessage = '';
     this.cdr.markForCheck();

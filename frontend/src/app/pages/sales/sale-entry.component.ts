@@ -112,6 +112,9 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   customerSearch: string = '';
   variantSearch: string = '';
   isStaff = false;
+  isManager = false;
+  minAllowedManagerDate = '';
+  maxAllowedEntryDate = '';
   // filteredCustomers: any[] = [];
   // filteredVariants: any[] = [];
   // customerAutocompleteCtrl: FormControl = new FormControl('');
@@ -143,6 +146,8 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const role = this.authService.getUserInfo()?.role || '';
     this.isStaff = role === 'STAFF';
+    this.isManager = role === 'MANAGER';
+    this.initializeDateRestrictionBounds();
     this.applyStaffDateRestriction();
     this.customerSearch$
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
@@ -197,6 +202,13 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const today = this.dateUtility.getTodayInIST();
     this.saleForm.get('saleDate')?.setValue(today, { emitEvent: false });
     this.saleForm.get('saleDate')?.disable({ emitEvent: false });
+  }
+
+  private initializeDateRestrictionBounds() {
+    const today = this.dateUtility.getTodayInIST();
+    this.maxAllowedEntryDate = today;
+    const yesterday = this.dateUtility.addDays(new Date(`${today}T00:00:00`), -1);
+    this.minAllowedManagerDate = this.dateUtility.getLocalDateString(yesterday);
   }
 
   /**
