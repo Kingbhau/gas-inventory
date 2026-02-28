@@ -36,6 +36,10 @@ export interface CustomerCylinderLedger {
   updatedDate?: string;
   createdBy?: string;
   updatedBy?: string;
+  verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  verificationRemark?: string;
   note?: string;
   paymentSplits?: LedgerPaymentSplit[];
 }

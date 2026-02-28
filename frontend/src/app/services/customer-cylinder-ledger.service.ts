@@ -5,6 +5,8 @@ import { LedgerUpdateRequest } from '../models/ledger-update-request.model';
 import { PageResponse } from '../models/page-response';
 import { ReturnPendingSummary } from '../models/return-pending-summary.model';
 import { PaymentsSummary } from '../models/payments-summary.model';
+import { LedgerVerificationSummary } from '../models/ledger-verification-summary.model';
+import { SimpleStatusDTO } from '../models/simple-status';
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
@@ -19,6 +21,7 @@ import { unwrapApiResponse } from '../utils/api-response.util';
   providedIn: 'root'
 })
 export class CustomerCylinderLedgerService {
+      private verificationApiUrl = getApiUrl('/ledger-verification');
       getAllMovements(): Observable<CustomerCylinderLedger[]> {
         return this.http.get<any>(`${this.apiUrl}/movements`, { withCredentials: true })
           .pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger[]>());
@@ -337,6 +340,101 @@ export class CustomerCylinderLedgerService {
 
     return this.http.get<any>(`${this.apiUrl}/payments-summary`, { params, withCredentials: true })
       .pipe(applyTimeout(), unwrapApiResponse<PaymentsSummary>());
+  }
+
+  getBankConfirmationQueue(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'transactionDate',
+    direction: string = 'DESC',
+    fromDate?: string,
+    toDate?: string,
+    transactionType?: string,
+    paymentMode?: string,
+    createdBy?: string,
+    bankAccountId?: number,
+    status?: string,
+    search?: string
+  ): Observable<PageResponse<CustomerCylinderLedger>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('direction', direction);
+
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (transactionType) params = params.set('transactionType', transactionType);
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
+    if (status) params = params.set('status', status);
+    if (search) params = params.set('search', search);
+
+    return this.http.get<any>(`${this.verificationApiUrl}/queue`, { params, withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<PageResponse<CustomerCylinderLedger>>());
+  }
+
+  getBankConfirmationSummary(
+    fromDate?: string,
+    toDate?: string,
+    transactionType?: string,
+    paymentMode?: string,
+    createdBy?: string,
+    bankAccountId?: number,
+    search?: string
+  ): Observable<LedgerVerificationSummary> {
+    let params = new HttpParams();
+    if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (transactionType) params = params.set('transactionType', transactionType);
+    if (paymentMode) params = params.set('paymentMode', paymentMode);
+    if (createdBy) params = params.set('createdBy', createdBy);
+    if (bankAccountId) params = params.set('bankAccountId', bankAccountId.toString());
+    if (search) params = params.set('search', search);
+
+    return this.http.get<any>(`${this.verificationApiUrl}/summary`, { params, withCredentials: true })
+      .pipe(applyTimeout(), unwrapApiResponse<LedgerVerificationSummary>());
+  }
+
+  verifyBankConfirmation(ledgerId: number, remark?: string): Observable<CustomerCylinderLedger> {
+    return this.http.patch<any>(
+      `${this.verificationApiUrl}/${ledgerId}/verify`,
+      { remark: remark || null },
+      { withCredentials: true }
+    ).pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger>());
+  }
+
+  rejectBankConfirmation(ledgerId: number, remark?: string): Observable<CustomerCylinderLedger> {
+    return this.http.patch<any>(
+      `${this.verificationApiUrl}/${ledgerId}/reject`,
+      { remark: remark || null },
+      { withCredentials: true }
+    ).pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger>());
+  }
+
+  markBankConfirmationPending(ledgerId: number, remark: string): Observable<CustomerCylinderLedger> {
+    return this.http.patch<any>(
+      `${this.verificationApiUrl}/${ledgerId}/pending`,
+      { remark },
+      { withCredentials: true }
+    ).pipe(applyTimeout(), unwrapApiResponse<CustomerCylinderLedger>());
+  }
+
+  bulkVerifyBankConfirmations(ledgerIds: number[], remark?: string): Observable<SimpleStatusDTO> {
+    return this.http.post<any>(
+      `${this.verificationApiUrl}/bulk/verify`,
+      { ledgerIds, remark: remark || null },
+      { withCredentials: true }
+    ).pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
+  }
+
+  bulkRejectBankConfirmations(ledgerIds: number[], remark: string): Observable<SimpleStatusDTO> {
+    return this.http.post<any>(
+      `${this.verificationApiUrl}/bulk/reject`,
+      { ledgerIds, remark },
+      { withCredentials: true }
+    ).pipe(applyTimeout(), unwrapApiResponse<SimpleStatusDTO>());
   }
 
   /**

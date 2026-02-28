@@ -25,6 +25,8 @@ public class DayBookDTO {
     private String partyName;
     private String details;
     private List<SalePaymentSplitDTO> paymentSplits;
+    private String verificationStatus;
+    private String verifiedBy;
 
     public DayBookDTO() {
     }
@@ -199,6 +201,22 @@ public class DayBookDTO {
 
     public void setPaymentSplits(List<SalePaymentSplitDTO> paymentSplits) {
         this.paymentSplits = paymentSplits;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
     }
 }
 

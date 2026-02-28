@@ -66,6 +66,12 @@ export const routes: Routes = [
     data: { roles: ['OWNER', 'MANAGER', 'STAFF'] }
   },
   {
+    path: 'payments/payment-confirmation-desk',
+    loadComponent: () => import('./pages/payment/payment-confirmation-desk.component').then(m => m.PaymentConfirmationDeskComponent),
+    canActivate: [RoleGuard],
+    data: { roles: ['OWNER', 'MANAGER'] }
+  },
+  {
     path: 'payments',
     loadComponent: () => import('./pages/payment/payment-management.component').then(m => m.PaymentManagementComponent),
     canActivate: [RoleGuard],

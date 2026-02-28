@@ -3,9 +3,12 @@ package com.gasagency.service;
 import com.gasagency.dto.response.CustomerCylinderLedgerDTO;
 import com.gasagency.dto.response.CustomerLedgerSummaryDTO;
 import com.gasagency.dto.response.CustomerLedgerVariantSummaryDTO;
+import com.gasagency.dto.response.LedgerVerificationSummaryDTO;
 import com.gasagency.dto.response.ReturnPendingSummaryDTO;
 import com.gasagency.dto.response.SalePaymentSplitDTO;
 import com.gasagency.dto.request.InitialDueUpdateRequestDTO;
+import com.gasagency.dto.request.LedgerBulkVerificationRequestDTO;
+import com.gasagency.dto.request.LedgerVerificationActionRequestDTO;
 import com.gasagency.dto.request.LedgerUpdateRequestDTO;
 import com.gasagency.dto.request.EmptyReturnRequestDTO;
 import com.gasagency.dto.request.PaymentRequestDTO;
@@ -43,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import com.gasagency.dto.response.CustomerBalanceDTO;
@@ -966,6 +970,204 @@ public class CustomerCylinderLedgerService {
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
         }
 
+        public Page<CustomerCylinderLedgerDTO> getBankVerificationQueue(
+                        LocalDate fromDate,
+                        LocalDate toDate,
+                        String refType,
+                        String paymentMode,
+                        String createdBy,
+                        Long bankAccountId,
+                        String verificationStatus,
+                        String search,
+                        Pageable pageable) {
+                CustomerCylinderLedger.VerificationStatus status = parseVerificationStatus(verificationStatus);
+                CustomerCylinderLedger.TransactionType transactionType = parseTransactionType(refType);
+                String normalizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+                return repository.findBankVerificationQueue(
+                                fromDate,
+                                toDate,
+                                transactionType,
+                                (paymentMode != null && !paymentMode.trim().isEmpty()) ? paymentMode.trim() : null,
+                                (createdBy != null && !createdBy.trim().isEmpty()) ? createdBy.trim() : null,
+                                bankAccountId,
+                                status,
+                                normalizedSearch,
+                                pageable)
+                                .map(this::toDTO);
+        }
+
+        public LedgerVerificationSummaryDTO getBankVerificationSummary(
+                        LocalDate fromDate,
+                        LocalDate toDate,
+                        String refType,
+                        String paymentMode,
+                        String createdBy,
+                        Long bankAccountId,
+                        String search) {
+                CustomerCylinderLedger.TransactionType transactionType = parseTransactionType(refType);
+                String normalizedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+                List<Object[]> rows = repository.getBankVerificationSummary(
+                                fromDate,
+                                toDate,
+                                transactionType,
+                                (paymentMode != null && !paymentMode.trim().isEmpty()) ? paymentMode.trim() : null,
+                                (createdBy != null && !createdBy.trim().isEmpty()) ? createdBy.trim() : null,
+                                bankAccountId,
+                                normalizedSearch);
+                LedgerVerificationSummaryDTO summary = new LedgerVerificationSummaryDTO();
+                for (Object[] row : rows) {
+                        if (row == null || row.length < 3) {
+                                continue;
+                        }
+                        CustomerCylinderLedger.VerificationStatus status = (CustomerCylinderLedger.VerificationStatus) row[0];
+                        BigDecimal amount = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+                        long count = row[2] != null ? ((Number) row[2]).longValue() : 0L;
+                        if (status == CustomerCylinderLedger.VerificationStatus.VERIFIED) {
+                                summary.setVerifiedAmount(summary.getVerifiedAmount().add(amount));
+                                summary.setVerifiedCount(summary.getVerifiedCount() + count);
+                        } else if (status == CustomerCylinderLedger.VerificationStatus.REJECTED) {
+                                summary.setRejectedAmount(summary.getRejectedAmount().add(amount));
+                                summary.setRejectedCount(summary.getRejectedCount() + count);
+                        } else {
+                                summary.setPendingAmount(summary.getPendingAmount().add(amount));
+                                summary.setPendingCount(summary.getPendingCount() + count);
+                        }
+                }
+                summary.setTotalAmount(
+                                summary.getPendingAmount()
+                                                .add(summary.getVerifiedAmount())
+                                                .add(summary.getRejectedAmount()));
+                return summary;
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO verifyLedgerAmount(Long ledgerId, LedgerVerificationActionRequestDTO request,
+                        String verifiedBy) {
+                return updateVerificationStatus(
+                                ledgerId,
+                                CustomerCylinderLedger.VerificationStatus.VERIFIED,
+                                request != null ? request.getRemark() : null,
+                                verifiedBy);
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO rejectLedgerAmount(Long ledgerId, LedgerVerificationActionRequestDTO request,
+                        String verifiedBy) {
+                String remark = request != null ? request.getRemark() : null;
+                if (remark == null || remark.trim().isEmpty()) {
+                        throw new InvalidOperationException("Remark is required when rejecting a transaction.");
+                }
+                return updateVerificationStatus(
+                                ledgerId,
+                                CustomerCylinderLedger.VerificationStatus.REJECTED,
+                                remark,
+                                verifiedBy);
+        }
+
+        @Transactional
+        public CustomerCylinderLedgerDTO markLedgerAsPending(Long ledgerId, LedgerVerificationActionRequestDTO request,
+                        String verifiedBy) {
+                String remark = request != null ? request.getRemark() : null;
+                if (remark == null || remark.trim().isEmpty()) {
+                        throw new InvalidOperationException("Remark is required when moving status back to pending.");
+                }
+                return updateVerificationStatus(
+                                ledgerId,
+                                CustomerCylinderLedger.VerificationStatus.PENDING,
+                                remark,
+                                verifiedBy);
+        }
+
+        @Transactional
+        public long verifyLedgersInBulk(LedgerBulkVerificationRequestDTO request, String verifiedBy) {
+                if (request == null || request.getLedgerIds() == null || request.getLedgerIds().isEmpty()) {
+                        throw new InvalidOperationException("Please select at least one transaction to verify.");
+                }
+                long updatedCount = 0L;
+                for (Long ledgerId : request.getLedgerIds()) {
+                        if (ledgerId == null) {
+                                continue;
+                        }
+                        updateVerificationStatus(
+                                        ledgerId,
+                                        CustomerCylinderLedger.VerificationStatus.VERIFIED,
+                                        request.getRemark(),
+                                        verifiedBy);
+                        updatedCount++;
+                }
+                return updatedCount;
+        }
+
+        @Transactional
+        public long rejectLedgersInBulk(LedgerBulkVerificationRequestDTO request, String verifiedBy) {
+                if (request == null || request.getLedgerIds() == null || request.getLedgerIds().isEmpty()) {
+                        throw new InvalidOperationException("Please select at least one transaction to reject.");
+                }
+                String remark = request.getRemark();
+                if (remark == null || remark.trim().isEmpty()) {
+                        throw new InvalidOperationException("Remark is required for bulk reject.");
+                }
+                long updatedCount = 0L;
+                for (Long ledgerId : request.getLedgerIds()) {
+                        if (ledgerId == null) {
+                                continue;
+                        }
+                        updateVerificationStatus(
+                                        ledgerId,
+                                        CustomerCylinderLedger.VerificationStatus.REJECTED,
+                                        remark,
+                                        verifiedBy);
+                        updatedCount++;
+                }
+                return updatedCount;
+        }
+
+        private CustomerCylinderLedgerDTO updateVerificationStatus(
+                        Long ledgerId,
+                        CustomerCylinderLedger.VerificationStatus status,
+                        String remark,
+                        String verifiedBy) {
+                CustomerCylinderLedger ledger = repository.findById(ledgerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Ledger entry not found with id: " + ledgerId));
+                BigDecimal amountReceived = ledger.getAmountReceived() != null ? ledger.getAmountReceived() : BigDecimal.ZERO;
+                if (amountReceived.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new InvalidOperationException(
+                                        "Only amount received transactions can be verified.");
+                }
+                ledger.setVerificationStatus(status);
+                ledger.setVerificationRemark((remark != null && !remark.trim().isEmpty()) ? remark.trim() : null);
+                if (status == CustomerCylinderLedger.VerificationStatus.PENDING) {
+                        ledger.setVerifiedBy(null);
+                        ledger.setVerifiedAt(null);
+                } else {
+                        ledger.setVerifiedBy((verifiedBy != null && !verifiedBy.trim().isEmpty()) ? verifiedBy.trim() : "SYSTEM");
+                        ledger.setVerifiedAt(LocalDateTime.now());
+                }
+                return toDTO(repository.save(ledger));
+        }
+
+        private CustomerCylinderLedger.VerificationStatus parseVerificationStatus(String status) {
+                if (status == null || status.trim().isEmpty()) {
+                        return null;
+                }
+                try {
+                        return CustomerCylinderLedger.VerificationStatus.valueOf(status.trim().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                        throw new InvalidOperationException("Invalid verification status: " + status);
+                }
+        }
+
+        private CustomerCylinderLedger.TransactionType parseTransactionType(String refType) {
+                if (refType == null || refType.trim().isEmpty()) {
+                        return null;
+                }
+                try {
+                        return CustomerCylinderLedger.TransactionType.valueOf(refType.trim().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                        throw new InvalidOperationException("Invalid transaction type: " + refType);
+                }
+        }
+
         public List<CustomerCylinderLedgerDTO> getLedgerByCustomer(Long customerId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "LEDGER", "customerId", customerId);
 
@@ -1145,6 +1347,12 @@ public class CustomerCylinderLedgerService {
                 dto.setNote(ledger.getNote());
                 dto.setCreatedBy(ledger.getCreatedBy());
                 dto.setUpdatedBy(ledger.getUpdatedBy());
+                dto.setVerificationStatus(ledger.getVerificationStatus() != null
+                                ? ledger.getVerificationStatus().name()
+                                : CustomerCylinderLedger.VerificationStatus.PENDING.name());
+                dto.setVerifiedBy(ledger.getVerifiedBy());
+                dto.setVerifiedAt(ledger.getVerifiedAt());
+                dto.setVerificationRemark(ledger.getVerificationRemark());
                 if (ledger.getWarehouse() != null) {
                         dto.setWarehouseId(ledger.getWarehouse().getId());
                         dto.setWarehouseName(ledger.getWarehouse().getName());

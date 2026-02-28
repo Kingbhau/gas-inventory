@@ -16,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 import { AutocompleteInputComponent } from '../../shared/components/autocomplete-input.component';
 import { DayBook, DayBookSummary } from '../../models/daybook.model';
 import { PageResponse } from '../../models/page-response';
+import { CustomerCylinderLedgerService } from '../../services/customer-cylinder-ledger.service';
 
 @Component({
   selector: 'app-daybook',
@@ -79,6 +80,10 @@ export class DayBookComponent implements OnInit, OnDestroy {
   }> = [];
   paymentBreakdownTitle = 'Payment Mode Breakdown';
   showPaymentModeBreakdownModal = false;
+  showVerificationModal = false;
+  verificationAction: 'VERIFY' | 'PENDING' = 'VERIFY';
+  verificationTarget: DayBook | null = null;
+  verificationRemark = '';
   selectedDate: string = '';
   isLoading = false;
   filterCreatedBy = '';
@@ -112,6 +117,7 @@ export class DayBookComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private userService: UserService,
     private authService: AuthService,
+    private ledgerService: CustomerCylinderLedgerService,
     private cdr: ChangeDetectorRef
   ) {
     // Set default date to today
@@ -348,12 +354,115 @@ export class DayBookComponent implements OnInit, OnDestroy {
     return user?.name || createdBy;
   }
 
+  getVerificationStatusLabel(transaction: DayBook): string {
+    const amountReceived = Number(transaction?.amountReceived) || 0;
+    if (amountReceived <= 0) {
+      return '-';
+    }
+    return transaction?.verificationStatus || 'PENDING';
+  }
+
+  getVerificationStatusClass(transaction: DayBook): string {
+    const status = this.getVerificationStatusLabel(transaction);
+    if (status === 'VERIFIED') return 'status-verified';
+    if (status === 'REJECTED') return 'status-rejected';
+    if (status === 'PENDING') return 'status-pending';
+    return 'status-na';
+  }
+
   get isManager(): boolean {
     return this.currentUserRole === 'MANAGER';
   }
 
   get isStaff(): boolean {
     return this.currentUserRole === 'STAFF';
+  }
+
+  get isOwner(): boolean {
+    return this.currentUserRole === 'OWNER';
+  }
+
+  isVerificationClickable(transaction: DayBook): boolean {
+    return this.isOwner && this.getVerificationStatusLabel(transaction) !== '-' && !!transaction.id;
+  }
+
+  onVerificationBadgeClick(transaction: DayBook): void {
+    if (!this.isVerificationClickable(transaction) || !transaction.id) {
+      return;
+    }
+    this.verificationTarget = transaction;
+    this.verificationAction = this.getVerificationStatusLabel(transaction) === 'PENDING' ? 'VERIFY' : 'PENDING';
+    this.verificationRemark = '';
+    this.showVerificationModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeVerificationModal(): void {
+    this.showVerificationModal = false;
+    this.verificationTarget = null;
+    this.verificationRemark = '';
+    this.verificationAction = 'VERIFY';
+    this.cdr.markForCheck();
+  }
+
+  confirmVerificationAction(): void {
+    if (!this.verificationTarget?.id) {
+      this.closeVerificationModal();
+      return;
+    }
+
+    if (this.verificationAction === 'PENDING' && !this.verificationRemark.trim()) {
+      this.toastr.info('Remark is required', 'Info');
+      return;
+    }
+
+    if (this.verificationAction === 'VERIFY') {
+      this.ledgerService.verifyBankConfirmation(this.verificationTarget.id, this.verificationRemark.trim() || undefined).subscribe({
+        next: () => {
+          this.toastr.success('Transaction verified', 'Success');
+          this.closeVerificationModal();
+          this.loadDayBookData();
+        },
+        error: (error: unknown) => {
+          const err = error as { error?: { message?: string }; message?: string };
+          this.toastr.error(err?.error?.message || err?.message || 'Verification failed', 'Error');
+        }
+      });
+      return;
+    }
+
+    this.ledgerService.markBankConfirmationPending(this.verificationTarget.id, this.verificationRemark.trim()).subscribe({
+      next: () => {
+        this.toastr.success('Transaction moved to pending', 'Success');
+        this.closeVerificationModal();
+        this.loadDayBookData();
+      },
+      error: (error: unknown) => {
+        const err = error as { error?: { message?: string }; message?: string };
+        this.toastr.error(err?.error?.message || err?.message || 'Update failed', 'Error');
+      }
+    });
+  }
+
+  rejectVerificationAction(): void {
+    if (!this.verificationTarget?.id || this.verificationAction !== 'VERIFY') {
+      return;
+    }
+    if (!this.verificationRemark.trim()) {
+      this.toastr.info('Remark is required to reject a transaction', 'Info');
+      return;
+    }
+    this.ledgerService.rejectBankConfirmation(this.verificationTarget.id, this.verificationRemark.trim() || undefined).subscribe({
+      next: () => {
+        this.toastr.success('Transaction rejected', 'Success');
+        this.closeVerificationModal();
+        this.loadDayBookData();
+      },
+      error: (error: unknown) => {
+        const err = error as { error?: { message?: string }; message?: string };
+        this.toastr.error(err?.error?.message || err?.message || 'Rejection failed', 'Error');
+      }
+    });
   }
 
   private filterOutBankDeposits(transactions: DayBook[]): DayBook[] {
