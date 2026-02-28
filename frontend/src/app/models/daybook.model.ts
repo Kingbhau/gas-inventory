@@ -26,6 +26,8 @@ export interface DayBook {
   referenceNumber?: string;
   partyName?: string;
   details?: string;
+  verificationStatus?: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  verifiedBy?: string;
   paymentSplits?: DayBookPaymentSplit[];
 }
 

@@ -1,0 +1,265 @@
+<div class="bank-deposit-history-container payment-history-container payment-confirmation-desk-container">
+  <div class="page-header">
+    <h1 class="page-title">Payment Confirmation Desk</h1>
+    <p class="page-subtitle">Verify payments for all payment modes</p>
+  </div>
+
+  <div class="filters-card">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">From Date</label>
+        <input type="date" [(ngModel)]="filterFromDate" class="filter-input">
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">To Date</label>
+        <input type="date" [(ngModel)]="filterToDate" class="filter-input" [min]="filterFromDate">
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          #deskFilterAutocomplete
+          label="Transaction Type"
+          [labelClass]="'filter-label'"
+          [items]="transactionTypeOptions"
+          [displayKey]="'label'"
+          placeholder="All Types"
+          (selectedChange)="filterTransactionType = $event?.value || ''">
+        </app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Bank Account</label>
+        <select [(ngModel)]="filterBankAccountId" class="filter-input">
+          <option [ngValue]="null">All Accounts</option>
+          <option *ngFor="let account of bankAccounts" [ngValue]="account.id">
+            {{ account.bankName }} - {{ account.accountNumber }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          #deskFilterAutocomplete
+          label="Payment Mode"
+          [labelClass]="'filter-label'"
+          [items]="paymentModes"
+          [displayKey]="'name'"
+          placeholder="All Modes"
+          (selectedChange)="filterPaymentMode = $event?.name || ''">
+        </app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <app-autocomplete-input
+          #deskFilterAutocomplete
+          label="Created By"
+          [labelClass]="'filter-label'"
+          [items]="users"
+          [displayKey]="'name'"
+          placeholder="All Users"
+          (selectedChange)="filterCreatedBy = $event?.username || ''">
+        </app-autocomplete-input>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Status</label>
+        <select [(ngModel)]="filterStatus" class="filter-input">
+          <option value="">All</option>
+          <option value="PENDING">Pending</option>
+          <option value="VERIFIED">Verified</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Search</label>
+        <input
+          type="text"
+          [(ngModel)]="filterSearch"
+          class="filter-input"
+          placeholder="Customer/mobile/reference">
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-actions">
+        <button (click)="applyFilters()" class="btn btn-primary">Search</button>
+        <button (click)="resetFilters()" class="btn btn-secondary">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="report-summary">
+    <div class="summary-card">
+      <span class="label">Total Amount</span>
+      <span class="value">{{ summary.totalAmount | indianCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Pending Amount</span>
+      <span class="value">{{ summary.pendingAmount | indianCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Verified Amount</span>
+      <span class="value">{{ summary.verifiedAmount | indianCurrency }}</span>
+    </div>
+    <div class="summary-card">
+      <span class="label">Rejected Amount</span>
+      <span class="value">{{ summary.rejectedAmount | indianCurrency }}</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Payment Verification List</h3>
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <button
+          *ngIf="canVerify"
+          class="btn btn-primary"
+          [disabled]="selectedCount === 0"
+          (click)="bulkVerifySelected()">
+          Verify Selected ({{ selectedCount }})
+        </button>
+        <button
+          *ngIf="canVerify"
+          class="btn btn-modal-reject"
+          [disabled]="selectedCount === 0"
+          (click)="bulkRejectSelected()">
+          Reject Selected ({{ selectedCount }})
+        </button>
+        <span class="record-count">{{ totalElements }} records</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div *ngIf="records.length > 0; else noData" class="table-wrapper">
+        <table class="table">
+          <thead>
+            <tr>
+              <th *ngIf="canVerify" class="checkbox-col">
+                <input
+                  type="checkbox"
+                  class="modern-checkbox"
+                  [checked]="allPendingSelected"
+                  (change)="toggleSelectAllPending($any($event.target).checked)">
+              </th>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Mode</th>
+              <th>Bank</th>
+              <th>Created By</th>
+              <th>Status</th>
+              <th>Verified By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let record of records">
+              <td *ngIf="canVerify" class="checkbox-col">
+                <input
+                  type="checkbox"
+                  class="modern-checkbox"
+                  [checked]="isSelected(record)"
+                  [disabled]="!isPending(record)"
+                  (change)="toggleSelection(record, $any($event.target).checked)">
+              </td>
+              <td>{{ record.transactionDate | date: 'dd MMM yyyy' }}</td>
+              <td>
+                <span class="type-badge" [ngClass]="getTransactionTypeClass(record.refType)">
+                  {{ getTransactionTypeLabel(record.refType) }}
+                </span>
+              </td>
+              <td>{{ record.customerName || 'N/A' }}</td>
+              <td class="amount">{{ record.amountReceived | indianCurrency }}</td>
+              <td>{{ record.paymentMode || 'N/A' }}</td>
+              <td>{{ record.bankAccountName || 'N/A' }}</td>
+              <td>{{ record.createdBy || '-' }}</td>
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="[getStatusClass(record.verificationStatus), isStatusToggleAllowed(record) ? 'clickable' : '']"
+                  [title]="isStatusToggleAllowed(record) ? 'Click to change status' : ''"
+                  (click)="onStatusBadgeClick(record)">
+                  {{ record.verificationStatus || 'PENDING' }}
+                </span>
+              </td>
+              <td>{{ record.verifiedBy || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ng-template #noData>
+        <div class="no-data">
+          <p><fa-icon [icon]="faClipboard"></fa-icon> No bank verification records found</p>
+        </div>
+      </ng-template>
+
+      <div *ngIf="records.length > 0" class="pagination">
+        <button
+          (click)="previousPage()"
+          [disabled]="currentPage === 1"
+          class="btn btn-secondary">
+          ← Previous
+        </button>
+        <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          (click)="nextPage()"
+          [disabled]="currentPage === totalPages"
+          class="btn btn-secondary">
+          Next →
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.25rem; margin-left: 2rem;">
+          <span class="page-size-label">Show</span>
+          <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)" class="page-size-select">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+          <span class="page-size-label">per page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showActionModal" class="modal-overlay" (click)="closeActionModal()">
+    <div class="modal-content verification-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">{{ getActionTitle() }}</h2>
+          <p class="modal-subtitle" *ngIf="actionTarget">
+            {{ actionTarget.customerName || 'Customer' }} · {{ actionTarget.amountReceived | indianCurrency }}
+          </p>
+          <p class="modal-subtitle" *ngIf="!actionTarget && actionType === 'BULK_VERIFY'">
+            You are about to verify {{ selectedCount }} transaction(s)
+          </p>
+        </div>
+        <button class="modal-close" (click)="closeActionModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="filter-label">
+            Remark
+            <span *ngIf="isRemarkRequired()" style="color:#dc2626;">*</span>
+          </label>
+          <textarea
+            [(ngModel)]="actionRemark"
+            rows="3"
+            class="filter-input"
+            [placeholder]="actionType === 'VERIFY' ? 'Optional for verify, required for reject' : (isRemarkRequired() ? 'Reason is required' : 'Optional remark')"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeActionModal()">Cancel</button>
+        <button
+          *ngIf="actionType === 'VERIFY'"
+          class="btn btn-modal-reject"
+          (click)="triggerRejectFromPending()">
+          Reject
+        </button>
+        <button
+          class="btn"
+          [ngClass]="actionType === 'PENDING' ? 'btn-modal-pending' : (actionType === 'BULK_REJECT' ? 'btn-modal-reject' : 'btn-modal-verify')"
+          (click)="confirmActionModal()">
+          {{
+            actionType === 'VERIFY'
+              ? 'Verify'
+              : (actionType === 'PENDING'
+                  ? 'Set Pending'
+                  : (actionType === 'BULK_REJECT' ? 'Reject Selected' : 'Confirm'))
+          }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -263,6 +263,13 @@ public class DayBookService {
         dayBook.setAmountReceived(ledger.getAmountReceived());
         dayBook.setDueAmount(ledger.getDueAmount());
         dayBook.setPaymentMode(ledger.getPaymentMode());
+        if (ledger.getAmountReceived() != null && ledger.getAmountReceived().compareTo(BigDecimal.ZERO) > 0) {
+            dayBook.setVerificationStatus(
+                    ledger.getVerificationStatus() != null
+                            ? ledger.getVerificationStatus().name()
+                            : CustomerCylinderLedger.VerificationStatus.PENDING.name());
+            dayBook.setVerifiedBy(ledger.getVerifiedBy());
+        }
         if (ledger.getSale() != null && ledger.getSale().getPaymentSplits() != null
                 && !ledger.getSale().getPaymentSplits().isEmpty()) {
             List<SalePaymentSplitDTO> splitDTOs = ledger.getSale().getPaymentSplits().stream()

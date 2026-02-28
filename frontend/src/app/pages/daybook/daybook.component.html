@@ -144,6 +144,8 @@
               <th class="col-amount text-center">Received</th>
               <th class="col-amount text-center">Due</th>
               <th class="col-mode">Mode</th>
+              <th class="col-mode">Verification</th>
+              <th class="col-created">Verified By</th>
               <th class="col-created">Created By</th>
             </tr>
           </thead>
@@ -158,6 +160,17 @@
               <td class="col-amount text-center amount">₹{{ formatAmount(transaction.amountReceived) }}</td>
               <td class="col-amount text-center amount" [class.due-highlight]="transaction.dueAmount && transaction.dueAmount > 0">₹{{ formatAmount(transaction.dueAmount) }}</td>
               <td class="col-mode">{{ transaction.paymentMode || '-' }}</td>
+              <td class="col-mode">
+                <span
+                  class="verification-badge"
+                  [ngClass]="getVerificationStatusClass(transaction)"
+                  [class.clickable]="isVerificationClickable(transaction)"
+                  [title]="isVerificationClickable(transaction) ? 'Click to update verification status' : ''"
+                  (click)="onVerificationBadgeClick(transaction)">
+                  {{ getVerificationStatusLabel(transaction) }}
+                </span>
+              </td>
+              <td class="col-created">{{ transaction.verifiedBy ? getCreatedByName(transaction.verifiedBy) : '-' }}</td>
               <td class="col-created">{{ getCreatedByName(transaction.createdBy) }}</td>
             </tr>
           </tbody>
@@ -218,6 +231,51 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closePaymentModeBreakdown()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="showVerificationModal" class="modal-overlay" (click)="closeVerificationModal()">
+    <div class="modal-content verification-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">
+            {{ verificationAction === 'VERIFY' ? 'Verify Transaction' : 'Move Back to Pending' }}
+          </h2>
+          <p class="modal-subtitle">
+            {{ verificationTarget?.partyName || verificationTarget?.customerName || 'Customer' }} ·
+            {{ verificationTarget?.amountReceived | indianCurrency }}
+          </p>
+        </div>
+        <button class="modal-close" (click)="closeVerificationModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="filter-label">
+            Remark
+            <span *ngIf="verificationAction === 'PENDING'" style="color:#dc2626;">*</span>
+          </label>
+          <textarea
+            [(ngModel)]="verificationRemark"
+            rows="3"
+            class="filter-input"
+            [placeholder]="verificationAction === 'VERIFY' ? 'Optional for verify, required for reject' : 'Reason is required'"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeVerificationModal()">Cancel</button>
+        <button
+          *ngIf="verificationAction === 'VERIFY'"
+          class="btn btn-modal-reject"
+          (click)="rejectVerificationAction()">
+          Reject
+        </button>
+        <button
+          class="btn"
+          [ngClass]="verificationAction === 'VERIFY' ? 'btn-modal-verify' : 'btn-modal-pending'"
+          (click)="confirmVerificationAction()">
+          {{ verificationAction === 'VERIFY' ? 'Verify' : 'Set Pending' }}
+        </button>
       </div>
     </div>
   </div>

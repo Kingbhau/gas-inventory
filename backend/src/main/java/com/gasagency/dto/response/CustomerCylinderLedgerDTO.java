@@ -37,6 +37,10 @@ public class CustomerCylinderLedgerDTO {
     private String note; // Internal note for special cases
     private String createdBy;
     private String updatedBy;
+    private String verificationStatus;
+    private String verifiedBy;
+    private LocalDateTime verifiedAt;
+    private String verificationRemark;
     private List<SalePaymentSplitDTO> paymentSplits;
 
     public CustomerCylinderLedgerDTO() {
@@ -331,6 +335,38 @@ public class CustomerCylinderLedgerDTO {
 
     public void setPaymentSplits(List<SalePaymentSplitDTO> paymentSplits) {
         this.paymentSplits = paymentSplits;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationRemark() {
+        return verificationRemark;
+    }
+
+    public void setVerificationRemark(String verificationRemark) {
+        this.verificationRemark = verificationRemark;
     }
 }
 

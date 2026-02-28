@@ -228,6 +228,56 @@ public interface CustomerCylinderLedgerRepository extends JpaRepository<Customer
                         @Param("bankAccountId") Long bankAccountId,
                         @Param("createdBy") String createdBy);
 
+        @Query("SELECT l FROM CustomerCylinderLedger l " +
+                        "WHERE COALESCE(l.amountReceived, 0) > 0 " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND (:refType IS NULL OR l.refType = :refType) " +
+                        "AND (COALESCE(:paymentMode, '') = '' OR LOWER(COALESCE(l.paymentMode, '')) = LOWER(:paymentMode)) " +
+                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
+                        "AND COALESCE(l.bankAccount.id, -1) = COALESCE(:bankAccountId, COALESCE(l.bankAccount.id, -1)) " +
+                        "AND (:status IS NULL " +
+                        "OR (:status = 'PENDING' AND (l.verificationStatus = 'PENDING' OR l.verificationStatus IS NULL)) " +
+                        "OR l.verificationStatus = :status) " +
+                        "AND (COALESCE(:search, '') = '' " +
+                        "OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%') " +
+                        "OR LOWER(COALESCE(l.transactionReference, '')) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "ORDER BY l.transactionDate DESC, l.id DESC")
+        Page<CustomerCylinderLedger> findBankVerificationQueue(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("createdBy") String createdBy,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("status") CustomerCylinderLedger.VerificationStatus status,
+                        @Param("search") String search,
+                        Pageable pageable);
+
+        @Query("SELECT l.verificationStatus, COALESCE(SUM(l.amountReceived), 0), COUNT(l) " +
+                        "FROM CustomerCylinderLedger l " +
+                        "WHERE COALESCE(l.amountReceived, 0) > 0 " +
+                        "AND l.transactionDate >= COALESCE(:fromDate, l.transactionDate) " +
+                        "AND l.transactionDate <= COALESCE(:toDate, l.transactionDate) " +
+                        "AND (:refType IS NULL OR l.refType = :refType) " +
+                        "AND (COALESCE(:paymentMode, '') = '' OR LOWER(COALESCE(l.paymentMode, '')) = LOWER(:paymentMode)) " +
+                        "AND (:createdBy IS NULL OR l.createdBy = :createdBy) " +
+                        "AND COALESCE(l.bankAccount.id, -1) = COALESCE(:bankAccountId, COALESCE(l.bankAccount.id, -1)) " +
+                        "AND (COALESCE(:search, '') = '' " +
+                        "OR LOWER(l.customer.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+                        "OR l.customer.mobile LIKE CONCAT('%', :search, '%') " +
+                        "OR LOWER(COALESCE(l.transactionReference, '')) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "GROUP BY l.verificationStatus")
+        List<Object[]> getBankVerificationSummary(
+                        @Param("fromDate") LocalDate fromDate,
+                        @Param("toDate") LocalDate toDate,
+                        @Param("refType") CustomerCylinderLedger.TransactionType refType,
+                        @Param("paymentMode") String paymentMode,
+                        @Param("createdBy") String createdBy,
+                        @Param("bankAccountId") Long bankAccountId,
+                        @Param("search") String search);
+
         // Lock for reading latest balance without duplicates
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT l FROM CustomerCylinderLedger l WHERE l.customer.id = :customerId " +

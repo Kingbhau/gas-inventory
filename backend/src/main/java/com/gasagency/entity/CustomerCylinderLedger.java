@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -26,7 +27,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
         @Index(name = "idx_ledger_customer_warehouse", columnList = "customer_id, warehouse_id"),
         @Index(name = "idx_customer_warehouse_variant", columnList = "customer_id, warehouse_id, variant_id"),
         @Index(name = "idx_ledger_customer_id_id", columnList = "customer_id, id"),
-        @Index(name = "idx_ledger_customer_variant_id", columnList = "customer_id, variant_id, id")
+        @Index(name = "idx_ledger_customer_variant_id", columnList = "customer_id, variant_id, id"),
+        @Index(name = "idx_ccl_verification_status_bank_date", columnList = "verification_status, bank_account_id, transaction_date")
 })
 public class CustomerCylinderLedger extends Auditable {
     @Id
@@ -117,6 +119,19 @@ public class CustomerCylinderLedger extends Auditable {
     @JsonBackReference("bankAccount-ledgers")
     private BankAccount bankAccount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", nullable = true, length = 20)
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+
+    @Column(name = "verified_by", nullable = true, length = 100)
+    private String verifiedBy;
+
+    @Column(name = "verified_at", nullable = true)
+    private LocalDateTime verifiedAt;
+
+    @Column(name = "verification_remark", nullable = true, length = 500)
+    private String verificationRemark;
+
     public CustomerCylinderLedger() {
     }
 
@@ -137,6 +152,17 @@ public class CustomerCylinderLedger extends Auditable {
 
     public enum TransactionType {
         INITIAL_STOCK, SALE, EMPTY_RETURN, TRANSFER, PAYMENT
+    }
+
+    public enum VerificationStatus {
+        PENDING, VERIFIED, REJECTED
+    }
+
+    @PrePersist
+    public void ensureVerificationDefaults() {
+        if (verificationStatus == null) {
+            verificationStatus = VerificationStatus.PENDING;
+        }
     }
 
     public Long getId() {
@@ -297,6 +323,38 @@ public class CustomerCylinderLedger extends Auditable {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public VerificationStatus getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(VerificationStatus verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public LocalDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(LocalDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
+    }
+
+    public String getVerificationRemark() {
+        return verificationRemark;
+    }
+
+    public void setVerificationRemark(String verificationRemark) {
+        this.verificationRemark = verificationRemark;
     }
 }
 
