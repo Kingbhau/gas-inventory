@@ -1,15 +1,58 @@
 package com.gasagency.dto.request;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 
 public class LedgerUpdateRequestDTO {
     private Long filledOut;
     private Long emptyIn;
     private BigDecimal totalAmount;
     private BigDecimal amountReceived;
+    private LocalDate transactionDate;
     private String updateReason;
     private String paymentMode;
     private Long bankAccountId;
+    private List<PaymentSplitUpdateDTO> paymentSplits;
+
+    public static class PaymentSplitUpdateDTO {
+        private String modeOfPayment;
+        private BigDecimal amount;
+        private Long bankAccountId;
+        private String note;
+
+        public String getModeOfPayment() {
+            return modeOfPayment;
+        }
+
+        public void setModeOfPayment(String modeOfPayment) {
+            this.modeOfPayment = modeOfPayment;
+        }
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount) {
+            this.amount = amount;
+        }
+
+        public Long getBankAccountId() {
+            return bankAccountId;
+        }
+
+        public void setBankAccountId(Long bankAccountId) {
+            this.bankAccountId = bankAccountId;
+        }
+
+        public String getNote() {
+            return note;
+        }
+
+        public void setNote(String note) {
+            this.note = note;
+        }
+    }
 
     public Long getFilledOut() {
         return filledOut;
@@ -43,6 +86,14 @@ public class LedgerUpdateRequestDTO {
         this.amountReceived = amountReceived;
     }
 
+    public LocalDate getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(LocalDate transactionDate) {
+        this.transactionDate = transactionDate;
+    }
+
     public String getUpdateReason() {
         return updateReason;
     }
@@ -65,6 +116,14 @@ public class LedgerUpdateRequestDTO {
 
     public void setBankAccountId(Long bankAccountId) {
         this.bankAccountId = bankAccountId;
+    }
+
+    public List<PaymentSplitUpdateDTO> getPaymentSplits() {
+        return paymentSplits;
+    }
+
+    public void setPaymentSplits(List<PaymentSplitUpdateDTO> paymentSplits) {
+        this.paymentSplits = paymentSplits;
     }
 }
 
