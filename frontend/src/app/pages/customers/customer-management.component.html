@@ -765,6 +765,18 @@
         <!-- Update Form -->
         <div style="border: 1px solid #ddd; padding: 12px; border-radius: 6px; margin-bottom: 1.5rem;">
           <h4 style="margin-top: 0;">Update Values</h4>
+
+          <div class="form-group">
+            <label class="form-label">Transaction Date</label>
+            <input
+              [ngModel]="updateForm.transactionDate"
+              (ngModelChange)="updateForm.transactionDate = $event; cdr.markForCheck()"
+              type="date"
+              class="form-control"
+              [min]="isManager ? minAllowedManagerDate : null"
+              [max]="maxAllowedEntryDate"
+              [disabled]="isStaff">
+          </div>
           
           <!-- SALE: Can edit Filled Out and Empty In -->
           <div *ngIf="selectedLedgerEntry?.refType === 'SALE'" class="form-group">
@@ -819,23 +831,68 @@
               type="text" 
               class="form-control" 
               placeholder="0.00" 
-              indianCurrencyFormat>
+              indianCurrencyFormat
+              [readonly]="shouldShowPaymentSplitsEditor()">
           </div>
 
           <!-- Payment Mode for SALE, EMPTY_RETURN, and PAYMENT -->
-          <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT'" class="form-group">
+          <div *ngIf="(selectedLedgerEntry?.refType === 'PAYMENT') || ((selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN') && !shouldShowPaymentSplitsEditor())" class="form-group">
             <label class="form-label">Payment Mode</label>
             <select 
               [ngModel]="updateForm.paymentMode" 
               (ngModelChange)="updateForm.paymentMode = $event; cdr.markForCheck()"
               class="form-control">
-              <option [value]="null">Select Payment Mode</option>
+              <option [ngValue]="undefined">Select Payment Mode</option>
               <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
             </select>
           </div>
 
+          <div *ngIf="selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN'" class="form-group">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input
+                type="checkbox"
+                [ngModel]="useUpdatePaymentSplits"
+                (ngModelChange)="toggleMultiplePaymentSplits($event)">
+              <span>Use Multiple Payment Splits</span>
+            </label>
+          </div>
+
+          <div *ngIf="shouldShowPaymentSplitsEditor() && (selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN')" class="form-group" style="border: 1px dashed #bbb; border-radius: 6px; padding: 10px;">
+            <label class="form-label">Payment Splits</label>
+            <div *ngFor="let split of updateForm.paymentSplits || []; let i = index" style="display: grid; grid-template-columns: 1.2fr 1fr 1.2fr auto; gap: 8px; margin-bottom: 8px;">
+              <select
+                [(ngModel)]="split.modeOfPayment"
+                class="form-control">
+                <option value="">Select Mode</option>
+                <option *ngFor="let mode of paymentModes" [value]="mode.name">{{ mode.name }}</option>
+              </select>
+              <input
+                [(ngModel)]="split.amount"
+                (ngModelChange)="onUpdateSplitAmountChange()"
+                type="number"
+                class="form-control"
+                min="0"
+                step="0.01"
+                placeholder="Amount">
+              <select
+                [(ngModel)]="split.bankAccountId"
+                class="form-control"
+                [disabled]="!(split.modeOfPayment && getSelectedPaymentMode(split.modeOfPayment)?.isBankAccountRequired)">
+                <option [ngValue]="undefined">No Bank</option>
+                <option *ngFor="let account of bankAccounts" [ngValue]="account.id">
+                  {{ account.bankName }} - {{ account.accountNumber }}
+                </option>
+              </select>
+              <button type="button" class="btn btn-secondary" (click)="removePaymentSplitForUpdate(i)" [disabled]="(updateForm.paymentSplits?.length || 0) <= 1">-</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <button type="button" class="btn btn-secondary" (click)="addPaymentSplitForUpdate()">+ Add Split</button>
+              <small class="text-muted">Split Total: ₹{{ getUpdateSplitTotal() | number: '1.0-2' }}</small>
+            </div>
+          </div>
+
           <!-- Bank Account for PAYMENT-type and bank-required modes -->
-          <div *ngIf="(selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT') && updateForm.paymentMode && getSelectedPaymentMode(updateForm.paymentMode)?.isBankAccountRequired" class="form-group">
+          <div *ngIf="(selectedLedgerEntry?.refType === 'SALE' || selectedLedgerEntry?.refType === 'EMPTY_RETURN' || selectedLedgerEntry?.refType === 'PAYMENT') && !shouldShowPaymentSplitsEditor() && updateForm.paymentMode && getSelectedPaymentMode(updateForm.paymentMode)?.isBankAccountRequired" class="form-group">
             <label class="form-label">Bank Account <span class="required">*</span></label>
             <select 
               [ngModel]="updateForm.bankAccountId" 
@@ -871,6 +928,9 @@
             <div style="margin-top: 8px; font-size: 0.9rem;">
               <!-- For SALE: show if total or payment changed -->
               <div *ngIf="selectedLedgerEntry?.refType === 'SALE'">
+                <div *ngIf="updateForm.transactionDate !== selectedLedgerEntry.transactionDate">
+                  Date: {{ selectedLedgerEntry.transactionDate }} → {{ updateForm.transactionDate }}
+                </div>
                 <div *ngIf="updateForm.filledOut !== selectedLedgerEntry.filledOut">
                   Filled: {{ selectedLedgerEntry.filledOut }} → {{ updateForm.filledOut }}
                 </div>
@@ -887,6 +947,9 @@
 
               <!-- For EMPTY_RETURN: show only empty count change -->
               <div *ngIf="selectedLedgerEntry?.refType === 'EMPTY_RETURN'">
+                <div *ngIf="updateForm.transactionDate !== selectedLedgerEntry.transactionDate">
+                  Date: {{ selectedLedgerEntry.transactionDate }} → {{ updateForm.transactionDate }}
+                </div>
                 <div *ngIf="updateForm.emptyIn !== selectedLedgerEntry.emptyIn">
                   Empty Count: {{ selectedLedgerEntry.emptyIn }} → {{ updateForm.emptyIn }}
                 </div>
@@ -897,6 +960,9 @@
 
               <!-- For PAYMENT: show only payment change -->
               <div *ngIf="selectedLedgerEntry?.refType === 'PAYMENT'">
+                <div *ngIf="updateForm.transactionDate !== selectedLedgerEntry.transactionDate">
+                  Date: {{ selectedLedgerEntry.transactionDate }} → {{ updateForm.transactionDate }}
+                </div>
                 <div *ngIf="updateForm.amountReceived !== selectedLedgerEntry.amountReceived">
                   Payment: ₹{{ selectedLedgerEntry.amountReceived | number: '1.0-2' }} → ₹{{ updateForm.amountReceived | number: '1.0-2' }}
                 </div>

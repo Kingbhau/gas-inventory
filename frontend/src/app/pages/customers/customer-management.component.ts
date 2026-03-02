@@ -208,11 +208,16 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     filledOut: 0,
     emptyIn: 0,
     totalAmount: 0,
-    amountReceived: 0
+    amountReceived: 0,
+    transactionDate: '',
+    paymentSplits: []
   };
   pricePerUnit = 0; // For SALE entries, original price per unit
   originalFilledOut = 0; // Track original qty to calc price per unit
   originalAmountReceived = 0; // Track original payment ratio
+  useUpdatePaymentSplits = false;
+  private singlePaymentSnapshot: { paymentMode?: string; bankAccountId?: number } = {};
+  private splitPaymentSnapshot: Array<{ modeOfPayment: string; amount: number; bankAccountId?: number; note?: string }> = [];
 
   constructor(
     private fb: FormBuilder,
@@ -290,7 +295,14 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   }
 
   getSelectedPaymentMode(modeName: string): PaymentMode | undefined {
-    return this.paymentModes.find(mode => mode.name === modeName);
+    const normalized = (modeName || '').trim().toLowerCase();
+    return this.paymentModes.find(mode => (mode.name || '').trim().toLowerCase() === normalized);
+  }
+
+  private normalizePaymentModeName(modeName: string | null | undefined): string | undefined {
+    if (!modeName) return undefined;
+    const matched = this.getSelectedPaymentMode(modeName);
+    return matched?.name || modeName;
   }
 
   /**
@@ -1447,10 +1459,22 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
 
     const changes: string[] = [];
     const refType = this.selectedLedgerEntry.refType;
+    const originalDate = String(this.selectedLedgerEntry.transactionDate || '');
+    const updatedDate = String(this.updateForm.transactionDate || '');
+
+    if (updatedDate && updatedDate !== originalDate) {
+      changes.push(`Date: ${originalDate} → ${updatedDate}`);
+    }
 
     // Parse currency strings to numbers
     const totalAmountNum = this.parseCurrencyToNumber(this.updateForm.totalAmount);
     const amountReceivedNum = this.parseCurrencyToNumber(this.updateForm.amountReceived);
+    const oldSplits = (this.selectedLedgerEntry.paymentSplits || [])
+      .map(s => `${s.paymentMode}:${Number(s.amount || 0).toFixed(2)}:${s.bankAccountId || ''}`)
+      .join('|');
+    const newSplits = (this.updateForm.paymentSplits || [])
+      .map(s => `${s.modeOfPayment}:${Number(s.amount || 0).toFixed(2)}:${s.bankAccountId || ''}`)
+      .join('|');
 
     // For SALE: show if filled, empty, or total/payment changed
     if (refType === 'SALE') {
@@ -1465,6 +1489,9 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       }
       if (amountReceivedNum !== this.selectedLedgerEntry.amountReceived) {
         changes.push(`Received: ₹${this.selectedLedgerEntry.amountReceived?.toFixed(2)} → ₹${amountReceivedNum.toFixed(2)}`);
+      }
+      if (oldSplits !== newSplits && (this.updateForm.paymentSplits?.length || 0) > 0) {
+        changes.push(`Payment Splits: ${this.selectedLedgerEntry.paymentSplits?.length || 0} → ${this.updateForm.paymentSplits?.length || 0} rows`);
       }
     }
 
@@ -1891,16 +1918,45 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
   // ==================== UPDATE LEDGER ENTRY METHODS ====================
 
   openUpdateForm(ledgerEntry: CustomerCylinderLedger) {
+    const existingSplits = (ledgerEntry.paymentSplits || [])
+      .filter(split => !!split?.paymentMode && (split.amount ?? 0) > 0)
+      .map(split => ({
+        modeOfPayment: this.normalizePaymentModeName(split.paymentMode) || '',
+        amount: split.amount,
+        bankAccountId: split.bankAccountId,
+        note: split.note || ''
+      }));
+    const fallbackSingleSplit = (!existingSplits.length && (ledgerEntry.amountReceived || 0) > 0 && ledgerEntry.paymentMode)
+      ? [{
+          modeOfPayment: this.normalizePaymentModeName(ledgerEntry.paymentMode) || '',
+          amount: ledgerEntry.amountReceived || 0,
+          bankAccountId: ledgerEntry.bankAccountId,
+          note: ''
+        }]
+      : [];
+
     this.selectedLedgerEntry = ledgerEntry;
     this.updateForm = {
       filledOut: ledgerEntry.filledOut || 0,
       emptyIn: ledgerEntry.emptyIn || 0,
       totalAmount: ledgerEntry.totalAmount || 0,
       amountReceived: ledgerEntry.amountReceived || 0,
+      transactionDate: ledgerEntry.transactionDate || this.dateUtility.getTodayInIST(),
       updateReason: '',
-      paymentMode: ledgerEntry.paymentMode || undefined,
+      paymentMode: this.normalizePaymentModeName(ledgerEntry.paymentMode) || undefined,
+      bankAccountId: ledgerEntry.bankAccountId || undefined,
+      paymentSplits: existingSplits.length ? existingSplits : fallbackSingleSplit
+    };
+    this.useUpdatePaymentSplits = (ledgerEntry.refType === 'SALE' || ledgerEntry.refType === 'EMPTY_RETURN')
+      && ((existingSplits.length > 1) || ledgerEntry.paymentMode === 'MULTIPLE');
+    this.singlePaymentSnapshot = {
+      paymentMode: this.normalizePaymentModeName(ledgerEntry.paymentMode) || undefined,
       bankAccountId: ledgerEntry.bankAccountId || undefined
     };
+    this.splitPaymentSnapshot = (this.updateForm.paymentSplits || []).map(split => ({ ...split }));
+    if (this.useUpdatePaymentSplits) {
+      this.syncAmountReceivedFromUpdateSplits();
+    }
     
     // Store original values for calculations
     this.originalFilledOut = ledgerEntry.filledOut || 0;
@@ -1931,6 +1987,84 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  shouldShowPaymentSplitsEditor(): boolean {
+    return !!this.selectedLedgerEntry
+      && (this.selectedLedgerEntry.refType === 'SALE' || this.selectedLedgerEntry.refType === 'EMPTY_RETURN')
+      && this.useUpdatePaymentSplits;
+  }
+
+  toggleMultiplePaymentSplits(useMultiple: boolean) {
+    if (!this.selectedLedgerEntry || (this.selectedLedgerEntry.refType !== 'SALE' && this.selectedLedgerEntry.refType !== 'EMPTY_RETURN')) return;
+    this.useUpdatePaymentSplits = useMultiple;
+    if (useMultiple) {
+      const currentTotal = this.parseCurrencyToNumber(this.updateForm.amountReceived);
+      this.singlePaymentSnapshot = {
+        paymentMode: this.updateForm.paymentMode,
+        bankAccountId: this.updateForm.bankAccountId
+      };
+      this.updateForm.paymentMode = undefined;
+      this.updateForm.bankAccountId = undefined;
+      if (this.splitPaymentSnapshot.length > 0) {
+        this.updateForm.paymentSplits = this.splitPaymentSnapshot.map(split => ({ ...split }));
+      } else {
+        this.updateForm.paymentSplits = [
+          {
+            modeOfPayment: '',
+            amount: currentTotal > 0 ? currentTotal : 0,
+            note: ''
+          }
+        ];
+      }
+      this.syncAmountReceivedFromUpdateSplits();
+    } else {
+      this.splitPaymentSnapshot = (this.updateForm.paymentSplits || []).map(split => ({ ...split }));
+      const first = this.updateForm.paymentSplits?.[0];
+      this.updateForm.paymentSplits = [];
+      this.updateForm.paymentMode = undefined;
+      this.updateForm.bankAccountId = undefined;
+    }
+    this.cdr.markForCheck();
+  }
+
+  addPaymentSplitForUpdate() {
+    const total = this.parseCurrencyToNumber(this.updateForm.amountReceived);
+    const current = (this.updateForm.paymentSplits || []).reduce((sum, split) => sum + (split.amount || 0), 0);
+    const remaining = Math.max(total - current, 0);
+    this.updateForm.paymentSplits = [
+      ...(this.updateForm.paymentSplits || []),
+      { modeOfPayment: '', amount: remaining, note: '' }
+    ];
+    this.updateForm.paymentMode = 'MULTIPLE';
+    this.updateForm.bankAccountId = undefined;
+    this.syncAmountReceivedFromUpdateSplits();
+    this.splitPaymentSnapshot = (this.updateForm.paymentSplits || []).map(split => ({ ...split }));
+    this.cdr.markForCheck();
+  }
+
+  removePaymentSplitForUpdate(index: number) {
+    if (!this.updateForm.paymentSplits || this.updateForm.paymentSplits.length <= 1) return;
+    this.updateForm.paymentSplits = this.updateForm.paymentSplits.filter((_, i) => i !== index);
+    this.syncAmountReceivedFromUpdateSplits();
+    this.splitPaymentSnapshot = (this.updateForm.paymentSplits || []).map(split => ({ ...split }));
+    this.cdr.markForCheck();
+  }
+
+  onUpdateSplitAmountChange() {
+    this.syncAmountReceivedFromUpdateSplits();
+    this.splitPaymentSnapshot = (this.updateForm.paymentSplits || []).map(split => ({ ...split }));
+    this.cdr.markForCheck();
+  }
+
+  getUpdateSplitTotal(): number {
+    return (this.updateForm.paymentSplits || []).reduce((sum, split) => sum + (split.amount || 0), 0);
+  }
+
+  private syncAmountReceivedFromUpdateSplits() {
+    if (!this.useUpdatePaymentSplits) return;
+    const total = this.getUpdateSplitTotal();
+    this.updateForm.amountReceived = Math.round(total * 100) / 100;
+  }
+
   closeUpdateForm() {
     this.showUpdateForm = false;
     this.selectedLedgerEntry = null;
@@ -1939,8 +2073,13 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       emptyIn: 0,
       totalAmount: 0,
       amountReceived: 0,
-      updateReason: ''
+      transactionDate: '',
+      updateReason: '',
+      paymentSplits: []
     };
+    this.useUpdatePaymentSplits = false;
+    this.singlePaymentSnapshot = {};
+    this.splitPaymentSnapshot = [];
     this.updateError = '';
     this.cdr.markForCheck();
   }
@@ -1963,6 +2102,14 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isStaff) {
+      this.updateForm.transactionDate = this.dateUtility.getTodayInIST();
+    }
+    if (!this.updateForm.transactionDate) {
+      this.toastr.error('Transaction date is required', 'Validation Error');
+      return;
+    }
+
     // Validate update reason is provided
     if (!this.updateForm.updateReason || this.updateForm.updateReason.trim() === '') {
       this.toastr.error('Update reason is required', 'Validation Error');
@@ -1972,17 +2119,55 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     // Convert currency strings to numbers
     const amountReceivedNum = this.parseCurrencyToNumber(this.updateForm.amountReceived);
     const totalAmountNum = this.parseCurrencyToNumber(this.updateForm.totalAmount);
+    const useSplitEditor = (this.selectedLedgerEntry.refType === 'SALE' || this.selectedLedgerEntry.refType === 'EMPTY_RETURN')
+      && this.useUpdatePaymentSplits;
+    const updateSplits = (useSplitEditor ? (this.updateForm.paymentSplits || []) : [])
+      .filter(split => split && split.modeOfPayment && (split.amount || 0) > 0)
+      .map(split => ({
+        modeOfPayment: split.modeOfPayment || '',
+        amount: Number(split.amount || 0),
+        bankAccountId: split.bankAccountId,
+        note: split.note || ''
+      }));
 
-    // If amount received is greater than 0, payment mode is required
-    if (amountReceivedNum > 0 && !this.updateForm.paymentMode) {
+    // If amount received is greater than 0, payment mode/split is required
+    if (amountReceivedNum > 0 && !this.updateForm.paymentMode && updateSplits.length === 0) {
       this.toastr.error('Payment mode is required when amount received is greater than 0', 'Validation Error');
       return;
     }
 
-    // Validate bank account if payment mode requires it
-    if (this.updateForm.paymentMode) {
-      const selectedMode = this.getSelectedPaymentMode(this.updateForm.paymentMode);
-      if (selectedMode && selectedMode.isBankAccountRequired && !this.updateForm.bankAccountId) {
+    if (useSplitEditor && amountReceivedNum > 0 && updateSplits.length === 0) {
+      this.toastr.error('Please add at least one valid payment split', 'Validation Error');
+      return;
+    }
+
+    if (useSplitEditor && updateSplits.length > 0) {
+      const splitTotal = updateSplits.reduce((sum, split) => sum + split.amount, 0);
+      if (Math.abs(splitTotal - amountReceivedNum) > 0.01) {
+        this.toastr.error('Sum of payment splits must match amount received', 'Validation Error');
+        return;
+      }
+      for (const split of updateSplits) {
+        const selectedMode = this.getSelectedPaymentMode(split.modeOfPayment);
+        if (!selectedMode) {
+          this.toastr.error(`Invalid payment mode in split: ${split.modeOfPayment}`, 'Validation Error');
+          return;
+        }
+        if (selectedMode.isBankAccountRequired && !split.bankAccountId) {
+          this.toastr.error(`Bank account is required for split mode: ${split.modeOfPayment}`, 'Validation Error');
+          return;
+        }
+      }
+    }
+
+    // Validate bank account if single payment mode requires it
+    if (!useSplitEditor && amountReceivedNum > 0 && updateSplits.length === 0) {
+      const selectedMode = this.updateForm.paymentMode ? this.getSelectedPaymentMode(this.updateForm.paymentMode) : undefined;
+      if (!selectedMode) {
+        this.toastr.error('Please select a valid payment mode', 'Validation Error');
+        return;
+      }
+      if (selectedMode.isBankAccountRequired && !this.updateForm.bankAccountId) {
         this.toastr.error('Bank account is required for this payment mode', 'Validation Error');
         return;
       }
@@ -2028,6 +2213,19 @@ export class CustomerManagementComponent implements OnInit, OnDestroy {
     }
     if (this.updateForm.bankAccountId !== (this.selectedLedgerEntry.bankAccountId ?? null)) {
       updateData.bankAccountId = this.updateForm.bankAccountId;
+    }
+    if (this.updateForm.transactionDate !== (this.selectedLedgerEntry.transactionDate ?? '')) {
+      updateData.transactionDate = this.updateForm.transactionDate;
+    }
+    if (useSplitEditor) {
+      updateData.paymentSplits = updateSplits;
+      if (updateSplits.length > 0) {
+        updateData.paymentMode = updateSplits.length > 1 ? 'MULTIPLE' : updateSplits[0].modeOfPayment;
+        updateData.bankAccountId = updateSplits.length > 1 ? undefined : updateSplits[0].bankAccountId;
+      } else {
+        updateData.paymentMode = undefined;
+        updateData.bankAccountId = undefined;
+      }
     }
     
     // Generate changes summary for the reason

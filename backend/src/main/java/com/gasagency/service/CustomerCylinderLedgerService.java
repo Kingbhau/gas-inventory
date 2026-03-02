@@ -21,6 +21,7 @@ import com.gasagency.entity.Warehouse;
 import com.gasagency.entity.BankAccount;
 import com.gasagency.entity.PaymentMode;
 import com.gasagency.entity.Sale;
+import com.gasagency.entity.SalePaymentSplit;
 import com.gasagency.entity.WarehouseTransfer;
 import com.gasagency.entity.AlertConfiguration;
 import com.gasagency.entity.BankAccountLedger;
@@ -34,6 +35,7 @@ import com.gasagency.repository.SaleRepository;
 import com.gasagency.repository.WarehouseTransferRepository;
 import com.gasagency.repository.BankAccountLedgerRepository;
 import com.gasagency.repository.CustomerLedgerPaymentSplitRepository;
+import com.gasagency.repository.SalePaymentSplitRepository;
 import com.gasagency.exception.ResourceNotFoundException;
 import com.gasagency.exception.InvalidOperationException;
 import com.gasagency.util.LoggerUtil;
@@ -75,6 +77,7 @@ public class CustomerCylinderLedgerService {
         private final BankAccountLedgerRepository bankAccountLedgerRepository;
         private final PaymentModeRepository paymentModeRepository;
         private final CustomerLedgerPaymentSplitRepository customerLedgerPaymentSplitRepository;
+        private final SalePaymentSplitRepository salePaymentSplitRepository;
         private final AuditRecordService auditRecordService;
         private final AlertConfigurationService alertConfigurationService;
 
@@ -91,6 +94,7 @@ public class CustomerCylinderLedgerService {
                         BankAccountLedgerRepository bankAccountLedgerRepository,
                         PaymentModeRepository paymentModeRepository,
                         CustomerLedgerPaymentSplitRepository customerLedgerPaymentSplitRepository,
+                        SalePaymentSplitRepository salePaymentSplitRepository,
                         AuditRecordService auditRecordService,
                         AlertConfigurationService alertConfigurationService) {
                 this.repository = repository;
@@ -106,6 +110,7 @@ public class CustomerCylinderLedgerService {
                 this.bankAccountLedgerRepository = bankAccountLedgerRepository;
                 this.paymentModeRepository = paymentModeRepository;
                 this.customerLedgerPaymentSplitRepository = customerLedgerPaymentSplitRepository;
+                this.salePaymentSplitRepository = salePaymentSplitRepository;
                 this.auditRecordService = auditRecordService;
                 this.alertConfigurationService = alertConfigurationService;
         }
@@ -1378,6 +1383,22 @@ public class CustomerCylinderLedgerService {
                                                         split.getNote()))
                                         .collect(Collectors.toList());
                         dto.setPaymentSplits(splitDTOs);
+                } else if (ledger.getRefType() == CustomerCylinderLedger.TransactionType.SALE
+                                && ledger.getRefId() != null) {
+                        List<SalePaymentSplitDTO> splitDTOs = salePaymentSplitRepository.findBySaleId(ledger.getRefId())
+                                        .stream()
+                                        .map(split -> new SalePaymentSplitDTO(
+                                                        split.getId(),
+                                                        split.getPaymentMode(),
+                                                        split.getAmount(),
+                                                        split.getBankAccount() != null ? split.getBankAccount().getId() : null,
+                                                        split.getBankAccount() != null
+                                                                        ? split.getBankAccount().getBankName() + " - "
+                                                                                        + split.getBankAccount().getAccountNumber()
+                                                                        : null,
+                                                        split.getNote()))
+                                        .collect(Collectors.toList());
+                        dto.setPaymentSplits(splitDTOs);
                 }
                 return dto;
         }
@@ -1828,6 +1849,15 @@ public class CustomerCylinderLedgerService {
 
                 if (hasValidSplits) {
                         saveLedgerPaymentSplits(dto.getId(), paymentSplits);
+                } else if (effectiveAmountReceived.compareTo(BigDecimal.ZERO) > 0
+                                && paymentModeName != null
+                                && !paymentModeName.isEmpty()) {
+                        saveSingleLedgerPaymentSplit(
+                                        dto.getId(),
+                                        paymentModeName,
+                                        effectiveAmountReceived,
+                                        request.getBankAccountId(),
+                                        "Recorded from empty return");
                 }
 
                 if (hasValidSplits) {
@@ -1890,6 +1920,33 @@ public class CustomerCylinderLedgerService {
                 if (!splitEntities.isEmpty()) {
                         customerLedgerPaymentSplitRepository.saveAll(splitEntities);
                 }
+        }
+
+        @Transactional
+        public void saveSingleLedgerPaymentSplit(Long ledgerId, String paymentMode, BigDecimal amount, Long bankAccountId,
+                        String note) {
+                if (ledgerId == null || paymentMode == null || paymentMode.trim().isEmpty() || amount == null
+                                || amount.compareTo(BigDecimal.ZERO) <= 0) {
+                        return;
+                }
+
+                CustomerCylinderLedger ledger = repository.findById(ledgerId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Ledger entry not found"));
+
+                CustomerLedgerPaymentSplit entity = new CustomerLedgerPaymentSplit();
+                entity.setLedger(ledger);
+                entity.setPaymentMode(paymentMode.trim());
+                entity.setAmount(amount.setScale(2, RoundingMode.HALF_UP));
+                entity.setNote(note);
+
+                if (bankAccountId != null && bankAccountId > 0) {
+                        BankAccount bankAccount = bankAccountRepository.findById(bankAccountId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Bank account not found with id: " + bankAccountId));
+                        entity.setBankAccount(bankAccount);
+                }
+
+                customerLedgerPaymentSplitRepository.save(entity);
         }
 
         /**
@@ -2080,6 +2137,7 @@ public class CustomerCylinderLedgerService {
                 long oldEmptyIn = entry.getEmptyIn();
                 BigDecimal oldTotalAmount = entry.getTotalAmount();
                 BigDecimal oldAmountReceived = entry.getAmountReceived();
+                LocalDate oldTransactionDate = entry.getTransactionDate();
                 String oldPaymentMode = entry.getPaymentMode();
                 Long oldBankAccountId = entry.getBankAccount() != null ? entry.getBankAccount().getId() : null;
 
@@ -2096,6 +2154,21 @@ public class CustomerCylinderLedgerService {
                 BigDecimal newAmountReceived = updateData != null && updateData.getAmountReceived() != null
                                 ? updateData.getAmountReceived()
                                 : oldAmountReceived;
+                LocalDate newTransactionDate = updateData != null && updateData.getTransactionDate() != null
+                                ? updateData.getTransactionDate()
+                                : oldTransactionDate;
+                String newPaymentMode = updateData != null && updateData.getPaymentMode() != null
+                                ? updateData.getPaymentMode()
+                                : oldPaymentMode;
+                Long newBankAccountId = updateData != null && updateData.getBankAccountId() != null
+                                ? updateData.getBankAccountId()
+                                : oldBankAccountId;
+                List<LedgerUpdateRequestDTO.PaymentSplitUpdateDTO> requestedPaymentSplits = updateData != null
+                                ? updateData.getPaymentSplits()
+                                : null;
+                boolean hasPaymentSplitsUpdate = requestedPaymentSplits != null;
+                List<LedgerUpdateRequestDTO.PaymentSplitUpdateDTO> effectiveSalePaymentSplits = null;
+                List<LedgerUpdateRequestDTO.PaymentSplitUpdateDTO> effectiveEmptyReturnPaymentSplits = null;
 
                 // If filled count changes for a SALE and total wasn't provided, recalculate total
                 if (entry.getRefType() == CustomerCylinderLedger.TransactionType.SALE
@@ -2139,6 +2212,188 @@ public class CustomerCylinderLedgerService {
                 if (newTotalAmount.compareTo(BigDecimal.ZERO) < 0 ||
                                 newAmountReceived.compareTo(BigDecimal.ZERO) < 0) {
                         throw new InvalidOperationException("Total or received amounts cannot be negative");
+                }
+                if (entry.getRefType() == CustomerCylinderLedger.TransactionType.SALE) {
+                        if (hasPaymentSplitsUpdate) {
+                                BigDecimal splitTotal = BigDecimal.ZERO;
+                                int validSplitCount = 0;
+                                String singleSplitMode = null;
+                                Long singleSplitBankAccountId = null;
+                                effectiveSalePaymentSplits = new ArrayList<>();
+
+                                for (LedgerUpdateRequestDTO.PaymentSplitUpdateDTO split : requestedPaymentSplits) {
+                                        if (split == null) {
+                                                continue;
+                                        }
+                                        String modeOfPayment = split.getModeOfPayment() != null
+                                                        ? split.getModeOfPayment().trim()
+                                                        : "";
+                                        BigDecimal splitAmount = split.getAmount() != null ? split.getAmount() : BigDecimal.ZERO;
+                                        if (modeOfPayment.isEmpty() || splitAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                                                throw new InvalidOperationException(
+                                                                "Each payment split must include mode and amount greater than zero");
+                                        }
+
+                                        PaymentMode paymentMode = paymentModeRepository.findByName(modeOfPayment)
+                                                        .orElseThrow(() -> new InvalidOperationException(
+                                                                        "Payment mode not found: " + modeOfPayment));
+                                        if (Boolean.TRUE.equals(paymentMode.getIsBankAccountRequired())
+                                                        && split.getBankAccountId() == null) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account is required for payment mode: "
+                                                                                + modeOfPayment);
+                                        }
+                                        if (split.getBankAccountId() != null
+                                                        && !bankAccountRepository.existsById(split.getBankAccountId())) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account not found with id: " + split.getBankAccountId());
+                                        }
+
+                                        BigDecimal normalizedAmount = splitAmount.setScale(2, RoundingMode.HALF_UP);
+                                        splitTotal = splitTotal.add(normalizedAmount);
+                                        validSplitCount++;
+                                        singleSplitMode = modeOfPayment;
+                                        singleSplitBankAccountId = split.getBankAccountId();
+
+                                        LedgerUpdateRequestDTO.PaymentSplitUpdateDTO normalizedSplit = new LedgerUpdateRequestDTO.PaymentSplitUpdateDTO();
+                                        normalizedSplit.setModeOfPayment(modeOfPayment);
+                                        normalizedSplit.setAmount(normalizedAmount);
+                                        normalizedSplit.setBankAccountId(split.getBankAccountId());
+                                        normalizedSplit.setNote(split.getNote());
+                                        effectiveSalePaymentSplits.add(normalizedSplit);
+                                }
+
+                                if (splitTotal.compareTo(newAmountReceived.setScale(2, RoundingMode.HALF_UP)) != 0) {
+                                        throw new InvalidOperationException(
+                                                        "Sum of payment splits (" + splitTotal
+                                                                        + ") must match amount received (" + newAmountReceived + ")");
+                                }
+
+                                if (validSplitCount > 1) {
+                                        newPaymentMode = "MULTIPLE";
+                                        newBankAccountId = null;
+                                } else if (validSplitCount == 1) {
+                                        newPaymentMode = singleSplitMode;
+                                        newBankAccountId = singleSplitBankAccountId;
+                                } else {
+                                        newPaymentMode = null;
+                                        newBankAccountId = null;
+                                }
+                        } else {
+                                if (newAmountReceived.compareTo(BigDecimal.ZERO) > 0) {
+                                        String normalizedPaymentMode = newPaymentMode != null ? newPaymentMode.trim() : null;
+                                        if (normalizedPaymentMode == null || normalizedPaymentMode.isEmpty()) {
+                                                throw new InvalidOperationException(
+                                                                "Payment mode is required when amount received is greater than zero");
+                                        }
+                                        if ("MULTIPLE".equalsIgnoreCase(normalizedPaymentMode)) {
+                                                throw new InvalidOperationException(
+                                                                "Payment splits are required when payment mode is MULTIPLE");
+                                        }
+                                        PaymentMode paymentMode = paymentModeRepository.findByName(normalizedPaymentMode)
+                                                        .orElseThrow(() -> new InvalidOperationException(
+                                                                        "Payment mode not found: " + normalizedPaymentMode));
+                                        if (Boolean.TRUE.equals(paymentMode.getIsBankAccountRequired())
+                                                        && newBankAccountId == null) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account is required for payment mode: "
+                                                                                + normalizedPaymentMode);
+                                        }
+                                        if (newBankAccountId != null && !bankAccountRepository.existsById(newBankAccountId)) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account not found with id: " + newBankAccountId);
+                                        }
+                                        newPaymentMode = normalizedPaymentMode;
+
+                                        LedgerUpdateRequestDTO.PaymentSplitUpdateDTO singleSplit = new LedgerUpdateRequestDTO.PaymentSplitUpdateDTO();
+                                        singleSplit.setModeOfPayment(newPaymentMode);
+                                        singleSplit.setAmount(newAmountReceived.setScale(2, RoundingMode.HALF_UP));
+                                        singleSplit.setBankAccountId(newBankAccountId);
+                                        singleSplit.setNote("Updated from ledger edit");
+                                        effectiveSalePaymentSplits = new ArrayList<>();
+                                        effectiveSalePaymentSplits.add(singleSplit);
+                                } else {
+                                        newPaymentMode = null;
+                                        newBankAccountId = null;
+                                        effectiveSalePaymentSplits = new ArrayList<>();
+                                }
+                        }
+                } else if (entry.getRefType() == CustomerCylinderLedger.TransactionType.EMPTY_RETURN) {
+                        if (hasPaymentSplitsUpdate) {
+                                BigDecimal splitTotal = BigDecimal.ZERO;
+                                int validSplitCount = 0;
+                                String singleSplitMode = null;
+                                Long singleSplitBankAccountId = null;
+                                effectiveEmptyReturnPaymentSplits = new ArrayList<>();
+
+                                for (LedgerUpdateRequestDTO.PaymentSplitUpdateDTO split : requestedPaymentSplits) {
+                                        if (split == null) {
+                                                continue;
+                                        }
+                                        String modeOfPayment = split.getModeOfPayment() != null
+                                                        ? split.getModeOfPayment().trim()
+                                                        : "";
+                                        BigDecimal splitAmount = split.getAmount() != null ? split.getAmount() : BigDecimal.ZERO;
+                                        if (modeOfPayment.isEmpty() || splitAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                                                throw new InvalidOperationException(
+                                                                "Each payment split must include mode and amount greater than zero");
+                                        }
+
+                                        PaymentMode paymentMode = paymentModeRepository.findByName(modeOfPayment)
+                                                        .orElseThrow(() -> new InvalidOperationException(
+                                                                        "Payment mode not found: " + modeOfPayment));
+                                        if (Boolean.TRUE.equals(paymentMode.getIsBankAccountRequired())
+                                                        && split.getBankAccountId() == null) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account is required for payment mode: "
+                                                                                + modeOfPayment);
+                                        }
+                                        if (split.getBankAccountId() != null
+                                                        && !bankAccountRepository.existsById(split.getBankAccountId())) {
+                                                throw new InvalidOperationException(
+                                                                "Bank account not found with id: " + split.getBankAccountId());
+                                        }
+
+                                        BigDecimal normalizedAmount = splitAmount.setScale(2, RoundingMode.HALF_UP);
+                                        splitTotal = splitTotal.add(normalizedAmount);
+                                        validSplitCount++;
+                                        singleSplitMode = modeOfPayment;
+                                        singleSplitBankAccountId = split.getBankAccountId();
+
+                                        LedgerUpdateRequestDTO.PaymentSplitUpdateDTO normalizedSplit = new LedgerUpdateRequestDTO.PaymentSplitUpdateDTO();
+                                        normalizedSplit.setModeOfPayment(modeOfPayment);
+                                        normalizedSplit.setAmount(normalizedAmount);
+                                        normalizedSplit.setBankAccountId(split.getBankAccountId());
+                                        normalizedSplit.setNote(split.getNote());
+                                        effectiveEmptyReturnPaymentSplits.add(normalizedSplit);
+                                }
+
+                                if (splitTotal.compareTo(newAmountReceived.setScale(2, RoundingMode.HALF_UP)) != 0) {
+                                        throw new InvalidOperationException(
+                                                        "Sum of payment splits (" + splitTotal
+                                                                        + ") must match amount received (" + newAmountReceived + ")");
+                                }
+
+                                if (validSplitCount > 1) {
+                                        newPaymentMode = "MULTIPLE";
+                                        newBankAccountId = null;
+                                } else if (validSplitCount == 1) {
+                                        newPaymentMode = singleSplitMode;
+                                        newBankAccountId = singleSplitBankAccountId;
+                                } else {
+                                        newPaymentMode = null;
+                                        newBankAccountId = null;
+                                }
+                        }
+                } else if (hasPaymentSplitsUpdate) {
+                        throw new InvalidOperationException(
+                                        "Payment splits can only be updated for SALE and EMPTY_RETURN transactions");
+                }
+                if (newTransactionDate == null) {
+                        throw new InvalidOperationException("Transaction date is required");
+                }
+                if (newTransactionDate.isAfter(LocalDate.now())) {
+                        throw new InvalidOperationException("Transaction date cannot be in the future");
                 }
                 // ==================== SIMULATION: CHECK CHAIN RECALCULATION
                 // ====================
@@ -2383,6 +2638,7 @@ public class CustomerCylinderLedgerService {
                 entry.setEmptyIn(newEmptyIn);
                 entry.setTotalAmount(newTotalAmount);
                 entry.setAmountReceived(newAmountReceived);
+                entry.setTransactionDate(newTransactionDate);
                 entry.setDueAmount(newCumulativeDue);
                 entry.setBalance(newBalance);
 
@@ -2391,21 +2647,24 @@ public class CustomerCylinderLedgerService {
                         entry.setUpdateReason(updateData.getUpdateReason());
                 }
 
-                // Set payment mode if provided
-                if (updateData != null && updateData.getPaymentMode() != null) {
-                        entry.setPaymentMode(updateData.getPaymentMode());
+                entry.setPaymentMode(newPaymentMode);
+                BankAccount newBankAccount = null;
+                if (newBankAccountId != null) {
+                        BankAccount resolvedBankAccount = bankAccountRepository.findById(newBankAccountId).orElse(null);
+                        if (resolvedBankAccount == null) {
+                                throw new ResourceNotFoundException("Bank account not found with id: " + newBankAccountId);
+                        }
+                        newBankAccount = resolvedBankAccount;
                 }
-
-                // Set bank account if provided
-                if (updateData != null && updateData.getBankAccountId() != null) {
-                        Long bankAccountId = updateData.getBankAccountId();
-                                BankAccount bankAccount = bankAccountRepository.findById(bankAccountId).orElse(null);
-                                entry.setBankAccount(bankAccount);
-                } else if (updateData != null && updateData.getBankAccountId() == null) {
-                        entry.setBankAccount(null);
-                }
+                entry.setBankAccount(newBankAccount);
 
                 repository.save(entry);
+
+                if (entry.getRefType() == CustomerCylinderLedger.TransactionType.EMPTY_RETURN) {
+                        syncEmptyReturnPaymentSplitsOnUpdate(entry, oldPaymentMode, oldAmountReceived, oldBankAccountId,
+                                        newPaymentMode, newAmountReceived, newBankAccountId,
+                                        effectiveEmptyReturnPaymentSplits);
+                }
 
                 // ==================== UPDATE RELATED SALE RECORD ====================
 
@@ -2416,7 +2675,12 @@ public class CustomerCylinderLedgerService {
                                 if (sale != null) {
                                         // Update the sale with new total amount
                                         sale.setTotalAmount(newTotalAmount);
+                                        sale.setSaleDate(newTransactionDate);
+                                        sale.setPaymentMode(newPaymentMode);
+                                        sale.setBankAccount(newBankAccount);
                                         saleRepository.save(sale);
+
+                                        replaceSalePaymentSplits(sale, effectiveSalePaymentSplits);
 
                                         logger.info("UPDATE_SALE: saleId={}, oldTotal={}, newTotal={}",
                                                         entry.getRefId(), oldTotalAmount, newTotalAmount);
@@ -2510,8 +2774,8 @@ public class CustomerCylinderLedgerService {
                 LoggerUtil.logBusinessSuccess(logger, "UPDATE_LEDGER", "ledgerId", ledgerId,
                                 "affectedEntries", affectedEntries.size());
                 recordLedgerUpdateAudit(updateData, entry, oldFilledOut, oldEmptyIn, oldTotalAmount, oldAmountReceived,
-                                oldPaymentMode, oldBankAccountId, newFilledOut, newEmptyIn, newTotalAmount,
-                                newAmountReceived);
+                                oldTransactionDate, oldPaymentMode, oldBankAccountId, newFilledOut, newEmptyIn,
+                                newTotalAmount, newAmountReceived, newTransactionDate);
                 LoggerUtil.logAudit("UPDATE", "LEDGER_ENTRY", "ledgerId", ledgerId,
                                 "customerId", customer.getId(),
                                 "oldValues", "total=" + oldTotalAmount + ", received=" + oldAmountReceived,
@@ -2526,12 +2790,14 @@ public class CustomerCylinderLedgerService {
                         long oldEmptyIn,
                         BigDecimal oldTotalAmount,
                         BigDecimal oldAmountReceived,
+                        LocalDate oldTransactionDate,
                         String oldPaymentMode,
                         Long oldBankAccountId,
                         long newFilledOut,
                         long newEmptyIn,
                         BigDecimal newTotalAmount,
-                        BigDecimal newAmountReceived) {
+                        BigDecimal newAmountReceived,
+                        LocalDate newTransactionDate) {
                 if (updateData == null) {
                         return;
                 }
@@ -2557,6 +2823,10 @@ public class CustomerCylinderLedgerService {
                         auditRecordService.recordChange(entityType, entityId, "UPDATE", "amountReceived",
                                         oldAmountReceived, newAmountReceived, note, source);
                 }
+                if (!Objects.equals(oldTransactionDate, newTransactionDate)) {
+                        auditRecordService.recordChange(entityType, entityId, "UPDATE", "transactionDate",
+                                        oldTransactionDate, newTransactionDate, note, source);
+                }
 
                 String newPaymentMode = entry.getPaymentMode();
                 if (!Objects.equals(oldPaymentMode, newPaymentMode)) {
@@ -2579,6 +2849,136 @@ public class CustomerCylinderLedgerService {
                         return true;
                 }
                 return oldValue.compareTo(newValue) != 0;
+        }
+
+        private void replaceSalePaymentSplits(Sale sale,
+                        List<LedgerUpdateRequestDTO.PaymentSplitUpdateDTO> paymentSplits) {
+                if (sale == null || sale.getId() == null) {
+                        return;
+                }
+                List<SalePaymentSplit> existingSplits = salePaymentSplitRepository.findBySaleId(sale.getId());
+                if (!existingSplits.isEmpty()) {
+                        salePaymentSplitRepository.deleteAll(existingSplits);
+                }
+                if (paymentSplits == null || paymentSplits.isEmpty()) {
+                        return;
+                }
+                for (LedgerUpdateRequestDTO.PaymentSplitUpdateDTO split : paymentSplits) {
+                        if (split == null || split.getAmount() == null || split.getAmount().compareTo(BigDecimal.ZERO) <= 0
+                                        || split.getModeOfPayment() == null || split.getModeOfPayment().trim().isEmpty()) {
+                                continue;
+                        }
+                        SalePaymentSplit entity = new SalePaymentSplit();
+                        entity.setSale(sale);
+                        entity.setPaymentMode(split.getModeOfPayment().trim());
+                        entity.setAmount(split.getAmount().setScale(2, RoundingMode.HALF_UP));
+                        entity.setNote(split.getNote());
+                        if (split.getBankAccountId() != null) {
+                                BankAccount splitBankAccount = bankAccountRepository.findById(split.getBankAccountId())
+                                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                                "Bank account not found with id: "
+                                                                                + split.getBankAccountId()));
+                                entity.setBankAccount(splitBankAccount);
+                        }
+                        salePaymentSplitRepository.save(entity);
+                }
+        }
+
+        private void syncEmptyReturnPaymentSplitsOnUpdate(
+                        CustomerCylinderLedger entry,
+                        String oldPaymentMode,
+                        BigDecimal oldAmountReceived,
+                        Long oldBankAccountId,
+                        String newPaymentMode,
+                        BigDecimal newAmountReceived,
+                        Long newBankAccountId,
+                        List<LedgerUpdateRequestDTO.PaymentSplitUpdateDTO> requestedSplits) {
+                if (entry == null || entry.getId() == null
+                                || entry.getRefType() != CustomerCylinderLedger.TransactionType.EMPTY_RETURN) {
+                        return;
+                }
+
+                boolean paymentModeChanged = !Objects.equals(
+                                oldPaymentMode != null ? oldPaymentMode.trim() : null,
+                                newPaymentMode != null ? newPaymentMode.trim() : null);
+                boolean amountChanged = hasBigDecimalChanged(oldAmountReceived, newAmountReceived);
+                boolean bankChanged = !Objects.equals(oldBankAccountId, newBankAccountId);
+                if (!paymentModeChanged && !amountChanged && !bankChanged) {
+                        return;
+                }
+
+                String normalizedMode = newPaymentMode != null ? newPaymentMode.trim() : null;
+                BigDecimal normalizedAmount = newAmountReceived != null ? newAmountReceived : BigDecimal.ZERO;
+
+                // Rebuild split rows from updated payment data to keep ledger and split table consistent.
+                List<CustomerLedgerPaymentSplit> existing = customerLedgerPaymentSplitRepository.findByLedgerId(entry.getId());
+                if (!existing.isEmpty()) {
+                        customerLedgerPaymentSplitRepository.deleteAll(existing);
+                }
+
+                if (normalizedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                        entry.setPaymentMode(null);
+                        entry.setBankAccount(null);
+                        return;
+                }
+
+                if (requestedSplits != null) {
+                        for (LedgerUpdateRequestDTO.PaymentSplitUpdateDTO req : requestedSplits) {
+                                if (req == null || req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0
+                                                || req.getModeOfPayment() == null || req.getModeOfPayment().trim().isEmpty()) {
+                                        continue;
+                                }
+                                CustomerLedgerPaymentSplit split = new CustomerLedgerPaymentSplit();
+                                split.setLedger(entry);
+                                split.setPaymentMode(req.getModeOfPayment().trim());
+                                split.setAmount(req.getAmount().setScale(2, RoundingMode.HALF_UP));
+                                split.setNote(req.getNote());
+                                if (req.getBankAccountId() != null) {
+                                        BankAccount splitBank = bankAccountRepository.findById(req.getBankAccountId())
+                                                        .orElseThrow(() -> new InvalidOperationException(
+                                                                        "Bank account not found with id: "
+                                                                                        + req.getBankAccountId()));
+                                        split.setBankAccount(splitBank);
+                                }
+                                customerLedgerPaymentSplitRepository.save(split);
+                        }
+                        return;
+                }
+
+                if (normalizedMode == null || normalizedMode.isEmpty()) {
+                        throw new InvalidOperationException(
+                                        "Payment mode is required for EMPTY_RETURN when amount received is greater than zero");
+                }
+
+                if ("MULTIPLE".equalsIgnoreCase(normalizedMode)) {
+                        throw new InvalidOperationException(
+                                        "To change EMPTY_RETURN payment with MULTIPLE mode, provide payment splits. "
+                                                        + "Switch to a single payment mode or keep existing multiple payment unchanged.");
+                }
+
+                PaymentMode paymentMode = paymentModeRepository.findByName(normalizedMode)
+                                .orElseThrow(() -> new InvalidOperationException(
+                                                "Payment mode not found: " + normalizedMode));
+
+                if (Boolean.TRUE.equals(paymentMode.getIsBankAccountRequired()) && newBankAccountId == null) {
+                        throw new InvalidOperationException(
+                                        "Bank account is required for payment mode: " + normalizedMode);
+                }
+
+                BankAccount splitBankAccount = null;
+                if (newBankAccountId != null) {
+                        splitBankAccount = bankAccountRepository.findById(newBankAccountId)
+                                        .orElseThrow(() -> new InvalidOperationException(
+                                                        "Bank account not found with id: " + newBankAccountId));
+                }
+
+                CustomerLedgerPaymentSplit split = new CustomerLedgerPaymentSplit();
+                split.setLedger(entry);
+                split.setPaymentMode(normalizedMode);
+                split.setAmount(normalizedAmount.setScale(2, RoundingMode.HALF_UP));
+                split.setBankAccount(splitBankAccount);
+                split.setNote("Updated from ledger edit");
+                customerLedgerPaymentSplitRepository.save(split);
         }
 
         // Repair function to recalculate all balances with correct formula
