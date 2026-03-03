@@ -1173,6 +1173,7 @@ public class CustomerCylinderLedgerService {
                 }
         }
 
+        @Transactional(readOnly = true)
         public List<CustomerCylinderLedgerDTO> getLedgerByCustomer(Long customerId) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT", "LEDGER", "customerId", customerId);
 
@@ -1188,6 +1189,7 @@ public class CustomerCylinderLedgerService {
                                 .collect(Collectors.toList());
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getLedgerByCustomer(Long customerId, Pageable pageable) {
                 LoggerUtil.logDatabaseOperation(logger, "SELECT_PAGINATED", "LEDGER", "customerId", customerId,
                                 "page", pageable.getPageNumber(), "size", pageable.getPageSize());
