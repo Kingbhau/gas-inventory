@@ -116,6 +116,7 @@ public class CustomerCylinderLedgerService {
         }
 
         // Get all ledger entries sorted by date descending (for stock movement history)
+        @Transactional(readOnly = true)
         public List<CustomerCylinderLedgerDTO> getAllMovements() {
                 List<CustomerCylinderLedgerDTO> ledgerMovements = repository.findAll().stream()
                                 .sorted((a, b) -> b.getTransactionDate().compareTo(a.getTransactionDate()))
@@ -167,17 +168,20 @@ public class CustomerCylinderLedgerService {
          * Paginated ledger movements (ledger entries only)
          * Use this for high-performance movement history screens.
          */
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getAllMovements(Pageable pageable) {
                 return repository.findAll(pageable)
                                 .map(this::toDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getAllMovements(Pageable pageable, Long variantId,
                         CustomerCylinderLedger.TransactionType refType) {
                 return repository.findMovementsFiltered(variantId, refType, pageable)
                                 .map(this::toDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getAllMovements(Pageable pageable, Long variantId, String refType) {
                 return getAllMovements(pageable, variantId, parseRefType(refType));
         }
@@ -186,6 +190,7 @@ public class CustomerCylinderLedgerService {
          * Paginated movements including warehouse transfers (merged in memory)
          * Use when Transfer entries must be shown alongside ledger entries.
          */
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getAllMovementsMerged(Pageable pageable, Long variantId,
                         CustomerCylinderLedger.TransactionType refType) {
                 List<CustomerCylinderLedgerDTO> combined = new ArrayList<>();
@@ -236,11 +241,13 @@ public class CustomerCylinderLedgerService {
                 return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, combined.size());
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getAllMovementsMerged(Pageable pageable, Long variantId, String refType) {
                 return getAllMovementsMerged(pageable, variantId, parseRefType(refType));
         }
 
         // Get ledger entries for a specific warehouse sorted by date descending
+        @Transactional(readOnly = true)
         public List<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId) {
                 // Get customer ledger movements for this warehouse
                 List<CustomerCylinderLedgerDTO> ledgerMovements = repository.findByWarehouseId(warehouseId).stream()
@@ -293,17 +300,20 @@ public class CustomerCylinderLedgerService {
         /**
          * Paginated ledger movements for a warehouse (ledger entries only)
          */
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId, Pageable pageable) {
                 return repository.findByWarehouseId(warehouseId, pageable)
                                 .map(this::toDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId, Pageable pageable,
                         Long variantId, CustomerCylinderLedger.TransactionType refType) {
                 return repository.findMovementsFilteredByWarehouse(warehouseId, variantId, refType, pageable)
                                 .map(this::toDTO);
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouse(Long warehouseId, Pageable pageable,
                         Long variantId, String refType) {
                 return getMovementsByWarehouse(warehouseId, pageable, variantId, parseRefType(refType));
@@ -312,6 +322,7 @@ public class CustomerCylinderLedgerService {
         /**
          * Paginated movements including transfers for a warehouse (merged in memory)
          */
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouseMerged(Long warehouseId, Pageable pageable,
                         Long variantId, CustomerCylinderLedger.TransactionType refType) {
                 List<CustomerCylinderLedgerDTO> combined = new ArrayList<>();
@@ -363,6 +374,7 @@ public class CustomerCylinderLedgerService {
                 return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, combined.size());
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getMovementsByWarehouseMerged(Long warehouseId, Pageable pageable,
                         Long variantId, String refType) {
                 return getMovementsByWarehouseMerged(warehouseId, pageable, variantId, parseRefType(refType));
@@ -975,6 +987,7 @@ public class CustomerCylinderLedgerService {
                                 (createdBy != null && !createdBy.isEmpty()) ? createdBy : null);
         }
 
+        @Transactional(readOnly = true)
         public Page<CustomerCylinderLedgerDTO> getBankVerificationQueue(
                         LocalDate fromDate,
                         LocalDate toDate,
