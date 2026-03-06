@@ -338,7 +338,13 @@ public class SaleService {
                                                                                 + variant.getName());
                                         });
 
-                        BigDecimal basePrice = customerVariantPrice.getSalePrice();
+                        BigDecimal basePrice = itemRequest.getBasePrice() != null
+                                        ? itemRequest.getBasePrice()
+                                        : customerVariantPrice.getSalePrice();
+                        if (basePrice.signum() < 0) {
+                                logger.error("Negative base price amount: {}", basePrice);
+                                throw new InvalidOperationException("Base price cannot be negative");
+                        }
                         BigDecimal subtotal = basePrice.multiply(BigDecimal.valueOf(itemRequest.getQtyIssued()));
                         BigDecimal discountAmount = itemRequest.getDiscount() != null ? itemRequest.getDiscount()
                                         : BigDecimal.ZERO;

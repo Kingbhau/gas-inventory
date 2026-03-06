@@ -423,7 +423,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           // Use customer-specific sale price and discount price
           this.saleForm.get('basePrice')?.setValue(response.salePrice);
           this.discountPrice = response.discountPrice || 0;
-          this.saleForm.get('basePrice')?.disable();
           this.calculateTotal();
         } else {
           // Fall back to monthly pricing
@@ -450,16 +449,20 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
       next: (price) => {
         this.saleForm.get('basePrice')?.setValue(price.basePrice);
         this.discountPrice = 0; // Reset discount price for monthly pricing
-        this.saleForm.get('basePrice')?.disable();
         this.calculateTotal();
       },
       error: () => {
         this.saleForm.get('basePrice')?.setValue(0);
         this.discountPrice = 0;
-        this.saleForm.get('basePrice')?.disable();
         this.calculateTotal();
       }
     });
+  }
+
+  onDiscountPriceChange(event: Event): void {
+    const value = (event.target as HTMLInputElement)?.value;
+    this.discountPrice = this.parseAmountInput(value);
+    this.calculateTotal();
   }
 
   loadCustomers() {
@@ -1040,6 +1043,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     const modeOfPayment = this.saleForm.get('modeOfPayment')?.value;
     const bankAccountIdValue = this.saleForm.get('bankAccountId')?.value;
     const paymentType = this.saleForm.get('paymentType')?.value;
+    const editedBasePrice = this.parseAmountInput(this.saleForm.get('basePrice')?.value);
     
     // Calculate total discount (per-unit discount × quantity)
     const totalDiscount = (this.discountPrice || 0) * qtyIssued;
@@ -1057,6 +1061,7 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
           variantId: variantId,
           qtyIssued: qtyIssued,
           qtyEmptyReceived: qtyEmptyReceived,
+          basePrice: editedBasePrice,
           discount: totalDiscount
         } as SaleItemRequest
       ]
@@ -1147,7 +1152,6 @@ export class SaleEntryComponent implements OnInit, OnDestroy {
     }
     
     this.initForm();
-    this.saleForm.get('basePrice')?.disable();
     
     this.saleForm.markAsPristine();
     this.saleForm.markAsUntouched();

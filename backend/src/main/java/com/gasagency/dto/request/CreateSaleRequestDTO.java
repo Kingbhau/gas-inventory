@@ -107,6 +107,10 @@ public class CreateSaleRequestDTO {
         @PositiveOrZero(message = "Quantity empty received cannot be negative")
         private Long qtyEmptyReceived;
 
+        @PositiveOrZero(message = "Base price cannot be negative")
+        @DecimalMin(value = "0.00", message = "Base price must be >= 0")
+        private BigDecimal basePrice;
+
         @PositiveOrZero(message = "Discount cannot be negative")
         @DecimalMin(value = "0.00", message = "Discount must be >= 0")
         private BigDecimal discount;
@@ -151,6 +155,14 @@ public class CreateSaleRequestDTO {
 
         public void setDiscount(BigDecimal discount) {
             this.discount = discount;
+        }
+
+        public BigDecimal getBasePrice() {
+            return basePrice;
+        }
+
+        public void setBasePrice(BigDecimal basePrice) {
+            this.basePrice = basePrice;
         }
     }
 
