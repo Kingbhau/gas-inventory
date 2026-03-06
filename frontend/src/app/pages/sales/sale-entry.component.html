@@ -127,7 +127,6 @@
                 type="number" 
                 class="form-control" 
                 placeholder="0.00"
-                [readonly]="true"
                 (change)="calculateTotal()">
             </div>
             <div *ngIf="saleForm.get('basePrice')?.invalid && saleForm.get('basePrice')?.touched" class="error-message">
@@ -135,7 +134,7 @@
             </div>
           </div>
 
-          <!-- Discount Price (Read-only) -->
+          <!-- Discount Price -->
           <div class="form-group">
             <label class="form-label">Discount Amount Per Unit</label>
             <div class="input-with-prefix">
@@ -144,9 +143,8 @@
                 type="number" 
                 class="form-control" 
                 [value]="discountPrice"
-                [readonly]="true"
                 placeholder="0.00"
-                (change)="calculateTotal()">
+                (input)="onDiscountPriceChange($event)">
             </div>
           </div>
         </div>

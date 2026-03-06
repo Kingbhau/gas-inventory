@@ -2,6 +2,7 @@ export interface SaleItemRequest {
   variantId: number;
   qtyIssued: number;
   qtyEmptyReceived: number;
+  basePrice?: number;
   discount?: number;
 }
 
